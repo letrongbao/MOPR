@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Họ và tên" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etHoTen"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="Nguyễn Văn A" android:inputType="textPersonName"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="CCCD/CMND" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etCccd"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="012345678901" android:inputType="number"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Số điện thoại" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etSdt"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="0901234567" android:inputType="phone"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Phòng thuê" android:textStyle="bold" android:textColor="#212121"/>
+        <Spinner android:id="@+id/spinnerPhong"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Số thành viên" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etSoThanhVien"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="1" android:inputType="number"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Ngày bắt đầu thuê" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etNgayBatDau"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="dd/MM/yyyy" android:inputType="text"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Ngày kết thúc hợp đồng" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etNgayKetThuc"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="dd/MM/yyyy" android:inputType="text"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Tiền cọc (VNĐ)" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etTienCoc"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="VD: 2500000" android:inputType="numberDecimal"/>
+    </LinearLayout>
+</ScrollView>

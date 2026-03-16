@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Số phòng" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etSoPhong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="VD: 101, A1, 2B..."
+            android:inputType="text"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Loại phòng" android:textStyle="bold" android:textColor="#212121"/>
+        <Spinner
+            android:id="@+id/spinnerLoaiPhong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Diện tích (m²)" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etDienTich"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="VD: 20"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Giá thuê (VNĐ/tháng)" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etGiaThue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="VD: 2500000"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Trạng thái" android:textStyle="bold" android:textColor="#212121"/>
+        <Spinner
+            android:id="@+id/spinnerTrangThai"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</ScrollView>

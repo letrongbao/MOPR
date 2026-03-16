@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "865059203516",
+    "project_id": "mopr-1da4a",
+    "storage_bucket": "mopr-1da4a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:865059203516:android:1ec8c4247ac76ddbeea3b9",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArP9HllnH-ira6G6qpE-CMQ3PtCiMciJc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
