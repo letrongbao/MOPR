@@ -9,6 +9,30 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Image picker -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginBottom="16dp"
+            android:background="#F0F0F0">
+
+            <ImageView
+                android:id="@+id/imgPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/baseline_home_24"
+                android:contentDescription="Ảnh phòng"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnChonAnh"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Chọn ảnh"/>
+        </FrameLayout>
+
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Số phòng" android:textStyle="bold" android:textColor="#212121"/>
         <EditText

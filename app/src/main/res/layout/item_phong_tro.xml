@@ -6,6 +6,9 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="4dp"
     android:layout_marginVertical="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="12dp"
     app:cardElevation="3dp">
 
@@ -21,7 +24,17 @@
             android:layout_width="5dp"
             android:layout_height="60dp"
             android:background="#4CAF50"
-            android:layout_marginEnd="14dp"/>
+            android:layout_marginEnd="12dp"/>
+
+        <ImageView
+            android:id="@+id/imgPhong"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginEnd="12dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/baseline_home_24"
+            android:background="#F0F0F0"
+            android:contentDescription="Ảnh phòng"/>
 
         <LinearLayout
             android:layout_width="0dp"

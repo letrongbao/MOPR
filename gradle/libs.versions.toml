@@ -10,6 +10,7 @@ constraintlayout = "2.2.1"
 firebaseBom = "33.7.0"
 lifecycle = "2.8.7"
 recyclerview = "1.3.2"
+glide = "4.16.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -25,6 +26,7 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

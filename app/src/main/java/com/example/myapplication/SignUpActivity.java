@@ -74,29 +74,32 @@ public class SignUpActivity extends AppCompatActivity {
 
         mAuth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener(authResult -> {
-                // Cập nhật displayName
+                String uid = authResult.getUser().getUid();
+
+                // Cập nhật displayName (chờ kết quả trước khi tiếp tục)
                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                         .setDisplayName(hoTen)
                         .build();
-                authResult.getUser().updateProfile(profileUpdates);
+                authResult.getUser().updateProfile(profileUpdates)
+                    .addOnCompleteListener(profileTask -> {
+                        // Lưu thông tin thêm vào Firestore
+                        Map<String, Object> user = new HashMap<>();
+                        user.put("hoTen", hoTen);
+                        user.put("email", email);
+                        user.put("soDienThoai", soDienThoai);
+                        user.put("uid", uid);
 
-                // Lưu thông tin thêm vào Firestore
-                Map<String, Object> user = new HashMap<>();
-                user.put("hoTen", hoTen);
-                user.put("email", email);
-                user.put("soDienThoai", soDienThoai);
-                user.put("uid", authResult.getUser().getUid());
-
-                db.collection("users").document(authResult.getUser().getUid())
-                    .set(user)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(this, HomeActivity.class));
-                        finish();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Lỗi lưu thông tin: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        btnSignUp.setEnabled(true);
+                        db.collection("users").document(uid)
+                            .set(user)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(this, HomeActivity.class));
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Lỗi lưu thông tin: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                btnSignUp.setEnabled(true);
+                            });
                     });
             })
             .addOnFailureListener(e -> {

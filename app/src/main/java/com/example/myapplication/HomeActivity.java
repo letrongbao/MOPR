@@ -16,18 +16,21 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class HomeActivity extends AppCompatActivity {
 
     private TextView tvUserName, tvStatPhong, tvStatNguoiThue, tvStatHoaDon, tvProfileEmail;
     private CardView cardPhongTro, cardNguoiThue, cardHoaDon, cardDoanhThu, cardProfile;
-    private ImageView btnLogout;
+    private ImageView btnLogout, imgAvatar;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
+    private ListenerRegistration phongListener, nguoiThueListener, hoaDonListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +55,7 @@ public class HomeActivity extends AppCompatActivity {
         tvStatHoaDon = findViewById(R.id.tvStatHoaDon);
         tvProfileEmail = findViewById(R.id.tvProfileEmail);
         btnLogout = findViewById(R.id.btnLogout);
+        imgAvatar = findViewById(R.id.imgAvatar);
 
         cardPhongTro = findViewById(R.id.cardPhongTro);
         cardNguoiThue = findViewById(R.id.cardNguoiThue);
@@ -71,6 +75,7 @@ public class HomeActivity extends AppCompatActivity {
         // Hiển thị tên user
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
+            // Hiển thị tạm từ Auth
             String displayName = user.getDisplayName();
             if (displayName != null && !displayName.isEmpty()) {
                 tvUserName.setText(displayName);
@@ -78,6 +83,18 @@ public class HomeActivity extends AppCompatActivity {
                 tvUserName.setText(user.getEmail());
             }
             tvProfileEmail.setText(user.getEmail());
+
+            // Lấy tên từ Firestore (chính xác hơn Auth cache)
+            db.collection("users").document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String hoTen = doc.getString("hoTen");
+                        if (hoTen != null && !hoTen.isEmpty()) {
+                            tvUserName.setText(hoTen);
+                        }
+                    }
+                });
         }
 
         // Navigation
@@ -108,25 +125,39 @@ public class HomeActivity extends AppCompatActivity {
         loadStats();
     }
 
+    private void removeListeners() {
+        if (phongListener != null) phongListener.remove();
+        if (nguoiThueListener != null) nguoiThueListener.remove();
+        if (hoaDonListener != null) hoaDonListener.remove();
+    }
+
     private void loadStats() {
-        // Đếm phòng
-        db.collection("phong_tro")
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+
+        String uid = user.getUid();
+
+        // Remove listener cũ trước khi tạo mới
+        removeListeners();
+
+        // Đếm phòng (scoped theo user)
+        phongListener = db.collection("users").document(uid).collection("phong_tro")
             .addSnapshotListener((value, error) -> {
                 if (value != null) {
                     tvStatPhong.setText(String.valueOf(value.size()));
                 }
             });
 
-        // Đếm người thuê
-        db.collection("nguoi_thue")
+        // Đếm người thuê (scoped theo user)
+        nguoiThueListener = db.collection("users").document(uid).collection("nguoi_thue")
             .addSnapshotListener((value, error) -> {
                 if (value != null) {
                     tvStatNguoiThue.setText(String.valueOf(value.size()));
                 }
             });
 
-        // Đếm hóa đơn chưa thanh toán
-        db.collection("hoa_don")
+        // Đếm hóa đơn chưa thanh toán (scoped theo user)
+        hoaDonListener = db.collection("users").document(uid).collection("hoa_don")
             .addSnapshotListener((value, error) -> {
                 if (value != null) {
                     int chuaThu = 0;
@@ -140,14 +171,28 @@ public class HomeActivity extends AppCompatActivity {
                 }
             });
 
-        // Cập nhật tên user
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            String displayName = user.getDisplayName();
-            if (displayName != null && !displayName.isEmpty()) {
-                tvUserName.setText(displayName);
-            }
-            tvProfileEmail.setText(user.getEmail());
-        }
+        // Cập nhật tên user từ Firestore
+        db.collection("users").document(uid)
+            .get()
+            .addOnSuccessListener(doc -> {
+                if (doc.exists()) {
+                    String hoTen = doc.getString("hoTen");
+                    if (hoTen != null && !hoTen.isEmpty()) {
+                        tvUserName.setText(hoTen);
+                    }
+                    String avatarUrl = doc.getString("avatarUrl");
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                        Glide.with(HomeActivity.this).load(avatarUrl).circleCrop().into(imgAvatar);
+                        imgAvatar.setPadding(0, 0, 0, 0);
+                    }
+                }
+            });
+        tvProfileEmail.setText(user.getEmail());
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        removeListeners();
     }
 }

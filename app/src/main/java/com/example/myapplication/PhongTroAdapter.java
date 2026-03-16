@@ -6,9 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import com.example.myapplication.model.PhongTro;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
     public interface OnItemActionListener {
         void onXoa(PhongTro phong);
         void onChon(PhongTro phong);
+        void onXemChiTiet(PhongTro phong);
     }
 
     public PhongTroAdapter(OnItemActionListener listener) {
@@ -60,6 +63,18 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
         holder.tvTrangThai.setBackground(badge);
         holder.viewStatus.setBackgroundColor(color);
 
+        // Load thumbnail
+        if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(phong.getHinhAnh())
+                    .centerCrop()
+                    .placeholder(R.drawable.baseline_home_24)
+                    .into(holder.imgPhong);
+        } else {
+            holder.imgPhong.setImageResource(R.drawable.baseline_home_24);
+        }
+
+        holder.itemView.setOnClickListener(v -> listener.onXemChiTiet(phong));
         holder.btnXoa.setOnClickListener(v -> listener.onXoa(phong));
         holder.btnSua.setOnClickListener(v -> listener.onChon(phong));
     }
@@ -72,6 +87,7 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvSoPhong, tvLoaiPhong, tvGiaThue, tvTrangThai;
         View viewStatus;
+        ImageView imgPhong;
         ImageButton btnXoa, btnSua;
 
         ViewHolder(View v) {
@@ -81,6 +97,7 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
             tvGiaThue = v.findViewById(R.id.tvGiaThue);
             tvTrangThai = v.findViewById(R.id.tvTrangThai);
             viewStatus = v.findViewById(R.id.viewStatus);
+            imgPhong = v.findViewById(R.id.imgPhong);
             btnXoa = v.findViewById(R.id.btnXoa);
             btnSua = v.findViewById(R.id.btnSua);
         }

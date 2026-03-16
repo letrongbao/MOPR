@@ -43,6 +43,9 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
+    // Image loading
+    implementation(libs.glide)
+
     // MVVM
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.livedata)

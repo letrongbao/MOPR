@@ -7,6 +7,7 @@ public class PhongTro {
     private double dienTich;
     private double giaThue;
     private String trangThai;   // "Trống", "Đã thuê"
+    private String hinhAnh;     // URL ảnh từ Firebase Storage
 
     public PhongTro() {} // Firestore cần constructor rỗng
 
@@ -31,4 +32,6 @@ public class PhongTro {
     public void setGiaThue(double giaThue) { this.giaThue = giaThue; }
     public String getTrangThai() { return trangThai; }
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+    public String getHinhAnh() { return hinhAnh; }
+    public void setHinhAnh(String hinhAnh) { this.hinhAnh = hinhAnh; }
 }

@@ -1,38 +1,71 @@
 package com.example.myapplication;
 
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class ProfileActivity extends AppCompatActivity {
+
+    private static final String CLOUD_NAME = "dsvkscwti";
+    private static final String UPLOAD_PRESET = "MOPR";
 
     private TextView tvDisplayName, tvEmail;
     private EditText edtProfileName, edtProfileEmail, edtProfilePhone;
     private EditText edtNewPassword, edtConfirmNewPassword;
     private Button btnSaveProfile, btnChangePassword;
+    private ImageView imgAvatar;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private Uri selectedAvatarUri;
+    private ActivityResultLauncher<String> avatarPickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Register avatar picker
+        avatarPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        selectedAvatarUri = uri;
+                        Glide.with(this).load(uri).circleCrop().into(imgAvatar);
+                        imgAvatar.setPadding(0, 0, 0, 0);
+                    }
+                }
+        );
 
         // Làm status bar trong suốt giống HomeActivity
         Window window = getWindow();
@@ -53,7 +86,7 @@ public class ProfileActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Thông tin cá nhân");
         }
-        
+
         // Tự động thêm padding cho Toolbar
         ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -66,6 +99,7 @@ public class ProfileActivity extends AppCompatActivity {
         // Bind views
         tvDisplayName = findViewById(R.id.tvDisplayName);
         tvEmail = findViewById(R.id.tvEmail);
+        imgAvatar = findViewById(R.id.imgAvatar);
         edtProfileName = findViewById(R.id.edtProfileName);
         edtProfileEmail = findViewById(R.id.edtProfileEmail);
         edtProfilePhone = findViewById(R.id.edtProfilePhone);
@@ -73,6 +107,8 @@ public class ProfileActivity extends AppCompatActivity {
         edtConfirmNewPassword = findViewById(R.id.edtConfirmNewPassword);
         btnSaveProfile = findViewById(R.id.btnSaveProfile);
         btnChangePassword = findViewById(R.id.btnChangePassword);
+
+        imgAvatar.setOnClickListener(v -> avatarPickerLauncher.launch("image/*"));
 
         loadUserInfo();
 
@@ -104,6 +140,7 @@ public class ProfileActivity extends AppCompatActivity {
                 if (doc.exists()) {
                     String hoTen = doc.getString("hoTen");
                     String soDienThoai = doc.getString("soDienThoai");
+                    String avatarUrl = doc.getString("avatarUrl");
 
                     if (hoTen != null && !hoTen.isEmpty()) {
                         edtProfileName.setText(hoTen);
@@ -111,6 +148,10 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                     if (soDienThoai != null) {
                         edtProfilePhone.setText(soDienThoai);
+                    }
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                        Glide.with(this).load(avatarUrl).circleCrop().into(imgAvatar);
+                        imgAvatar.setPadding(0, 0, 0, 0);
                     }
                 }
             });
@@ -130,18 +171,100 @@ public class ProfileActivity extends AppCompatActivity {
 
         btnSaveProfile.setEnabled(false);
 
-        // Cập nhật displayName trên Firebase Auth
-        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                .setDisplayName(hoTen)
-                .build();
+        if (selectedAvatarUri != null) {
+            uploadAvatarAndSave(user, hoTen, soDienThoai);
+        } else {
+            updateProfile(user, hoTen, soDienThoai, null);
+        }
+    }
 
-        user.updateProfile(profileUpdates)
+    private void uploadAvatarAndSave(FirebaseUser user, String hoTen, String soDienThoai) {
+        Toast.makeText(this, "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                InputStream is = getContentResolver().openInputStream(selectedAvatarUri);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+                is.close();
+                byte[] imageBytes = baos.toByteArray();
+
+                String boundary = "----Boundary" + System.currentTimeMillis();
+                URL url = new URL("https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n");
+                dos.writeBytes(UPLOAD_PRESET + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.jpg\"\r\n");
+                dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
+                dos.write(imageBytes);
+                dos.writeBytes("\r\n");
+
+                dos.writeBytes("--" + boundary + "--\r\n");
+                dos.flush();
+                dos.close();
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) response.append(line);
+                    reader.close();
+
+                    JSONObject json = new JSONObject(response.toString());
+                    String avatarUrl = json.getString("secure_url");
+
+                    runOnUiThread(() -> updateProfile(user, hoTen, soDienThoai, avatarUrl));
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Upload ảnh thất bại", Toast.LENGTH_LONG).show();
+                        btnSaveProfile.setEnabled(true);
+                    });
+                }
+                conn.disconnect();
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Tải ảnh thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    btnSaveProfile.setEnabled(true);
+                });
+            }
+        }).start();
+    }
+
+    private void updateProfile(FirebaseUser user, String hoTen, String soDienThoai, String avatarUrl) {
+        UserProfileChangeRequest.Builder profileBuilder = new UserProfileChangeRequest.Builder()
+                .setDisplayName(hoTen);
+        if (avatarUrl != null) {
+            profileBuilder.setPhotoUri(Uri.parse(avatarUrl));
+        }
+
+        user.updateProfile(profileBuilder.build())
             .addOnSuccessListener(aVoid -> {
-                // Cập nhật Firestore
+                java.util.Map<String, Object> updates = new java.util.HashMap<>();
+                updates.put("hoTen", hoTen);
+                updates.put("soDienThoai", soDienThoai);
+                if (avatarUrl != null) {
+                    updates.put("avatarUrl", avatarUrl);
+                }
+
                 db.collection("users").document(user.getUid())
-                    .update("hoTen", hoTen, "soDienThoai", soDienThoai)
+                    .update(updates)
                     .addOnSuccessListener(aVoid2 -> {
                         tvDisplayName.setText(hoTen);
+                        selectedAvatarUri = null;
                         Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
                         btnSaveProfile.setEnabled(true);
                     })
@@ -152,11 +275,15 @@ public class ProfileActivity extends AppCompatActivity {
                         userData.put("soDienThoai", soDienThoai);
                         userData.put("email", user.getEmail());
                         userData.put("uid", user.getUid());
+                        if (avatarUrl != null) {
+                            userData.put("avatarUrl", avatarUrl);
+                        }
 
                         db.collection("users").document(user.getUid())
                             .set(userData)
                             .addOnSuccessListener(aVoid3 -> {
                                 tvDisplayName.setText(hoTen);
+                                selectedAvatarUri = null;
                                 Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
                                 btnSaveProfile.setEnabled(true);
                             })

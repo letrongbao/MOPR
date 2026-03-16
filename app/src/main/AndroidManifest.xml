@@ -29,6 +29,9 @@
             android:name=".HoaDonActivity"
             android:exported="false" />
         <activity
+            android:name=".ChiTietPhongTroActivity"
+            android:exported="false" />
+        <activity
             android:name=".PhongTroActivity"
             android:exported="false" />
         <activity
