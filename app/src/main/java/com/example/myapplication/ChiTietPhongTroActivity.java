@@ -1,33 +1,70 @@
 package com.example.myapplication;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
+import com.example.myapplication.api.RetrofitClient;
+import com.example.myapplication.model.NguoiThue;
+import com.example.myapplication.model.NominatimResult;
 import com.example.myapplication.model.PhongTro;
+import com.example.myapplication.room.AppDatabase;
+import com.example.myapplication.room.PhongYeuThich;
+import com.example.myapplication.room.PhongYeuThichDao;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ChiTietPhongTroActivity extends AppCompatActivity {
 
     private ImageView imgPhong;
     private TextView tvSoPhong, tvLoaiPhong, tvDienTich, tvGiaThue, tvTrangThai, tvTrangThaiRow;
+    private TextView tvTenNguoiThue, tvSdtNguoiThue;
+    private CardView cardNguoiThue;
+    private LinearLayout btnGoiDien, btnNhanTin, btnChiDuong, btnChiaSe;
+    private FloatingActionButton fabFavorite;
+    private PhongYeuThichDao favoriteDao;
+    private PhongTro currentPhong;
+    private volatile boolean isFavorite = false;
+
+    private String soDienThoaiNguoiThue;
+    private String tenPhongHienTai;
+    private double giaThueHienTai;
+
+    private ListenerRegistration roomListener;
+    private ListenerRegistration tenantListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +72,7 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
 
         // Transparent status bar
         Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_chi_tiet_phong_tro);
@@ -62,6 +96,18 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         tvGiaThue = findViewById(R.id.tvGiaThueChiTiet);
         tvTrangThai = findViewById(R.id.tvTrangThaiChiTiet);
         tvTrangThaiRow = findViewById(R.id.tvTrangThaiRow);
+        tvTenNguoiThue = findViewById(R.id.tvTenNguoiThue);
+        tvSdtNguoiThue = findViewById(R.id.tvSdtNguoiThue);
+        cardNguoiThue = findViewById(R.id.cardNguoiThue);
+
+        btnGoiDien = findViewById(R.id.btnGoiDien);
+        btnNhanTin = findViewById(R.id.btnNhanTin);
+        btnChiDuong = findViewById(R.id.btnChiDuong);
+        btnChiaSe = findViewById(R.id.btnChiaSe);
+
+        // === ROOM DATABASE: Yêu thích phòng (offline) ===
+        fabFavorite = findViewById(R.id.fabFavorite);
+        favoriteDao = AppDatabase.getInstance(this).phongYeuThichDao();
 
         String phongId = getIntent().getStringExtra("PHONG_ID");
         if (phongId == null) {
@@ -70,15 +116,113 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
             return;
         }
 
+        // Observe trạng thái yêu thích từ Room
+        favoriteDao.isFavorite(phongId).observe(this, isFav -> {
+            isFavorite = isFav != null && isFav;
+            fabFavorite.setImageResource(isFavorite
+                    ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_border);
+        });
+
+        fabFavorite.setOnClickListener(v -> toggleFavorite(phongId));
+
+        // === IMPLICIT INTENTS ===
+
+        // 1. Gọi điện cho người thuê (ACTION_DIAL)
+        btnGoiDien.setOnClickListener(v -> {
+            if (soDienThoaiNguoiThue == null || soDienThoaiNguoiThue.isEmpty()) {
+                Toast.makeText(this, "Phòng chưa có người thuê", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + soDienThoaiNguoiThue));
+            startActivity(intent);
+        });
+
+        // 2. Nhắn tin SMS cho người thuê (ACTION_SENDTO)
+        btnNhanTin.setOnClickListener(v -> {
+            if (soDienThoaiNguoiThue == null || soDienThoaiNguoiThue.isEmpty()) {
+                Toast.makeText(this, "Phòng chưa có người thuê", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("smsto:" + soDienThoaiNguoiThue));
+            intent.putExtra("sms_body", "Xin chào, tôi liên hệ về phòng " + tenPhongHienTai);
+            startActivity(intent);
+        });
+
+        // 3. Mở Google Maps chỉ đường - dùng Retrofit gọi Nominatim API geocode
+        btnChiDuong.setOnClickListener(v -> {
+            String query = "Phòng trọ " + (tenPhongHienTai != null ? tenPhongHienTai : "");
+            Toast.makeText(this, "Đang tìm vị trí...", Toast.LENGTH_SHORT).show();
+
+            RetrofitClient.getNominatimApi()
+                    .searchAddress(query, "json", 1)
+                    .enqueue(new Callback<List<NominatimResult>>() {
+                        @Override
+                        public void onResponse(Call<List<NominatimResult>> call, Response<List<NominatimResult>> response) {
+                            if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                                NominatimResult result = response.body().get(0);
+                                String lat = result.getLat();
+                                String lon = result.getLon();
+                                if (lat == null || lon == null) {
+                                    openMapsWithQuery(query);
+                                    return;
+                                }
+                                // Mở Google Maps với tọa độ từ Nominatim
+                                Uri gmmUri = Uri.parse("geo:" + lat + "," + lon + "?q=" + lat + "," + lon + "(" + Uri.encode("Phòng " + tenPhongHienTai) + ")");
+                                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmUri);
+                                mapIntent.setPackage("com.google.android.apps.maps");
+                                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                                    startActivity(mapIntent);
+                                } else {
+                                    startActivity(new Intent(Intent.ACTION_VIEW,
+                                            Uri.parse("https://www.google.com/maps/@" + lat + "," + lon + ",17z")));
+                                }
+                            } else {
+                                // Fallback: mở map với query text
+                                openMapsWithQuery(query);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<List<NominatimResult>> call, Throwable t) {
+                            // Nếu API fail, fallback mở map bình thường
+                            openMapsWithQuery(query);
+                        }
+                    });
+        });
+
+        // 4. Chia sẻ thông tin phòng trọ - chọn chia sẻ chung hoặc gửi SMS từ danh bạ
+        btnChiaSe.setOnClickListener(v -> {
+            String[] options = {"Chia sẻ chung", "Gửi SMS cho liên hệ trong danh bạ"};
+            new AlertDialog.Builder(this)
+                    .setTitle("Chia sẻ phòng trọ")
+                    .setItems(options, (dialog, which) -> {
+                        if (which == 0) {
+                            shareRoomGeneral();
+                        } else {
+                            shareRoomViaContacts();
+                        }
+                    }).show();
+        });
+
         loadRoomData(phongId);
+        loadTenantData(phongId);
     }
 
     private void loadRoomData(String phongId) {
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        FirebaseFirestore.getInstance()
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        String uid = user.getUid();
+        roomListener = FirebaseFirestore.getInstance()
                 .collection("users").document(uid)
                 .collection("phong_tro").document(phongId)
                 .addSnapshotListener((doc, e) -> {
+                    if (isFinishing() || isDestroyed()) return;
                     if (e != null || doc == null || !doc.exists()) {
                         Toast.makeText(this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
                         return;
@@ -90,7 +234,39 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
                 });
     }
 
+    private void loadTenantData(String phongId) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        String uid = user.getUid();
+        tenantListener = FirebaseFirestore.getInstance()
+                .collection("users").document(uid)
+                .collection("nguoi_thue")
+                .whereEqualTo("idPhong", phongId)
+                .addSnapshotListener((value, error) -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (error != null || value == null || value.isEmpty()) {
+                        cardNguoiThue.setVisibility(View.GONE);
+                        soDienThoaiNguoiThue = null;
+                        return;
+                    }
+                    for (QueryDocumentSnapshot doc : value) {
+                        NguoiThue nguoiThue = doc.toObject(NguoiThue.class);
+                        if (nguoiThue != null) {
+                            cardNguoiThue.setVisibility(View.VISIBLE);
+                            tvTenNguoiThue.setText("Họ tên: " + nguoiThue.getHoTen());
+                            tvSdtNguoiThue.setText("SĐT: " + nguoiThue.getSoDienThoai());
+                            soDienThoaiNguoiThue = nguoiThue.getSoDienThoai();
+                            break;
+                        }
+                    }
+                });
+    }
+
     private void displayRoom(PhongTro phong) {
+        currentPhong = phong;
+        tenPhongHienTai = phong.getSoPhong();
+        giaThueHienTai = phong.getGiaThue();
+
         tvSoPhong.setText("Phòng " + phong.getSoPhong());
         tvLoaiPhong.setText(phong.getLoaiPhong());
         tvDienTich.setText((int) phong.getDienTich() + " m²");
@@ -112,8 +288,8 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         tvTrangThaiRow.setText(phong.getTrangThai());
         tvTrangThaiRow.setTextColor(color);
 
-        // Load full image
-        if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty()) {
+        // Load full image (kiểm tra Activity còn sống)
+        if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty() && !isDestroyed()) {
             Glide.with(this)
                     .load(phong.getHinhAnh())
                     .centerCrop()
@@ -124,6 +300,114 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Phòng " + phong.getSoPhong());
         }
+    }
+
+    private void toggleFavorite(String phongId) {
+        if (currentPhong == null) return;
+        boolean currentFavorite = isFavorite;
+        new Thread(() -> {
+            if (currentFavorite) {
+                favoriteDao.deleteById(phongId);
+                runOnUiThread(() -> Toast.makeText(this, "Đã bỏ yêu thích", Toast.LENGTH_SHORT).show());
+            } else {
+                PhongYeuThich fav = new PhongYeuThich();
+                fav.setId(phongId);
+                fav.setSoPhong(currentPhong.getSoPhong());
+                fav.setLoaiPhong(currentPhong.getLoaiPhong());
+                fav.setDienTich(currentPhong.getDienTich());
+                fav.setGiaThue(currentPhong.getGiaThue());
+                fav.setTrangThai(currentPhong.getTrangThai());
+                fav.setHinhAnh(currentPhong.getHinhAnh());
+                fav.setNgayLuu(System.currentTimeMillis());
+                favoriteDao.insert(fav);
+                runOnUiThread(() -> Toast.makeText(this, "Đã thêm vào yêu thích", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private String buildShareText() {
+        NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
+        return "Phòng trọ cho thuê:\n"
+                + "Phòng: " + tenPhongHienTai + "\n"
+                + "Giá: " + fmt.format(giaThueHienTai) + " đ/tháng\n"
+                + "Liên hệ: " + (soDienThoaiNguoiThue != null ? soDienThoaiNguoiThue : "Chủ trọ");
+    }
+
+    private void shareRoomGeneral() {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Phòng trọ " + tenPhongHienTai);
+        intent.putExtra(Intent.EXTRA_TEXT, buildShareText());
+        startActivity(Intent.createChooser(intent, "Chia sẻ qua"));
+    }
+
+    // === CONTENT PROVIDER: Đọc danh bạ để gửi SMS chia sẻ phòng trọ ===
+    private static final int REQUEST_READ_CONTACTS = 200;
+
+    private void shareRoomViaContacts() {
+        if (!ContactHelper.hasContactPermission(this)) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_READ_CONTACTS);
+            return;
+        }
+        showContactPicker();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_READ_CONTACTS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                showContactPicker();
+            } else {
+                Toast.makeText(this, "Cần quyền đọc danh bạ để chia sẻ", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void showContactPicker() {
+        java.util.List<ContactHelper.Contact> contacts = ContactHelper.readContacts(getContentResolver());
+        if (contacts.isEmpty()) {
+            Toast.makeText(this, "Danh bạ trống", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] contactNames = new String[contacts.size()];
+        for (int i = 0; i < contacts.size(); i++) {
+            contactNames[i] = contacts.get(i).toString();
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Chọn liên hệ để gửi SMS")
+                .setItems(contactNames, (dialog, which) -> {
+                    ContactHelper.Contact selected = contacts.get(which);
+                    // Gửi SMS qua Implicit Intent (ACTION_SENDTO)
+                    Intent smsIntent = new Intent(Intent.ACTION_SENDTO);
+                    smsIntent.setData(Uri.parse("smsto:" + selected.phone));
+                    smsIntent.putExtra("sms_body", buildShareText());
+                    startActivity(smsIntent);
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void openMapsWithQuery(String query) {
+        Uri gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(query));
+        Intent intent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        intent.setPackage("com.google.android.apps.maps");
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://www.google.com/maps/search/?api=1&query=" + Uri.encode(query))));
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (roomListener != null) roomListener.remove();
+        if (tenantListener != null) tenantListener.remove();
     }
 
     @Override

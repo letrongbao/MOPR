@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="widget_hoa_don_description">Hiển thị số hóa đơn chưa thanh toán và tổng phòng trọ</string>
 </resources>

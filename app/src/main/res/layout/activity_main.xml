@@ -49,11 +49,12 @@
                 android:layout_height="50dp"
                 android:id="@+id/username"
                 android:background="@drawable/custome_edittext"
-                android:drawableLeft="@drawable/ic_email"
+                android:drawableStart="@drawable/ic_email"
                 android:drawablePadding="8dp"
                 android:hint="Email"
                 android:padding="8dp"
                 android:inputType="textEmailAddress"
+                android:autofillHints="emailAddress"
                 android:textColor="@color/black"
                 android:layout_marginTop="40dp"/>
 
@@ -62,13 +63,24 @@
                 android:layout_height="50dp"
                 android:id="@+id/password"
                 android:background="@drawable/custome_edittext"
-                android:drawableLeft="@drawable/lock_24dp_1f1f1f_fill0_wght400_grad0_opsz24"
+                android:drawableStart="@drawable/lock_24dp_1f1f1f_fill0_wght400_grad0_opsz24"
                 android:drawablePadding="8dp"
                 android:hint="Mật khẩu"
                 android:padding="8dp"
                 android:inputType="textPassword"
+                android:autofillHints="password"
                 android:textColor="@color/black"
                 android:layout_marginTop="20dp"/>
+
+            <CheckBox
+                android:id="@+id/cbRememberMe"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ghi nhớ đăng nhập"
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:layout_marginTop="12dp"
+                android:buttonTint="@color/purple"/>
 
             <Button
                 android:layout_width="match_parent"
@@ -76,7 +88,7 @@
                 android:id="@+id/loginButton"
                 android:text="Đăng nhập"
                 android:textSize="18sp"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="16dp"
                 android:backgroundTint="@color/purple"
                 app:cornerRadius="20dp"/>
 

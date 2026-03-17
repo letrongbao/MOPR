@@ -1,13 +1,15 @@
 package com.example.myapplication;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -18,10 +20,13 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -29,19 +34,8 @@ import com.example.myapplication.model.PhongTro;
 import com.example.myapplication.viewmodel.PhongTroViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 public class PhongTroActivity extends AppCompatActivity {
 
-    // TODO: Thay bằng thông tin Cloudinary của bạn
     private static final String CLOUD_NAME = "dsvkscwti";
     private static final String UPLOAD_PRESET = "MOPR";
 
@@ -51,6 +45,10 @@ public class PhongTroActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private ImageView dialogImgPreview;
     private ActivityResultLauncher<String> imagePickerLauncher;
+
+    // Phòng đang chờ kết quả upload từ Foreground Service
+    private PhongTro pendingUploadPhong;
+    private BroadcastReceiver uploadReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,11 +67,32 @@ public class PhongTroActivity extends AppCompatActivity {
                 }
         );
 
+        // === BROADCAST RECEIVER: Nhận kết quả upload từ Foreground Service ===
+        uploadReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String imageUrl = intent.getStringExtra(ImageUploadService.EXTRA_IMAGE_URL);
+                if (imageUrl != null && pendingUploadPhong != null) {
+                    pendingUploadPhong.setHinhAnh(imageUrl);
+                    if (pendingUploadPhong.getId() != null) {
+                        viewModel.capNhatPhong(pendingUploadPhong,
+                                () -> runOnUiThread(() -> Toast.makeText(PhongTroActivity.this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(() -> Toast.makeText(PhongTroActivity.this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
+                    } else {
+                        viewModel.themPhong(pendingUploadPhong,
+                                () -> runOnUiThread(() -> Toast.makeText(PhongTroActivity.this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(() -> Toast.makeText(PhongTroActivity.this, "Thất bại", Toast.LENGTH_LONG).show()));
+                    }
+                    pendingUploadPhong = null;
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE);
+        LocalBroadcastManager.getInstance(this).registerReceiver(uploadReceiver, filter);
+
         // Làm trong suốt Status Bar giống HomeActivity
         Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_phong_tro);
@@ -127,6 +146,7 @@ public class PhongTroActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(PhongTroViewModel.class);
         viewModel.getDanhSachPhong().observe(this, list -> {
+            if (list == null) return;
             adapter.setDanhSach(list);
             tvEmpty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
         });
@@ -265,86 +285,21 @@ public class PhongTroActivity extends AppCompatActivity {
                 .setNegativeButton("Hủy", null).show();
     }
 
+    // === FOREGROUND SERVICE: Upload ảnh qua Service thay vì thread trực tiếp ===
     private void uploadImageAndSave(PhongTro phong) {
-        Toast.makeText(this, "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
+        pendingUploadPhong = phong;
+        Intent serviceIntent = new Intent(this, ImageUploadService.class);
+        serviceIntent.putExtra(ImageUploadService.EXTRA_IMAGE_URI, selectedImageUri.toString());
+        ContextCompat.startForegroundService(this, serviceIntent);
+        Toast.makeText(this, "Đang upload ảnh qua Service...", Toast.LENGTH_SHORT).show();
+    }
 
-        new Thread(() -> {
-            try {
-                // Đọc ảnh từ URI
-                InputStream is = getContentResolver().openInputStream(selectedImageUri);
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
-                }
-                is.close();
-                byte[] imageBytes = baos.toByteArray();
-
-                // Upload lên Cloudinary qua HTTP POST
-                String boundary = "----Boundary" + System.currentTimeMillis();
-                URL url = new URL("https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setDoOutput(true);
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-
-                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
-
-                // Field: upload_preset
-                dos.writeBytes("--" + boundary + "\r\n");
-                dos.writeBytes("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n");
-                dos.writeBytes(UPLOAD_PRESET + "\r\n");
-
-                // Field: file (image)
-                dos.writeBytes("--" + boundary + "\r\n");
-                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"image.jpg\"\r\n");
-                dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
-                dos.write(imageBytes);
-                dos.writeBytes("\r\n");
-
-                dos.writeBytes("--" + boundary + "--\r\n");
-                dos.flush();
-                dos.close();
-
-                // Đọc response
-                int responseCode = conn.getResponseCode();
-                if (responseCode == 200) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) response.append(line);
-                    reader.close();
-
-                    JSONObject json = new JSONObject(response.toString());
-                    String imageUrl = json.getString("secure_url");
-
-                    // Lưu URL vào phòng rồi save
-                    phong.setHinhAnh(imageUrl);
-                    runOnUiThread(() -> {
-                        if (phong.getId() != null) {
-                            viewModel.capNhatPhong(phong,
-                                    () -> runOnUiThread(() -> Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()),
-                                    () -> runOnUiThread(() -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
-                        } else {
-                            viewModel.themPhong(phong,
-                                    () -> runOnUiThread(() -> Toast.makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
-                                    () -> runOnUiThread(() -> Toast.makeText(this, "Thất bại", Toast.LENGTH_LONG).show()));
-                        }
-                    });
-                } else {
-                    BufferedReader errReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-                    StringBuilder errResponse = new StringBuilder();
-                    String errLine;
-                    while ((errLine = errReader.readLine()) != null) errResponse.append(errLine);
-                    errReader.close();
-                    runOnUiThread(() -> Toast.makeText(this, "Upload thất bại: " + errResponse, Toast.LENGTH_LONG).show());
-                }
-                conn.disconnect();
-            } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, "Tải ảnh thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
-        }).start();
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (uploadReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(uploadReceiver);
+        }
     }
 
     @Override

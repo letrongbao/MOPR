@@ -2,10 +2,13 @@ package com.example.myapplication;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,9 +17,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -32,15 +37,18 @@ public class HomeActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private ListenerRegistration phongListener, nguoiThueListener, hoaDonListener;
 
+    // Network callback thay thế deprecated BroadcastReceiver
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
+    private Snackbar offlineSnackbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // Làm cho status bar trong suốt
+
+        // Làm cho status bar trong suốt (thay thế deprecated SYSTEM_UI_FLAG)
         Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_home);
@@ -72,6 +80,32 @@ public class HomeActivity extends AppCompatActivity {
             return insets;
         });
 
+        // === NETWORK CALLBACK: Kiểm tra trạng thái mạng (thay thế deprecated CONNECTIVITY_ACTION) ===
+        View rootView = findViewById(android.R.id.content);
+        offlineSnackbar = Snackbar.make(rootView,
+                "Bạn đang offline. Vui lòng kiểm tra kết nối mạng!", Snackbar.LENGTH_INDEFINITE)
+                .setAction("OK", v -> {});
+        offlineSnackbar.setBackgroundTint(Color.parseColor("#F44336"));
+        offlineSnackbar.setTextColor(Color.WHITE);
+        offlineSnackbar.setActionTextColor(Color.WHITE);
+
+        connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(Network network) {
+                runOnUiThread(() -> {
+                    if (offlineSnackbar.isShown()) offlineSnackbar.dismiss();
+                });
+            }
+
+            @Override
+            public void onLost(Network network) {
+                runOnUiThread(() -> {
+                    if (!offlineSnackbar.isShown()) offlineSnackbar.show();
+                });
+            }
+        };
+
         // Hiển thị tên user
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
@@ -80,9 +114,11 @@ public class HomeActivity extends AppCompatActivity {
             if (displayName != null && !displayName.isEmpty()) {
                 tvUserName.setText(displayName);
             } else {
-                tvUserName.setText(user.getEmail());
+                String email = user.getEmail();
+                tvUserName.setText(email != null ? email : "");
             }
-            tvProfileEmail.setText(user.getEmail());
+            String email = user.getEmail();
+            tvProfileEmail.setText(email != null ? email : "");
 
             // Lấy tên từ Firestore (chính xác hơn Auth cache)
             db.collection("users").document(user.getUid())
@@ -110,6 +146,9 @@ public class HomeActivity extends AppCompatActivity {
                 .setTitle("Đăng xuất")
                 .setMessage("Bạn có chắc muốn đăng xuất?")
                 .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                    // Xóa SharedPreferences khi đăng xuất
+                    getSharedPreferences("NhaTroPrefs", MODE_PRIVATE)
+                        .edit().clear().apply();
                     mAuth.signOut();
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
@@ -123,6 +162,22 @@ public class HomeActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadStats();
+        // Đăng ký NetworkCallback (thay thế deprecated BroadcastReceiver)
+        if (connectivityManager != null) {
+            NetworkRequest request = new NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
+            connectivityManager.registerNetworkCallback(request, networkCallback);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Hủy đăng ký NetworkCallback khi activity không active
+        if (connectivityManager != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        }
     }
 
     private void removeListeners() {
@@ -175,6 +230,7 @@ public class HomeActivity extends AppCompatActivity {
         db.collection("users").document(uid)
             .get()
             .addOnSuccessListener(doc -> {
+                if (isFinishing() || isDestroyed()) return;
                 if (doc.exists()) {
                     String hoTen = doc.getString("hoTen");
                     if (hoTen != null && !hoTen.isEmpty()) {
@@ -187,7 +243,8 @@ public class HomeActivity extends AppCompatActivity {
                     }
                 }
             });
-        tvProfileEmail.setText(user.getEmail());
+        String email = user.getEmail();
+        tvProfileEmail.setText(email != null ? email : "");
     }
 
     @Override
