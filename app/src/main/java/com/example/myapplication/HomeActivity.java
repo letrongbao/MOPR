@@ -117,32 +117,8 @@ public class HomeActivity extends AppCompatActivity {
             return true;
         });
 
-        // Hiển thị tên user
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            // Hiển thị tạm từ Auth
-            String displayName = user.getDisplayName();
-            if (displayName != null && !displayName.isEmpty()) {
-                tvUserName.setText(displayName);
-            } else {
-                String email = user.getEmail();
-                tvUserName.setText(email != null ? email : "");
-            }
-            String email = user.getEmail();
-            tvProfileEmail.setText(email != null ? email : "");
-
-            // Lấy tên từ Firestore (chính xác hơn Auth cache)
-            db.collection("users").document(user.getUid())
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        String hoTen = doc.getString("hoTen");
-                        if (hoTen != null && !hoTen.isEmpty()) {
-                            tvUserName.setText(hoTen);
-                        }
-                    }
-                });
-        }
+        // Khởi tạo hiển thị tạm từ Auth
+        loadUserInfoFromAuth();
 
         // Navigation
         cardPhongTro.setOnClickListener(v -> startActivity(new Intent(this, PhongTroActivity.class)));
@@ -173,9 +149,55 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    private void loadUserInfoFromAuth() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            String displayName = user.getDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                tvUserName.setText(displayName);
+            } else {
+                String email = user.getEmail();
+                tvUserName.setText(email != null ? email : "");
+            }
+            String email = user.getEmail();
+            tvProfileEmail.setText(email != null ? email : "");
+            
+            if (user.getPhotoUrl() != null) {
+                Glide.with(this).load(user.getPhotoUrl()).circleCrop().into(imgAvatar);
+                imgAvatar.setPadding(0, 0, 0, 0);
+            }
+        }
+    }
+
+    private void loadUserInfoFromFirestore() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+
+        db.collection("users").document(user.getUid())
+            .get()
+            .addOnSuccessListener(doc -> {
+                if (isFinishing() || isDestroyed()) return;
+                if (doc.exists()) {
+                    String hoTen = doc.getString("hoTen");
+                    if (hoTen != null && !hoTen.isEmpty()) {
+                        tvUserName.setText(hoTen);
+                    }
+                    String avatarUrl = doc.getString("avatarUrl");
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                        Glide.with(HomeActivity.this).load(avatarUrl).circleCrop().into(imgAvatar);
+                        imgAvatar.setPadding(0, 0, 0, 0);
+                    }
+                }
+            });
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        
+        // Luôn load lại thông tin user khi quay lại Home
+        loadUserInfoFromAuth();
+        loadUserInfoFromFirestore();
 
         new TenantRepository().ensureActiveTenant(this, new TenantRepository.TenantReadyCallback() {
             @Override
@@ -316,26 +338,6 @@ public class HomeActivity extends AppCompatActivity {
                         tvStatHoaDon.setText(String.valueOf(chuaThu));
                     }
                 });
-
-        // Cập nhật tên user từ Firestore
-        db.collection("users").document(uid)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (isFinishing() || isDestroyed()) return;
-                    if (doc.exists()) {
-                        String hoTen = doc.getString("hoTen");
-                        if (hoTen != null && !hoTen.isEmpty()) {
-                            tvUserName.setText(hoTen);
-                        }
-                        String avatarUrl = doc.getString("avatarUrl");
-                        if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                            Glide.with(HomeActivity.this).load(avatarUrl).circleCrop().into(imgAvatar);
-                            imgAvatar.setPadding(0, 0, 0, 0);
-                        }
-                    }
-                });
-        String email = user.getEmail();
-        tvProfileEmail.setText(email != null ? email : "");
     }
 
     private void showTenantSwitcher() {
