@@ -37,6 +37,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import android.widget.AdapterView;
 
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,12 +50,13 @@ import java.util.Map;
 public class HoaDonActivity extends AppCompatActivity {
 
     private boolean isTenantUser;
-    private String tenantRoomId;
 
     private HoaDonViewModel viewModel;
     private HoaDonAdapter adapter;
     private TextView tvEmpty;
     private List<PhongTro> danhSachPhong = new ArrayList<>();
+    private FloatingActionButton fabThem;
+    private FloatingActionButton fabChotKy;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final PaymentRepository paymentRepository = new PaymentRepository();
@@ -86,8 +88,8 @@ public class HoaDonActivity extends AppCompatActivity {
 
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        FloatingActionButton fabThem = findViewById(R.id.fabThem);
-        FloatingActionButton fabChotKy = findViewById(R.id.fabChotKy);
+        fabThem = findViewById(R.id.fabThem);
+        fabChotKy = findViewById(R.id.fabChotKy);
 
         adapter = new HoaDonAdapter(new HoaDonAdapter.OnItemActionListener() {
             @Override
@@ -131,7 +133,9 @@ public class HoaDonActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(HoaDonViewModel.class);
         setupInvoiceObserverAndPermissions();
 
-        fabThem.setOnClickListener(v -> hienDialogThemHoaDon());
+        if (fabThem != null) {
+            fabThem.setOnClickListener(v -> hienDialogThemHoaDon());
+        }
         if (fabChotKy != null) {
             fabChotKy.setOnClickListener(v -> hienDialogChotKy());
         }
@@ -163,7 +167,6 @@ public class HoaDonActivity extends AppCompatActivity {
                     if (isTenant) {
                         isTenantUser = true;
                         String roomId = doc.getString("roomId");
-                        tenantRoomId = roomId;
                         if (roomId == null || roomId.trim().isEmpty()) {
                             Toast.makeText(this, "Thiếu roomId cho tài khoản TENANT", Toast.LENGTH_SHORT).show();
                             finish();
@@ -171,7 +174,7 @@ public class HoaDonActivity extends AppCompatActivity {
                         }
 
                         adapter.setReadOnly(true);
-                        fabThem.setVisibility(View.GONE);
+                        if (fabThem != null) fabThem.setVisibility(View.GONE);
                         if (fabChotKy != null) fabChotKy.setVisibility(View.GONE);
 
                         viewModel.getHoaDonTheoPhong(roomId).observe(this, list -> {
@@ -182,7 +185,6 @@ public class HoaDonActivity extends AppCompatActivity {
                     }
 
                     isTenantUser = false;
-                    tenantRoomId = null;
                     adapter.setReadOnly(false);
                     viewModel.getDanhSachHoaDon().observe(this, list -> {
                         adapter.setDanhSach(list);
@@ -320,7 +322,7 @@ public class HoaDonActivity extends AppCompatActivity {
         if (h.getPhiWifi() > 0) sb.append("- Phí Wifi: ").append(fmt.format(h.getPhiWifi())).append("\n");
         if (h.getPhiGuiXe() > 0) sb.append("- Phí gửi xe: ").append(fmt.format(h.getPhiGuiXe())).append("\n");
         
-        tvChiTiet.setText(sb.toString() + "\n\n(Đang tải thanh toán...) ");
+        tvChiTiet.setText(sb + "\n\n(Đang tải thanh toán...) ");
         tvTong.setText("TỔNG CỘNG: " + fmt.format(h.getTongTien()));
 
         paymentRepository.listByInvoice(h.getId()).observe(this, payments -> {
@@ -333,7 +335,7 @@ public class HoaDonActivity extends AppCompatActivity {
             String extra = "\n\n── Thanh toán ──\n" +
                     "Đã thu: " + fmt.format(paid) + "\n" +
                     "Còn lại: " + fmt.format(remaining);
-            tvChiTiet.setText(sb.toString() + extra);
+            tvChiTiet.setText(sb + extra);
         });
 
         AlertDialog.Builder b = new AlertDialog.Builder(this)
@@ -773,8 +775,8 @@ public class HoaDonActivity extends AppCompatActivity {
         try {
             String base = "https://img.vietqr.io/image/" + bankCode + "-" + accountNo + "-compact2.png";
             String q = "?amount=" + amount
-                    + "&addInfo=" + java.net.URLEncoder.encode(addInfo, "UTF-8")
-                    + "&accountName=" + java.net.URLEncoder.encode(accountName, "UTF-8");
+                    + "&addInfo=" + java.net.URLEncoder.encode(addInfo, StandardCharsets.UTF_8.name())
+                    + "&accountName=" + java.net.URLEncoder.encode(accountName, StandardCharsets.UTF_8.name());
             return base + q;
         } catch (Exception e) {
             return "";
