@@ -62,6 +62,9 @@ dependencies {
     implementation(libs.room.runtime)
     annotationProcessor(libs.room.compiler)
 
+    // Phase 5: background jobs (reminders)
+    implementation("androidx.work:work-runtime:2.9.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

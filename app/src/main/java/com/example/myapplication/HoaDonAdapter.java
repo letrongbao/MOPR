@@ -19,6 +19,7 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
 
     private List<HoaDon> danhSach = new ArrayList<>();
     private final OnItemActionListener listener;
+    private boolean readOnly;
 
     public interface OnItemActionListener {
         void onXoa(HoaDon hoaDon);
@@ -33,6 +34,11 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
 
     public void setDanhSach(List<HoaDon> list) {
         this.danhSach = list;
+        notifyDataSetChanged();
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
         notifyDataSetChanged();
     }
 
@@ -54,7 +60,7 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         holder.tvTongTien.setText(fmt.format(h.getTongTien()));
 
-        boolean daTT = "Đã thanh toán".equals(h.getTrangThai());
+        boolean daTT = InvoiceStatus.PAID.equals(h.getTrangThai());
         holder.tvTrangThai.setText(h.getTrangThai());
         
         GradientDrawable badge = new GradientDrawable();
@@ -64,9 +70,18 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
         holder.tvTrangThai.setBackground(badge);
         holder.tvTrangThai.setTextColor(Color.parseColor(daTT ? "#2E7D32" : "#C62828"));
 
-        holder.tvTrangThai.setOnClickListener(v -> listener.onDoiTrangThai(h));
-        holder.btnSua.setOnClickListener(v -> listener.onSua(h));
-        holder.btnXoa.setOnClickListener(v -> listener.onXoa(h));
+        holder.btnSua.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        holder.btnXoa.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+
+        holder.tvTrangThai.setOnClickListener(v -> {
+            if (!readOnly) listener.onDoiTrangThai(h);
+        });
+        holder.btnSua.setOnClickListener(v -> {
+            if (!readOnly) listener.onSua(h);
+        });
+        holder.btnXoa.setOnClickListener(v -> {
+            if (!readOnly) listener.onXoa(h);
+        });
         holder.btnXuat.setOnClickListener(v -> listener.onXuat(h));
     }
 

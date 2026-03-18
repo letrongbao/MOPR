@@ -26,6 +26,10 @@ public class HoaDonViewModel extends ViewModel {
         repository.themHoaDon(hoaDon, onSuccess, onFail);
     }
 
+    public void themHoaDonUnique(HoaDon hoaDon, Runnable onSuccess, Runnable onDuplicate, Runnable onFail) {
+        repository.themHoaDonUnique(hoaDon, onSuccess, onDuplicate, onFail);
+    }
+
     public void capNhatHoaDon(HoaDon hoaDon, Runnable onSuccess, Runnable onFail) {
         repository.capNhatHoaDon(hoaDon, onSuccess, onFail);
     }

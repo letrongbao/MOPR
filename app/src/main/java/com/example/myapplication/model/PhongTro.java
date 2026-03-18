@@ -9,6 +9,10 @@ public class PhongTro {
     private String trangThai;   // "Trống", "Đã thuê"
     private String hinhAnh;     // URL ảnh từ Firebase Storage
 
+    // Phase 2: group rooms by "khu" (property)
+    private String khuId;
+    private String khuTen;
+
     public PhongTro() {} // Firestore cần constructor rỗng
 
     public PhongTro(String soPhong, String loaiPhong, double dienTich,
@@ -34,4 +38,10 @@ public class PhongTro {
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
     public String getHinhAnh() { return hinhAnh; }
     public void setHinhAnh(String hinhAnh) { this.hinhAnh = hinhAnh; }
+
+    public String getKhuId() { return khuId; }
+    public void setKhuId(String khuId) { this.khuId = khuId; }
+
+    public String getKhuTen() { return khuTen; }
+    public void setKhuTen(String khuTen) { this.khuTen = khuTen; }
 }

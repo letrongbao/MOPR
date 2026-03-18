@@ -2,5 +2,26 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="purple">#8692f7</color>
+    <color name="purple">#8692F7</color>
+
+    <!-- Material-ish palette (used by Theme.Material3.*) -->
+    <color name="primary">#8692F7</color>
+    <color name="on_primary">#FFFFFFFF</color>
+
+    <color name="secondary">#3F51B5</color>
+    <color name="on_secondary">#FFFFFFFF</color>
+
+    <color name="surface">#FFFFFFFF</color>
+    <color name="on_surface">#1C1B1F</color>
+
+    <color name="surface_variant">#E7E0EC</color>
+    <color name="on_surface_variant">#49454F</color>
+
+    <color name="outline">#CAC4D0</color>
+
+    <!-- Semantic colors -->
+    <color name="success">#2E7D32</color>
+    <color name="success_container">#E8F5E9</color>
+    <color name="error">#C62828</color>
+    <color name="error_container">#FFEBEE</color>
 </resources>

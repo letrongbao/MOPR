@@ -56,6 +56,9 @@ public class HoaDonWidgetProvider extends AppWidgetProvider {
         appWidgetManager.updateAppWidget(appWidgetId, views);
 
         String uid = user.getUid();
+        String tenantId = context.getSharedPreferences("NhaTroPrefs", Context.MODE_PRIVATE)
+                .getString("activeTenantId", null);
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Dùng background thread với Tasks.await() thay vì async callback
@@ -63,14 +66,15 @@ public class HoaDonWidgetProvider extends AppWidgetProvider {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 // Đếm hóa đơn chưa thanh toán (blocking call)
-                Task<QuerySnapshot> hoaDonTask = db.collection("users").document(uid)
-                        .collection("hoa_don").get();
+                Task<QuerySnapshot> hoaDonTask = (tenantId != null && !tenantId.isEmpty())
+                        ? db.collection("tenants").document(tenantId).collection("hoa_don").get()
+                        : db.collection("users").document(uid).collection("hoa_don").get();
                 QuerySnapshot hoaDonSnap = Tasks.await(hoaDonTask);
 
                 int chuaThanhToan = 0;
                 for (QueryDocumentSnapshot doc : hoaDonSnap) {
                     String trangThai = doc.getString("trangThai");
-                    if ("Chưa thanh toán".equals(trangThai)) {
+                    if (InvoiceStatus.UNPAID.equals(trangThai)) {
                         chuaThanhToan++;
                     }
                 }
@@ -78,8 +82,9 @@ public class HoaDonWidgetProvider extends AppWidgetProvider {
                         "Hóa đơn chưa TT: " + chuaThanhToan);
 
                 // Đếm phòng (blocking call)
-                Task<QuerySnapshot> phongTask = db.collection("users").document(uid)
-                        .collection("phong_tro").get();
+                Task<QuerySnapshot> phongTask = (tenantId != null && !tenantId.isEmpty())
+                        ? db.collection("tenants").document(tenantId).collection("phong_tro").get()
+                        : db.collection("users").document(uid).collection("phong_tro").get();
                 QuerySnapshot phongSnap = Tasks.await(phongTask);
 
                 views.setTextViewText(R.id.tvWidgetPhong,

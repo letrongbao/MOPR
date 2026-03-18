@@ -1,0 +1,204 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isTenantMember(tenantId) {
+      return signedIn() && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+    }
+
+    function memberRole(tenantId) {
+      return get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role;
+    }
+
+    function invitePath(tenantId, code) {
+      return /databases/$(database)/documents/tenants/$(tenantId)/invites/$(code);
+    }
+
+    function validInvite(tenantId, code) {
+      return signedIn()
+        && request.auth.token.email != null
+        && exists(invitePath(tenantId, code))
+        && get(invitePath(tenantId, code)).data.email == request.auth.token.email
+        && get(invitePath(tenantId, code)).data.status == 'PENDING';
+    }
+
+    function isOwner(tenantId) {
+      return isTenantMember(tenantId) && memberRole(tenantId) == 'OWNER';
+    }
+
+    function isStaffOrOwner(tenantId) {
+      return isTenantMember(tenantId) && (memberRole(tenantId) in ['OWNER', 'STAFF']);
+    }
+
+    match /users/{userId} {
+      allow read, create, update, delete: if signedIn() && request.auth.uid == userId;
+
+      // Legacy subcollections (per-user scope) - kept for backward compatibility & migration.
+      match /{col}/{docId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+    }
+
+    match /tenants/{tenantId} {
+      allow read: if isTenantMember(tenantId);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+
+      // OWNER can update only basic org config + quota knobs
+      allow update: if isOwner(tenantId)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'name',
+          'timezone',
+          'currency',
+          'billingCycleDay',
+          'plan',
+          'maxRooms',
+          'maxStaff',
+          'maxInvoicesPerMonth',
+          'bankCode',
+          'bankAccountNo',
+          'bankAccountName',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+
+      match /members/{memberId} {
+        allow read: if isTenantMember(tenantId);
+
+        // create OWNER membership sau khi tenant đã tồn tại, hoặc STAFF/TENANT khi có invite hợp lệ
+        allow create: if signedIn()
+          && request.auth.uid == memberId
+          && (
+            (
+              request.resource.data.role == 'OWNER'
+              && get(/databases/$(database)/documents/tenants/$(tenantId)).data.ownerUid == request.auth.uid
+            )
+            || (
+              (request.resource.data.role in ['STAFF', 'TENANT'])
+              && request.resource.data.inviteCode is string
+              && validInvite(tenantId, request.resource.data.inviteCode)
+            )
+          );
+
+        allow update: if isOwner(tenantId);
+        allow delete: if false;
+      }
+
+      match /invites/{inviteId} {
+        allow read: if isOwner(tenantId) || (signedIn() && request.auth.token.email != null && request.auth.token.email == resource.data.email);
+        allow create: if isOwner(tenantId);
+        // invitee chỉ được update khi invite đang PENDING (accept), owner được update mọi lúc
+        allow update: if isOwner(tenantId) || (
+          signedIn()
+          && request.auth.token.email != null
+          && request.auth.token.email == resource.data.email
+          && resource.data.status == 'PENDING'
+        );
+        allow delete: if false;
+      }
+
+      match /auditLogs/{logId} {
+        allow read: if isStaffOrOwner(tenantId);
+        allow create: if isStaffOrOwner(tenantId);
+        allow update, delete: if false;
+      }
+
+      function memberRoomId(tenantId) {
+        return get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.roomId;
+      }
+
+      match /khu_tro/{docId} {
+        allow read: if isTenantMember(tenantId);
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /phong_tro/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && docId == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /nguoi_thue/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.idPhong == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /hoa_don/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.idPhong == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /contracts/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /meterReadings/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+
+        allow create, delete: if isStaffOrOwner(tenantId);
+
+        allow update: if isStaffOrOwner(tenantId) || (
+          isTenantMember(tenantId)
+          && memberRole(tenantId) == 'TENANT'
+          && resource.data.roomId == memberRoomId(tenantId)
+          && request.resource.data.roomId == resource.data.roomId
+          && request.resource.data.periodKey == resource.data.periodKey
+          && request.resource.data.elecStart == resource.data.elecStart
+          && request.resource.data.elecEnd == resource.data.elecEnd
+          && request.resource.data.waterStart == resource.data.waterStart
+          && request.resource.data.waterEnd == resource.data.waterEnd
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'tenantConfirmStatus',
+            'tenantConfirmNote',
+            'tenantConfirmAt'
+          ])
+          && (request.resource.data.tenantConfirmStatus in ['APPROVED', 'DISPUTED'])
+        );
+      }
+
+      match /payments/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /tickets/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+
+        allow create: if isStaffOrOwner(tenantId) || (
+          isTenantMember(tenantId)
+          && memberRole(tenantId) == 'TENANT'
+          && request.resource.data.roomId == memberRoomId(tenantId)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.status == 'Mới'
+        );
+
+        // tenant chỉ được sửa khi ticket còn "Mới" và không đổi status (đơn giản hoá)
+        allow update: if isStaffOrOwner(tenantId) || (
+          isTenantMember(tenantId)
+          && memberRole(tenantId) == 'TENANT'
+          && resource.data.createdBy == request.auth.uid
+          && resource.data.status == 'Mới'
+          && request.resource.data.status == resource.data.status
+        );
+
+        allow delete: if isStaffOrOwner(tenantId);
+      }
+
+      // default deny for unknown subcollections (tighten-by-default)
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+  }
+}

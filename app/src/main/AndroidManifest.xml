@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -32,6 +33,21 @@
             android:exported="false" />
         <activity
             android:name=".HoaDonActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LichSuThanhToanActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LichSuCongToActivity"
+            android:exported="false" />
+        <activity
+            android:name=".KhuTroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OrgAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TicketActivity"
             android:exported="false" />
         <activity
             android:name=".ChiTietPhongTroActivity"

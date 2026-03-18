@@ -25,6 +25,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
+import com.example.myapplication.TenantSession;
 import com.example.myapplication.api.RetrofitClient;
 import com.example.myapplication.model.NguoiThue;
 import com.example.myapplication.model.NominatimResult;
@@ -35,13 +36,20 @@ import com.example.myapplication.room.PhongYeuThichDao;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -65,6 +73,8 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
 
     private ListenerRegistration roomListener;
     private ListenerRegistration tenantListener;
+
+    private String phongId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +119,7 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         fabFavorite = findViewById(R.id.fabFavorite);
         favoriteDao = AppDatabase.getInstance(this).phongYeuThichDao();
 
-        String phongId = getIntent().getStringExtra("PHONG_ID");
+        phongId = getIntent().getStringExtra("PHONG_ID");
         if (phongId == null) {
             Toast.makeText(this, "Không tìm thấy phòng", Toast.LENGTH_SHORT).show();
             finish();
@@ -206,6 +216,13 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
                     }).show();
         });
 
+        findViewById(R.id.cardCongTo).setOnClickListener(v -> hienDialogChotCongTo());
+        findViewById(R.id.cardLichSuCongTo).setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, LichSuCongToActivity.class);
+            intent.putExtra("PHONG_ID", phongId);
+            startActivity(intent);
+        });
+
         loadRoomData(phongId);
         loadTenantData(phongId);
     }
@@ -218,8 +235,13 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
             return;
         }
         String uid = user.getUid();
-        roomListener = FirebaseFirestore.getInstance()
-                .collection("users").document(uid)
+
+        String tenantId = TenantSession.getActiveTenantId();
+        DocumentReference scopeDoc = (tenantId != null && !tenantId.isEmpty())
+                ? FirebaseFirestore.getInstance().collection("tenants").document(tenantId)
+                : FirebaseFirestore.getInstance().collection("users").document(uid);
+
+        roomListener = scopeDoc
                 .collection("phong_tro").document(phongId)
                 .addSnapshotListener((doc, e) -> {
                     if (isFinishing() || isDestroyed()) return;
@@ -234,12 +256,150 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
                 });
     }
 
+    private void hienDialogChotCongTo() {
+        if (phongId == null) return;
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_chot_cong_to, null);
+        android.widget.EditText etThangNam = dialogView.findViewById(R.id.etThangNam);
+        android.widget.EditText etDienDau = dialogView.findViewById(R.id.etDienDau);
+        android.widget.EditText etDienCuoi = dialogView.findViewById(R.id.etDienCuoi);
+        android.widget.EditText etNuocDau = dialogView.findViewById(R.id.etNuocDau);
+        android.widget.EditText etNuocCuoi = dialogView.findViewById(R.id.etNuocCuoi);
+
+        etThangNam.setText(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+
+        final double[] lastElecEnd = {0};
+        final double[] lastWaterEnd = {0};
+        loadLatestMeterEnds(phongId, (eEnd, wEnd) -> {
+            lastElecEnd[0] = eEnd;
+            lastWaterEnd[0] = wEnd;
+            etDienDau.setText(formatDouble(eEnd));
+            etNuocDau.setText(formatDouble(wEnd));
+            if (etDienCuoi.getText().toString().trim().isEmpty()) etDienCuoi.setText(formatDouble(eEnd));
+            if (etNuocCuoi.getText().toString().trim().isEmpty()) etNuocCuoi.setText(formatDouble(wEnd));
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle("Chốt công tơ")
+                .setView(dialogView)
+                .setPositiveButton("Lưu", (d, w) -> {
+                    try {
+                        String period = etThangNam.getText().toString().trim();
+                        double elecStart = lastElecEnd[0];
+                        double waterStart = lastWaterEnd[0];
+                        double elecEnd = parseDouble(etDienCuoi);
+                        double waterEnd = parseDouble(etNuocCuoi);
+
+                        if (elecEnd < elecStart || waterEnd < waterStart) {
+                            Toast.makeText(this, "Chỉ số cuối không được nhỏ hơn chỉ số đầu", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        saveMeterReading(phongId, period, elecStart, elecEnd, waterStart, waterEnd);
+                        Toast.makeText(this, "Đã lưu chỉ số công tơ", Toast.LENGTH_SHORT).show();
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private interface MeterEndCallback {
+        void onResult(double elecEnd, double waterEnd);
+    }
+
+    private void loadLatestMeterEnds(String roomId, MeterEndCallback callback) {
+        scopedCollection("meterReadings").whereEqualTo("roomId", roomId).get()
+                .addOnSuccessListener(snapshot -> {
+                    String bestKey = null;
+                    double bestElecEnd = 0;
+                    double bestWaterEnd = 0;
+
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        String key = doc.getString("periodKey");
+                        if (key == null) {
+                            String period = doc.getString("period");
+                            key = toPeriodKey(period);
+                        }
+                        if (key == null) key = "";
+
+                        if (bestKey == null || key.compareTo(bestKey) > 0) {
+                            bestKey = key;
+                            Double e = doc.getDouble("elecEnd");
+                            Double w = doc.getDouble("waterEnd");
+                            bestElecEnd = e != null ? e : 0;
+                            bestWaterEnd = w != null ? w : 0;
+                        }
+                    }
+
+                    callback.onResult(bestElecEnd, bestWaterEnd);
+                })
+                .addOnFailureListener(e -> callback.onResult(0, 0));
+    }
+
+    private void saveMeterReading(String roomId, String period, double elecStart, double elecEnd, double waterStart, double waterEnd) {
+        String periodKey = toPeriodKey(period);
+        if (periodKey == null || periodKey.isEmpty()) return;
+
+        String docId = roomId + "_" + periodKey;
+        Map<String, Object> data = new HashMap<>();
+        data.put("roomId", roomId);
+        data.put("period", period);
+        data.put("periodKey", periodKey);
+        data.put("elecStart", elecStart);
+        data.put("elecEnd", elecEnd);
+        data.put("waterStart", waterStart);
+        data.put("waterEnd", waterEnd);
+
+        scopedCollection("meterReadings").document(docId).set(data);
+    }
+
+    private String toPeriodKey(String period) {
+        if (period == null) return "";
+        String[] parts = period.trim().split("/");
+        if (parts.length != 2) return "";
+        try {
+            int month = Integer.parseInt(parts[0]);
+            int year = Integer.parseInt(parts[1]);
+            if (month < 1 || month > 12) return "";
+            return String.format(Locale.US, "%04d%02d", year, month);
+        } catch (NumberFormatException e) {
+            return "";
+        }
+    }
+
+    private CollectionReference scopedCollection(String collection) {
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return FirebaseFirestore.getInstance().collection("tenants").document(tenantId).collection(collection);
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) throw new IllegalStateException("User not logged in");
+        return FirebaseFirestore.getInstance().collection("users").document(user.getUid()).collection(collection);
+    }
+
+    private double parseDouble(android.widget.EditText et) {
+        String s = et.getText().toString().trim();
+        return s.isEmpty() ? 0 : Double.parseDouble(s);
+    }
+
+    private String formatDouble(double value) {
+        return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
+    }
+
     private void loadTenantData(String phongId) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
         String uid = user.getUid();
-        tenantListener = FirebaseFirestore.getInstance()
-                .collection("users").document(uid)
+
+        String tenantId = TenantSession.getActiveTenantId();
+        DocumentReference scopeDoc = (tenantId != null && !tenantId.isEmpty())
+                ? FirebaseFirestore.getInstance().collection("tenants").document(tenantId)
+                : FirebaseFirestore.getInstance().collection("users").document(uid);
+
+        tenantListener = scopeDoc
                 .collection("nguoi_thue")
                 .whereEqualTo("idPhong", phongId)
                 .addSnapshotListener((value, error) -> {
@@ -267,14 +427,15 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         tenPhongHienTai = phong.getSoPhong();
         giaThueHienTai = phong.getGiaThue();
 
-        tvSoPhong.setText("Phòng " + phong.getSoPhong());
+        String khu = phong.getKhuTen();
+        tvSoPhong.setText("Phòng " + phong.getSoPhong() + (khu != null && !khu.trim().isEmpty() ? (" • " + khu.trim()) : ""));
         tvLoaiPhong.setText(phong.getLoaiPhong());
         tvDienTich.setText((int) phong.getDienTich() + " m²");
 
         NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
         tvGiaThue.setText(fmt.format(phong.getGiaThue()) + " đ/tháng");
 
-        boolean trong = "Trống".equals(phong.getTrangThai());
+        boolean trong = RoomStatus.VACANT.equals(phong.getTrangThai());
         int color = Color.parseColor(trong ? "#4CAF50" : "#F44336");
 
         // Status badge overlay on image

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etBankCode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Bank code (VD: VCB, ACB, TCB...)" />
+
+    <EditText
+        android:id="@+id/etBankAccountNo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="Số tài khoản" />
+
+    <EditText
+        android:id="@+id/etBankAccountName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="Tên chủ tài khoản" />
+
+</LinearLayout>

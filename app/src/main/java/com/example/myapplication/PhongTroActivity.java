@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -159,8 +160,19 @@ public class PhongTroActivity extends AppCompatActivity {
         EditText etSoPhong = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
         EditText etGiaThue = dialogView.findViewById(R.id.etGiaThue);
+        Spinner spinnerKhu = dialogView.findViewById(R.id.spinnerKhuTro);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
         Spinner spinnerTrangThai = dialogView.findViewById(R.id.spinnerTrangThai);
+
+        java.util.List<String> khuIds = new java.util.ArrayList<>();
+        java.util.List<String> khuLabels = new java.util.ArrayList<>();
+        ArrayAdapter<String> khuAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, khuLabels);
+        khuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerKhu != null) {
+            spinnerKhu.setAdapter(khuAdapter);
+            loadKhuOptions(spinnerKhu, khuIds, khuLabels, null, khuAdapter);
+        }
 
         // Image picker
         dialogImgPreview = dialogView.findViewById(R.id.imgPreview);
@@ -196,13 +208,23 @@ public class PhongTroActivity extends AppCompatActivity {
                                 Double.parseDouble(giaThueStr),
                                 spinnerTrangThai.getSelectedItem().toString());
 
-                        if (selectedImageUri != null) {
-                            uploadImageAndSave(phong);
-                        } else {
-                            viewModel.themPhong(phong,
-                                    () -> runOnUiThread(() -> Toast.makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
-                                    () -> runOnUiThread(() -> Toast.makeText(this, "Thất bại — kiểm tra kết nối Firebase", Toast.LENGTH_LONG).show()));
+                        if (spinnerKhu != null) {
+                            int khuIdx = spinnerKhu.getSelectedItemPosition();
+                            if (khuIdx >= 0 && khuIdx < khuIds.size()) {
+                                phong.setKhuId(khuIds.get(khuIdx));
+                                phong.setKhuTen(khuLabels.get(khuIdx));
+                            }
                         }
+
+                        ensureRoomQuotaThen(() -> {
+                            if (selectedImageUri != null) {
+                                uploadImageAndSave(phong);
+                            } else {
+                                viewModel.themPhong(phong,
+                                        () -> runOnUiThread(() -> Toast.makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
+                                        () -> runOnUiThread(() -> Toast.makeText(this, "Thất bại — kiểm tra kết nối Firebase", Toast.LENGTH_LONG).show()));
+                            }
+                        });
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
                     }
@@ -210,13 +232,91 @@ public class PhongTroActivity extends AppCompatActivity {
                 .setNegativeButton("Hủy", null).show();
     }
 
+    private void ensureRoomQuotaThen(@NonNull Runnable onAllowed) {
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            onAllowed.run();
+            return;
+        }
+
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        db.collection("tenants").document(tenantId).get()
+                .addOnSuccessListener(tdoc -> {
+                    Long maxRoomsL = tdoc.getLong("maxRooms");
+                    int maxRooms = maxRoomsL != null ? maxRoomsL.intValue() : 50;
+
+                    db.collection("tenants").document(tenantId).collection("phong_tro").get()
+                            .addOnSuccessListener(qs -> {
+                                int current = qs != null ? qs.size() : 0;
+                                if (current >= maxRooms) {
+                                    Toast.makeText(this, "Đã vượt giới hạn phòng (" + maxRooms + ")", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                                onAllowed.run();
+                            })
+                            .addOnFailureListener(e -> onAllowed.run());
+                })
+                .addOnFailureListener(e -> onAllowed.run());
+    }
+
+    private void loadKhuOptions(@NonNull Spinner spinner, @NonNull java.util.List<String> ids, @NonNull java.util.List<String> labels,
+                                String selectedId, @NonNull android.widget.ArrayAdapter<String> adapter) {
+        ids.clear();
+        labels.clear();
+        ids.add("");
+        labels.add("(Không chọn)");
+        adapter.notifyDataSetChanged();
+
+        String tenantId = TenantSession.getActiveTenantId();
+        com.google.firebase.firestore.CollectionReference col;
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("tenants").document(tenantId).collection("khu_tro");
+        } else {
+            com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) return;
+            col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users").document(user.getUid()).collection("khu_tro");
+        }
+
+        col.get().addOnSuccessListener(qs -> {
+            for (com.google.firebase.firestore.QueryDocumentSnapshot doc : qs) {
+                String name = doc.getString("tenKhu");
+                if (name == null || name.trim().isEmpty()) name = doc.getId();
+                ids.add(doc.getId());
+                labels.add(name);
+            }
+            adapter.notifyDataSetChanged();
+
+            if (selectedId != null && !selectedId.trim().isEmpty()) {
+                for (int i = 0; i < ids.size(); i++) {
+                    if (selectedId.equals(ids.get(i))) {
+                        spinner.setSelection(i);
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     private void hienDialogSuaPhong(PhongTro phong) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_them_phong, null);
         EditText etSoPhong = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
         EditText etGiaThue = dialogView.findViewById(R.id.etGiaThue);
+        Spinner spinnerKhu = dialogView.findViewById(R.id.spinnerKhuTro);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
         Spinner spinnerTrangThai = dialogView.findViewById(R.id.spinnerTrangThai);
+
+        java.util.List<String> khuIds = new java.util.ArrayList<>();
+        java.util.List<String> khuLabels = new java.util.ArrayList<>();
+        ArrayAdapter<String> khuAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, khuLabels);
+        khuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerKhu != null) {
+            spinnerKhu.setAdapter(khuAdapter);
+            loadKhuOptions(spinnerKhu, khuIds, khuLabels, phong.getKhuId(), khuAdapter);
+        }
 
         // Image picker
         dialogImgPreview = dialogView.findViewById(R.id.imgPreview);
@@ -268,6 +368,14 @@ public class PhongTroActivity extends AppCompatActivity {
                                 Double.parseDouble(giaThueStr),
                                 spinnerTrangThai.getSelectedItem().toString());
                         updated.setId(phong.getId());
+
+                        if (spinnerKhu != null) {
+                            int khuIdx = spinnerKhu.getSelectedItemPosition();
+                            if (khuIdx >= 0 && khuIdx < khuIds.size()) {
+                                updated.setKhuId(khuIds.get(khuIdx));
+                                updated.setKhuTen(khuLabels.get(khuIdx));
+                            }
+                        }
 
                         if (selectedImageUri != null) {
                             uploadImageAndSave(updated);

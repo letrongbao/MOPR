@@ -49,7 +49,12 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         PhongTro phong = danhSach.get(position);
         holder.tvSoPhong.setText("Phòng " + phong.getSoPhong());
-        holder.tvLoaiPhong.setText(phong.getLoaiPhong() + " • " + (int) phong.getDienTich() + "m²");
+        String khu = phong.getKhuTen();
+        String line = phong.getLoaiPhong() + " • " + (int) phong.getDienTich() + "m²";
+        if (khu != null && !khu.trim().isEmpty() && !"(Không chọn)".equals(khu)) {
+            line = khu + " • " + line;
+        }
+        holder.tvLoaiPhong.setText(line);
         NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
         holder.tvGiaThue.setText(fmt.format(phong.getGiaThue()) + " đ/tháng");
 
