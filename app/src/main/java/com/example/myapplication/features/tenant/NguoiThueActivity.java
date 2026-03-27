@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -62,8 +63,7 @@ public class NguoiThueActivity extends AppCompatActivity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.getDecorView()
-                .setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_nguoi_thue);
@@ -196,7 +196,12 @@ public class NguoiThueActivity extends AppCompatActivity {
                         return;
                     }
                     try {
-                        PhongTro phongChon = danhSachPhong.get(spinnerPhong.getSelectedItemPosition());
+                        int idx = spinnerPhong.getSelectedItemPosition();
+                        if (idx < 0 || idx >= danhSachPhong.size()) {
+                            Toast.makeText(this, "Vui lòng chọn phòng", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        PhongTro phongChon = danhSachPhong.get(idx);
                         final String roomId = phongChon.getId();
                         String soTVStr = etSoThanhVien.getText().toString().trim();
                         NguoiThue nt = new NguoiThue(hoTen, cccd, sdt, roomId,
@@ -272,8 +277,13 @@ public class NguoiThueActivity extends AppCompatActivity {
                         return;
                     }
                     try {
+                        int idx = spinnerPhong.getSelectedItemPosition();
+                        if (idx < 0 || idx >= danhSachPhong.size()) {
+                            Toast.makeText(this, "Vui lòng chọn phòng", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         final String oldRoomId = nguoiThue.getIdPhong();
-                        PhongTro phongChon = danhSachPhong.get(spinnerPhong.getSelectedItemPosition());
+                        PhongTro phongChon = danhSachPhong.get(idx);
                         final String newRoomId = phongChon.getId();
                         String soTVStr = etSoThanhVien.getText().toString().trim();
                         NguoiThue updated = new NguoiThue(hoTen, cccd, sdt, newRoomId,

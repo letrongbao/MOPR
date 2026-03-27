@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -78,8 +79,7 @@ public class HoaDonActivity extends AppCompatActivity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.getDecorView()
-                .setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_hoa_don);
@@ -558,7 +558,12 @@ public class HoaDonActivity extends AppCompatActivity {
                 .setView(dialogView)
                 .setPositiveButton("Tạo", (d, w) -> {
                     try {
-                        PhongTro phongChon = danhSachPhong.get(spinnerPhong.getSelectedItemPosition());
+                        int idx = spinnerPhong.getSelectedItemPosition();
+                        if (idx < 0 || idx >= danhSachPhong.size()) {
+                            Toast.makeText(this, "Vui lòng chọn phòng", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        PhongTro phongChon = danhSachPhong.get(idx);
                         HoaDon hd = new HoaDon();
                         hd.setIdPhong(phongChon.getId());
                         hd.setSoPhong(phongChon.getSoPhong());
@@ -667,7 +672,12 @@ public class HoaDonActivity extends AppCompatActivity {
                 .setView(dialogView)
                 .setPositiveButton("Cập nhật", (d, w) -> {
                     try {
-                        PhongTro phongChon = danhSachPhong.get(spinnerPhong.getSelectedItemPosition());
+                        int idx = spinnerPhong.getSelectedItemPosition();
+                        if (idx < 0 || idx >= danhSachPhong.size()) {
+                            Toast.makeText(this, "Vui lòng chọn phòng", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        PhongTro phongChon = danhSachPhong.get(idx);
                         HoaDon updated = new HoaDon();
                         updated.setId(hoaDon.getId());
                         updated.setIdPhong(phongChon.getId());

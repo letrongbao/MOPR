@@ -8,6 +8,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
 import com.example.myapplication.R;
 
 public class GridAdapter extends BaseAdapter {
@@ -61,11 +63,11 @@ public class GridAdapter extends BaseAdapter {
         if (isLocked) {
             tileContainer.setBackgroundResource(R.drawable.bg_home_icon_box);
             tileContainer.setAlpha(0.3f);
-            textView.setTextColor(0xFFBBBBBB);
+            textView.setTextColor(ContextCompat.getColor(context, R.color.locked_text));
         } else {
             tileContainer.setBackgroundResource(R.drawable.bg_home_icon_box);
             tileContainer.setAlpha(1.0f);
-            textView.setTextColor(0xFF444444);
+            textView.setTextColor(ContextCompat.getColor(context, R.color.text_main));
         }
 
         return convertView;
