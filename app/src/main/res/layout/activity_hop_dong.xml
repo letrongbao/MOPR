@@ -7,6 +7,7 @@
     android:background="#F3F3F3">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary">
@@ -15,10 +16,38 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="Tạo hợp đồng"
-            app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:navigationIconTint="@color/white"/>
+            app:navigationIconTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTitleLine1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hợp đồng"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tvTitleLine2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -33,6 +62,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Card Nội dung hợp đồng -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -65,6 +95,7 @@
                         android:inputType="text"
                         android:textColor="#212121"/>
 
+                    <!-- Tên và Điện thoại -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -119,22 +150,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Địa chỉ *"
-                        android:textStyle="bold"
-                        android:textColor="#212121"
-                        android:layout_marginTop="12dp"/>
-                    <EditText
-                        android:id="@+id/etDiaChi"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_rounded"
-                        android:paddingHorizontal="14dp"
-                        android:inputType="textPostalAddress"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:text="Số CCCD *"
                         android:textStyle="bold"
                         android:textColor="#212121"
@@ -148,6 +163,7 @@
                         android:paddingHorizontal="14dp"
                         android:inputType="number"/>
 
+                    <!-- Ảnh CCCD -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -160,21 +176,17 @@
                             android:layout_weight="1"
                             android:layout_marginEnd="8dp"
                             android:orientation="vertical">
-
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
                                 android:gravity="center_vertical">
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Mặt trước CCCD"
                                     android:textColor="#666666"/>
-
                                 <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-
                                 <ImageView
                                     android:id="@+id/ivEditFront"
                                     android:layout_width="22dp"
@@ -182,13 +194,11 @@
                                     android:src="@drawable/ic_edit"
                                     app:tint="#333333"/>
                             </LinearLayout>
-
                             <FrameLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="120dp"
                                 android:layout_marginTop="6dp"
                                 android:background="@drawable/bg_input_rounded">
-
                                 <ImageView
                                     android:id="@+id/ivFront"
                                     android:layout_width="match_parent"
@@ -205,21 +215,17 @@
                             android:layout_weight="1"
                             android:layout_marginStart="8dp"
                             android:orientation="vertical">
-
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
                                 android:gravity="center_vertical">
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Mặt sau CCCD"
                                     android:textColor="#666666"/>
-
                                 <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-
                                 <ImageView
                                     android:id="@+id/ivEditBack"
                                     android:layout_width="22dp"
@@ -227,13 +233,11 @@
                                     android:src="@drawable/ic_edit"
                                     app:tint="#333333"/>
                             </LinearLayout>
-
                             <FrameLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="120dp"
                                 android:layout_marginTop="6dp"
                                 android:background="@drawable/bg_input_rounded">
-
                                 <ImageView
                                     android:id="@+id/ivBack"
                                     android:layout_width="match_parent"
@@ -245,12 +249,12 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <!-- Phòng và Số người -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginTop="14dp">
-
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -297,12 +301,12 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <!-- Tiền phòng và Tiền cọc -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginTop="14dp">
-
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -325,7 +329,6 @@
                                 android:paddingHorizontal="14dp"
                                 android:inputType="number"/>
                         </LinearLayout>
-
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -357,12 +360,12 @@
                         android:text="Hiển thị tiền cọc trên hóa đơn"
                         android:checked="true"/>
 
+                    <!-- Ngày ký và Số tháng -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginTop="14dp">
-
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -375,12 +378,10 @@
                                 android:text="Ngày ký HĐ *"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
-
                             <FrameLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp">
-
                                 <EditText
                                     android:id="@+id/etNgayKy"
                                     android:layout_width="match_parent"
@@ -391,7 +392,6 @@
                                     android:inputType="none"
                                     android:focusable="false"
                                     android:clickable="true"/>
-
                                 <ImageView
                                     android:id="@+id/ivPickDate"
                                     android:layout_width="22dp"
@@ -431,13 +431,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Nhắc tôi trước 1 tháng khi hợp đồng này hết hạn"
+                        android:text="Nhắc tôi trước 1 tháng khi HĐ hết hạn"
                         android:checked="true"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Chỉ số điện *"
+                        android:text="Chỉ số điện ban đầu *"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginTop="12dp"/>
@@ -450,11 +450,11 @@
                         android:paddingHorizontal="14dp"
                         android:inputType="number"/>
 
+                    <!-- Dịch vụ -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp">
-
                         <CheckBox
                             android:id="@+id/cbGuiXe"
                             android:layout_width="0dp"
@@ -464,7 +464,6 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/llSoXe"
                             app:layout_constraintTop_toTopOf="parent"/>
-
                         <LinearLayout
                             android:id="@+id/llSoXe"
                             android:layout_width="120dp"
@@ -472,7 +471,6 @@
                             android:orientation="vertical"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent">
-
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -480,7 +478,6 @@
                                 android:textStyle="bold"
                                 android:textColor="#212121"
                                 android:layout_gravity="end"/>
-
                             <EditText
                                 android:id="@+id/etSoXe"
                                 android:layout_width="match_parent"
@@ -491,7 +488,6 @@
                                 android:paddingHorizontal="14dp"
                                 android:inputType="number"/>
                         </LinearLayout>
-
                         <TextView
                             android:id="@+id/tvGuiXePrice"
                             android:layout_width="0dp"
@@ -501,7 +497,6 @@
                             app:layout_constraintStart_toStartOf="@id/cbGuiXe"
                             app:layout_constraintTop_toBottomOf="@id/cbGuiXe"
                             app:layout_constraintEnd_toStartOf="@id/llSoXe"/>
-
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <CheckBox
@@ -527,7 +522,6 @@
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginTop="12dp"/>
-
                     <EditText
                         android:id="@+id/etGhiChu"
                         android:layout_width="match_parent"
@@ -545,16 +539,16 @@
                         android:layout_marginTop="6dp"
                         android:text="Hiển thị ghi chú trên hóa đơn"
                         android:checked="true"/>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Nút bấm -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="16dp"
-                android:text="Lưu hợp đồng"
+                android:text="Tạo hợp đồng"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 app:cornerRadius="10dp"
@@ -595,8 +589,6 @@
                 android:visibility="gone"
                 app:cornerRadius="10dp"
                 app:backgroundTint="#1976D2"/>
-
         </LinearLayout>
     </ScrollView>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

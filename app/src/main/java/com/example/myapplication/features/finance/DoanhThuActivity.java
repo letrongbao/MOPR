@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.domain.HoaDon;
 import com.example.myapplication.viewmodel.HoaDonViewModel;
 import com.example.myapplication.viewmodel.NguoiThueViewModel;
@@ -30,6 +31,7 @@ import com.example.myapplication.core.session.TenantSession;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +43,19 @@ public class DoanhThuActivity extends AppCompatActivity {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private List<HoaDon> lastInvoices;
-    private final Map<String, Double> paidByInvoiceId = new HashMap<>();
+    private final List<PaymentEntry> lastPayments = new ArrayList<>();
+
+    private static final class PaymentEntry {
+        final String invoiceId;
+        final double amount;
+        final String paidAt;
+
+        PaymentEntry(String invoiceId, double amount, String paidAt) {
+            this.invoiceId = invoiceId;
+            this.amount = amount;
+            this.paidAt = paidAt;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +90,8 @@ public class DoanhThuActivity extends AppCompatActivity {
         TextView tvSoHDChuaTT = findViewById(R.id.tvSoHDChuaTT);
         TextView tvSoNguoiThue = findViewById(R.id.tvSoNguoiThue);
 
-        String thangNay = new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date());
+        String thangNay = FinancePeriodUtil
+                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
         ViewModelProvider viewModelProvider = new ViewModelProvider(this);
@@ -106,14 +121,16 @@ public class DoanhThuActivity extends AppCompatActivity {
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
-                    paidByInvoiceId.clear();
+                    lastPayments.clear();
                     for (QueryDocumentSnapshot doc : snapshot) {
                         String invoiceId = doc.getString("invoiceId");
                         Double amt = doc.getDouble("amount");
                         if (invoiceId == null || invoiceId.trim().isEmpty())
                             continue;
-                        paidByInvoiceId.put(invoiceId,
-                                paidByInvoiceId.getOrDefault(invoiceId, 0.0) + (amt != null ? amt : 0.0));
+                        lastPayments.add(new PaymentEntry(
+                                invoiceId,
+                                amt != null ? amt : 0.0,
+                                doc.getString("paidAt")));
                     }
                     updateInvoiceStats(thangNay, fmt);
                 });
@@ -132,10 +149,16 @@ public class DoanhThuActivity extends AppCompatActivity {
 
         int chuaThu = 0;
         double daThuThang = 0;
+        Map<String, String> invoiceMonthById = new HashMap<>();
 
         for (HoaDon h : lastInvoices) {
             if (h == null)
                 continue;
+
+            String invoiceId = h.getId();
+            if (invoiceId != null && !invoiceId.trim().isEmpty()) {
+                invoiceMonthById.put(invoiceId, FinancePeriodUtil.normalizeMonthYear(h.getThangNam()));
+            }
 
             String st = h.getTrangThai();
             if (st == null || st.trim().isEmpty())
@@ -144,12 +167,23 @@ public class DoanhThuActivity extends AppCompatActivity {
             if (InvoiceStatus.UNPAID.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
                 chuaThu++;
             }
+        }
 
-            if (h.getThangNam() != null && h.getThangNam().trim().equals(thangNay)) {
-                String invoiceId = h.getId();
-                if (invoiceId != null && !invoiceId.trim().isEmpty()) {
-                    double paid = paidByInvoiceId.getOrDefault(invoiceId, 0.0);
-                    daThuThang += Math.min(paid, h.getTongTien());
+        for (PaymentEntry payment : lastPayments) {
+            if (payment == null)
+                continue;
+
+            String paidMonth = FinancePeriodUtil.normalizeMonthYear(payment.paidAt);
+            if (thangNay.equals(paidMonth)) {
+                daThuThang += payment.amount;
+                continue;
+            }
+
+            // Backward compatibility for old payment records missing paidAt.
+            if (paidMonth.isEmpty()) {
+                String invoiceMonth = invoiceMonthById.getOrDefault(payment.invoiceId, "");
+                if (thangNay.equals(invoiceMonth)) {
+                    daThuThang += payment.amount;
                 }
             }
         }

@@ -59,12 +59,9 @@ public class NguoiThueActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. Làm trong suốt Status Bar giống HomeActivity
+        // Handle window insets properly for status bar
         Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        WindowCompat.setDecorFitsSystemWindows(window, true);
 
         setContentView(R.layout.activity_nguoi_thue);
 
@@ -74,13 +71,6 @@ public class NguoiThueActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Quản lý người thuê");
         }
-
-        // 2. Tự động thêm Padding cho Toolbar
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
 
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);

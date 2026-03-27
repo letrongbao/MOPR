@@ -54,7 +54,7 @@ public class CanNhaAdapter extends RecyclerView.Adapter<CanNhaAdapter.VH> {
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_khu_tro, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_can_nha, parent, false);
         return new VH(v);
     }
 
@@ -63,12 +63,12 @@ public class CanNhaAdapter extends RecyclerView.Adapter<CanNhaAdapter.VH> {
         CanNha k = items.get(position);
 
         String addr = k.getDiaChi() != null && !k.getDiaChi().trim().isEmpty() ? k.getDiaChi() : "Chưa có địa chỉ";
-        h.tvKhuAddr.setText(addr);
+        h.tvCanNhaAddr.setText(addr);
 
-        String manager = k.getTenKhu() != null ? k.getTenKhu().trim() : "";
+        String manager = k.getTenCanNha() != null ? k.getTenCanNha().trim() : "";
         String phone = k.getSdtQuanLy() != null ? k.getSdtQuanLy().trim() : "";
         String managerDisplay = manager.isEmpty() ? "Chưa có tên quản lý" : manager;
-        h.tvKhuName.setText(phone.isEmpty() ? managerDisplay : (managerDisplay + "  •  " + phone));
+        h.tvCanNhaName.setText(phone.isEmpty() ? managerDisplay : (managerDisplay + "  •  " + phone));
 
         // Bank info (fallback to manager name)
         String chuTk = (k.getChuTaiKhoan() != null && !k.getChuTaiKhoan().trim().isEmpty()) ? k.getChuTaiKhoan().trim()
@@ -164,7 +164,7 @@ public class CanNhaAdapter extends RecyclerView.Adapter<CanNhaAdapter.VH> {
 
     static class VH extends RecyclerView.ViewHolder {
         View headerRoot;
-        TextView tvKhuAddr, tvKhuName, tvBankInfo;
+        TextView tvCanNhaAddr, tvCanNhaName, tvBankInfo;
         LinearLayout llToggleFees, llFeeTable;
         ImageView ivFeesExpand;
         TextView tvFeeDien, tvFeeNuoc, tvFeeNuocUnit, tvFeeXe, tvFeeInternet, tvFeeGiatSay, tvFeeThangMay, tvFeeTiviCap,
@@ -175,8 +175,8 @@ public class CanNhaAdapter extends RecyclerView.Adapter<CanNhaAdapter.VH> {
         VH(@NonNull View itemView) {
             super(itemView);
             headerRoot = itemView.findViewById(R.id.headerRoot);
-            tvKhuAddr = itemView.findViewById(R.id.tvKhuAddr);
-            tvKhuName = itemView.findViewById(R.id.tvKhuName);
+            tvCanNhaAddr = itemView.findViewById(R.id.tvCanNhaAddr);
+            tvCanNhaName = itemView.findViewById(R.id.tvCanNhaName);
             tvBankInfo = itemView.findViewById(R.id.tvBankInfo);
 
             llToggleFees = itemView.findViewById(R.id.llToggleFees);

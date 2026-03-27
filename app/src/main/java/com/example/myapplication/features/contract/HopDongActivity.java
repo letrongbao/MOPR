@@ -14,6 +14,7 @@ import android.print.PrintManager;
 import android.view.View;
 import android.view.Window;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -29,6 +30,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
@@ -40,6 +42,10 @@ import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.domain.CanNha;
 import com.example.myapplication.domain.NguoiThue;
 import com.example.myapplication.domain.PhongTro;
+import com.example.myapplication.domain.RentalHistory;
+import com.example.myapplication.features.property.room.PhongTroActivity;
+import com.example.myapplication.core.repository.domain.RentalHistoryRepository;
+import com.google.firebase.Timestamp;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -65,7 +71,7 @@ public class HopDongActivity extends AppCompatActivity {
 
     private NguoiThue currentContract;
 
-    private EditText etSoHopDong, etTenKhach, etDienThoai, etDiaChi, etCccd;
+    private EditText etSoHopDong, etTenKhach, etDienThoai, etCccd;
     private ImageView ivFront, ivBack, ivEditFront, ivEditBack;
     private EditText etPhong, etSoNguoi, etTienPhong, etTienCoc;
     private CheckBox cbShowDeposit;
@@ -92,6 +98,9 @@ public class HopDongActivity extends AppCompatActivity {
 
     private BroadcastReceiver uploadReceiver;
 
+    private RentalHistoryRepository rentalHistoryRepo;
+    private TextView tvTitleLine1, tvTitleLine2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,6 +108,12 @@ public class HopDongActivity extends AppCompatActivity {
         Window window = getWindow();
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
+
+        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
+                window.getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.setAppearanceLightStatusBars(false);
+        }
 
         phongId = getIntent().getStringExtra(EXTRA_PHONG_ID);
         if (phongId == null || phongId.trim().isEmpty()) {
@@ -138,28 +153,34 @@ public class HopDongActivity extends AppCompatActivity {
                 Toast.makeText(HopDongActivity.this, "Tải ảnh lên thành công", Toast.LENGTH_SHORT).show();
             }
         };
-        LocalBroadcastManager.getInstance(this)
-                .registerReceiver(uploadReceiver, new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE));
+        LocalBroadcastManager.getInstance(this).registerReceiver(uploadReceiver,
+                new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE));
+
+        rentalHistoryRepo = new RentalHistoryRepository();
 
         setContentView(R.layout.activity_hop_dong);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
+        tvTitleLine1 = findViewById(R.id.tvTitleLine1);
+        tvTitleLine2 = findViewById(R.id.tvTitleLine2);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Tạo hợp đồng");
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        View appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                return insets;
+            });
+        }
 
         bindViews();
         wireUI();
-
         loadPhongThenContract();
     }
 
@@ -176,39 +197,30 @@ public class HopDongActivity extends AppCompatActivity {
         etSoHopDong = findViewById(R.id.etSoHopDong);
         etTenKhach = findViewById(R.id.etTenKhach);
         etDienThoai = findViewById(R.id.etDienThoai);
-        etDiaChi = findViewById(R.id.etDiaChi);
         etCccd = findViewById(R.id.etCccd);
-
         ivFront = findViewById(R.id.ivFront);
         ivBack = findViewById(R.id.ivBack);
         ivEditFront = findViewById(R.id.ivEditFront);
         ivEditBack = findViewById(R.id.ivEditBack);
-
         etPhong = findViewById(R.id.etPhong);
         etSoNguoi = findViewById(R.id.etSoNguoi);
         etTienPhong = findViewById(R.id.etTienPhong);
         etTienCoc = findViewById(R.id.etTienCoc);
         cbShowDeposit = findViewById(R.id.cbShowDeposit);
-
-        // Apply money formatters
         MoneyFormatter.applyTo(etTienPhong);
         MoneyFormatter.applyTo(etTienCoc);
-
         etNgayKy = findViewById(R.id.etNgayKy);
         etSoThang = findViewById(R.id.etSoThang);
         ivPickDate = findViewById(R.id.ivPickDate);
         cbRemind = findViewById(R.id.cbRemind);
-
         etChiSoDien = findViewById(R.id.etChiSoDien);
         cbGuiXe = findViewById(R.id.cbGuiXe);
         tvGuiXePrice = findViewById(R.id.tvGuiXePrice);
         etSoXe = findViewById(R.id.etSoXe);
         cbInternet = findViewById(R.id.cbInternet);
         cbGiatSay = findViewById(R.id.cbGiatSay);
-
         etGhiChu = findViewById(R.id.etGhiChu);
         cbShowNote = findViewById(R.id.cbShowNote);
-
         btnSave = findViewById(R.id.btnSave);
         btnPrint = findViewById(R.id.btnPrint);
         btnEnd = findViewById(R.id.btnEnd);
@@ -219,14 +231,12 @@ public class HopDongActivity extends AppCompatActivity {
         View.OnClickListener pickDate = v -> showDatePicker();
         etNgayKy.setOnClickListener(pickDate);
         ivPickDate.setOnClickListener(pickDate);
-
         cbGuiXe.setOnCheckedChangeListener((buttonView, isChecked) -> {
             etSoXe.setEnabled(isChecked);
             etSoXe.setBackgroundResource(isChecked ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
             if (!isChecked)
                 etSoXe.setText("");
         });
-
         ivEditFront.setOnClickListener(v -> {
             pendingUploadTarget = UploadTarget.FRONT;
             imagePicker.launch("image/*");
@@ -235,7 +245,6 @@ public class HopDongActivity extends AppCompatActivity {
             pendingUploadTarget = UploadTarget.BACK;
             imagePicker.launch("image/*");
         });
-
         btnSave.setOnClickListener(v -> saveOrUpdate(true));
         btnUpdate.setOnClickListener(v -> saveOrUpdate(false));
         btnEnd.setOnClickListener(v -> confirmEndContract());
@@ -252,9 +261,7 @@ public class HopDongActivity extends AppCompatActivity {
     private void startUploadSelectedImage() {
         if (selectedImageUri == null || pendingUploadTarget == null)
             return;
-
         setUploadEnabled(false);
-
         Intent i = new Intent(this, ImageUploadService.class);
         i.putExtra(ImageUploadService.EXTRA_IMAGE_URI, selectedImageUri.toString());
         startService(i);
@@ -265,7 +272,6 @@ public class HopDongActivity extends AppCompatActivity {
         if (tenantId != null && !tenantId.trim().isEmpty()) {
             return db.collection("tenants").document(tenantId).collection(collection);
         }
-
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null)
             throw new IllegalStateException("User not logged in");
@@ -276,7 +282,6 @@ public class HopDongActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null)
             return null;
-
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId != null && !tenantId.trim().isEmpty()) {
             return db.collection("tenants").document(tenantId);
@@ -285,8 +290,7 @@ public class HopDongActivity extends AppCompatActivity {
     }
 
     private void loadPhongThenContract() {
-        scopedCollection("phong_tro").document(phongId)
-                .get()
+        scopedCollection("phong_tro").document(phongId).get()
                 .addOnSuccessListener(doc -> {
                     currentPhong = doc != null && doc.exists() ? doc.toObject(PhongTro.class) : null;
                     if (currentPhong == null) {
@@ -295,7 +299,6 @@ public class HopDongActivity extends AppCompatActivity {
                         return;
                     }
                     currentPhong.setId(doc.getId());
-
                     bindPhongToUI();
                     loadKhuFeesThenContract();
                 })
@@ -306,26 +309,26 @@ public class HopDongActivity extends AppCompatActivity {
     }
 
     private void loadKhuFeesThenContract() {
-        String khuId = currentPhong.getKhuId();
-        if (khuId == null || khuId.trim().isEmpty()) {
+        String canNhaId = currentPhong.getCanNhaId();
+        if (canNhaId == null || canNhaId.trim().isEmpty()) {
             currentKhu = null;
             bindFeesToUI(null);
             loadExistingContract();
             return;
         }
-
-        scopedCollection("khu_tro").document(khuId)
-                .get()
+        scopedCollection("can_nha").document(canNhaId).get()
                 .addOnSuccessListener(doc -> {
                     currentKhu = doc != null && doc.exists() ? doc.toObject(CanNha.class) : null;
                     if (currentKhu != null)
                         currentKhu.setId(doc.getId());
                     bindFeesToUI(currentKhu);
                     loadExistingContract();
+                    updateFullToolbarHeader();
                 })
                 .addOnFailureListener(e -> {
                     bindFeesToUI(null);
                     loadExistingContract();
+                    updateFullToolbarHeader();
                 });
     }
 
@@ -333,7 +336,6 @@ public class HopDongActivity extends AppCompatActivity {
         double giaXe = khu != null ? khu.getGiaXe() : 0;
         double giaInternet = khu != null ? khu.getGiaInternet() : 0;
         double giaGiatSay = khu != null ? khu.getGiaGiatSay() : 0;
-
         tvGuiXePrice.setText("Gửi xe " + formatVnd(giaXe) + "/chiếc");
         cbInternet.setText("Internet " + formatVnd(giaInternet) + "/phòng");
         cbGiatSay.setText("Giặt sấy " + formatVnd(giaGiatSay) + "/phòng");
@@ -342,39 +344,48 @@ public class HopDongActivity extends AppCompatActivity {
     private void bindPhongToUI() {
         etPhong.setText(currentPhong.getSoPhong() != null ? currentPhong.getSoPhong() : "");
         MoneyFormatter.setValue(etTienPhong, currentPhong.getGiaThue());
-
-        // Defaults
         etSoHopDong.setText(generateContractNo());
         etNgayKy.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
-
-        // Default deposit = rent
         MoneyFormatter.setValue(etTienCoc, currentPhong.getGiaThue());
+        updateFullToolbarHeader();
     }
 
     private void loadExistingContract() {
         scopedCollection("nguoi_thue")
                 .whereEqualTo("idPhong", phongId)
-                .get()
+                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+                .limit(1).get()
                 .addOnSuccessListener(qs -> {
-                    NguoiThue best = null;
-                    if (qs != null) {
-                        for (com.google.firebase.firestore.QueryDocumentSnapshot d : qs) {
-                            NguoiThue n = d.toObject(NguoiThue.class);
-                            if (n == null)
-                                continue;
+                    if (qs != null && !qs.isEmpty()) {
+                        com.google.firebase.firestore.DocumentSnapshot d = qs.getDocuments().get(0);
+                        NguoiThue n = d.toObject(NguoiThue.class);
+                        if (n != null) {
                             n.setId(d.getId());
-
-                            // Backward compatible: missing status => ACTIVE
-                            String st = n.getTrangThaiHopDong();
-                            boolean ended = st != null && st.equalsIgnoreCase("ENDED");
-                            if (ended)
-                                continue;
-
-                            best = n;
-                            break;
+                            currentContract = n;
+                            applyModeView();
+                            return;
                         }
                     }
+                    loadExistingContractLegacyFallback();
+                })
+                .addOnFailureListener(e -> loadExistingContractLegacyFallback());
+    }
 
+    private void loadExistingContractLegacyFallback() {
+        scopedCollection("nguoi_thue").whereEqualTo("idPhong", phongId).limit(1).get()
+                .addOnSuccessListener(qs -> {
+                    NguoiThue best = null;
+                    if (qs != null && !qs.isEmpty()) {
+                        com.google.firebase.firestore.DocumentSnapshot d = qs.getDocuments().get(0);
+                        NguoiThue n = d.toObject(NguoiThue.class);
+                        if (n != null) {
+                            String st = n.getTrangThaiHopDong();
+                            if (st == null || !st.equalsIgnoreCase("ENDED")) {
+                                n.setId(d.getId());
+                                best = n;
+                            }
+                        }
+                    }
                     if (best != null) {
                         currentContract = best;
                         applyModeView();
@@ -390,72 +401,67 @@ public class HopDongActivity extends AppCompatActivity {
     }
 
     private void applyModeCreate() {
-        if (getSupportActionBar() != null)
-            getSupportActionBar().setTitle("Tạo hợp đồng");
         btnSave.setVisibility(View.VISIBLE);
         btnPrint.setVisibility(View.GONE);
         btnEnd.setVisibility(View.GONE);
         btnUpdate.setVisibility(View.GONE);
-
         setUploadEnabled(true);
     }
 
     private void applyModeView() {
-        if (getSupportActionBar() != null)
-            getSupportActionBar().setTitle("Xem hợp đồng");
         btnSave.setVisibility(View.GONE);
         btnPrint.setVisibility(View.VISIBLE);
         btnEnd.setVisibility(View.VISIBLE);
         btnUpdate.setVisibility(View.VISIBLE);
-
         bindContractToUI(currentContract);
         setUploadEnabled(true);
     }
 
-    private void bindContractToUI(@NonNull NguoiThue c) {
-        if (c.getSoHopDong() != null && !c.getSoHopDong().trim().isEmpty()) {
-            etSoHopDong.setText(c.getSoHopDong());
-        }
+    private void updateFullToolbarHeader() {
+        String title = "Hợp đồng";
+        if (currentPhong != null)
+            title = "Hợp đồng phòng " + nullToEmpty(currentPhong.getSoPhong());
+        String subtitle = "";
+        if (currentKhu != null) {
+            subtitle = (currentKhu.getDiaChi() != null && !currentKhu.getDiaChi().trim().isEmpty())
+                    ? currentKhu.getDiaChi()
+                    : currentKhu.getTenCanNha();
+        } else if (currentPhong != null)
+            subtitle = currentPhong.getCanNhaTen();
+        if (tvTitleLine1 != null)
+            tvTitleLine1.setText(nullToEmpty(title));
+        if (tvTitleLine2 != null)
+            tvTitleLine2.setText(nullToEmpty(subtitle));
+    }
 
+    private void bindContractToUI(@NonNull NguoiThue c) {
+        if (c.getSoHopDong() != null && !c.getSoHopDong().trim().isEmpty())
+            etSoHopDong.setText(c.getSoHopDong());
         etTenKhach.setText(nullToEmpty(c.getHoTen()));
         etDienThoai.setText(nullToEmpty(c.getSoDienThoai()));
-        etDiaChi.setText(nullToEmpty(c.getDiaChi()));
         etCccd.setText(nullToEmpty(c.getCccd()));
-
         etSoNguoi.setText(c.getSoThanhVien() > 0 ? String.valueOf(c.getSoThanhVien()) : "");
-
-        if (c.getTienPhong() > 0) {
+        if (c.getTienPhong() > 0)
             MoneyFormatter.setValue(etTienPhong, c.getTienPhong());
-        }
-        if (c.getTienCoc() > 0) {
+        if (c.getTienCoc() > 0)
             MoneyFormatter.setValue(etTienCoc, c.getTienCoc());
-        }
-
         cbShowDeposit.setChecked(c.isHienThiTienCocTrenHoaDon());
-
         etNgayKy.setText(nullToEmpty(c.getNgayBatDauThue()));
         etSoThang.setText(c.getSoThangHopDong() > 0 ? String.valueOf(c.getSoThangHopDong()) : "");
         cbRemind.setChecked(c.isNhacTruoc1Thang());
-
         etChiSoDien.setText(c.getChiSoDienDau() > 0 ? String.valueOf(c.getChiSoDienDau()) : "");
-
         cbGuiXe.setChecked(c.isDichVuGuiXe());
         etSoXe.setEnabled(c.isDichVuGuiXe());
         etSoXe.setBackgroundResource(c.isDichVuGuiXe() ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
         etSoXe.setText(c.getSoLuongXe() > 0 ? String.valueOf(c.getSoLuongXe()) : "");
-
         cbInternet.setChecked(c.isDichVuInternet());
         cbGiatSay.setChecked(c.isDichVuGiatSay());
-
         etGhiChu.setText(nullToEmpty(c.getGhiChu()));
         cbShowNote.setChecked(c.isHienThiGhiChuTrenHoaDon());
-
-        if (c.getCccdFrontUrl() != null && !c.getCccdFrontUrl().trim().isEmpty()) {
+        if (c.getCccdFrontUrl() != null && !c.getCccdFrontUrl().trim().isEmpty())
             Glide.with(this).load(c.getCccdFrontUrl()).centerCrop().into(ivFront);
-        }
-        if (c.getCccdBackUrl() != null && !c.getCccdBackUrl().trim().isEmpty()) {
+        if (c.getCccdBackUrl() != null && !c.getCccdBackUrl().trim().isEmpty())
             Glide.with(this).load(c.getCccdBackUrl()).centerCrop().into(ivBack);
-        }
     }
 
     private void showDatePicker() {
@@ -464,13 +470,11 @@ public class HopDongActivity extends AppCompatActivity {
         try {
             if (!cur.isEmpty()) {
                 Date d = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(cur);
-                if (d != null) {
+                if (d != null)
                     cal.setTime(d);
-                }
             }
         } catch (Exception ignored) {
         }
-
         DatePickerDialog dlg = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
             Calendar c = Calendar.getInstance();
             c.set(year, month, dayOfMonth);
@@ -482,32 +486,19 @@ public class HopDongActivity extends AppCompatActivity {
     private void saveOrUpdate(boolean isCreate) {
         if (currentContract == null)
             currentContract = new NguoiThue();
-
-        String soHD = text(etSoHopDong);
-        String ten = text(etTenKhach);
-        String sdt = text(etDienThoai);
-        String diaChi = text(etDiaChi);
-        String cccd = text(etCccd);
-        String soNguoiStr = text(etSoNguoi);
-        String ngayKy = text(etNgayKy);
-        String soThangStr = text(etSoThang);
-        String chiSoDienStr = text(etChiSoDien);
-
-        if (ten.isEmpty() || sdt.isEmpty() || diaChi.isEmpty() || cccd.isEmpty() || soNguoiStr.isEmpty()
-                || ngayKy.isEmpty() || soThangStr.isEmpty() || chiSoDienStr.isEmpty()) {
+        String soHD = text(etSoHopDong), ten = text(etTenKhach), sdt = text(etDienThoai), cccd = text(etCccd);
+        String soNguoiStr = text(etSoNguoi), ngayKy = text(etNgayKy), soThangStr = text(etSoThang),
+                chiSoDienStr = text(etChiSoDien);
+        if (ten.isEmpty() || sdt.isEmpty() || cccd.isEmpty() || soNguoiStr.isEmpty() || ngayKy.isEmpty()
+                || soThangStr.isEmpty() || chiSoDienStr.isEmpty()) {
             Toast.makeText(this, "Vui lòng nhập đủ các trường bắt buộc (*)", Toast.LENGTH_SHORT).show();
             return;
         }
-
         if (cbGuiXe.isChecked() && text(etSoXe).isEmpty()) {
             Toast.makeText(this, "Vui lòng nhập số lượng xe", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        int soNguoi;
-        int soThang;
-        int chiSoDien;
-        int soXe = 0;
+        int soNguoi, soThang, chiSoDien, soXe = 0;
         try {
             soNguoi = Integer.parseInt(soNguoiStr);
             soThang = Integer.parseInt(soThangStr);
@@ -518,54 +509,42 @@ public class HopDongActivity extends AppCompatActivity {
             Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
             return;
         }
-
         double tienPhong = MoneyFormatter.getValue(etTienPhong);
         double tienCoc = MoneyFormatter.getValue(etTienCoc);
-
         currentContract.setSoHopDong(soHD);
         currentContract.setHoTen(ten);
         currentContract.setSoDienThoai(sdt);
-        currentContract.setDiaChi(diaChi);
+        currentContract.setDiaChi("");
         currentContract.setCccd(cccd);
-
         currentContract.setIdPhong(phongId);
         currentContract.setSoPhong(currentPhong != null ? currentPhong.getSoPhong() : null);
-
         currentContract.setSoThanhVien(soNguoi);
         currentContract.setNgayBatDauThue(ngayKy);
         currentContract.setSoThangHopDong(soThang);
         currentContract.setNhacTruoc1Thang(cbRemind.isChecked());
-
         currentContract.setTienPhong(tienPhong);
         currentContract.setTienCoc(tienCoc);
         currentContract.setHienThiTienCocTrenHoaDon(cbShowDeposit.isChecked());
-
         currentContract.setChiSoDienDau(chiSoDien);
         currentContract.setDichVuGuiXe(cbGuiXe.isChecked());
         currentContract.setSoLuongXe(soXe);
         currentContract.setDichVuInternet(cbInternet.isChecked());
         currentContract.setDichVuGiatSay(cbGiatSay.isChecked());
-
         currentContract.setGhiChu(text(etGhiChu));
         currentContract.setHienThiGhiChuTrenHoaDon(cbShowNote.isChecked());
-
         currentContract.setTrangThaiHopDong("ACTIVE");
-
-        String endDate = computeEndDate(ngayKy, soThang);
-        currentContract.setNgayKetThucHopDong(endDate);
-
+        currentContract.setNgayKetThucHopDong(computeEndDate(ngayKy, soThang));
         long now = System.currentTimeMillis();
         if (currentContract.getCreatedAt() == null)
             currentContract.setCreatedAt(now);
         currentContract.setUpdatedAt(now);
-
         if (isCreate || currentContract.getId() == null || currentContract.getId().trim().isEmpty()) {
             scopedCollection("nguoi_thue").add(currentContract)
                     .addOnSuccessListener(ref -> {
                         currentContract.setId(ref.getId());
                         markRoomStatus(RoomStatus.RENTED);
                         Toast.makeText(this, "Đã lưu hợp đồng", Toast.LENGTH_SHORT).show();
-                        applyModeView();
+                        navigateToRoomList(RoomStatus.RENTED);
                     })
                     .addOnFailureListener(e -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show());
         } else {
@@ -582,43 +561,135 @@ public class HopDongActivity extends AppCompatActivity {
         if (currentContract == null || currentContract.getId() == null)
             return;
         new AlertDialog.Builder(this)
-                .setTitle("Kết thúc hợp đồng?")
-                .setMessage("Phòng sẽ chuyển về trạng thái 'Trống'.")
+                .setTitle("Xác nhận kết thúc hợp đồng")
+                .setMessage(
+                        "Bạn có chắc chắn muốn kết thúc hợp đồng này?\n\n• Phòng sẽ chuyển về trạng thái 'Trống'\n• Thông tin hợp đồng sẽ được lưu vào lịch sử")
                 .setPositiveButton("Kết thúc", (d, w) -> endContract())
-                .setNegativeButton("Hủy", null)
-                .show();
+                .setNegativeButton("Hủy", null).setCancelable(false).show();
     }
 
     private void endContract() {
         if (currentContract == null || currentContract.getId() == null)
             return;
-
         String oldRoomId = phongId;
         long now = System.currentTimeMillis();
-
+        createRentalHistoryLog(currentContract, oldRoomId, now);
         currentContract.setTrangThaiHopDong("ENDED");
         currentContract.setEndedAt(now);
         currentContract.setIdPhongCu(oldRoomId);
         currentContract.setIdPhong("");
         currentContract.setUpdatedAt(now);
-
         scopedCollection("nguoi_thue").document(currentContract.getId()).set(currentContract)
                 .addOnSuccessListener(v -> {
                     markRoomStatus(RoomStatus.VACANT);
-                    Toast.makeText(this, "Đã kết thúc hợp đồng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Đã kết thúc hợp đồng và lưu lịch sử", Toast.LENGTH_SHORT).show();
+                    navigateToRoomList(RoomStatus.VACANT);
                 })
                 .addOnFailureListener(e -> Toast.makeText(this, "Thao tác thất bại", Toast.LENGTH_SHORT).show());
+    }
+
+    private void navigateToRoomList(@NonNull String status) {
+        Intent intent = new Intent(this, PhongTroActivity.class);
+        intent.putExtra("FILTER_STATUS", status);
+        if (currentPhong != null && currentPhong.getCanNhaId() != null
+                && !currentPhong.getCanNhaId().trim().isEmpty()) {
+            intent.putExtra("CAN_NHA_ID", currentPhong.getCanNhaId());
+            intent.putExtra("CAN_NHA_NAME", currentPhong.getCanNhaTen());
+            if (currentKhu != null)
+                intent.putExtra("CAN_NHA_ADDR", currentKhu.getDiaChi());
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void createRentalHistoryLog(NguoiThue contract, String roomId, long endTime) {
+        RentalHistory history = new RentalHistory();
+        history.setIdHopDong(contract.getId());
+        history.setIdPhong(roomId);
+        history.setIdNguoiThue(contract.getId());
+        if (currentPhong != null) {
+            history.setSoPhong(currentPhong.getSoPhong());
+            history.setCanNhaTen(currentPhong.getCanNhaTen());
+            history.setTang(currentPhong.getTang());
+        } else
+            history.setSoPhong(contract.getSoPhong());
+        history.setHoTen(contract.getHoTen());
+        history.setCccd(contract.getCccd());
+        history.setSoDienThoai(contract.getSoDienThoai());
+        history.setDiaChi(contract.getDiaChi());
+        history.setSoHopDong(contract.getSoHopDong());
+        history.setSoThanhVien(contract.getSoThanhVien());
+        history.setNgayBatDauThue(contract.getNgayBatDauThue());
+        history.setNgayKetThucHopDong(contract.getNgayKetThucHopDong());
+        history.setSoThangHopDong(contract.getSoThangHopDong());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        history.setNgayKetThucThucTe(sdf.format(new Date(endTime)));
+        if (contract.getNgayBatDauThue() != null && !contract.getNgayBatDauThue().isEmpty()) {
+            try {
+                Date startDate = sdf.parse(contract.getNgayBatDauThue());
+                if (startDate != null) {
+                    long diff = endTime - startDate.getTime();
+                    history.setSoNgayThueThucTe((int) (diff / (1000 * 60 * 60 * 24)));
+                    history.setStartTimestamp(startDate.getTime());
+                }
+            } catch (Exception e) {
+                history.setSoNgayThueThucTe(0);
+            }
+        }
+        history.setEndTimestamp(endTime);
+        history.setTienPhong(contract.getTienPhong());
+        history.setTienCoc(contract.getTienCoc());
+        history.setDichVuGuiXe(contract.isDichVuGuiXe());
+        history.setDichVuInternet(contract.isDichVuInternet());
+        history.setDichVuGiatSay(contract.isDichVuGiatSay());
+        history.setSoLuongXe(contract.getSoLuongXe());
+        history.setGhiChu(contract.getGhiChu());
+        history.setLyDoKetThuc("Kết thúc hợp đồng");
+        history.setCreatedAt(Timestamp.now());
+        calculateInvoiceStats(contract.getId(), (totalPaid, paidCount, unpaidCount) -> {
+            history.setTongTienDaThanhToan(totalPaid);
+            history.setSoHoaDonDaThanhToan(paidCount);
+            history.setSoHoaDonChuaThanhToan(unpaidCount);
+            rentalHistoryRepo.addHistory(history)
+                    .addOnSuccessListener(ref -> {
+                        history.setId(ref.getId());
+                        android.util.Log.d("HopDongActivity", "Đã lưu lịch sử cho thuê: " + ref.getId());
+                    })
+                    .addOnFailureListener(
+                            e -> android.util.Log.e("HopDongActivity", "Lỗi lưu lịch sử: " + e.getMessage()));
+        });
+    }
+
+    private interface InvoiceStatsCallback {
+        void onDone(double totalPaid, int paidCount, int unpaidCount);
+    }
+
+    private void calculateInvoiceStats(String tenantId, @NonNull InvoiceStatsCallback callback) {
+        scopedCollection("hoa_don").whereEqualTo("idNguoiThue", tenantId).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    double totalPaid = 0;
+                    int paidCount = 0, unpaidCount = 0;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String trangThai = doc.getString("trangThai");
+                        if ("Đã thanh toán".equals(trangThai)) {
+                            Double tongTien = doc.getDouble("tongTien");
+                            if (tongTien != null)
+                                totalPaid += tongTien;
+                            paidCount++;
+                        } else
+                            unpaidCount++;
+                    }
+                    callback.onDone(totalPaid, paidCount, unpaidCount);
+                })
+                .addOnFailureListener(e -> callback.onDone(0, 0, 0));
     }
 
     private void markRoomStatus(@NonNull String status) {
         DocumentReference scope = scopedDoc();
         if (scope == null)
             return;
-        scope.collection("phong_tro").document(phongId)
-                .update("trangThai", status)
-                .addOnFailureListener(e -> {
-                    // ignore
-                });
+        scope.collection("phong_tro").document(phongId).update("trangThai", status);
     }
 
     private void printContract() {
@@ -626,186 +697,75 @@ public class HopDongActivity extends AppCompatActivity {
             Toast.makeText(this, "Chưa có dữ liệu", Toast.LENGTH_SHORT).show();
             return;
         }
-
         String html = buildContractHtml(currentContract);
-        WebView webView = new WebView(this);
-        webView.loadDataWithBaseURL(null, html, "text/HTML", "UTF-8", null);
-
         PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
         if (printManager == null) {
             Toast.makeText(this, "Thiết bị không hỗ trợ in", Toast.LENGTH_SHORT).show();
             return;
         }
-
         String jobName = "HopDong_" + (currentContract.getSoHopDong() != null ? currentContract.getSoHopDong() : "");
-        printManager.print(jobName, webView.createPrintDocumentAdapter(jobName),
-                new PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build());
+        WebView webView = new WebView(this);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                printManager.print(jobName, view.createPrintDocumentAdapter(jobName),
+                        new PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build());
+            }
+        });
+        webView.loadDataWithBaseURL(null, html, "text/HTML", "UTF-8", null);
     }
 
     private String buildContractHtml(@NonNull NguoiThue c) {
         String room = currentPhong != null ? nullToEmpty(currentPhong.getSoPhong()) : "";
         String khuDiaChi = currentKhu != null ? nullToEmpty(currentKhu.getDiaChi()) : "";
-        String tenChuTro = currentKhu != null ? nullToEmpty(currentKhu.getTenKhu()) : "";
+        String tenChuTro = currentKhu != null ? nullToEmpty(currentKhu.getTenCanNha()) : "";
         String sdtChuTro = currentKhu != null ? nullToEmpty(currentKhu.getSdtQuanLy()) : "";
-        String ngayKy = nullToEmpty(c.getNgayBatDauThue());
-        String ngayKetThuc = nullToEmpty(c.getNgayKetThucHopDong());
+        String ngayKy = nullToEmpty(c.getNgayBatDauThue()), ngayKetThuc = nullToEmpty(c.getNgayKetThucHopDong());
         int soThang = c.getSoThangHopDong();
-
-        // Build chi phí section
         StringBuilder chiPhi = new StringBuilder();
         if (currentKhu != null) {
-            chiPhi.append("- Tiền điện: ").append(formatVndNumberOnly(currentKhu.getGiaDien())).append("/kWh");
-            chiPhi.append(" (Chỉ số ban đầu: ").append(c.getChiSoDienDau()).append(")<br/>");
+            chiPhi.append("- Tiền điện: ").append(formatVndNumberOnly(currentKhu.getGiaDien()))
+                    .append("/kWh (Chỉ số ban đầu: ").append(c.getChiSoDienDau()).append(")<br/>");
             String cachTinhNuoc = currentKhu.getCachTinhNuoc();
             String donViNuoc = "nguoi".equals(cachTinhNuoc) ? "/người/tháng"
                     : "dong_ho".equals(cachTinhNuoc) ? "/m³" : "/phòng";
             chiPhi.append("- Tiền nước: ").append(formatVndNumberOnly(currentKhu.getGiaNuoc())).append(donViNuoc)
                     .append("<br/>");
-            if (c.isDichVuGuiXe()) {
+            if (c.isDichVuGuiXe())
                 chiPhi.append("- Phí gửi xe: ").append(formatVndNumberOnly(currentKhu.getGiaXe()))
                         .append("/chiếc (SL: ").append(c.getSoLuongXe()).append(")<br/>");
-            }
-            if (c.isDichVuInternet()) {
+            if (c.isDichVuInternet())
                 chiPhi.append("- Internet: ").append(formatVndNumberOnly(currentKhu.getGiaInternet()))
                         .append("/tháng<br/>");
-            }
-            if (c.isDichVuGiatSay()) {
+            if (c.isDichVuGiatSay())
                 chiPhi.append("- Giặt sấy: ").append(formatVndNumberOnly(currentKhu.getGiaGiatSay()))
                         .append("/tháng<br/>");
-            }
         }
-
-        return "<!DOCTYPE html><html><head><meta charset='utf-8'/>" +
-                "<style>" +
-                "body{font-family:'Times New Roman',serif;font-size:13px;padding:30px 40px;line-height:1.6;color:#000;}"
-                +
-                ".header{text-align:center;margin-bottom:20px;}" +
-                ".header h3{margin:0;font-size:14px;font-weight:bold;text-transform:uppercase;}" +
-                ".header p{margin:2px 0;font-size:12px;font-style:italic;}" +
-                ".title{text-align:center;margin:25px 0;}" +
-                ".title h2{margin:0;font-size:18px;font-weight:bold;text-transform:uppercase;}" +
-                ".info{margin-bottom:8px;}" +
-                ".section{margin-top:15px;}" +
-                ".section-title{font-weight:bold;margin-bottom:5px;}" +
-                ".indent{padding-left:20px;}" +
-                ".gia-han-table{width:100%;border-collapse:collapse;margin:10px 0;}" +
-                ".gia-han-table th,.gia-han-table td{border:1px solid #000;padding:6px 8px;text-align:center;font-size:12px;}"
-                +
-                ".gia-han-table th{background:#f5f5f5;font-weight:bold;}" +
-                ".signature{display:flex;justify-content:space-around;margin-top:40px;text-align:center;}" +
-                ".signature div{width:40%;}" +
-                ".signature .label{font-weight:bold;text-transform:uppercase;}" +
-                ".signature .note{font-style:italic;font-size:11px;}" +
-                ".signature .name{margin-top:60px;font-weight:bold;}" +
-                "</style></head><body>" +
-
-                // Header
-                "<div class='header'>" +
-                "<h3>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h3>" +
-                "<p>Độc lập – Tự do – Hạnh phúc</p>" +
-                "</div>" +
-
-                // Title
-                "<div class='title'>" +
-                "<h2>HỢP ĐỒNG THUÊ PHÒNG TRỌ</h2>" +
-                "</div>" +
-
-                // Opening
-                "<p class='info'>Hôm nay, ngày " + formatDateFull(ngayKy) + ", tại căn nhà số " + escape(khuDiaChi)
-                + "</p>" +
-                "<p class='info'>Chúng tôi ký tên dưới đây gồm có:</p>" +
-
-                // Bên A
-                "<div class='section'>" +
-                "<p class='section-title'>BÊN CHO THUÊ PHÒNG TRỌ (gọi tắt là Bên A):</p>" +
-                "<p class='indent'>Ông/bà: " + escape(tenChuTro) + "</p>" +
-                "<p class='indent'>CMND/CCCD số: .................. cấp ngày: ............... nơi cấp: ...............</p>"
-                +
-                "<p class='indent'>Điện thoại: " + escape(sdtChuTro) + "</p>" +
-                "<p class='indent'>Thường trú tại: " + escape(khuDiaChi) + "</p>" +
-                "</div>" +
-
-                // Bên B
-                "<div class='section'>" +
-                "<p class='section-title'>BÊN THUÊ PHÒNG TRỌ (gọi tắt là Bên B):</p>" +
-                "<p class='indent'>Ông/bà: " + escape(c.getHoTen()) + "</p>" +
-                "<p class='indent'>CMND/CCCD số: " + escape(c.getCccd())
-                + " cấp ngày: ............... nơi cấp: ...............</p>" +
-                "<p class='indent'>Điện thoại: " + escape(c.getSoDienThoai()) + "</p>" +
-                "<p class='indent'>Thường trú tại: " + escape(c.getDiaChi()) + "</p>" +
-                "</div>" +
-
-                "<p style='margin-top:15px;'>Sau khi thỏa thuận, hai bên thống nhất như sau:</p>" +
-
-                // Điều 1
-                "<div class='section'>" +
-                "<p class='section-title'>1. Nội dung thuê phòng trọ</p>" +
-                "<p class='indent'>Bên A cho Bên B thuê 01 phòng trọ số " + escape(room) + " tại căn nhà số "
-                + escape(khuDiaChi) + ".</p>" +
-                "<p class='indent'>Với thời hạn là: " + soThang + " tháng (Từ ngày " + escape(ngayKy) + " đến ngày "
-                + escape(ngayKetThuc) + ").</p>" +
-                "<p class='indent'>Giá thuê: " + formatVnd(c.getTienPhong()) + "/tháng.</p>" +
-                "<p class='indent'>Chưa bao gồm chi phí:</p>" +
-                "<p class='indent'>" + chiPhi.toString() + "</p>" +
-                "</div>" +
-
-                // Điều 2
-                "<div class='section'>" +
-                "<p class='section-title'>2. Trách nhiệm Bên A</p>" +
-                "<p class='indent'>- Đảm bảo căn nhà cho thuê không có tranh chấp, khiếu kiện.</p>" +
-                "<p class='indent'>- Đăng ký với chính quyền địa phương về thủ tục cho thuê phòng trọ.</p>" +
-                "</div>" +
-
-                // Điều 3
-                "<div class='section'>" +
-                "<p class='section-title'>3. Trách nhiệm Bên B</p>" +
-                "<p class='indent'>- Đặt cọc với số tiền là " + formatVnd(c.getTienCoc())
-                + ", thanh toán tiền thuê phòng hàng tháng + tiền điện + nước.</p>" +
-                "<p class='indent'>- Đảm bảo các thiết bị và sửa chữa các hư hỏng trong phòng trong khi sử dụng. Nếu không sửa chữa thì khi trả phòng, bên A sẽ trừ vào tiền đặt cọc, giá trị cụ thể tính theo giá thị trường.</p>"
-                +
-                "<p class='indent'>- Chỉ sử dụng phòng trọ vào mục đích ở, với số lượng tối đa không quá "
+        return "<!DOCTYPE html><html><head><meta charset='utf-8'/><style>body{font-family:'Times New Roman',serif;font-size:13px;padding:30px 40px;line-height:1.6;color:#000;}.header{text-align:center;margin-bottom:20px;}.header h3{margin:0;font-size:14px;font-weight:bold;text-transform:uppercase;}.header p{margin:2px 0;font-size:12px;font-style:italic;}.title{text-align:center;margin:25px 0;}.title h2{margin:0;font-size:18px;font-weight:bold;text-transform:uppercase;}.info{margin-bottom:8px;}.section{margin-top:15px;}.section-title{font-weight:bold;margin-bottom:5px;}.indent{padding-left:20px;}.gia-han-table{width:100%;border-collapse:collapse;margin:10px 0;}.gia-han-table th,.gia-han-table td{border:1px solid #000;padding:6px 8px;text-align:center;font-size:12px;}.gia-han-table th{background:#f5f5f5;font-weight:bold;}.signature{display:flex;justify-content:space-around;margin-top:40px;text-align:center;}.signature div{width:40%;}.signature .label{font-weight:bold;text-transform:uppercase;}.signature .note{font-style:italic;font-size:11px;}.signature .name{margin-top:60px;font-weight:bold;}</style></head><body><div class='header'><h3>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h3><p>Độc lập – Tự do – Hạnh phúc</p></div><div class='title'><h2>HỢP ĐỒNG THUÊ PHÒNG TRỌ</h2></div><p class='info'>Hôm nay, ngày "
+                + formatDateFull(ngayKy) + ", tại căn nhà số " + escape(khuDiaChi)
+                + "</p><p class='info'>Chúng tôi ký tên dưới đây gồm có:</p><div class='section'><p class='section-title'>BÊN CHO THUÊ PHÒNG TRỌ (gọi tắt là Bên A):</p><p class='indent'>Ông/bà: "
+                + escape(tenChuTro)
+                + "</p><p class='indent'>CMND/CCCD số: .................. cấp ngày: ............... nơi cấp: ...............</p><p class='indent'>Điện thoại: "
+                + escape(sdtChuTro) + "</p><p class='indent'>Thường trú tại: " + escape(khuDiaChi)
+                + "</p></div><div class='section'><p class='section-title'>BÊN THUÊ PHÒNG TRỌ (gọi tắt là Bên B):</p><p class='indent'>Ông/bà: "
+                + escape(c.getHoTen()) + "</p><p class='indent'>CMND/CCCD số: " + escape(c.getCccd())
+                + " cấp ngày: ............... nơi cấp: ...............</p><p class='indent'>Điện thoại: "
+                + escape(c.getSoDienThoai())
+                + "</p></div><p style='margin-top:15px;'>Sau khi thỏa thuận, hai bên thống nhất như sau:</p><div class='section'><p class='section-title'>1. Nội dung thuê phòng trọ</p><p class='indent'>Bên A cho Bên B thuê 01 phòng trọ số "
+                + escape(room) + " tại căn nhà số " + escape(khuDiaChi) + ".</p><p class='indent'>Với thời hạn là: "
+                + soThang + " tháng (Từ ngày " + escape(ngayKy) + " đến ngày " + escape(ngayKetThuc)
+                + ").</p><p class='indent'>Giá thuê: " + formatVnd(c.getTienPhong())
+                + "/tháng.</p><p class='indent'>Chưa bao gồm chi phí:</p><p class='indent'>" + chiPhi.toString()
+                + "</p></div><div class='section'><p class='section-title'>2. Trách nhiệm Bên A</p><p class='indent'>- Đảm bảo căn nhà cho thuê không có tranh chấp, khiếu kiện.</p><p class='indent'>- Đăng ký với chính quyền địa phương về thủ tục cho thuê phòng trọ.</p></div><div class='section'><p class='section-title'>3. Trách nhiệm Bên B</p><p class='indent'>- Đặt cọc với số tiền là "
+                + formatVnd(c.getTienCoc())
+                + ", thanh toán tiền thuê phòng hàng tháng + tiền điện + nước.</p><p class='indent'>- Đảm bảo các thiết bị và sửa chữa các hư hỏng trong phòng trong khi sử dụng. Nếu không sửa chữa thì khi trả phòng, bên A sẽ trừ vào tiền đặt cọc, giá trị cụ thể tính theo giá thị trường.</p><p class='indent'>- Chỉ sử dụng phòng trọ vào mục đích ở, với số lượng tối đa không quá "
                 + c.getSoThanhVien()
-                + " người; không chứa các thiết bị gây cháy nổ, hàng cấm; cung cấp giấy tờ tùy thân để đăng ký tạm trú theo quy định, giữ gìn an ninh trật tự, nếp sống văn hóa đô thị; không tụ tập nhậu nhẹt, cờ bạc và các hành vi vi phạm pháp luật khác.</p>"
-                +
-                "<p class='indent'>- Không được tự ý cải tạo kiến trúc phòng hoặc trang trí ảnh hưởng tới tường, cột, nền... Nếu có nhu cầu trên phải trao đổi với bên A để được thống nhất.</p>"
-                +
-                "</div>" +
-
-                // Điều 4
-                "<div class='section'>" +
-                "<p class='section-title'>4. Điều khoản thực hiện</p>" +
-                "<p class='indent'>Hai bên nghiêm túc thực hiện những quy định trên trong thời hạn cho thuê, nếu bên A lấy phòng phải báo cho bên B ít nhất 01 tháng, hoặc ngược lại.</p>"
-                +
-                "<p class='indent'>Sau thời hạn cho thuê " + soThang
-                + " tháng nếu bên B có nhu cầu hai bên tiếp tục thương lượng giá thuê để gia hạn hợp đồng.</p>" +
-                "</div>" +
-
-                // Bảng gia hạn
-                "<div class='section'>" +
-                "<p class='section-title'>Bảng gia hạn hợp đồng:</p>" +
-                "<table class='gia-han-table'>" +
-                "<tr><th>Lần</th><th>Thời gian<br/>(tháng)</th><th>Từ ngày</th><th>Đến ngày</th><th>Giá thuê/tháng</th><th>Ký tên</th></tr>"
-                +
-                "<tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr>" +
-                "<tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>" +
-                "</table>" +
-                "</div>" +
-
-                // Signature
-                "<div class='signature'>" +
-                "<div>" +
-                "<p class='label'>BÊN B</p>" +
-                "<p class='note'>(Ký, ghi rõ họ tên)</p>" +
-                "<p class='name'>" + escape(c.getHoTen()) + "</p>" +
-                "</div>" +
-                "<div>" +
-                "<p class='label'>BÊN A</p>" +
-                "<p class='note'>(Ký, ghi rõ họ tên)</p>" +
-                "<p class='name'>" + escape(tenChuTro) + "</p>" +
-                "</div>" +
-                "</div>" +
-
-                "</body></html>";
+                + " người; không chứa các thiết bị gây cháy nổ, hàng cấm; cung cấp giấy tờ tùy thân để đăng ký tạm trú theo quy định, giữ gìn an ninh trật tự, nếp sống văn hóa đô thị; không tụ tập nhậu nhẹt, cờ bạc và các hành vi vi phạm pháp luật khác.</p><p class='indent'>- Không được tự ý cải tạo kiến trúc phòng hoặc trang trí ảnh hưởng tới tường, cột, nền... Nếu có nhu cầu trên phải trao đổi với bên A để được thống nhất.</p></div><div class='section'><p class='section-title'>4. Điều khoản thực hiện</p><p class='indent'>Hai bên nghiêm túc thực hiện những quy định trên trong thời hạn cho thuê, nếu bên A lấy phòng phải báo cho bên B ít nhất 01 tháng, hoặc ngược lại.</p><p class='indent'>Sau thời hạn cho thuê "
+                + soThang
+                + " tháng nếu bên B có nhu cầu hai bên tiếp tục thương lượng giá thuê để gia hạn hợp đồng.</p></div><div class='section'><p class='section-title'>Bảng gia hạn hợp đồng:</p><table class='gia-han-table'><tr><th>Lần</th><th>Thời gian<br/>(tháng)</th><th>Từ ngày</th><th>Đến ngày</th><th>Giá thuê/tháng</th><th>Ký tên</th></tr><tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div class='signature'><div><p class='label'>BÊN B</p><p class='note'>(Ký, ghi rõ họ tên)</p><p class='name'>"
+                + escape(c.getHoTen())
+                + "</p></div><div><p class='label'>BÊN A</p><p class='note'>(Ký, ghi rõ họ tên)</p><p class='name'>"
+                + escape(tenChuTro) + "</p></div></div></body></html>";
     }
 
     private String formatDateFull(String dateStr) {
@@ -813,16 +773,11 @@ public class HopDongActivity extends AppCompatActivity {
             return "... tháng ... năm ...";
         try {
             String[] parts = dateStr.split("/");
-            if (parts.length == 3) {
+            if (parts.length == 3)
                 return parts[0] + " tháng " + parts[1] + " năm " + parts[2];
-            }
         } catch (Exception ignored) {
         }
         return dateStr;
-    }
-
-    private String row(String k, String v) {
-        return "<tr><td class='k'>" + escape(k) + "</td><td class='v'>" + escape(v) + "</td></tr>";
     }
 
     private String escape(String s) {
@@ -857,26 +812,11 @@ public class HopDongActivity extends AppCompatActivity {
         return et.getText() != null ? et.getText().toString().trim() : "";
     }
 
-    private double parseMoney(String s) {
-        if (s == null)
-            return 0;
-        String raw = s.replaceAll("[^0-9]", "");
-        if (raw.isEmpty())
-            return 0;
-        try {
-            return Double.parseDouble(raw);
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
     private String formatVnd(double value) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-        return fmt.format((long) value) + " đ";
+        return NumberFormat.getNumberInstance(new Locale("vi", "VN")).format((long) value) + " đ";
     }
 
     private String formatVndNumberOnly(double value) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-        return fmt.format((long) value) + " đ";
+        return NumberFormat.getNumberInstance(new Locale("vi", "VN")).format((long) value) + " đ";
     }
 }

@@ -1,10 +1,12 @@
 package com.example.myapplication.domain;
 
+import com.google.firebase.firestore.PropertyName;
+
 public class CanNha {
     private String id;
 
     // Basic info
-    private String tenKhu; // tên quản lý
+    private String tenCanNha; // tên quản lý
     private String sdtQuanLy;
     private String diaChi;
     private String ghiChu;
@@ -39,8 +41,8 @@ public class CanNha {
     public CanNha() {
     }
 
-    public CanNha(String tenKhu, String diaChi, String ghiChu) {
-        this.tenKhu = tenKhu;
+    public CanNha(String tenCanNha, String diaChi, String ghiChu) {
+        this.tenCanNha = tenCanNha;
         this.diaChi = diaChi;
         this.ghiChu = ghiChu;
     }
@@ -53,12 +55,14 @@ public class CanNha {
         this.id = id;
     }
 
-    public String getTenKhu() {
-        return tenKhu;
+    @PropertyName("tenCanNha")
+    public String getTenCanNha() {
+        return tenCanNha;
     }
 
-    public void setTenKhu(String tenKhu) {
-        this.tenKhu = tenKhu;
+    @PropertyName("tenCanNha")
+    public void setTenCanNha(String tenCanNha) {
+        this.tenCanNha = tenCanNha;
     }
 
     public String getSdtQuanLy() {

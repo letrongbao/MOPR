@@ -1,5 +1,7 @@
 package com.example.myapplication.domain;
 
+import com.google.firebase.firestore.PropertyName;
+
 public class PhongTro {
     private String id;
     private String soPhong;
@@ -9,9 +11,9 @@ public class PhongTro {
     private String trangThai; // "Trống", "Đã thuê"
     private String hinhAnh; // URL ảnh từ Firebase Storage
 
-    // Phase 2: group rooms by "khu" (property)
-    private String khuId;
-    private String khuTen;
+    // Group rooms by house
+    private String canNhaId;
+    private String canNhaTen;
 
     // Enhanced fields
     private int tang; // Floor number
@@ -91,20 +93,24 @@ public class PhongTro {
         this.hinhAnh = hinhAnh;
     }
 
-    public String getKhuId() {
-        return khuId;
+    @PropertyName("canNhaId")
+    public String getCanNhaId() {
+        return canNhaId;
     }
 
-    public void setKhuId(String khuId) {
-        this.khuId = khuId;
+    @PropertyName("canNhaId")
+    public void setCanNhaId(String canNhaId) {
+        this.canNhaId = canNhaId;
     }
 
-    public String getKhuTen() {
-        return khuTen;
+    @PropertyName("canNhaTen")
+    public String getCanNhaTen() {
+        return canNhaTen;
     }
 
-    public void setKhuTen(String khuTen) {
-        this.khuTen = khuTen;
+    @PropertyName("canNhaTen")
+    public void setCanNhaTen(String canNhaTen) {
+        this.canNhaTen = canNhaTen;
     }
 
     public int getTang() {

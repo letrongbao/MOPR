@@ -20,7 +20,7 @@
             android:layout_marginTop="12dp"/>
 
         <EditText
-            android:id="@+id/etKhuAddr"
+            android:id="@+id/etCanNhaAddr"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="4dp"
@@ -48,7 +48,7 @@
             android:layout_marginTop="8dp"/>
 
         <EditText
-            android:id="@+id/etKhuName"
+            android:id="@+id/etCanNhaName"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="4dp"
@@ -67,7 +67,7 @@
             android:layout_marginTop="12dp"/>
 
         <EditText
-            android:id="@+id/etKhuPhone"
+            android:id="@+id/etCanNhaPhone"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="4dp"
@@ -414,7 +414,7 @@
             android:layout_marginTop="16dp"/>
 
         <EditText
-            android:id="@+id/etKhuNote"
+            android:id="@+id/etCanNhaNote"
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:layout_marginTop="4dp"
@@ -484,3 +484,6 @@
 
     </LinearLayout>
 </ScrollView>
+
+
+

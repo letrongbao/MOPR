@@ -27,6 +27,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,6 +42,7 @@ import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.features.contract.HopDongActivity;
 import com.example.myapplication.domain.PhongTro;
 import com.example.myapplication.viewmodel.PhongTroViewModel;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
 public class PhongTroActivity extends AppCompatActivity {
@@ -60,6 +62,11 @@ public class PhongTroActivity extends AppCompatActivity {
     private BroadcastReceiver uploadReceiver;
 
     private com.google.firebase.firestore.ListenerRegistration tenantsListener;
+
+    private String presetCanNhaId;
+    private String presetCanNhaName;
+    private String presetCanNhaAddr;
+    private String initialStatusFilter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,12 +114,28 @@ public class PhongTroActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE);
         LocalBroadcastManager.getInstance(this).registerReceiver(uploadReceiver, filter);
 
-        // Làm trong suốt Status Bar giống HomeActivity
+        // Edge-to-edge like Home
         Window window = getWindow();
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
+        // Ensure status bar icons are white
+        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
+                window.getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.setAppearanceLightStatusBars(false);
+        }
+
         setContentView(R.layout.activity_phong_tro);
+
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                return insets;
+            });
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -120,20 +143,16 @@ public class PhongTroActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("");
         }
-
-        // Tự động đẩy Toolbar xuống để tránh bị Status Bar che
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
-        String filterKhuId = getIntent().getStringExtra("KHU_ID");
-        String khuName = getIntent().getStringExtra("KHU_NAME");
-        String khuAddr = getIntent().getStringExtra("KHU_ADDR");
+        presetCanNhaId = getIntent().getStringExtra("CAN_NHA_ID");
+        presetCanNhaName = getIntent().getStringExtra("CAN_NHA_NAME");
+        presetCanNhaAddr = getIntent().getStringExtra("CAN_NHA_ADDR");
+        initialStatusFilter = getIntent().getStringExtra("FILTER_STATUS");
+        final String finalFilterCanNhaId = presetCanNhaId;
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -144,14 +163,9 @@ public class PhongTroActivity extends AppCompatActivity {
             tvTitle1.setText("Danh sách phòng của nhà");
         }
         if (tvTitle2 != null) {
-            String sub = (khuAddr != null && !khuAddr.trim().isEmpty()) ? khuAddr
-                    : (khuName != null ? khuName : "");
+            String sub = (presetCanNhaAddr != null && !presetCanNhaAddr.trim().isEmpty()) ? presetCanNhaAddr
+                    : (presetCanNhaName != null ? presetCanNhaName : "");
             tvTitle2.setText(sub);
-        }
-
-        View btnHome = findViewById(R.id.btnHome);
-        if (btnHome != null) {
-            btnHome.setOnClickListener(v -> finish());
         }
 
         View btnAddRoom = findViewById(R.id.btnAddRoom);
@@ -160,8 +174,9 @@ public class PhongTroActivity extends AppCompatActivity {
         }
 
         MaterialButtonToggleGroup toggle = findViewById(R.id.toggleRoomStatus);
+        final int initialTabIndex = RoomStatus.RENTED.equals(initialStatusFilter) ? 1 : 0;
         if (toggle != null) {
-            toggle.check(R.id.btnSegmentVacant);
+            toggle.check(initialTabIndex == 1 ? R.id.btnSegmentRented : R.id.btnSegmentVacant);
         }
 
         adapter = new PhongTroAdapter(new PhongTroAdapter.OnItemActionListener() {
@@ -216,7 +231,7 @@ public class PhongTroActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
-        final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(0);
+        final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(initialTabIndex);
         if (toggle != null) {
             toggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
                 if (!isChecked)
@@ -228,7 +243,7 @@ public class PhongTroActivity extends AppCompatActivity {
                 }
 
                 if (viewModel != null && viewModel.getDanhSachPhong().getValue() != null) {
-                    applyFilters(viewModel.getDanhSachPhong().getValue(), filterKhuId, tabIdx.get());
+                    applyFilters(viewModel.getDanhSachPhong().getValue(), finalFilterCanNhaId, tabIdx.get());
                 }
             });
         }
@@ -279,20 +294,20 @@ public class PhongTroActivity extends AppCompatActivity {
         viewModel.getDanhSachPhong().observe(this, list -> {
             if (list == null)
                 return;
-            applyFilters(list, filterKhuId, tabIdx.get());
+            applyFilters(list, finalFilterCanNhaId, tabIdx.get());
         });
     }
 
     private void applyFilters(
             @androidx.annotation.NonNull java.util.List<com.example.myapplication.domain.PhongTro> list,
-            String filterKhuId,
+            String filterCanNhaId,
             int tabIndex) {
         java.util.List<com.example.myapplication.domain.PhongTro> out = new java.util.ArrayList<>();
         for (com.example.myapplication.domain.PhongTro p : list) {
             if (p == null)
                 continue;
-            if (filterKhuId != null && !filterKhuId.trim().isEmpty()) {
-                if (p.getKhuId() == null || !filterKhuId.equals(p.getKhuId()))
+            if (filterCanNhaId != null && !filterCanNhaId.trim().isEmpty()) {
+                if (p.getCanNhaId() == null || !filterCanNhaId.equals(p.getCanNhaId()))
                     continue;
             }
             boolean vacant = RoomStatus.VACANT.equals(p.getTrangThai());
@@ -309,6 +324,63 @@ public class PhongTroActivity extends AppCompatActivity {
 
     private interface BoolCallback {
         void onResult(boolean value);
+    }
+
+    private String normalizeCanNhaId(String canNhaId) {
+        return canNhaId == null ? "" : canNhaId.trim();
+    }
+
+    private boolean hasDuplicateRoomNumberInSameCanNha(@NonNull String soPhong, String canNhaId,
+            String excludeRoomId) {
+        if (viewModel == null || viewModel.getDanhSachPhong().getValue() == null) {
+            return false;
+        }
+
+        String targetSoPhong = soPhong.trim();
+        String targetCanNhaId = normalizeCanNhaId(canNhaId);
+
+        for (PhongTro item : viewModel.getDanhSachPhong().getValue()) {
+            if (item == null) {
+                continue;
+            }
+            if (excludeRoomId != null && excludeRoomId.equals(item.getId())) {
+                continue;
+            }
+
+            String itemSoPhong = item.getSoPhong() == null ? "" : item.getSoPhong().trim();
+            String itemCanNhaId = normalizeCanNhaId(item.getCanNhaId());
+            if (itemCanNhaId.equals(targetCanNhaId) && itemSoPhong.equalsIgnoreCase(targetSoPhong)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void hasDuplicateRoomNumberInSameCanNhaRemote(
+            @NonNull String soPhong,
+            String canNhaId,
+            String excludeRoomId,
+            @NonNull BoolCallback cb) {
+        com.google.firebase.firestore.Query q = scopedCollection("phong_tro")
+                .whereEqualTo("soPhong", soPhong.trim());
+
+        q.get()
+                .addOnSuccessListener(qs -> {
+                    String targetCanNhaId = normalizeCanNhaId(canNhaId);
+                    boolean exists = false;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
+                        if (excludeRoomId != null && excludeRoomId.equals(doc.getId())) {
+                            continue;
+                        }
+                        String docCanNhaId = normalizeCanNhaId(doc.getString("canNhaId"));
+                        if (docCanNhaId.equals(targetCanNhaId)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    cb.onResult(exists);
+                })
+                .addOnFailureListener(e -> cb.onResult(false));
     }
 
     private com.google.firebase.firestore.CollectionReference scopedCollection(String collection) {
@@ -367,18 +439,25 @@ public class PhongTroActivity extends AppCompatActivity {
         EditText etSoPhong = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
         EditText etGiaThue = dialogView.findViewById(R.id.etGiaThue);
-        Spinner spinnerKhu = dialogView.findViewById(R.id.spinnerKhuTro);
+        Spinner spinnerCanNha = dialogView.findViewById(R.id.spinnerCanNha);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
-        Spinner spinnerTrangThai = dialogView.findViewById(R.id.spinnerTrangThai);
+        View layoutCanNhaField = dialogView.findViewById(R.id.layoutCanNhaField);
 
-        java.util.List<String> khuIds = new java.util.ArrayList<>();
-        java.util.List<String> khuLabels = new java.util.ArrayList<>();
-        ArrayAdapter<String> khuAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, khuLabels);
-        khuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        if (spinnerKhu != null) {
-            spinnerKhu.setAdapter(khuAdapter);
-            loadKhuOptions(spinnerKhu, khuIds, khuLabels, null, khuAdapter);
+        MoneyFormatter.applyTo(etGiaThue);
+
+        final boolean lockCanNha = presetCanNhaId != null && !presetCanNhaId.trim().isEmpty();
+
+        java.util.List<String> canNhaIds = new java.util.ArrayList<>();
+        java.util.List<String> canNhaLabels = new java.util.ArrayList<>();
+        ArrayAdapter<String> canNhaAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, canNhaLabels);
+        canNhaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerCanNha != null && !lockCanNha) {
+            spinnerCanNha.setAdapter(canNhaAdapter);
+            loadCanNhaOptions(spinnerCanNha, canNhaIds, canNhaLabels, null, canNhaAdapter);
+        }
+        if (layoutCanNhaField != null && lockCanNha) {
+            layoutCanNhaField.setVisibility(View.GONE);
         }
 
         // Image picker
@@ -387,14 +466,10 @@ public class PhongTroActivity extends AppCompatActivity {
         dialogView.findViewById(R.id.btnChonAnh).setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
         ArrayAdapter<String> loaiAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, new String[] { "Đơn", "Đôi", "Ghép" });
+                android.R.layout.simple_spinner_item,
+                new String[] { "Studio", "Duplex", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ" });
         loaiAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLoai.setAdapter(loaiAdapter);
-
-        ArrayAdapter<String> ttAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, new String[] { "Trống", "Đã thuê" });
-        ttAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTrangThai.setAdapter(ttAdapter);
 
         new AlertDialog.Builder(this)
                 .setTitle("Thêm phòng mới")
@@ -408,31 +483,60 @@ public class PhongTroActivity extends AppCompatActivity {
                         return;
                     }
                     try {
-                        PhongTro phong = new PhongTro(
-                                soPhong,
-                                spinnerLoai.getSelectedItem().toString(),
-                                Double.parseDouble(dienTichStr),
-                                giaThue,
-                                spinnerTrangThai.getSelectedItem().toString());
-
-                        if (spinnerKhu != null) {
-                            int khuIdx = spinnerKhu.getSelectedItemPosition();
-                            if (khuIdx >= 0 && khuIdx < khuIds.size()) {
-                                phong.setKhuId(khuIds.get(khuIdx));
-                                phong.setKhuTen(khuLabels.get(khuIdx));
+                        String selectedCanNhaId = lockCanNha ? presetCanNhaId.trim() : "";
+                        String selectedCanNhaLabel = lockCanNha
+                                ? ((presetCanNhaName != null && !presetCanNhaName.trim().isEmpty()) ? presetCanNhaName
+                                        : (presetCanNhaAddr != null ? presetCanNhaAddr : ""))
+                                : "";
+                        if (!lockCanNha && spinnerCanNha != null) {
+                            int canNhaIdx = spinnerCanNha.getSelectedItemPosition();
+                            if (canNhaIdx >= 0 && canNhaIdx < canNhaIds.size()) {
+                                selectedCanNhaId = canNhaIds.get(canNhaIdx);
+                                selectedCanNhaLabel = canNhaLabels.get(canNhaIdx);
                             }
                         }
+                        final String finalSelectedCanNhaId = selectedCanNhaId;
+                        final String finalSelectedCanNhaLabel = selectedCanNhaLabel;
 
-                        ensureRoomQuotaThen(() -> {
-                            if (selectedImageUri != null) {
-                                uploadImageAndSave(phong);
-                            } else {
-                                viewModel.themPhong(phong,
-                                        () -> runOnUiThread(() -> Toast
-                                                .makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
-                                        () -> runOnUiThread(() -> Toast.makeText(this,
-                                                "Thất bại — kiểm tra kết nối Firebase", Toast.LENGTH_LONG).show()));
+                        if (hasDuplicateRoomNumberInSameCanNha(soPhong, finalSelectedCanNhaId, null)) {
+                            Toast.makeText(this,
+                                    "Số phòng đã tồn tại trong căn nhà đã chọn",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        hasDuplicateRoomNumberInSameCanNhaRemote(soPhong, finalSelectedCanNhaId, null, exists -> {
+                            if (exists) {
+                                Toast.makeText(this,
+                                        "Số phòng đã tồn tại trong căn nhà đã chọn",
+                                        Toast.LENGTH_LONG).show();
+                                return;
                             }
+
+                            PhongTro phong = new PhongTro(
+                                    soPhong,
+                                    spinnerLoai.getSelectedItem().toString(),
+                                    Double.parseDouble(dienTichStr),
+                                    giaThue,
+                                    RoomStatus.VACANT);
+
+                            if (!finalSelectedCanNhaId.isEmpty()) {
+                                phong.setCanNhaId(finalSelectedCanNhaId);
+                                phong.setCanNhaTen(finalSelectedCanNhaLabel);
+                            }
+
+                            ensureRoomQuotaThen(() -> {
+                                if (selectedImageUri != null) {
+                                    uploadImageAndSave(phong);
+                                } else {
+                                    viewModel.themPhong(phong,
+                                            () -> runOnUiThread(() -> Toast
+                                                    .makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
+                                            () -> runOnUiThread(() -> Toast.makeText(this,
+                                                    "Thất bại — kiểm tra kết nối Firebase", Toast.LENGTH_LONG)
+                                                    .show()));
+                                }
+                            });
                         });
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
@@ -470,7 +574,7 @@ public class PhongTroActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> onAllowed.run());
     }
 
-    private void loadKhuOptions(@NonNull Spinner spinner, @NonNull java.util.List<String> ids,
+    private void loadCanNhaOptions(@NonNull Spinner spinner, @NonNull java.util.List<String> ids,
             @NonNull java.util.List<String> labels,
             String selectedId, @NonNull android.widget.ArrayAdapter<String> adapter) {
         ids.clear();
@@ -483,19 +587,19 @@ public class PhongTroActivity extends AppCompatActivity {
         com.google.firebase.firestore.CollectionReference col;
         if (tenantId != null && !tenantId.trim().isEmpty()) {
             col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("tenants").document(tenantId).collection("khu_tro");
+                    .collection("tenants").document(tenantId).collection("can_nha");
         } else {
             com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
                     .getCurrentUser();
             if (user == null)
                 return;
             col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("users").document(user.getUid()).collection("khu_tro");
+                    .collection("users").document(user.getUid()).collection("can_nha");
         }
 
         col.get().addOnSuccessListener(qs -> {
             for (com.google.firebase.firestore.QueryDocumentSnapshot doc : qs) {
-                String name = doc.getString("tenKhu");
+                String name = doc.getString("tenCanNha");
                 if (name == null || name.trim().isEmpty())
                     name = doc.getId();
                 ids.add(doc.getId());
@@ -519,21 +623,26 @@ public class PhongTroActivity extends AppCompatActivity {
         EditText etSoPhong = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
         EditText etGiaThue = dialogView.findViewById(R.id.etGiaThue);
-        Spinner spinnerKhu = dialogView.findViewById(R.id.spinnerKhuTro);
+        Spinner spinnerCanNha = dialogView.findViewById(R.id.spinnerCanNha);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
-        Spinner spinnerTrangThai = dialogView.findViewById(R.id.spinnerTrangThai);
+        View layoutCanNhaField = dialogView.findViewById(R.id.layoutCanNhaField);
+
+        final boolean lockCanNha = presetCanNhaId != null && !presetCanNhaId.trim().isEmpty();
 
         // Apply money formatter to price field
         MoneyFormatter.applyTo(etGiaThue);
 
-        java.util.List<String> khuIds = new java.util.ArrayList<>();
-        java.util.List<String> khuLabels = new java.util.ArrayList<>();
-        ArrayAdapter<String> khuAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, khuLabels);
-        khuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        if (spinnerKhu != null) {
-            spinnerKhu.setAdapter(khuAdapter);
-            loadKhuOptions(spinnerKhu, khuIds, khuLabels, phong.getKhuId(), khuAdapter);
+        java.util.List<String> canNhaIds = new java.util.ArrayList<>();
+        java.util.List<String> canNhaLabels = new java.util.ArrayList<>();
+        ArrayAdapter<String> canNhaAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, canNhaLabels);
+        canNhaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        if (spinnerCanNha != null && !lockCanNha) {
+            spinnerCanNha.setAdapter(canNhaAdapter);
+            loadCanNhaOptions(spinnerCanNha, canNhaIds, canNhaLabels, phong.getCanNhaId(), canNhaAdapter);
+        }
+        if (layoutCanNhaField != null && lockCanNha) {
+            layoutCanNhaField.setVisibility(View.GONE);
         }
 
         // Image picker
@@ -546,17 +655,11 @@ public class PhongTroActivity extends AppCompatActivity {
             Glide.with(this).load(phong.getHinhAnh()).centerCrop().into(dialogImgPreview);
         }
 
-        String[] loaiOptions = { "Đơn", "Đôi", "Ghép" };
+        String[] loaiOptions = { "Studio", "Duplex", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ" };
         ArrayAdapter<String> loaiAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, loaiOptions);
         loaiAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLoai.setAdapter(loaiAdapter);
-
-        String[] ttOptions = { "Trống", "Đã thuê" };
-        ArrayAdapter<String> ttAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, ttOptions);
-        ttAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTrangThai.setAdapter(ttAdapter);
 
         etSoPhong.setText(phong.getSoPhong());
         etDienTich.setText(phong.getDienTich() % 1 == 0 ? String.valueOf((long) phong.getDienTich())
@@ -565,12 +668,6 @@ public class PhongTroActivity extends AppCompatActivity {
         for (int i = 0; i < loaiOptions.length; i++) {
             if (loaiOptions[i].equals(phong.getLoaiPhong())) {
                 spinnerLoai.setSelection(i);
-                break;
-            }
-        }
-        for (int i = 0; i < ttOptions.length; i++) {
-            if (ttOptions[i].equals(phong.getTrangThai())) {
-                spinnerTrangThai.setSelection(i);
                 break;
             }
         }
@@ -587,34 +684,65 @@ public class PhongTroActivity extends AppCompatActivity {
                         return;
                     }
                     try {
-                        PhongTro updated = new PhongTro(soPhong,
-                                spinnerLoai.getSelectedItem().toString(),
-                                Double.parseDouble(dienTichStr),
-                                giaThue,
-                                spinnerTrangThai.getSelectedItem().toString());
-                        updated.setId(phong.getId());
-
-                        if (spinnerKhu != null) {
-                            int khuIdx = spinnerKhu.getSelectedItemPosition();
-                            if (khuIdx >= 0 && khuIdx < khuIds.size()) {
-                                updated.setKhuId(khuIds.get(khuIdx));
-                                updated.setKhuTen(khuLabels.get(khuIdx));
+                        String selectedCanNhaId = lockCanNha ? presetCanNhaId.trim() : "";
+                        String selectedCanNhaLabel = lockCanNha
+                                ? ((presetCanNhaName != null && !presetCanNhaName.trim().isEmpty()) ? presetCanNhaName
+                                        : (presetCanNhaAddr != null ? presetCanNhaAddr : ""))
+                                : "";
+                        if (!lockCanNha && spinnerCanNha != null) {
+                            int canNhaIdx = spinnerCanNha.getSelectedItemPosition();
+                            if (canNhaIdx >= 0 && canNhaIdx < canNhaIds.size()) {
+                                selectedCanNhaId = canNhaIds.get(canNhaIdx);
+                                selectedCanNhaLabel = canNhaLabels.get(canNhaIdx);
                             }
                         }
+                        final String finalSelectedCanNhaId = selectedCanNhaId;
+                        final String finalSelectedCanNhaLabel = selectedCanNhaLabel;
 
-                        enforceRentedIfHasTenants(updated, () -> {
-                            if (selectedImageUri != null) {
-                                uploadImageAndSave(updated);
-                            } else {
-                                // Giữ ảnh cũ nếu không chọn ảnh mới
-                                updated.setHinhAnh(phong.getHinhAnh());
-                                viewModel.capNhatPhong(updated,
-                                        () -> runOnUiThread(() -> Toast
-                                                .makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()),
-                                        () -> runOnUiThread(() -> Toast
-                                                .makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
-                            }
-                        });
+                        if (hasDuplicateRoomNumberInSameCanNha(soPhong, finalSelectedCanNhaId, phong.getId())) {
+                            Toast.makeText(this,
+                                    "Số phòng đã tồn tại trong căn nhà đã chọn",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        hasDuplicateRoomNumberInSameCanNhaRemote(soPhong, finalSelectedCanNhaId, phong.getId(),
+                                exists -> {
+                                    if (exists) {
+                                        Toast.makeText(this,
+                                                "Số phòng đã tồn tại trong căn nhà đã chọn",
+                                                Toast.LENGTH_LONG).show();
+                                        return;
+                                    }
+
+                                    PhongTro updated = new PhongTro(soPhong,
+                                            spinnerLoai.getSelectedItem().toString(),
+                                            Double.parseDouble(dienTichStr),
+                                            giaThue,
+                                            phong.getTrangThai());
+                                    updated.setId(phong.getId());
+
+                                    if (!finalSelectedCanNhaId.isEmpty()) {
+                                        updated.setCanNhaId(finalSelectedCanNhaId);
+                                        updated.setCanNhaTen(finalSelectedCanNhaLabel);
+                                    }
+
+                                    enforceRentedIfHasTenants(updated, () -> {
+                                        if (selectedImageUri != null) {
+                                            uploadImageAndSave(updated);
+                                        } else {
+                                            // Giữ ảnh cũ nếu không chọn ảnh mới
+                                            updated.setHinhAnh(phong.getHinhAnh());
+                                            viewModel.capNhatPhong(updated,
+                                                    () -> runOnUiThread(() -> Toast
+                                                            .makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT)
+                                                            .show()),
+                                                    () -> runOnUiThread(() -> Toast
+                                                            .makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT)
+                                                            .show()));
+                                        }
+                                    });
+                                });
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
                     }

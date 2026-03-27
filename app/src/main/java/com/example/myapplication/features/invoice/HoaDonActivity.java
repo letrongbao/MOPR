@@ -76,11 +76,9 @@ public class HoaDonActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Handle window insets properly for status bar
         Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        WindowCompat.setDecorFitsSystemWindows(window, true);
 
         setContentView(R.layout.activity_hoa_don);
 
@@ -90,12 +88,6 @@ public class HoaDonActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Thống kê báo phí");
         }
-
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
 
         tvEmpty = findViewById(R.id.tvEmpty);
         llEmpty = findViewById(R.id.llEmpty);
@@ -111,10 +103,9 @@ public class HoaDonActivity extends AppCompatActivity {
         TabLayout tabLayout = findViewById(R.id.tabLayout);
         final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(0);
         if (tabLayout != null) {
-            tabLayout.addTab(tabLayout.newTab().setText("Chưa báo"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đã báo"));
+            tabLayout.addTab(tabLayout.newTab().setText("Chưa thanh toán"));
             tabLayout.addTab(tabLayout.newTab().setText("Đóng 1 phần"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đã đóng"));
+            tabLayout.addTab(tabLayout.newTab().setText("Đã thanh toán"));
         }
 
         adapter = new HoaDonAdapter(new HoaDonAdapter.OnItemActionListener() {
@@ -824,8 +815,6 @@ public class HoaDonActivity extends AppCompatActivity {
             if (tabIndex == 0) {
                 match = InvoiceStatus.UNPAID.equals(st);
             } else if (tabIndex == 1) {
-                match = InvoiceStatus.PAID.equals(st);
-            } else if (tabIndex == 2) {
                 match = InvoiceStatus.PARTIAL.equals(st);
             } else {
                 match = InvoiceStatus.PAID.equals(st);
@@ -924,27 +913,17 @@ public class HoaDonActivity extends AppCompatActivity {
                 .setView(dialogView)
                 .setPositiveButton("Xác nhận", (d, w) -> {
                     try {
-                        Payment p = new Payment();
-                        p.setInvoiceId(hoaDon.getId());
-                        p.setRoomId(hoaDon.getIdPhong());
                         double amount = parseDouble(etAmount);
                         if (amount <= 0) {
                             Toast.makeText(this, "Số tiền phải > 0", Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        p.setAmount(amount);
-                        p.setMethod(spinnerMethod.getSelectedItemPosition() == 0 ? "CASH" : "BANK");
-                        p.setPaidAt(etPaidAt.getText().toString().trim());
-                        p.setNote(etNote.getText().toString().trim());
 
-                        paymentRepository.add(p,
-                                () -> {
-                                    recomputeAndUpdateInvoiceStatus(hoaDon);
-                                    runOnUiThread(() -> Toast
-                                            .makeText(this, "Đã ghi nhận thanh toán", Toast.LENGTH_SHORT).show());
-                                },
-                                () -> runOnUiThread(() -> Toast
-                                        .makeText(this, "Ghi nhận thanh toán thất bại", Toast.LENGTH_SHORT).show()));
+                        String method = spinnerMethod.getSelectedItemPosition() == 0 ? "CASH" : "BANK";
+                        String paidAt = etPaidAt.getText().toString().trim();
+                        String note = etNote.getText().toString().trim();
+
+                        submitPayment(hoaDon, amount, method, paidAt, note);
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
                     }
@@ -1009,6 +988,56 @@ public class HoaDonActivity extends AppCompatActivity {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    private void submitPayment(@NonNull HoaDon hoaDon, double amount, @NonNull String method,
+            @NonNull String paidAt, @NonNull String note) {
+        String invoiceId = hoaDon.getId();
+        if (invoiceId == null || invoiceId.trim().isEmpty()) {
+            Toast.makeText(this, "Thiếu ID hoá đơn", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        scopedCollection("payments")
+                .whereEqualTo("invoiceId", invoiceId)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    double paid = 0;
+                    if (qs != null) {
+                        for (QueryDocumentSnapshot doc : qs) {
+                            Double amt = doc.getDouble("amount");
+                            if (amt != null)
+                                paid += amt;
+                        }
+                    }
+
+                    double remaining = Math.max(0, hoaDon.getTongTien() - paid);
+                    if (amount > remaining + 0.01) {
+                        Toast.makeText(this,
+                                "Số tiền thu vượt phần còn lại: " + formatDouble(remaining),
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    Payment p = new Payment();
+                    p.setInvoiceId(invoiceId);
+                    p.setRoomId(hoaDon.getIdPhong());
+                    p.setAmount(amount);
+                    p.setMethod(method);
+                    p.setPaidAt(paidAt);
+                    p.setNote(note);
+
+                    paymentRepository.add(p,
+                            () -> {
+                                recomputeAndUpdateInvoiceStatus(hoaDon);
+                                runOnUiThread(() -> Toast
+                                        .makeText(this, "Đã ghi nhận thanh toán", Toast.LENGTH_SHORT).show());
+                            },
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, "Ghi nhận thanh toán thất bại", Toast.LENGTH_SHORT).show()));
+                })
+                .addOnFailureListener(e -> Toast
+                        .makeText(this, "Không thể kiểm tra công nợ hiện tại", Toast.LENGTH_SHORT).show());
     }
 
     @Override

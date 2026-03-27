@@ -49,6 +49,10 @@
         <!-- Tenant / Contract -->
         <activity android:name=".features.tenant.NguoiThueActivity" />
         <activity android:name=".features.contract.HopDongActivity" />
+        <activity android:name=".features.contract.ContractPdfPreviewActivity" />
+        
+        <!-- History -->
+        <activity android:name=".features.history.RentalHistoryActivity" />
 
         <!-- Finance -->
         <activity android:name=".features.finance.ChiPhiActivity" />
@@ -56,6 +60,8 @@
 
         <!-- Settings -->
         <activity android:name=".features.settings.ProfileActivity" />
+        <activity android:name=".features.settings.EditProfileActivity" />
+        <activity android:name=".features.settings.ChangePasswordActivity" />
         <activity android:name=".features.settings.BackupRestoreActivity" />
 
         <!-- Org -->
@@ -67,6 +73,16 @@
         <service
             android:name=".core.service.ImageUploadService"
             android:foregroundServiceType="dataSync" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

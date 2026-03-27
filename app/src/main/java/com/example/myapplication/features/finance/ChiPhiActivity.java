@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.domain.ChiPhi;
 import com.example.myapplication.viewmodel.ChiPhiViewModel;
@@ -161,33 +162,20 @@ public class ChiPhiActivity extends AppCompatActivity {
     private void updateSummary(List<ChiPhi> list) {
         if (tvSummary == null)
             return;
-        String month = new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date());
+        String month = FinancePeriodUtil
+                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
         double total = 0;
         if (list != null) {
             for (ChiPhi cp : list) {
                 if (cp == null)
                     continue;
-                String my = toMonthYear(cp.getPaidAt());
+                String my = FinancePeriodUtil.normalizeMonthYear(cp.getPaidAt());
                 if (month.equals(my))
                     total += cp.getAmount();
             }
         }
         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         tvSummary.setText("Tổng chi tháng " + month + ": " + fmt.format(total));
-    }
-
-    private String toMonthYear(String paidAt) {
-        if (paidAt == null)
-            return "";
-        String[] parts = paidAt.trim().split("/");
-        if (parts.length == 3) {
-            return parts[1] + "/" + parts[2];
-        }
-        if (parts.length == 2) {
-            // in case user enters MM/yyyy
-            return parts[0] + "/" + parts[1];
-        }
-        return "";
     }
 
     private void hienDialogThem() {

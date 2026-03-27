@@ -37,7 +37,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"/>
 
             <TextView
-                android:id="@+id/tvKhuAddr"
+                android:id="@+id/tvCanNhaAddr"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -92,7 +92,7 @@
                 </FrameLayout>
 
                 <TextView
-                    android:id="@+id/tvKhuName"
+                    android:id="@+id/tvCanNhaName"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
@@ -361,3 +361,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

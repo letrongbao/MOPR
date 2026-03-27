@@ -65,6 +65,30 @@ public class NguoiThueRepository {
         return data;
     }
 
+    /**
+     * Lấy danh sách hợp đồng đã kết thúc (lịch sử cho thuê)
+     */
+    public MutableLiveData<List<NguoiThue>> layLichSuChoThue() {
+        MutableLiveData<List<NguoiThue>> data = new MutableLiveData<>();
+        getUserCollection().whereEqualTo("trangThaiHopDong", "ENDED")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null) {
+                        data.setValue(new ArrayList<>());
+                        return;
+                    }
+                    List<NguoiThue> list = new ArrayList<>();
+                    snapshot.forEach(doc -> {
+                        NguoiThue n = doc.toObject(NguoiThue.class);
+                        n.setId(doc.getId());
+                        list.add(n);
+                    });
+                    // Sắp xếp theo thời gian kết thúc mới nhất
+                    list.sort((a, b) -> Long.compare(b.getEndedAt(), a.getEndedAt()));
+                    data.setValue(list);
+                });
+        return data;
+    }
+
     public void themNguoiThue(NguoiThue nguoiThue, Runnable onSuccess, Runnable onFail) {
         getUserCollection().add(nguoiThue)
                 .addOnSuccessListener(ref -> {

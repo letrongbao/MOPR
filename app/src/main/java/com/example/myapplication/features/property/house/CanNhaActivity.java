@@ -28,6 +28,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,6 +41,7 @@ import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.features.property.room.PhongTroActivity;
 import com.example.myapplication.domain.CanNha;
 import com.example.myapplication.core.repository.domain.CanNhaRepository;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -64,11 +66,28 @@ public class CanNhaActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Edge-to-edge like Home
         Window window = getWindow();
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
-        setContentView(R.layout.activity_khu_tro);
+        // Ensure status bar icons are white
+        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
+                window.getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.setAppearanceLightStatusBars(false);
+        }
+
+        setContentView(R.layout.activity_can_nha);
+
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                return insets;
+            });
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -76,12 +95,7 @@ public class CanNhaActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Các căn nhà của bạn");
         }
-
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         tvEmpty = findViewById(R.id.tvEmpty);
 
@@ -140,9 +154,9 @@ public class CanNhaActivity extends AppCompatActivity {
             @Override
             public void onViewRooms(@NonNull CanNha item) {
                 Intent it = new Intent(CanNhaActivity.this, PhongTroActivity.class);
-                it.putExtra("KHU_ID", item.getId());
-                it.putExtra("KHU_NAME", item.getTenKhu());
-                it.putExtra("KHU_ADDR", item.getDiaChi());
+                it.putExtra("CAN_NHA_ID", item.getId());
+                it.putExtra("CAN_NHA_NAME", item.getTenCanNha());
+                it.putExtra("CAN_NHA_ADDR", item.getDiaChi());
                 startActivity(it);
             }
         });
@@ -195,7 +209,7 @@ public class CanNhaActivity extends AppCompatActivity {
     private void confirmDelete(CanNha k) {
         new AlertDialog.Builder(this)
                 .setTitle("Xóa nhà?")
-                .setMessage("Bạn có chắc chắn muốn xóa '" + k.getTenKhu() + "'?")
+                .setMessage("Bạn có chắc chắn muốn xóa '" + k.getTenCanNha() + "'?")
                 .setPositiveButton("Xóa", (d, w) -> repo.delete(k.getId(),
                         () -> runOnUiThread(() -> Toast.makeText(this, "Đã xóa", Toast.LENGTH_SHORT).show()),
                         () -> runOnUiThread(() -> Toast.makeText(this, "Xóa thất bại", Toast.LENGTH_SHORT).show())))
@@ -204,10 +218,10 @@ public class CanNhaActivity extends AppCompatActivity {
     }
 
     private void showCreateDialog(CanNha existing) {
-        View v = getLayoutInflater().inflate(R.layout.dialog_create_khu, null);
-        EditText etName = v.findViewById(R.id.etKhuName);
-        EditText etPhone = v.findViewById(R.id.etKhuPhone);
-        EditText etAddr = v.findViewById(R.id.etKhuAddr);
+        View v = getLayoutInflater().inflate(R.layout.dialog_create_can_nha, null);
+        EditText etName = v.findViewById(R.id.etCanNhaName);
+        EditText etPhone = v.findViewById(R.id.etCanNhaPhone);
+        EditText etAddr = v.findViewById(R.id.etCanNhaAddr);
 
         LinearLayout llExtraFees = v.findViewById(R.id.llExtraFeesContainer);
         View btnAddExtraFee = v.findViewById(R.id.btnAddExtraFee);
@@ -233,7 +247,7 @@ public class CanNhaActivity extends AppCompatActivity {
         EditText etGiaRac = v.findViewById(R.id.etGiaRac);
         EditText etGiaDichVu = v.findViewById(R.id.etGiaDichVu);
 
-        EditText etNote = v.findViewById(R.id.etKhuNote);
+        EditText etNote = v.findViewById(R.id.etCanNhaNote);
 
         // Apply money formatters to all price fields
         applyMoneyFormatters(etGiaDien, etGiaNuoc, etGiaXe, etGiaInternet,
@@ -261,7 +275,7 @@ public class CanNhaActivity extends AppCompatActivity {
         }
 
         if (isEdit) {
-            etName.setText(existing.getTenKhu());
+            etName.setText(existing.getTenCanNha());
             etPhone.setText(existing.getSdtQuanLy());
             etAddr.setText(existing.getDiaChi());
 
@@ -366,7 +380,7 @@ public class CanNhaActivity extends AppCompatActivity {
                 java.util.List<CanNha.PhiKhac> extraFees = collectExtraFees(llExtraFees);
 
                 CanNha target = isEdit ? existing : new CanNha();
-                target.setTenKhu(name);
+                target.setTenCanNha(name);
                 target.setSdtQuanLy(phone);
                 target.setDiaChi(addr);
                 target.setGhiChu(note);
@@ -399,7 +413,7 @@ public class CanNhaActivity extends AppCompatActivity {
                     repo.add(target,
                             () -> runOnUiThread(() -> Toast.makeText(this, "Đã thêm", Toast.LENGTH_SHORT).show()),
                             () -> runOnUiThread(
-                                    () -> Toast.makeText(this, "Thêm thất bại", Toast.LENGTH_SHORT).show()));
+                                    () -> Toast.makeText(this, "Thêm thất bại", Toast.LENGTH_LONG).show()));
                 }
 
                 dlg.dismiss();

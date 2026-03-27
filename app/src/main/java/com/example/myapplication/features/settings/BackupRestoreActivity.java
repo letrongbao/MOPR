@@ -51,10 +51,11 @@ public class BackupRestoreActivity extends AppCompatActivity {
     private String tenantId;
 
     private static final String[] BACKUP_COLLECTIONS = new String[] {
-            "khu_tro",
+            "can_nha",
             "phong_tro",
             "nguoi_thue",
             "hoa_don",
+            "rental_history",
             "payments",
             "meterReadings",
             "chi_phi"

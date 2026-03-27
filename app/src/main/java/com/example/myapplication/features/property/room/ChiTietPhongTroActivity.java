@@ -199,7 +199,7 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         currentPhong = phong;
         tenPhongHienTai = phong.getSoPhong();
 
-        String khu = phong.getKhuTen();
+        String khu = phong.getCanNhaTen();
         tvSoPhong.setText(
                 "Phòng " + phong.getSoPhong() + (khu != null && !khu.trim().isEmpty() ? (" • " + khu.trim()) : ""));
         tvLoaiPhong.setText(phong.getLoaiPhong());
@@ -251,3 +251,4 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         return true;
     }
 }
+
