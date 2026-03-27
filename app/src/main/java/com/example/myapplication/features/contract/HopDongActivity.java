@@ -643,34 +643,182 @@ public class HopDongActivity extends AppCompatActivity {
     }
 
     private String buildContractHtml(@NonNull NguoiThue c) {
-        String room = currentPhong != null ? ("Phòng " + nullToEmpty(currentPhong.getSoPhong())) : "";
-        return "<html><head><meta charset='utf-8'/>" +
-                "<style>body{font-family:sans-serif;padding:18px}h2{margin:0 0 12px 0}" +
-                "table{width:100%;border-collapse:collapse}td{padding:6px 0;vertical-align:top}" +
-                ".k{color:#666;width:32%}.v{font-weight:600}</style></head><body>" +
-                "<h2>HỢP ĐỒNG THUÊ PHÒNG</h2>" +
-                "<table>" +
-                row("Số hợp đồng", nullToEmpty(c.getSoHopDong())) +
-                row("Khách hàng", nullToEmpty(c.getHoTen())) +
-                row("Điện thoại", nullToEmpty(c.getSoDienThoai())) +
-                row("Địa chỉ", nullToEmpty(c.getDiaChi())) +
-                row("CCCD", nullToEmpty(c.getCccd())) +
-                row("Phòng", room) +
-                row("Số người ở", String.valueOf(c.getSoThanhVien())) +
-                row("Tiền phòng", formatVnd(c.getTienPhong())) +
-                row("Tiền cọc", formatVnd(c.getTienCoc())) +
-                row("Ngày ký", nullToEmpty(c.getNgayBatDauThue())) +
-                row("Số tháng", String.valueOf(c.getSoThangHopDong())) +
-                row("Ngày kết thúc", nullToEmpty(c.getNgayKetThucHopDong())) +
-                row("Chỉ số điện", String.valueOf(c.getChiSoDienDau())) +
-                row("Gửi xe", c.isDichVuGuiXe() ? ("Có (" + c.getSoLuongXe() + " xe)") : "Không") +
-                row("Internet", c.isDichVuInternet() ? "Có" : "Không") +
-                row("Giặt sấy", c.isDichVuGiatSay() ? "Có" : "Không") +
-                row("Ghi chú", nullToEmpty(c.getGhiChu())) +
-                "</table>" +
-                "<p style='margin-top:24px'>Chủ trọ _____________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Khách thuê _____________</p>"
+        String room = currentPhong != null ? nullToEmpty(currentPhong.getSoPhong()) : "";
+        String khuDiaChi = currentKhu != null ? nullToEmpty(currentKhu.getDiaChi()) : "";
+        String tenChuTro = currentKhu != null ? nullToEmpty(currentKhu.getTenKhu()) : "";
+        String sdtChuTro = currentKhu != null ? nullToEmpty(currentKhu.getSdtQuanLy()) : "";
+        String ngayKy = nullToEmpty(c.getNgayBatDauThue());
+        String ngayKetThuc = nullToEmpty(c.getNgayKetThucHopDong());
+        int soThang = c.getSoThangHopDong();
+
+        // Build chi phí section
+        StringBuilder chiPhi = new StringBuilder();
+        if (currentKhu != null) {
+            chiPhi.append("- Tiền điện: ").append(formatVndNumberOnly(currentKhu.getGiaDien())).append("/kWh");
+            chiPhi.append(" (Chỉ số ban đầu: ").append(c.getChiSoDienDau()).append(")<br/>");
+            String cachTinhNuoc = currentKhu.getCachTinhNuoc();
+            String donViNuoc = "nguoi".equals(cachTinhNuoc) ? "/người/tháng"
+                    : "dong_ho".equals(cachTinhNuoc) ? "/m³" : "/phòng";
+            chiPhi.append("- Tiền nước: ").append(formatVndNumberOnly(currentKhu.getGiaNuoc())).append(donViNuoc)
+                    .append("<br/>");
+            if (c.isDichVuGuiXe()) {
+                chiPhi.append("- Phí gửi xe: ").append(formatVndNumberOnly(currentKhu.getGiaXe()))
+                        .append("/chiếc (SL: ").append(c.getSoLuongXe()).append(")<br/>");
+            }
+            if (c.isDichVuInternet()) {
+                chiPhi.append("- Internet: ").append(formatVndNumberOnly(currentKhu.getGiaInternet()))
+                        .append("/tháng<br/>");
+            }
+            if (c.isDichVuGiatSay()) {
+                chiPhi.append("- Giặt sấy: ").append(formatVndNumberOnly(currentKhu.getGiaGiatSay()))
+                        .append("/tháng<br/>");
+            }
+        }
+
+        return "<!DOCTYPE html><html><head><meta charset='utf-8'/>" +
+                "<style>" +
+                "body{font-family:'Times New Roman',serif;font-size:13px;padding:30px 40px;line-height:1.6;color:#000;}"
                 +
+                ".header{text-align:center;margin-bottom:20px;}" +
+                ".header h3{margin:0;font-size:14px;font-weight:bold;text-transform:uppercase;}" +
+                ".header p{margin:2px 0;font-size:12px;font-style:italic;}" +
+                ".title{text-align:center;margin:25px 0;}" +
+                ".title h2{margin:0;font-size:18px;font-weight:bold;text-transform:uppercase;}" +
+                ".info{margin-bottom:8px;}" +
+                ".section{margin-top:15px;}" +
+                ".section-title{font-weight:bold;margin-bottom:5px;}" +
+                ".indent{padding-left:20px;}" +
+                ".gia-han-table{width:100%;border-collapse:collapse;margin:10px 0;}" +
+                ".gia-han-table th,.gia-han-table td{border:1px solid #000;padding:6px 8px;text-align:center;font-size:12px;}"
+                +
+                ".gia-han-table th{background:#f5f5f5;font-weight:bold;}" +
+                ".signature{display:flex;justify-content:space-around;margin-top:40px;text-align:center;}" +
+                ".signature div{width:40%;}" +
+                ".signature .label{font-weight:bold;text-transform:uppercase;}" +
+                ".signature .note{font-style:italic;font-size:11px;}" +
+                ".signature .name{margin-top:60px;font-weight:bold;}" +
+                "</style></head><body>" +
+
+                // Header
+                "<div class='header'>" +
+                "<h3>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h3>" +
+                "<p>Độc lập – Tự do – Hạnh phúc</p>" +
+                "</div>" +
+
+                // Title
+                "<div class='title'>" +
+                "<h2>HỢP ĐỒNG THUÊ PHÒNG TRỌ</h2>" +
+                "</div>" +
+
+                // Opening
+                "<p class='info'>Hôm nay, ngày " + formatDateFull(ngayKy) + ", tại căn nhà số " + escape(khuDiaChi)
+                + "</p>" +
+                "<p class='info'>Chúng tôi ký tên dưới đây gồm có:</p>" +
+
+                // Bên A
+                "<div class='section'>" +
+                "<p class='section-title'>BÊN CHO THUÊ PHÒNG TRỌ (gọi tắt là Bên A):</p>" +
+                "<p class='indent'>Ông/bà: " + escape(tenChuTro) + "</p>" +
+                "<p class='indent'>CMND/CCCD số: .................. cấp ngày: ............... nơi cấp: ...............</p>"
+                +
+                "<p class='indent'>Điện thoại: " + escape(sdtChuTro) + "</p>" +
+                "<p class='indent'>Thường trú tại: " + escape(khuDiaChi) + "</p>" +
+                "</div>" +
+
+                // Bên B
+                "<div class='section'>" +
+                "<p class='section-title'>BÊN THUÊ PHÒNG TRỌ (gọi tắt là Bên B):</p>" +
+                "<p class='indent'>Ông/bà: " + escape(c.getHoTen()) + "</p>" +
+                "<p class='indent'>CMND/CCCD số: " + escape(c.getCccd())
+                + " cấp ngày: ............... nơi cấp: ...............</p>" +
+                "<p class='indent'>Điện thoại: " + escape(c.getSoDienThoai()) + "</p>" +
+                "<p class='indent'>Thường trú tại: " + escape(c.getDiaChi()) + "</p>" +
+                "</div>" +
+
+                "<p style='margin-top:15px;'>Sau khi thỏa thuận, hai bên thống nhất như sau:</p>" +
+
+                // Điều 1
+                "<div class='section'>" +
+                "<p class='section-title'>1. Nội dung thuê phòng trọ</p>" +
+                "<p class='indent'>Bên A cho Bên B thuê 01 phòng trọ số " + escape(room) + " tại căn nhà số "
+                + escape(khuDiaChi) + ".</p>" +
+                "<p class='indent'>Với thời hạn là: " + soThang + " tháng (Từ ngày " + escape(ngayKy) + " đến ngày "
+                + escape(ngayKetThuc) + ").</p>" +
+                "<p class='indent'>Giá thuê: " + formatVnd(c.getTienPhong()) + "/tháng.</p>" +
+                "<p class='indent'>Chưa bao gồm chi phí:</p>" +
+                "<p class='indent'>" + chiPhi.toString() + "</p>" +
+                "</div>" +
+
+                // Điều 2
+                "<div class='section'>" +
+                "<p class='section-title'>2. Trách nhiệm Bên A</p>" +
+                "<p class='indent'>- Đảm bảo căn nhà cho thuê không có tranh chấp, khiếu kiện.</p>" +
+                "<p class='indent'>- Đăng ký với chính quyền địa phương về thủ tục cho thuê phòng trọ.</p>" +
+                "</div>" +
+
+                // Điều 3
+                "<div class='section'>" +
+                "<p class='section-title'>3. Trách nhiệm Bên B</p>" +
+                "<p class='indent'>- Đặt cọc với số tiền là " + formatVnd(c.getTienCoc())
+                + ", thanh toán tiền thuê phòng hàng tháng + tiền điện + nước.</p>" +
+                "<p class='indent'>- Đảm bảo các thiết bị và sửa chữa các hư hỏng trong phòng trong khi sử dụng. Nếu không sửa chữa thì khi trả phòng, bên A sẽ trừ vào tiền đặt cọc, giá trị cụ thể tính theo giá thị trường.</p>"
+                +
+                "<p class='indent'>- Chỉ sử dụng phòng trọ vào mục đích ở, với số lượng tối đa không quá "
+                + c.getSoThanhVien()
+                + " người; không chứa các thiết bị gây cháy nổ, hàng cấm; cung cấp giấy tờ tùy thân để đăng ký tạm trú theo quy định, giữ gìn an ninh trật tự, nếp sống văn hóa đô thị; không tụ tập nhậu nhẹt, cờ bạc và các hành vi vi phạm pháp luật khác.</p>"
+                +
+                "<p class='indent'>- Không được tự ý cải tạo kiến trúc phòng hoặc trang trí ảnh hưởng tới tường, cột, nền... Nếu có nhu cầu trên phải trao đổi với bên A để được thống nhất.</p>"
+                +
+                "</div>" +
+
+                // Điều 4
+                "<div class='section'>" +
+                "<p class='section-title'>4. Điều khoản thực hiện</p>" +
+                "<p class='indent'>Hai bên nghiêm túc thực hiện những quy định trên trong thời hạn cho thuê, nếu bên A lấy phòng phải báo cho bên B ít nhất 01 tháng, hoặc ngược lại.</p>"
+                +
+                "<p class='indent'>Sau thời hạn cho thuê " + soThang
+                + " tháng nếu bên B có nhu cầu hai bên tiếp tục thương lượng giá thuê để gia hạn hợp đồng.</p>" +
+                "</div>" +
+
+                // Bảng gia hạn
+                "<div class='section'>" +
+                "<p class='section-title'>Bảng gia hạn hợp đồng:</p>" +
+                "<table class='gia-han-table'>" +
+                "<tr><th>Lần</th><th>Thời gian<br/>(tháng)</th><th>Từ ngày</th><th>Đến ngày</th><th>Giá thuê/tháng</th><th>Ký tên</th></tr>"
+                +
+                "<tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr>" +
+                "<tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>" +
+                "</table>" +
+                "</div>" +
+
+                // Signature
+                "<div class='signature'>" +
+                "<div>" +
+                "<p class='label'>BÊN B</p>" +
+                "<p class='note'>(Ký, ghi rõ họ tên)</p>" +
+                "<p class='name'>" + escape(c.getHoTen()) + "</p>" +
+                "</div>" +
+                "<div>" +
+                "<p class='label'>BÊN A</p>" +
+                "<p class='note'>(Ký, ghi rõ họ tên)</p>" +
+                "<p class='name'>" + escape(tenChuTro) + "</p>" +
+                "</div>" +
+                "</div>" +
+
                 "</body></html>";
+    }
+
+    private String formatDateFull(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty())
+            return "... tháng ... năm ...";
+        try {
+            String[] parts = dateStr.split("/");
+            if (parts.length == 3) {
+                return parts[0] + " tháng " + parts[1] + " năm " + parts[2];
+            }
+        } catch (Exception ignored) {
+        }
+        return dateStr;
     }
 
     private String row(String k, String v) {

@@ -328,6 +328,12 @@ public class CanNhaActivity extends AppCompatActivity {
 
         dlg.setOnShowListener(dd -> {
             dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(btn -> {
+                String addr = etAddr.getText().toString().trim();
+                if (addr.isEmpty()) {
+                    Toast.makeText(this, "Vui lòng nhập địa chỉ", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 String name = etName.getText().toString().trim();
                 if (name.isEmpty()) {
                     Toast.makeText(this, "Vui lòng nhập tên quản lý", Toast.LENGTH_SHORT).show();
@@ -335,12 +341,7 @@ public class CanNhaActivity extends AppCompatActivity {
                 }
                 String phone = etPhone.getText().toString().trim();
                 if (phone.isEmpty()) {
-                    Toast.makeText(this, "Vui lòng nhập số điện thoại", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                String addr = etAddr.getText().toString().trim();
-                if (addr.isEmpty()) {
-                    Toast.makeText(this, "Vui lòng nhập địa chỉ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Vui lòng nhập số điện thoại quản lý", Toast.LENGTH_SHORT).show();
                     return;
                 }
 

@@ -15,16 +15,30 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivRoomImage"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/baseline_home_24"
+            android:background="#E0E0E0"
+            app:shapeAppearanceOverlay="@style/RoundedCorner8"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
         <TextView
             android:id="@+id/tvSoPhong"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:text="P.101"
-            android:textSize="22sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toEndOf="@id/ivRoomImage"
+            app:layout_constraintTop_toTopOf="@id/ivRoomImage"
+            app:layout_constraintBottom_toBottomOf="@id/ivRoomImage" />
 
         <LinearLayout
             android:id="@+id/llContent"

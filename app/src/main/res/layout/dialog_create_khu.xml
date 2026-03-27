@@ -13,44 +13,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tên quản lý *"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:textColor="@color/black"/>
-
-        <EditText
-            android:id="@+id/etKhuName"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/custome_edittext"
-            android:paddingHorizontal="12dp"
-            android:textSize="14sp"
-            android:hint="Nhập tên quản lý"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Số điện thoại *"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="12dp"/>
-
-        <EditText
-            android:id="@+id/etKhuPhone"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/custome_edittext"
-            android:paddingHorizontal="12dp"
-            android:textSize="14sp"
-            android:hint="Nhập SĐT quản lý"
-            android:inputType="phone"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="Địa chỉ căn nhà *"
             android:textStyle="bold"
             android:textSize="13sp"
@@ -66,6 +28,54 @@
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
             android:hint="Nhập địa chỉ"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thông tin quản lý căn nhà"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên quản lý *"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="8dp"/>
+
+        <EditText
+            android:id="@+id/etKhuName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/custome_edittext"
+            android:paddingHorizontal="12dp"
+            android:textSize="14sp"
+            android:hint="Nhập tên quản lý"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Số điện thoại quản lý *"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="12dp"/>
+
+        <EditText
+            android:id="@+id/etKhuPhone"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/custome_edittext"
+            android:paddingHorizontal="12dp"
+            android:textSize="14sp"
+            android:hint="Nhập SĐT quản lý"
+            android:inputType="phone"/>
 
         <TextView
             android:layout_width="wrap_content"

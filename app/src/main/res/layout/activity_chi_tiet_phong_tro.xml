@@ -56,19 +56,6 @@
                     android:textColor="@color/white"
                     android:textSize="12sp"
                     android:textStyle="bold"/>
-
-                <!-- Nút yêu thích (FAB) -->
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabFavorite"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="16dp"
-                    android:src="@drawable/ic_favorite_border"
-                    android:contentDescription="Yêu thích"
-                    app:fabSize="mini"
-                    app:backgroundTint="@color/white"
-                    app:tint="@null"/>
             </FrameLayout>
 
             <!-- Room info card -->
@@ -248,115 +235,15 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardCongTo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:cardBackgroundColor="?attr/colorSurface"
-                    app:strokeColor="?attr/colorOutline"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/baseline_receipt_24"
-                            android:tint="@color/purple"
-                            android:contentDescription="Công tơ"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:text="Chốt công tơ"
-                            android:textStyle="bold"
-                            android:textSize="15sp"
-                            android:textColor="#212121"/>
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"/>
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_arrow_right"
-                            android:tint="#999999"
-                            android:contentDescription="Mở"/>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardLichSuCongTo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:cardBackgroundColor="?attr/colorSurface"
-                    app:strokeColor="?attr/colorOutline"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/baseline_bar_chart_24"
-                            android:tint="@color/purple"
-                            android:contentDescription="Lịch sử công tơ"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:text="Lịch sử công tơ"
-                            android:textStyle="bold"
-                            android:textSize="15sp"
-                            android:textColor="#212121"/>
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"/>
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_arrow_right"
-                            android:tint="#999999"
-                            android:contentDescription="Mở"/>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Action buttons: Gọi điện, Nhắn tin, Chỉ đường, Chia sẻ -->
+                <!-- Action buttons: Gọi điện, Nhắn tin -->
                 <LinearLayout
+                    android:id="@+id/llActionButtons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginTop="16dp"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:visibility="gone">
 
                     <LinearLayout
                         android:id="@+id/btnGoiDien"
@@ -409,62 +296,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Nhắn tin"
-                            android:textSize="12sp"
-                            android:textColor="#333333"
-                            android:layout_marginTop="4dp"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/btnChiDuong"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="12dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@drawable/ic_directions"
-                            android:background="@drawable/bg_icon_circle"
-                            android:padding="8dp"
-                            android:contentDescription="Chỉ đường"
-                            app:tint="@color/purple"/>
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Chỉ đường"
-                            android:textSize="12sp"
-                            android:textColor="#333333"
-                            android:layout_marginTop="4dp"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/btnChiaSe"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="12dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@drawable/ic_share"
-                            android:background="@drawable/bg_icon_circle_red"
-                            android:padding="8dp"
-                            android:contentDescription="Chia sẻ"
-                            app:tint="#F44336"/>
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Chia sẻ"
                             android:textSize="12sp"
                             android:textColor="#333333"
                             android:layout_marginTop="4dp"/>

@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.util.MoneyFormatter;
@@ -80,6 +81,18 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
         holder.tvTrangThai.setText(trong ? "Đang trống" : "Đang thuê");
         holder.tvTrangThai.setTextColor(color);
 
+        // Load room image
+        if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(phong.getHinhAnh())
+                    .centerCrop()
+                    .placeholder(R.drawable.baseline_home_24)
+                    .error(R.drawable.baseline_home_24)
+                    .into(holder.ivRoomImage);
+        } else {
+            holder.ivRoomImage.setImageResource(R.drawable.baseline_home_24);
+        }
+
         // Chip background
         GradientDrawable chipBg = new GradientDrawable();
         chipBg.setCornerRadius(dp(holder.itemView, 14));
@@ -102,8 +115,10 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
         holder.itemView.setOnClickListener(v -> listener.onXemChiTiet(phong));
 
         if (holder.btnMore != null) {
-            holder.btnMore.setVisibility(readOnly ? View.GONE : View.VISIBLE);
-            if (!readOnly) {
+            // Ẩn nút menu nếu phòng đang thuê hoặc ở chế độ readOnly
+            boolean isRented = !trong;
+            holder.btnMore.setVisibility((readOnly || isRented) ? View.GONE : View.VISIBLE);
+            if (!readOnly && !isRented) {
                 holder.btnMore.setOnClickListener(v -> {
                     PopupMenu pm = new PopupMenu(v.getContext(), v);
                     pm.getMenu().add(0, 1, 0, "Sửa phòng");
@@ -135,11 +150,12 @@ public class PhongTroAdapter extends RecyclerView.Adapter<PhongTroAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvSoPhong, tvGiaThue, tvTrangThai, tvNguoiThue;
-        ImageView btnMore;
+        ImageView btnMore, ivRoomImage;
         com.google.android.material.button.MaterialButton btnCreateContract;
 
         ViewHolder(View v) {
             super(v);
+            ivRoomImage = v.findViewById(R.id.ivRoomImage);
             tvSoPhong = v.findViewById(R.id.tvSoPhong);
             tvGiaThue = v.findViewById(R.id.tvGiaThue);
             tvTrangThai = v.findViewById(R.id.tvTrangThai);

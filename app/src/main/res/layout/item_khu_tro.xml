@@ -77,21 +77,32 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/baseline_person_24"
-                    app:tint="#9E9E9E"/>
+                <FrameLayout
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_manager_badge"
+                    android:foregroundGravity="center">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_id_card"
+                        app:tint="@color/primary"/>
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/tvKhuName"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
                     android:text="Quang - 0987654321"
                     android:textStyle="bold"
                     android:textColor="@color/black"
-                    android:textSize="15sp"/>
+                    android:textSize="15sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
             </LinearLayout>
 
             <!-- Bank info -->

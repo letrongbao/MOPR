@@ -67,8 +67,8 @@ public class CanNhaAdapter extends RecyclerView.Adapter<CanNhaAdapter.VH> {
 
         String manager = k.getTenKhu() != null ? k.getTenKhu().trim() : "";
         String phone = k.getSdtQuanLy() != null ? k.getSdtQuanLy().trim() : "";
-        h.tvKhuName
-                .setText(phone.isEmpty() ? (manager.isEmpty() ? "Chưa có tên" : manager) : (manager + " - " + phone));
+        String managerDisplay = manager.isEmpty() ? "Chưa có tên quản lý" : manager;
+        h.tvKhuName.setText(phone.isEmpty() ? managerDisplay : (managerDisplay + "  •  " + phone));
 
         // Bank info (fallback to manager name)
         String chuTk = (k.getChuTaiKhoan() != null && !k.getChuTaiKhoan().trim().isEmpty()) ? k.getChuTaiKhoan().trim()
