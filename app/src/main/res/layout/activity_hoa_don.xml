@@ -138,7 +138,7 @@
                 <ImageView
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@drawable/ic_launcher_foreground"
+                    android:src="@drawable/baseline_receipt_24"
                     app:tint="#888888"/>
                 <TextView
                     android:id="@+id/tvEmpty"

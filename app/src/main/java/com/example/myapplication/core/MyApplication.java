@@ -25,6 +25,8 @@ public class MyApplication extends Application {
         @Override
         public void onCreate() {
                 super.onCreate();
+                // Phải init Firebase trước khi dùng bất kỳ service Firebase nào
+                FirebaseApp.initializeApp(this);
                 TenantSession.init(this);
                 ensureReminderChannel();
                 scheduleInvoiceReminders();
