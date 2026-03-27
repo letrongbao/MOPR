@@ -1,0 +1,144 @@
+package com.example.myapplication.domain;
+
+public class NguoiThue {
+    private String id;
+    private String hoTen;
+    private String cccd;
+    private String soDienThoai;
+
+    // Contract/customer extended info
+    private String diaChi;
+    private String soHopDong;
+    private String cccdFrontUrl;
+    private String cccdBackUrl;
+
+    private String idPhong;         // tham chiếu tới PhongTro.id
+    private String idPhongCu;       // lưu lịch sử khi kết thúc hợp đồng
+
+    private int soThanhVien;
+    private String ngayBatDauThue;  // định dạng "dd/MM/yyyy" (ngày ký HĐ)
+    private String ngayKetThucHopDong;
+
+    private double tienPhong;
+    private double tienCoc;
+    private boolean hienThiTienCocTrenHoaDon = true;
+
+    private int soThangHopDong;
+    private boolean nhacTruoc1Thang = true;
+
+    private int chiSoDienDau;
+
+    private boolean dichVuGuiXe;
+    private int soLuongXe;
+    private boolean dichVuInternet;
+    private boolean dichVuGiatSay;
+
+    private String ghiChu;
+    private boolean hienThiGhiChuTrenHoaDon = true;
+
+    // ACTIVE / ENDED
+    private String trangThaiHopDong = "ACTIVE";
+    private Long createdAt;
+    private Long updatedAt;
+    private Long endedAt;
+
+    public NguoiThue() {}
+
+    public NguoiThue(String hoTen, String cccd, String soDienThoai, String idPhong,
+                     int soThanhVien, String ngayBatDauThue,
+                     String ngayKetThucHopDong, double tienCoc) {
+        this.hoTen = hoTen;
+        this.cccd = cccd;
+        this.soDienThoai = soDienThoai;
+        this.idPhong = idPhong;
+        this.soThanhVien = soThanhVien;
+        this.ngayBatDauThue = ngayBatDauThue;
+        this.ngayKetThucHopDong = ngayKetThucHopDong;
+        this.tienCoc = tienCoc;
+    }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getHoTen() { return hoTen; }
+    public void setHoTen(String hoTen) { this.hoTen = hoTen; }
+    public String getCccd() { return cccd; }
+    public void setCccd(String cccd) { this.cccd = cccd; }
+    public String getSoDienThoai() { return soDienThoai; }
+    public void setSoDienThoai(String soDienThoai) { this.soDienThoai = soDienThoai; }
+
+    public String getIdPhong() { return idPhong; }
+    public void setIdPhong(String idPhong) { this.idPhong = idPhong; }
+    public int getSoThanhVien() { return soThanhVien; }
+    public void setSoThanhVien(int soThanhVien) { this.soThanhVien = soThanhVien; }
+    public String getNgayBatDauThue() { return ngayBatDauThue; }
+    public void setNgayBatDauThue(String ngayBatDauThue) { this.ngayBatDauThue = ngayBatDauThue; }
+    public String getNgayKetThucHopDong() { return ngayKetThucHopDong; }
+    public void setNgayKetThucHopDong(String ngayKetThucHopDong) { this.ngayKetThucHopDong = ngayKetThucHopDong; }
+    public String getDiaChi() { return diaChi; }
+    public void setDiaChi(String diaChi) { this.diaChi = diaChi; }
+
+    public String getSoHopDong() { return soHopDong; }
+    public void setSoHopDong(String soHopDong) { this.soHopDong = soHopDong; }
+
+    public String getCccdFrontUrl() { return cccdFrontUrl; }
+    public void setCccdFrontUrl(String cccdFrontUrl) { this.cccdFrontUrl = cccdFrontUrl; }
+
+    public String getCccdBackUrl() { return cccdBackUrl; }
+    public void setCccdBackUrl(String cccdBackUrl) { this.cccdBackUrl = cccdBackUrl; }
+
+    public String getIdPhongCu() { return idPhongCu; }
+    public void setIdPhongCu(String idPhongCu) { this.idPhongCu = idPhongCu; }
+
+    public double getTienPhong() { return tienPhong; }
+    public void setTienPhong(double tienPhong) { this.tienPhong = tienPhong; }
+
+    public double getTienCoc() { return tienCoc; }
+    public void setTienCoc(double tienCoc) { this.tienCoc = tienCoc; }
+
+    public boolean isHienThiTienCocTrenHoaDon() { return hienThiTienCocTrenHoaDon; }
+    public void setHienThiTienCocTrenHoaDon(boolean hienThiTienCocTrenHoaDon) { this.hienThiTienCocTrenHoaDon = hienThiTienCocTrenHoaDon; }
+
+    public int getSoThangHopDong() { return soThangHopDong; }
+    public void setSoThangHopDong(int soThangHopDong) { this.soThangHopDong = soThangHopDong; }
+
+    public boolean isNhacTruoc1Thang() { return nhacTruoc1Thang; }
+    public void setNhacTruoc1Thang(boolean nhacTruoc1Thang) { this.nhacTruoc1Thang = nhacTruoc1Thang; }
+
+    public int getChiSoDienDau() { return chiSoDienDau; }
+    public void setChiSoDienDau(int chiSoDienDau) { this.chiSoDienDau = chiSoDienDau; }
+
+    public boolean isDichVuGuiXe() { return dichVuGuiXe; }
+    public void setDichVuGuiXe(boolean dichVuGuiXe) { this.dichVuGuiXe = dichVuGuiXe; }
+
+    public int getSoLuongXe() { return soLuongXe; }
+    public void setSoLuongXe(int soLuongXe) { this.soLuongXe = soLuongXe; }
+
+    public boolean isDichVuInternet() { return dichVuInternet; }
+    public void setDichVuInternet(boolean dichVuInternet) { this.dichVuInternet = dichVuInternet; }
+
+    public boolean isDichVuGiatSay() { return dichVuGiatSay; }
+    public void setDichVuGiatSay(boolean dichVuGiatSay) { this.dichVuGiatSay = dichVuGiatSay; }
+
+    public String getGhiChu() { return ghiChu; }
+    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+
+    public boolean isHienThiGhiChuTrenHoaDon() { return hienThiGhiChuTrenHoaDon; }
+    public void setHienThiGhiChuTrenHoaDon(boolean hienThiGhiChuTrenHoaDon) { this.hienThiGhiChuTrenHoaDon = hienThiGhiChuTrenHoaDon; }
+
+    public String getTrangThaiHopDong() { return trangThaiHopDong; }
+    public void setTrangThaiHopDong(String trangThaiHopDong) { this.trangThaiHopDong = trangThaiHopDong; }
+
+    public Long getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Long createdAt) { this.createdAt = createdAt; }
+
+    public Long getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Long updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getEndedAt() { return endedAt; }
+    public void setEndedAt(Long endedAt) { this.endedAt = endedAt; }
+
+    // Tên phòng lưu kèm để hiển thị (denormalized)
+    private String soPhong;
+    public String getSoPhong() { return soPhong; }
+    public void setSoPhong(String soPhong) { this.soPhong = soPhong; }
+}

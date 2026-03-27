@@ -2,8 +2,8 @@ package com.example.myapplication.viewmodel;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
-import com.example.myapplication.model.PhongTro;
-import com.example.myapplication.repository.PhongTroRepository;
+import com.example.myapplication.domain.PhongTro;
+import com.example.myapplication.core.repository.domain.PhongTroRepository;
 import java.util.List;
 
 public class PhongTroViewModel extends ViewModel {

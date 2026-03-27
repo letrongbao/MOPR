@@ -2,8 +2,8 @@ package com.example.myapplication.viewmodel;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
-import com.example.myapplication.model.HoaDon;
-import com.example.myapplication.repository.HoaDonRepository;
+import com.example.myapplication.domain.HoaDon;
+import com.example.myapplication.core.repository.domain.HoaDonRepository;
 import java.util.List;
 
 public class HoaDonViewModel extends ViewModel {

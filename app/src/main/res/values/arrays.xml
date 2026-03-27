@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="extra_fee_units">
+        <item>Người</item>
+        <item>Phòng</item>
+        <item>Chiếc</item>
+        <item>KWH</item>
+        <item>m³</item>
+        <item>Lần</item>
+    </string-array>
+</resources>

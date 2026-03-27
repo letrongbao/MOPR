@@ -2,26 +2,48 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="purple">#8692F7</color>
 
-    <!-- Material-ish palette (used by Theme.Material3.*) -->
-    <color name="primary">#8692F7</color>
+    <!-- Primary Blue (ActionBar & Top) -->
+    <color name="primary">#1E88E5</color>
+    <color name="primary_dark">#1565C0</color>
     <color name="on_primary">#FFFFFFFF</color>
 
-    <color name="secondary">#3F51B5</color>
+    <color name="secondary">#2196F3</color>
     <color name="on_secondary">#FFFFFFFF</color>
 
-    <color name="surface">#FFFFFFFF</color>
-    <color name="on_surface">#1C1B1F</color>
-
-    <color name="surface_variant">#E7E0EC</color>
-    <color name="on_surface_variant">#49454F</color>
-
-    <color name="outline">#CAC4D0</color>
+    <!-- Restore purple for legacy layouts -->
+    <color name="purple">#8692F7</color>
 
     <!-- Semantic colors -->
-    <color name="success">#2E7D32</color>
-    <color name="success_container">#E8F5E9</color>
-    <color name="error">#C62828</color>
-    <color name="error_container">#FFEBEE</color>
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="warning">#FFC107</color>
+
+    <!-- Menu Icon Gradient (Light to Dark Blue) -->
+    <color name="menu_blue_light">#64B5F6</color>
+    <color name="menu_blue_dark">#1E88E5</color>
+
+    <!-- Button Colors from Screenshots -->
+    <color name="btn_green">#28A745</color>
+    <color name="btn_orange">#FF5722</color>
+    <color name="btn_blue_action">#2196F3</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_light">#F8F9FA</color>
+    <color name="surface">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <color name="text_main">#333333</color>
+    <color name="text_sub">#757575</color>
+
+    <!-- Status colors -->
+    <color name="status_empty">#F44336</color>
+    <color name="status_rented">#2196F3</color>
+
+    <!-- Locked/Disabled state -->
+    <color name="locked_overlay">#4DFFFFFF</color>
+    <color name="locked_text">#BDBDBD</color>
+    <color name="lock_icon">#FFD54F</color>
+
+    <color name="outline">#E0E0E0</color>
 </resources>

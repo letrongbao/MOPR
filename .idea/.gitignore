@@ -1,7 +1,3 @@
 # Default ignored files
 /shelf/
 /workspace.xml
-# Machine-specific files (khác nhau giữa các máy)
-/deviceManager.xml
-/deploymentTargetSelector.xml
-/migrations.xml

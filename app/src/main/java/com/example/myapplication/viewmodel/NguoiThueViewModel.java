@@ -2,8 +2,8 @@ package com.example.myapplication.viewmodel;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
-import com.example.myapplication.model.NguoiThue;
-import com.example.myapplication.repository.NguoiThueRepository;
+import com.example.myapplication.domain.NguoiThue;
+import com.example.myapplication.core.repository.domain.NguoiThueRepository;
 import java.util.List;
 
 public class NguoiThueViewModel extends ViewModel {

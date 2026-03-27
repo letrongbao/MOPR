@@ -44,14 +44,6 @@
             android:layout_marginBottom="12dp"/>
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Khu" android:textStyle="bold" android:textColor="#212121"/>
-        <Spinner
-            android:id="@+id/spinnerKhuTro"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"/>
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Loại phòng" android:textStyle="bold" android:textColor="#212121"/>
         <Spinner
             android:id="@+id/spinnerLoaiPhong"
@@ -75,15 +67,9 @@
             android:id="@+id/etGiaThue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="VD: 2500000"
-            android:inputType="numberDecimal"
+            android:hint="VD: 2.500.000"
+            android:inputType="number"
             android:layout_marginBottom="12dp"/>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Trạng thái" android:textStyle="bold" android:textColor="#212121"/>
-        <Spinner
-            android:id="@+id/spinnerTrangThai"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
     </LinearLayout>
 </ScrollView>

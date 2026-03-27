@@ -1,6 +1,6 @@
 package com.example.myapplication.api;
 
-import com.example.myapplication.model.NominatimResult;
+import com.example.myapplication.domain.NominatimResult;
 
 import java.util.List;
 
