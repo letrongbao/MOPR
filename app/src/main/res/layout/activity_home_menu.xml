@@ -27,12 +27,10 @@
             <RelativeLayout
                 android:id="@+id/appBar"
                 android:layout_width="match_parent"
-                android:layout_height="84dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
+                android:layout_height="90dp"
                 android:paddingHorizontal="16dp">
 
-                <!-- Logo App -->
+                <!-- Logo App & Title -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -40,43 +38,43 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <FrameLayout
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_icon_circle"
-                        android:layout_marginEnd="10dp">
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/baseline_home_24"
-                            app:tint="@color/white"/>
-                    </FrameLayout>
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="14dp"
+                        android:src="@mipmap/logo_round"
+                        android:background="@color/white"
+                        android:padding="2dp"
+                        app:shapeAppearanceOverlay="@style/CircleImage"
+                        android:elevation="4dp"/>
 
                     <TextView
                         android:id="@+id/tvAppTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="QUẢN LÝ TRỌ"
+                        android:text="QUẢN LÍ TRỌ"
                         android:textColor="@color/white"
-                        android:textStyle="bold"
                         android:textSize="22sp"
-                        android:letterSpacing="0.03"/>
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:shadowColor="#40000000"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"/>
                 </LinearLayout>
 
                 <!-- Icon Người dùng -->
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnProfile"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:background="@drawable/bg_icon_circle"
-                    android:backgroundTint="#26FFFFFF"
-                    android:padding="8dp"
+                    android:padding="2dp"
                     android:src="@drawable/ic_profile"
                     android:contentDescription="Tài khoản"
                     app:tint="@color/white"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     app:shapeAppearanceOverlay="@style/CircleImage" />
 
             </RelativeLayout>
@@ -93,7 +91,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Thanh thông tin tóm tắt (Dashboard) -->
+                <!-- Dashboard Stats -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -189,8 +187,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Sử dụng View thay cho GridView bên trong ScrollView để tránh lỗi cuộn -->
-                <!-- Menu Grid 2x2 với thiết kế mới -->
+                <!-- Menu Grid -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -198,13 +195,10 @@
                     android:paddingHorizontal="16dp"
                     android:paddingBottom="16dp">
 
-                    <!-- Row 1 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-
-                        <!-- Card 1: Quản lý nhà phòng -->
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardHouse"
                             android:layout_width="0dp"
@@ -217,55 +211,28 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground">
-
                             <RelativeLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/bg_card_gradient_purple"
                                 android:padding="16dp">
-
-                                <!-- Decorative circle -->
-                                <View
-                                    android:layout_width="100dp"
-                                    android:layout_height="100dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentTop="true"
-                                    android:layout_marginEnd="-30dp"
-                                    android:layout_marginTop="-30dp"
-                                    android:background="@drawable/bg_icon_circle"
-                                    android:backgroundTint="#20FFFFFF"
-                                    android:alpha="0.5"/>
-
                                 <ImageView
                                     android:id="@+id/iconHouse"
                                     android:layout_width="48dp"
                                     android:layout_height="48dp"
-                                    android:layout_alignParentTop="true"
                                     android:src="@drawable/ic_house"
                                     app:tint="@color/white"/>
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_alignParentBottom="true"
-                                    android:text="Quản lý\nnhà phòng"
+                                    android:text="Quản lí\nnhà phòng"
                                     android:textColor="@color/white"
                                     android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:lineSpacingExtra="2dp"/>
-
-                                <ImageView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentBottom="true"
-                                    android:src="@drawable/ic_arrow_right"
-                                    app:tint="#80FFFFFF"/>
-
+                                    android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
 
-                        <!-- Card 2: Báo phí / Hóa đơn -->
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardInvoice"
                             android:layout_width="0dp"
@@ -278,32 +245,16 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground">
-
                             <RelativeLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/bg_card_gradient_pink"
                                 android:padding="16dp">
-
-                                <!-- Decorative circle -->
-                                <View
-                                    android:layout_width="80dp"
-                                    android:layout_height="80dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentTop="true"
-                                    android:layout_marginEnd="-20dp"
-                                    android:layout_marginTop="-20dp"
-                                    android:background="@drawable/bg_icon_circle"
-                                    android:backgroundTint="#20FFFFFF"
-                                    android:alpha="0.5"/>
-
                                 <ImageView
                                     android:layout_width="48dp"
                                     android:layout_height="48dp"
-                                    android:layout_alignParentTop="true"
                                     android:src="@drawable/ic_invoice"
                                     app:tint="@color/white"/>
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
@@ -311,30 +262,16 @@
                                     android:text="Báo phí\nhóa đơn"
                                     android:textColor="@color/white"
                                     android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:lineSpacingExtra="2dp"/>
-
-                                <ImageView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentBottom="true"
-                                    android:src="@drawable/ic_arrow_right"
-                                    app:tint="#80FFFFFF"/>
-
+                                    android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
-
                     </LinearLayout>
 
-                    <!-- Row 2 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:orientation="horizontal">
-
-                        <!-- Card 3: Quản lý chi -->
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardExpense"
                             android:layout_width="0dp"
@@ -347,54 +284,27 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground">
-
                             <RelativeLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/bg_card_gradient_blue"
                                 android:padding="16dp">
-
-                                <!-- Decorative circle -->
-                                <View
-                                    android:layout_width="90dp"
-                                    android:layout_height="90dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentTop="true"
-                                    android:layout_marginEnd="-25dp"
-                                    android:layout_marginTop="-25dp"
-                                    android:background="@drawable/bg_icon_circle"
-                                    android:backgroundTint="#20FFFFFF"
-                                    android:alpha="0.5"/>
-
                                 <ImageView
                                     android:layout_width="48dp"
                                     android:layout_height="48dp"
-                                    android:layout_alignParentTop="true"
                                     android:src="@drawable/ic_expense"
                                     app:tint="@color/white"/>
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_alignParentBottom="true"
-                                    android:text="Quản lý\nchi phí"
+                                    android:text="Quản lí\nchi phí"
                                     android:textColor="@color/white"
                                     android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:lineSpacingExtra="2dp"/>
-
-                                <ImageView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentBottom="true"
-                                    android:src="@drawable/ic_arrow_right"
-                                    app:tint="#80FFFFFF"/>
-
+                                    android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
 
-                        <!-- Card 4: Báo cáo -->
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardReport"
                             android:layout_width="0dp"
@@ -407,32 +317,16 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground">
-
                             <RelativeLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/bg_card_gradient_green"
                                 android:padding="16dp">
-
-                                <!-- Decorative circle -->
-                                <View
-                                    android:layout_width="70dp"
-                                    android:layout_height="70dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentTop="true"
-                                    android:layout_marginEnd="-15dp"
-                                    android:layout_marginTop="-15dp"
-                                    android:background="@drawable/bg_icon_circle"
-                                    android:backgroundTint="#20FFFFFF"
-                                    android:alpha="0.5"/>
-
                                 <ImageView
                                     android:layout_width="48dp"
                                     android:layout_height="48dp"
-                                    android:layout_alignParentTop="true"
                                     android:src="@drawable/ic_report"
                                     app:tint="@color/white"/>
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
@@ -440,30 +334,27 @@
                                     android:text="Thống kê\nbáo cáo"
                                     android:textColor="@color/white"
                                     android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:lineSpacingExtra="2dp"/>
-
-                                <ImageView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_alignParentBottom="true"
-                                    android:src="@drawable/ic_arrow_right"
-                                    app:tint="#80FFFFFF"/>
-
+                                    android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
-
                     </LinearLayout>
-
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/tvVersion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Phiên bản 2.6.3"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:paddingVertical="16dp" />
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    <!-- Profile Drawer (trượt từ phải) -->
+    <!-- Profile Drawer -->
     <LinearLayout
         android:id="@+id/profileDrawer"
         android:layout_width="300dp"
@@ -472,12 +363,11 @@
         android:orientation="vertical"
         android:background="@color/white"
         android:fitsSystemWindows="false"
+        android:elevation="8dp"
         android:clickable="true"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:elevation="8dp">
+        android:focusable="true">
 
-        <!-- Header với gradient -->
+        <!-- Drawer Header -->
         <RelativeLayout
             android:id="@+id/drawerHeader"
             android:layout_width="match_parent"
@@ -487,7 +377,6 @@
             android:paddingBottom="24dp"
             android:paddingHorizontal="20dp">
 
-            <!-- Logo app nhỏ ở góc trên -->
             <LinearLayout
                 android:id="@+id/logoContainer"
                 android:layout_width="wrap_content"
@@ -497,31 +386,24 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:layout_marginBottom="20dp">
-
-                <FrameLayout
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:background="@drawable/bg_icon_circle_white">
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/baseline_home_24"
-                        app:tint="@color/primary"/>
-                </FrameLayout>
-
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@mipmap/logo_round"
+                    android:background="@color/white"
+                    android:padding="2dp"
+                    app:shapeAppearanceOverlay="@style/CircleImage"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="QUẢN LÝ TRỌ"
+                    android:layout_marginStart="10dp"
+                    android:text="QUẢN LÍ TRỌ"
                     android:textColor="@color/white"
                     android:textSize="14sp"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
                     android:letterSpacing="0.05"/>
             </LinearLayout>
 
-            <!-- Avatar người dùng -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/drawerAvatar"
                 android:layout_width="80dp"
@@ -535,7 +417,6 @@
                 app:strokeColor="@color/white"
                 app:strokeWidth="2dp"/>
 
-            <!-- Tên người dùng -->
             <TextView
                 android:id="@+id/drawerUserName"
                 android:layout_width="wrap_content"
@@ -548,7 +429,6 @@
                 android:textSize="18sp"
                 android:textStyle="bold"/>
 
-            <!-- Email -->
             <TextView
                 android:id="@+id/drawerUserEmail"
                 android:layout_width="wrap_content"
@@ -559,10 +439,9 @@
                 android:text="email@example.com"
                 android:textColor="#DDFFFFFF"
                 android:textSize="13sp"/>
-
         </RelativeLayout>
 
-        <!-- Menu chức năng -->
+        <!-- Menu items -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -570,7 +449,6 @@
             android:orientation="vertical"
             android:paddingVertical="12dp">
 
-            <!-- Sửa thông tin -->
             <LinearLayout
                 android:id="@+id/menuEditProfile"
                 android:layout_width="match_parent"
@@ -579,9 +457,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
                 android:paddingHorizontal="20dp">
-
                 <FrameLayout
                     android:layout_width="40dp"
                     android:layout_height="40dp"
@@ -594,35 +470,15 @@
                         android:src="@drawable/ic_edit"
                         app:tint="@color/primary"/>
                 </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
+                <TextView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="16dp"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sửa thông tin"
-                        android:textColor="@color/text_main"
-                        android:textSize="15sp"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Cập nhật họ tên, số điện thoại"
-                        android:textColor="@color/text_sub"
-                        android:textSize="12sp"/>
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_arrow_right"
-                    app:tint="#BDBDBD"/>
+                    android:text="Sửa thông tin"
+                    android:textColor="@color/text_main"
+                    android:textSize="15sp"/>
             </LinearLayout>
 
-            <!-- Lịch sử cho thuê -->
             <LinearLayout
                 android:id="@+id/menuRentalHistory"
                 android:layout_width="match_parent"
@@ -631,9 +487,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
                 android:paddingHorizontal="20dp">
-
                 <FrameLayout
                     android:layout_width="40dp"
                     android:layout_height="40dp"
@@ -646,35 +500,15 @@
                         android:src="@drawable/ic_history"
                         app:tint="#9C27B0"/>
                 </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
+                <TextView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="16dp"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Lịch sử cho thuê"
-                        android:textColor="@color/text_main"
-                        android:textSize="15sp"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Xem lại các hợp đồng đã hoàn thành"
-                        android:textColor="@color/text_sub"
-                        android:textSize="12sp"/>
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_arrow_right"
-                    app:tint="#BDBDBD"/>
+                    android:text="Lịch sử cho thuê"
+                    android:textColor="@color/text_main"
+                    android:textSize="15sp"/>
             </LinearLayout>
 
-            <!-- Đổi mật khẩu -->
             <LinearLayout
                 android:id="@+id/menuChangePassword"
                 android:layout_width="match_parent"
@@ -683,9 +517,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
                 android:paddingHorizontal="20dp">
-
                 <FrameLayout
                     android:layout_width="40dp"
                     android:layout_height="40dp"
@@ -698,52 +530,28 @@
                         android:src="@drawable/ic_lock"
                         app:tint="#FF9800"/>
                 </FrameLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
+                <TextView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="16dp"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Đổi mật khẩu"
-                        android:textColor="@color/text_main"
-                        android:textSize="15sp"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Thay đổi mật khẩu đăng nhập"
-                        android:textColor="@color/text_sub"
-                        android:textSize="12sp"/>
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_arrow_right"
-                    app:tint="#BDBDBD"/>
+                    android:text="Đổi mật khẩu"
+                    android:textColor="@color/text_main"
+                    android:textSize="15sp"/>
             </LinearLayout>
-
         </LinearLayout>
 
-        <!-- Footer - Góp ý, Chia sẻ, Đăng xuất -->
+        <!-- Footer -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp"
             android:background="#FAFAFA">
-
-            <!-- Góp ý và Chia sẻ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center">
-
-                <!-- Liên hệ góp ý -->
                 <LinearLayout
                     android:id="@+id/menuFeedback"
                     android:layout_width="0dp"
@@ -754,31 +562,18 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_circle"
-                        android:backgroundTint="#E8F5E9">
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_feedback"
-                            app:tint="#4CAF50"/>
-                    </FrameLayout>
-
+                    android:padding="8dp">
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_feedback"
+                        app:tint="@color/text_sub"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Liên hệ góp ý"
-                        android:textColor="@color/text_main"
-                        android:textSize="12sp"/>
+                        android:text="Góp ý"
+                        android:textSize="11sp"/>
                 </LinearLayout>
-
-                <!-- Chia sẻ ứng dụng -->
                 <LinearLayout
                     android:id="@+id/menuShare"
                     android:layout_width="0dp"
@@ -789,40 +584,22 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_circle"
-                        android:backgroundTint="#E3F2FD">
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_share"
-                            app:tint="@color/primary"/>
-                    </FrameLayout>
-
+                    android:padding="8dp">
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_share"
+                        app:tint="@color/text_sub"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Chia sẻ app"
-                        android:textColor="@color/text_main"
-                        android:textSize="12sp"/>
+                        android:text="Chia sẻ"
+                        android:textSize="11sp"/>
                 </LinearLayout>
-
             </LinearLayout>
 
-            <!-- Divider -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="12dp"
-                android:background="#EEEEEE"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginVertical="8dp"/>
 
-            <!-- Đăng xuất -->
             <LinearLayout
                 android:id="@+id/menuLogout"
                 android:layout_width="match_parent"
@@ -830,26 +607,21 @@
                 android:background="@drawable/bg_menu_item_ripple"
                 android:clickable="true"
                 android:focusable="true"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
-
+                android:gravity="center">
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_logout"
                     app:tint="#F44336"/>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="Đăng xuất"
                     android:textColor="#F44336"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
             </LinearLayout>
-
-            <!-- Version -->
             <TextView
                 android:id="@+id/tvDrawerVersion"
                 android:layout_width="match_parent"
@@ -858,10 +630,7 @@
                 android:text="Phiên bản 2.6.3"
                 android:textSize="11sp"
                 android:textColor="#BDBDBD"
-                android:layout_marginTop="12dp"/>
-
+                android:layout_marginTop="8dp"/>
         </LinearLayout>
-
     </LinearLayout>
-
 </androidx.drawerlayout.widget.DrawerLayout>

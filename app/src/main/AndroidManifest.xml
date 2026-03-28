@@ -34,7 +34,6 @@
 
         <!-- Home -->
         <activity android:name=".features.home.HomeMenuActivity" />
-        <activity android:name=".features.home.HomeActivity" />
 
         <!-- Property -->
         <activity android:name=".features.property.house.CanNhaActivity" />
