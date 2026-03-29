@@ -10,17 +10,49 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        app:elevation="4dp">
+
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             android:background="@color/purple"
-            app:title="Quản lý người thuê"
+            app:title="Danh sách khách thuê"
             app:titleTextColor="@color/white"/>
+
+        <!-- Search bar bên dưới Toolbar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="10dp"
+            android:background="@color/purple"
+            android:gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/etTimKiem"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input_rounded"
+                android:hint="Nhập SĐT/tên tìm kiếm..."
+                android:textSize="13sp"
+                android:textColorHint="#AAAAAA"
+                android:textColor="#1A1A1A"
+                android:paddingHorizontal="14dp"
+                android:singleLine="true"
+                android:inputType="text"
+                android:drawableEnd="@drawable/ic_add"
+                android:drawableTint="#888888"/>
+
+        </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- Trạng thái rỗng -->
     <TextView
         android:id="@+id/tvEmpty"
         android:layout_width="wrap_content"
@@ -32,14 +64,17 @@
         android:textColor="#999999"
         android:visibility="gone"/>
 
+    <!-- Danh sách chính (Nhóm phòng + Thẻ bài khách) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="80dp"
         android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
+    <!-- FAB Thêm người thuê -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabThem"
         android:layout_width="wrap_content"

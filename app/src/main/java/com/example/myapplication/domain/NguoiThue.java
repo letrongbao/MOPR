@@ -137,6 +137,24 @@ public class NguoiThue {
     public Long getEndedAt() { return endedAt; }
     public void setEndedAt(Long endedAt) { this.endedAt = endedAt; }
 
+    // Tính năng Quản lý Khách Thuê Nâng cao
+    private boolean isNguoiLienHe = false;
+    private boolean isDaiDienHopDong = false;
+    private boolean isTamTru = false;
+    private boolean isDayDuGiayTo = false;
+
+    public boolean isNguoiLienHe() { return isNguoiLienHe; }
+    public void setNguoiLienHe(boolean nguoiLienHe) { isNguoiLienHe = nguoiLienHe; }
+
+    public boolean isDaiDienHopDong() { return isDaiDienHopDong; }
+    public void setDaiDienHopDong(boolean daiDienHopDong) { isDaiDienHopDong = daiDienHopDong; }
+
+    public boolean isTamTru() { return isTamTru; }
+    public void setTamTru(boolean tamTru) { isTamTru = tamTru; }
+
+    public boolean isDayDuGiayTo() { return isDayDuGiayTo; }
+    public void setDayDuGiayTo(boolean dayDuGiayTo) { isDayDuGiayTo = dayDuGiayTo; }
+
     // Tên phòng lưu kèm để hiển thị (denormalized)
     private String soPhong;
     public String getSoPhong() { return soPhong; }

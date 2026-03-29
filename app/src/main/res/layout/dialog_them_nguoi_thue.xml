@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -9,6 +10,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Họ và tên -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Họ và tên" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etHoTen"
@@ -16,6 +18,7 @@
             android:hint="Nguyễn Văn A" android:inputType="textPersonName"
             android:layout_marginBottom="12dp"/>
 
+        <!-- CCCD -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="CCCD/CMND" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etCccd"
@@ -23,6 +26,7 @@
             android:hint="012345678901" android:inputType="number"
             android:layout_marginBottom="12dp"/>
 
+        <!-- Số điện thoại -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Số điện thoại" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etSdt"
@@ -30,12 +34,14 @@
             android:hint="0901234567" android:inputType="phone"
             android:layout_marginBottom="12dp"/>
 
+        <!-- Phòng thuê -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Phòng thuê" android:textStyle="bold" android:textColor="#212121"/>
         <Spinner android:id="@+id/spinnerPhong"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"/>
 
+        <!-- Số thành viên -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Số thành viên" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etSoThanhVien"
@@ -43,6 +49,7 @@
             android:hint="1" android:inputType="number"
             android:layout_marginBottom="12dp"/>
 
+        <!-- Ngày bắt đầu -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Ngày bắt đầu thuê" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etNgayBatDau"
@@ -50,6 +57,7 @@
             android:hint="dd/MM/yyyy" android:inputType="text"
             android:layout_marginBottom="12dp"/>
 
+        <!-- Ngày kết thúc -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Ngày kết thúc hợp đồng" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etNgayKetThuc"
@@ -57,10 +65,84 @@
             android:hint="dd/MM/yyyy" android:inputType="text"
             android:layout_marginBottom="12dp"/>
 
+        <!-- Tiền cọc -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Tiền cọc (VNĐ)" android:textStyle="bold" android:textColor="#212121"/>
         <EditText android:id="@+id/etTienCoc"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:hint="VD: 2500000" android:inputType="numberDecimal"/>
+            android:hint="VD: 2500000" android:inputType="numberDecimal"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- Phần trạng thái khách thuê (2 cột x 2 hàng)                  -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trạng thái &amp; Vai trò"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:textColor="#555555"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Hàng 1: Người liên hệ | Đại diện hợp đồng -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbNguoiLienHe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Người liên hệ"
+                android:textSize="13sp"
+                app:buttonTint="#2E7D32"/>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbDaiDienHopDong"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Đại diện HĐ"
+                android:textSize="13sp"
+                app:buttonTint="#1565C0"/>
+
+        </LinearLayout>
+
+        <!-- Hàng 2: Tạm trú | Đầy đủ giấy tờ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbTamTru"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Đã đăng ký tạm trú"
+                android:textSize="13sp"
+                app:buttonTint="#E65100"/>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbDayDuGiayTo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Đầy đủ giấy tờ"
+                android:textSize="13sp"
+                app:buttonTint="#E65100"/>
+
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>
