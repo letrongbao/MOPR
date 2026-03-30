@@ -1,11 +1,12 @@
 package com.example.myapplication.features.tenant;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -13,10 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -75,7 +73,9 @@ public class NguoiThueActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         FloatingActionButton fabThem = findViewById(R.id.fabThem);
+        EditText etTimKiem = findViewById(R.id.etTimKiem);
 
+        // ── Khởi tạo Adapter Multi-ViewType ────────────────────────────────
         adapter = new NguoiThueAdapter(new NguoiThueAdapter.OnItemActionListener() {
             @Override
             public void onXoa(NguoiThue nguoiThue) {
@@ -99,16 +99,37 @@ public class NguoiThueActivity extends AppCompatActivity {
             }
         });
 
+        // ── Callback nút [+ Thêm] trên header mỗi phòng ────────────────────
+        adapter.setOnAddToRoomListener((roomId, roomName) ->
+                hienDialogThemNguoiThue(roomId));
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
         preselectRoomId = getIntent().getStringExtra("PRESELECT_ROOM_ID");
 
+        // ── Live-search: lọc danh sách khi người dùng gõ ──────────────────
+        if (etTimKiem != null) {
+            etTimKiem.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+                @Override public void afterTextChanged(Editable s) {}
+                @Override
+                public void onTextChanged(CharSequence s, int st, int b, int c) {
+                    adapter.filter(s.toString());
+                    // Ẩn/hiện empty state dựa trên số khách sau khi lọc
+                    tvEmpty.setVisibility(
+                            adapter.getTenantCount() == 0 ? View.VISIBLE : View.GONE);
+                }
+            });
+        }
+
         viewModel = new ViewModelProvider(this).get(NguoiThueViewModel.class);
         viewModel.getDanhSachNguoiThue().observe(this, list -> {
-            adapter.setDanhSach(list);
-            tvEmpty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
-            lastTenants = list;
+            // Dùng setData() để tự động Group-by phòng
+            adapter.setData(list);
+            tvEmpty.setVisibility(
+                    (list == null || list.isEmpty()) ? View.VISIBLE : View.GONE);
+            lastTenants = list != null ? list : new ArrayList<>();
             maybeAutoMigrateTenantRoomLinks();
         });
 
@@ -142,16 +163,20 @@ public class NguoiThueActivity extends AppCompatActivity {
             return;
         }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_them_nguoi_thue, null);
-        EditText etHoTen = dialogView.findViewById(R.id.etHoTen);
-        EditText etCccd = dialogView.findViewById(R.id.etCccd);
-        EditText etSdt = dialogView.findViewById(R.id.etSdt);
-        Spinner spinnerPhong = dialogView.findViewById(R.id.spinnerPhong);
-        EditText etSoThanhVien = dialogView.findViewById(R.id.etSoThanhVien);
-        EditText etNgayBatDau = dialogView.findViewById(R.id.etNgayBatDau);
-        EditText etNgayKetThuc = dialogView.findViewById(R.id.etNgayKetThuc);
-        EditText etTienCoc = dialogView.findViewById(R.id.etTienCoc);
+        EditText etHoTen        = dialogView.findViewById(R.id.etHoTen);
+        EditText etCccd         = dialogView.findViewById(R.id.etCccd);
+        EditText etSdt          = dialogView.findViewById(R.id.etSdt);
+        Spinner  spinnerPhong   = dialogView.findViewById(R.id.spinnerPhong);
+        EditText etSoThanhVien  = dialogView.findViewById(R.id.etSoThanhVien);
+        EditText etNgayBatDau   = dialogView.findViewById(R.id.etNgayBatDau);
+        EditText etNgayKetThuc  = dialogView.findViewById(R.id.etNgayKetThuc);
+        EditText etTienCoc      = dialogView.findViewById(R.id.etTienCoc);
+        // ─ 4 Checkbox trạng thái mới ───────────────────────────────────────
+        CheckBox cbNguoiLienHe    = dialogView.findViewById(R.id.cbNguoiLienHe);
+        CheckBox cbDaiDienHopDong = dialogView.findViewById(R.id.cbDaiDienHopDong);
+        CheckBox cbTamTru         = dialogView.findViewById(R.id.cbTamTru);
+        CheckBox cbDayDuGiayTo    = dialogView.findViewById(R.id.cbDayDuGiayTo);
 
-        // Apply money formatter
         MoneyFormatter.applyTo(etTienCoc);
 
         String[] phongNames = danhSachPhong.stream()
@@ -174,9 +199,9 @@ public class NguoiThueActivity extends AppCompatActivity {
                 .setTitle("Thêm người thuê")
                 .setView(dialogView)
                 .setPositiveButton("Thêm", (d, w) -> {
-                    String hoTen = etHoTen.getText().toString().trim();
-                    String cccd = etCccd.getText().toString().trim();
-                    String sdt = etSdt.getText().toString().trim();
+                    String hoTen  = etHoTen.getText().toString().trim();
+                    String cccd   = etCccd.getText().toString().trim();
+                    String sdt    = etSdt.getText().toString().trim();
                     String ngayBD = etNgayBatDau.getText().toString().trim();
                     String ngayKT = etNgayKetThuc.getText().toString().trim();
                     double tienCoc = MoneyFormatter.getValue(etTienCoc);
@@ -198,10 +223,21 @@ public class NguoiThueActivity extends AppCompatActivity {
                                 soTVStr.isEmpty() ? 1 : Integer.parseInt(soTVStr),
                                 ngayBD, ngayKT, tienCoc);
                         nt.setSoPhong(phongChon.getSoPhong());
+                        // ─ Gán 4 trạng thái mới ──────────────────────────────────
+                        nt.setNguoiLienHe(cbNguoiLienHe.isChecked());
+                        nt.setDaiDienHopDong(cbDaiDienHopDong.isChecked());
+                        nt.setTamTru(cbTamTru.isChecked());
+                        nt.setDayDuGiayTo(cbDayDuGiayTo.isChecked());
+
+                        // ─ Tạo thông báo đúng trạng thái ───────────────────────────
+                        StringBuilder statusMsg = new StringBuilder("Thêm thành công!");
+                        if (!nt.isTamTru()) statusMsg.append(" Chưa đăng ký tạm trú.");
+                        if (!nt.isDayDuGiayTo()) statusMsg.append(" Chưa đủ giấy tờ.");
+
                         viewModel.themNguoiThue(nt,
                                 () -> runOnUiThread(() -> {
                                     markRoomRented(roomId);
-                                    Toast.makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, statusMsg.toString(), Toast.LENGTH_LONG).show();
                                 }),
                                 () -> runOnUiThread(() -> Toast
                                         .makeText(this, "Thất bại — kiểm tra Firebase", Toast.LENGTH_LONG).show()));
@@ -218,16 +254,20 @@ public class NguoiThueActivity extends AppCompatActivity {
             return;
         }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_them_nguoi_thue, null);
-        EditText etHoTen = dialogView.findViewById(R.id.etHoTen);
-        EditText etCccd = dialogView.findViewById(R.id.etCccd);
-        EditText etSdt = dialogView.findViewById(R.id.etSdt);
-        Spinner spinnerPhong = dialogView.findViewById(R.id.spinnerPhong);
-        EditText etSoThanhVien = dialogView.findViewById(R.id.etSoThanhVien);
-        EditText etNgayBatDau = dialogView.findViewById(R.id.etNgayBatDau);
-        EditText etNgayKetThuc = dialogView.findViewById(R.id.etNgayKetThuc);
-        EditText etTienCoc = dialogView.findViewById(R.id.etTienCoc);
+        EditText etHoTen        = dialogView.findViewById(R.id.etHoTen);
+        EditText etCccd         = dialogView.findViewById(R.id.etCccd);
+        EditText etSdt          = dialogView.findViewById(R.id.etSdt);
+        Spinner  spinnerPhong   = dialogView.findViewById(R.id.spinnerPhong);
+        EditText etSoThanhVien  = dialogView.findViewById(R.id.etSoThanhVien);
+        EditText etNgayBatDau   = dialogView.findViewById(R.id.etNgayBatDau);
+        EditText etNgayKetThuc  = dialogView.findViewById(R.id.etNgayKetThuc);
+        EditText etTienCoc      = dialogView.findViewById(R.id.etTienCoc);
+        // ─ 4 Checkbox trạng thái ──────────────────────────────────────────
+        CheckBox cbNguoiLienHe    = dialogView.findViewById(R.id.cbNguoiLienHe);
+        CheckBox cbDaiDienHopDong = dialogView.findViewById(R.id.cbDaiDienHopDong);
+        CheckBox cbTamTru         = dialogView.findViewById(R.id.cbTamTru);
+        CheckBox cbDayDuGiayTo    = dialogView.findViewById(R.id.cbDayDuGiayTo);
 
-        // Apply money formatter
         MoneyFormatter.applyTo(etTienCoc);
 
         String[] phongNames = danhSachPhong.stream()
@@ -237,6 +277,7 @@ public class NguoiThueActivity extends AppCompatActivity {
         phongAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerPhong.setAdapter(phongAdapter);
 
+        // ─ Pre-fill dữ liệu cũ ─────────────────────────────────────────
         etHoTen.setText(nguoiThue.getHoTen());
         etCccd.setText(nguoiThue.getCccd());
         etSdt.setText(nguoiThue.getSoDienThoai());
@@ -244,6 +285,12 @@ public class NguoiThueActivity extends AppCompatActivity {
         etNgayBatDau.setText(nguoiThue.getNgayBatDauThue());
         etNgayKetThuc.setText(nguoiThue.getNgayKetThucHopDong());
         MoneyFormatter.setValue(etTienCoc, nguoiThue.getTienCoc());
+        // Pre-fill 4 Checkbox từ dữ liệu Firebase
+        cbNguoiLienHe.setChecked(nguoiThue.isNguoiLienHe());
+        cbDaiDienHopDong.setChecked(nguoiThue.isDaiDienHopDong());
+        cbTamTru.setChecked(nguoiThue.isTamTru());
+        cbDayDuGiayTo.setChecked(nguoiThue.isDayDuGiayTo());
+
         for (int i = 0; i < danhSachPhong.size(); i++) {
             if (danhSachPhong.get(i).getId().equals(nguoiThue.getIdPhong())) {
                 spinnerPhong.setSelection(i);
@@ -255,9 +302,9 @@ public class NguoiThueActivity extends AppCompatActivity {
                 .setTitle("Chỉnh sửa thông tin người thuê")
                 .setView(dialogView)
                 .setPositiveButton("Cập nhật", (d, w) -> {
-                    String hoTen = etHoTen.getText().toString().trim();
-                    String cccd = etCccd.getText().toString().trim();
-                    String sdt = etSdt.getText().toString().trim();
+                    String hoTen  = etHoTen.getText().toString().trim();
+                    String cccd   = etCccd.getText().toString().trim();
+                    String sdt    = etSdt.getText().toString().trim();
                     String ngayBD = etNgayBatDau.getText().toString().trim();
                     String ngayKT = etNgayKetThuc.getText().toString().trim();
                     double tienCoc = MoneyFormatter.getValue(etTienCoc);
@@ -281,13 +328,24 @@ public class NguoiThueActivity extends AppCompatActivity {
                                 ngayBD, ngayKT, tienCoc);
                         updated.setSoPhong(phongChon.getSoPhong());
                         updated.setId(nguoiThue.getId());
+                        // ─ Gán 4 trạng thái mới ──────────────────────────────────
+                        updated.setNguoiLienHe(cbNguoiLienHe.isChecked());
+                        updated.setDaiDienHopDong(cbDaiDienHopDong.isChecked());
+                        updated.setTamTru(cbTamTru.isChecked());
+                        updated.setDayDuGiayTo(cbDayDuGiayTo.isChecked());
+
+                        // ─ Toast đúng trạng thái ───────────────────────────────────
+                        StringBuilder statusMsg = new StringBuilder("Cập nhật thành công!");
+                        if (!updated.isTamTru()) statusMsg.append(" Chưa đăng ký tạm trú.");
+                        if (!updated.isDayDuGiayTo()) statusMsg.append(" Chưa đủ giấy tờ.");
+
                         viewModel.capNhatNguoiThue(updated,
                                 () -> runOnUiThread(() -> {
                                     markRoomRented(newRoomId);
                                     if (oldRoomId != null && !oldRoomId.equals(newRoomId)) {
                                         maybeMarkRoomVacant(oldRoomId);
                                     }
-                                    Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, statusMsg.toString(), Toast.LENGTH_LONG).show();
                                 }),
                                 () -> runOnUiThread(
                                         () -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));

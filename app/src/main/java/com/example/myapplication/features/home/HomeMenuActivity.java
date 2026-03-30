@@ -32,6 +32,7 @@ import com.example.myapplication.features.finance.ChiPhiActivity;
 import com.example.myapplication.features.finance.DoanhThuActivity;
 import com.example.myapplication.features.invoice.HoaDonActivity;
 import com.example.myapplication.features.property.house.CanNhaActivity;
+import com.example.myapplication.features.tenant.NguoiThueActivity;
 import com.example.myapplication.domain.PhongTro;
 import com.example.myapplication.core.repository.domain.CanNhaRepository;
 import com.example.myapplication.viewmodel.PhongTroViewModel;
@@ -134,10 +135,11 @@ public class HomeMenuActivity extends AppCompatActivity {
     }
 
     private void setupMenuCards() {
-        MaterialCardView cardHouse = findViewById(R.id.cardHouse);
-        MaterialCardView cardInvoice = findViewById(R.id.cardInvoice);
-        MaterialCardView cardExpense = findViewById(R.id.cardExpense);
-        MaterialCardView cardReport = findViewById(R.id.cardReport);
+        MaterialCardView cardHouse      = findViewById(R.id.cardHouse);
+        MaterialCardView cardInvoice    = findViewById(R.id.cardInvoice);
+        MaterialCardView cardExpense    = findViewById(R.id.cardExpense);
+        MaterialCardView cardReport     = findViewById(R.id.cardReport);
+        MaterialCardView cardKhachThue  = findViewById(R.id.cardKhachThue);
 
         if (cardHouse != null) {
             cardHouse.setOnClickListener(v -> startActivity(new Intent(this, CanNhaActivity.class)));
@@ -153,6 +155,11 @@ public class HomeMenuActivity extends AppCompatActivity {
 
         if (cardReport != null) {
             cardReport.setOnClickListener(v -> startActivity(new Intent(this, DoanhThuActivity.class)));
+        }
+
+        // ── Card mới: Quản lý Khách Thuê ──────────────────────────────
+        if (cardKhachThue != null) {
+            cardKhachThue.setOnClickListener(v -> startActivity(new Intent(this, NguoiThueActivity.class)));
         }
     }
 
