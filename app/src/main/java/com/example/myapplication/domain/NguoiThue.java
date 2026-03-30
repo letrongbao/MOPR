@@ -36,6 +36,9 @@ public class NguoiThue {
     private String ghiChu;
     private boolean hienThiGhiChuTrenHoaDon = true;
 
+    // Trạng thái thu tiền cọc
+    private boolean trangThaiThuCoc = false;
+
     // ACTIVE / ENDED
     private String trangThaiHopDong = "ACTIVE";
     private Long createdAt;
@@ -136,6 +139,9 @@ public class NguoiThue {
 
     public Long getEndedAt() { return endedAt; }
     public void setEndedAt(Long endedAt) { this.endedAt = endedAt; }
+
+    public boolean isTrangThaiThuCoc() { return trangThaiThuCoc; }
+    public void setTrangThaiThuCoc(boolean trangThaiThuCoc) { this.trangThaiThuCoc = trangThaiThuCoc; }
 
     // Tính năng Quản lý Khách Thuê Nâng cao
     private boolean isNguoiLienHe = false;

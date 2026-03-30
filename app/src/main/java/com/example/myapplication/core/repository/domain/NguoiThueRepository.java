@@ -198,4 +198,15 @@ public class NguoiThueRepository {
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
+
+    /**
+     * Cập nhật trạng thái thu tiền cọc
+     */
+    public Task<Void> capNhatTrangThaiThuCoc(String contractId, boolean trangThaiThuCoc) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("trangThaiThuCoc", trangThaiThuCoc);
+        updates.put("updatedAt", System.currentTimeMillis());
+        
+        return getUserCollection().document(contractId).update(updates);
+    }
 }

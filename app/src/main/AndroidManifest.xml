@@ -48,6 +48,7 @@
         <!-- Tenant / Contract -->
         <activity android:name=".features.tenant.NguoiThueActivity" />
         <activity android:name=".features.contract.HopDongActivity" />
+        <activity android:name=".features.contract.HopDongListActivity" />
         <activity android:name=".features.contract.ContractPdfPreviewActivity" />
         
         <!-- History -->

@@ -33,6 +33,7 @@ import com.example.myapplication.features.finance.DoanhThuActivity;
 import com.example.myapplication.features.invoice.HoaDonActivity;
 import com.example.myapplication.features.property.house.CanNhaActivity;
 import com.example.myapplication.features.tenant.NguoiThueActivity;
+import com.example.myapplication.features.contract.HopDongListActivity;
 import com.example.myapplication.domain.PhongTro;
 import com.example.myapplication.core.repository.domain.CanNhaRepository;
 import com.example.myapplication.viewmodel.PhongTroViewModel;
@@ -157,9 +158,15 @@ public class HomeMenuActivity extends AppCompatActivity {
             cardReport.setOnClickListener(v -> startActivity(new Intent(this, DoanhThuActivity.class)));
         }
 
-        // ── Card mới: Quản lý Khách Thuê ──────────────────────────────
+        // ── Card Quản Lý Khách Thuê ───────────────────────────────────────
         if (cardKhachThue != null) {
             cardKhachThue.setOnClickListener(v -> startActivity(new Intent(this, NguoiThueActivity.class)));
+        }
+
+        // ── Card Hợp Đồng Thông Minh ──────────────────────────────────────
+        MaterialCardView cardHopDong = findViewById(R.id.cardHopDong);
+        if (cardHopDong != null) {
+            cardHopDong.setOnClickListener(v -> startActivity(new Intent(this, HopDongListActivity.class)));
         }
     }
 

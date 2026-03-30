@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_thu_coc"
+        android:title="Thu tiền cọc"/>
+    <item
+        android:id="@+id/menu_xem_chi_tiet"
+        android:title="Xem chi tiết hợp đồng"/>
+</menu>

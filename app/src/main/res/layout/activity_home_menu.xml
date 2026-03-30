@@ -202,7 +202,7 @@
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardHouse"
                             android:layout_width="0dp"
-                            android:layout_height="168dp"
+                            android:layout_height="140dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="8dp"
                             app:cardCornerRadius="20dp"
@@ -218,8 +218,8 @@
                                 android:padding="16dp">
                                 <ImageView
                                     android:id="@+id/iconHouse"
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
                                     android:src="@drawable/ic_house"
                                     app:tint="@color/white"/>
                                 <TextView
@@ -228,7 +228,7 @@
                                     android:layout_alignParentBottom="true"
                                     android:text="Quản lí\nnhà phòng"
                                     android:textColor="@color/white"
-                                    android:textSize="16sp"
+                                    android:textSize="15sp"
                                     android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
@@ -236,7 +236,7 @@
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardInvoice"
                             android:layout_width="0dp"
-                            android:layout_height="168dp"
+                            android:layout_height="140dp"
                             android:layout_weight="1"
                             android:layout_marginStart="8dp"
                             app:cardCornerRadius="20dp"
@@ -251,8 +251,8 @@
                                 android:background="@drawable/bg_card_gradient_pink"
                                 android:padding="16dp">
                                 <ImageView
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
                                     android:src="@drawable/ic_invoice"
                                     app:tint="@color/white"/>
                                 <TextView
@@ -261,12 +261,13 @@
                                     android:layout_alignParentBottom="true"
                                     android:text="Báo phí\nhóa đơn"
                                     android:textColor="@color/white"
-                                    android:textSize="16sp"
+                                    android:textSize="15sp"
                                     android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
+                    <!-- Hàng 2: Chi phí & Doanh thu -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -275,7 +276,7 @@
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardExpense"
                             android:layout_width="0dp"
-                            android:layout_height="168dp"
+                            android:layout_height="140dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="8dp"
                             app:cardCornerRadius="20dp"
@@ -290,8 +291,8 @@
                                 android:background="@drawable/bg_card_gradient_blue"
                                 android:padding="16dp">
                                 <ImageView
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
                                     android:src="@drawable/ic_expense"
                                     app:tint="@color/white"/>
                                 <TextView
@@ -300,7 +301,7 @@
                                     android:layout_alignParentBottom="true"
                                     android:text="Quản lí\nchi phí"
                                     android:textColor="@color/white"
-                                    android:textSize="16sp"
+                                    android:textSize="15sp"
                                     android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
@@ -308,7 +309,7 @@
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/cardReport"
                             android:layout_width="0dp"
-                            android:layout_height="168dp"
+                            android:layout_height="140dp"
                             android:layout_weight="1"
                             android:layout_marginStart="8dp"
                             app:cardCornerRadius="20dp"
@@ -323,8 +324,8 @@
                                 android:background="@drawable/bg_card_gradient_green"
                                 android:padding="16dp">
                                 <ImageView
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
                                     android:src="@drawable/ic_report"
                                     app:tint="@color/white"/>
                                 <TextView
@@ -333,73 +334,88 @@
                                     android:layout_alignParentBottom="true"
                                     android:text="Thống kê\nbáo cáo"
                                     android:textColor="@color/white"
-                                    android:textSize="16sp"
+                                    android:textSize="15sp"
                                     android:textStyle="bold"/>
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
-                    <!-- Hàng 3: Quản lý Khách Thuê (full width) -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cardKhachThue"
+                    <!-- Hàng 3: Khách Thuê & Hợp Đồng Thông Minh -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="100dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="0dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-                        <RelativeLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@drawable/bg_card_gradient_teal"
-                            android:padding="20dp">
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_centerVertical="true"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardKhachThue"
+                            android:layout_width="0dp"
+                            android:layout_height="140dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_card_gradient_teal"
+                                android:padding="16dp">
                                 <ImageView
-                                    android:layout_width="44dp"
-                                    android:layout_height="44dp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
                                     android:src="@drawable/ic_user_avatar"
                                     app:tint="@color/white"
-                                    android:layout_marginEnd="16dp"
                                     android:contentDescription="Khách thuê"/>
-                                <LinearLayout
+                                <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:orientation="vertical">
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Quản lý Khách Thuê"
-                                        android:textColor="@color/white"
-                                        android:textSize="17sp"
-                                        android:textStyle="bold"/>
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Xem danh sách, trạng thái giấy tờ"
-                                        android:textColor="#DDFFFFFF"
-                                        android:textSize="12sp"
-                                        android:layout_marginTop="2dp"/>
-                                </LinearLayout>
-                            </LinearLayout>
-                            <!-- Mũi tên phải -->
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:src="@drawable/ic_arrow_right"
-                                app:tint="#AAFFFFFF"
-                                android:contentDescription="Mở"/>
-                        </RelativeLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                                    android:layout_alignParentBottom="true"
+                                    android:text="Quản lý\nkhách thuê"
+                                    android:textColor="@color/white"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"/>
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardHopDong"
+                            android:layout_width="0dp"
+                            android:layout_height="140dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_card_gradient_orange"
+                                android:padding="16dp">
+                                <ImageView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@drawable/ic_contract"
+                                    app:tint="@color/white"
+                                    android:contentDescription="Hợp đồng"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentBottom="true"
+                                    android:text="Hợp đồng\nthông minh"
+                                    android:textColor="@color/white"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"/>
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
