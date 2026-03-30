@@ -209,4 +209,26 @@ public class NguoiThueRepository {
         
         return getUserCollection().document(contractId).update(updates);
     }
+
+    /**
+     * Xóa hợp đồng khỏi Firestore
+     * 
+     * @param contractId ID của hợp đồng cần xóa
+     * @param onSuccess Callback khi xóa thành công
+     * @param onFail Callback khi xóa thất bại
+     */
+    public void xoaHopDong(String contractId, Runnable onSuccess, Runnable onFail) {
+        if (contractId == null || contractId.trim().isEmpty()) {
+            if (onFail != null) onFail.run();
+            return;
+        }
+        
+        getUserCollection().document(contractId).delete()
+                .addOnSuccessListener(aVoid -> {
+                    if (onSuccess != null) onSuccess.run();
+                })
+                .addOnFailureListener(e -> {
+                    if (onFail != null) onFail.run();
+                });
+    }
 }
