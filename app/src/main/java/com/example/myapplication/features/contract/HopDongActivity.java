@@ -522,8 +522,11 @@ public class HopDongActivity extends AppCompatActivity {
         currentContract.setNgayBatDauThue(ngayKy);
         currentContract.setSoThangHopDong(soThang);
         currentContract.setNhacTruoc1Thang(cbRemind.isChecked());
+        
+        // Set both old (double) and new (long) fields for compatibility
         currentContract.setTienPhong(tienPhong);
-        currentContract.setTienCoc(tienCoc);
+        currentContract.setGiaThue((long) tienPhong);  // New long field
+        currentContract.setTienCoc((long) tienCoc);    // New long field
         currentContract.setHienThiTienCocTrenHoaDon(cbShowDeposit.isChecked());
         currentContract.setChiSoDienDau(chiSoDien);
         currentContract.setDichVuGuiXe(cbGuiXe.isChecked());

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="0dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Row 1: Tên phòng + Trạng thái + Menu 3 chấm -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <!-- Icon phòng + Tên phòng -->
+            <LinearLayout
+                android:id="@+id/layoutRoomInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/btnMenu">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_icon_circle"
+                    android:backgroundTint="#E3F2FD">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_house"
+                        app:tint="#1976D2"/>
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvTenPhong"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Phòng 101"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A2E"
+                    android:layout_marginStart="12dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+            </LinearLayout>
+
+            <!-- ImageButton 3 chấm -->
+            <ImageButton
+                android:id="@+id/btnMenu"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                android:contentDescription="Menu"
+                app:tint="#666666"/>
+        </RelativeLayout>
+
+        <!-- Chip Trạng thái Hợp đồng -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipTrangThai"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đang hiệu lực"
+            android:textSize="12sp"
+            android:textColor="@color/white"
+            app:chipCornerRadius="8dp"
+            app:chipMinHeight="28dp"
+            app:chipBackgroundColor="#4CAF50"
+            app:chipStrokeWidth="0dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Trạng thái Thu cọc -->
+        <TextView
+            android:id="@+id/tvDepositStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⏳ Chờ thu cọc"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#FF9800"
+            android:layout_marginBottom="12dp"
+            android:visibility="visible"/>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Row 2: Giá thuê và Tiền cọc nằm ngang -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <!-- Giá thuê -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💰 Giá thuê"
+                    android:textSize="13sp"
+                    android:textColor="#888888"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvGiaThue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2.000.000đ"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"/>
+            </LinearLayout>
+
+            <!-- Tiền cọc -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏦 Tiền cọc"
+                    android:textSize="13sp"
+                    android:textColor="#888888"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvTienCoc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="500.000đ"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#FF6D00"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Thông tin khách thuê (optional) -->
+        <LinearLayout
+            android:id="@+id/layoutTenantInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:visibility="visible">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_user_avatar"
+                app:tint="#888888"/>
+
+            <TextView
+                android:id="@+id/tvTenantName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Nguyễn Văn A"
+                android:textSize="13sp"
+                android:textColor="#555555"
+                android:layout_marginStart="6dp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tvTenantPhone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0987 654 321"
+                android:textSize="12sp"
+                android:textColor="#888888"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
