@@ -87,6 +87,9 @@ public class HopDongListActivity extends AppCompatActivity {
         // Xử lý cập nhật trạng thái thu cọc
         adapter.setOnDepositUpdateListener(contract -> updateDepositStatus(contract));
 
+        // Xử lý xóa hợp đồng
+        adapter.setOnContractDeleteListener(contractId -> deleteContract(contractId));
+
         // SearchView
         EditText etSearch = findViewById(R.id.etSearchHd);
         if (etSearch != null) {
@@ -201,5 +204,34 @@ public class HopDongListActivity extends AppCompatActivity {
                     contract.setTrangThaiThuCoc(false);
                     adapter.notifyDataSetChanged();
                 });
+    }
+
+    /**
+     * Xóa hợp đồng khỏi Firestore
+     */
+    private void deleteContract(String contractId) {
+        if (contractId == null || contractId.trim().isEmpty()) {
+            Toast.makeText(this, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Log.d(TAG, "Deleting contract: " + contractId);
+
+        repo.xoaHopDong(contractId, 
+            () -> {
+                // Thành công
+                Log.d(TAG, "Contract deleted successfully");
+                Toast.makeText(this, "✓ Đã xóa hợp đồng thành công", Toast.LENGTH_SHORT).show();
+                
+                // Xóa item khỏi adapter
+                adapter.removeItemById(contractId);
+            },
+            () -> {
+                // Thất bại
+                Log.e(TAG, "Failed to delete contract");
+                Toast.makeText(this, "❌ Lỗi: Không thể xóa hợp đồng. Vui lòng kiểm tra kết nối mạng và thử lại.", 
+                        Toast.LENGTH_LONG).show();
+            }
+        );
     }
 }

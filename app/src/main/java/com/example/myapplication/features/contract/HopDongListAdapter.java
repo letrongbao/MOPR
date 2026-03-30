@@ -52,8 +52,13 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
         void onDepositUpdated(NguoiThue contract);
     }
 
+    public interface OnContractDeleteListener {
+        void onContractDeleted(String contractId);
+    }
+
     private OnNhacTaiKyListener nhacListener;
     private OnDepositUpdateListener depositListener;
+    private OnContractDeleteListener deleteListener;
 
     public void setOnNhacTaiKyListener(OnNhacTaiKyListener l) {
         this.nhacListener = l;
@@ -61,6 +66,10 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
 
     public void setOnDepositUpdateListener(OnDepositUpdateListener l) {
         this.depositListener = l;
+    }
+
+    public void setOnContractDeleteListener(OnContractDeleteListener l) {
+        this.deleteListener = l;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -326,6 +335,12 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
             } else if (itemId == R.id.menu_xem_chi_tiet) {
                 openContractDetail(anchor.getContext(), contract);
                 return true;
+            } else if (itemId == R.id.menu_chinh_sua) {
+                openEditContract(anchor.getContext(), contract);
+                return true;
+            } else if (itemId == R.id.menu_xoa_hop_dong) {
+                showDeleteConfirmDialog(anchor.getContext(), contract, position);
+                return true;
             }
             return false;
         });
@@ -396,6 +411,47 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
         context.startActivity(intent);
     }
 
+    /**
+     * Mở màn hình chỉnh sửa hợp đồng
+     */
+    private void openEditContract(Context context, NguoiThue contract) {
+        if (contract == null || contract.getId() == null) {
+            Toast.makeText(context, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(context, HopDongActivity.class);
+        
+        // Gửi flag để báo đây là mode EDIT
+        intent.putExtra("MODE", "EDIT");
+        
+        // Gửi toàn bộ thông tin hợp đồng
+        intent.putExtra("CONTRACT_ID", contract.getId());
+        intent.putExtra("PHONG_ID", contract.getIdPhong());
+        intent.putExtra("SO_HOP_DONG", contract.getSoHopDong());
+        intent.putExtra("HO_TEN", contract.getHoTen());
+        intent.putExtra("SO_DIEN_THOAI", contract.getSoDienThoai());
+        intent.putExtra("CCCD", contract.getCccd());
+        intent.putExtra("SO_THANH_VIEN", contract.getSoThanhVien());
+        intent.putExtra("NGAY_BAT_DAU", contract.getNgayBatDauThue());
+        intent.putExtra("SO_THANG", contract.getSoThangHopDong());
+        intent.putExtra("GIA_THUE", contract.getGiaThue());
+        intent.putExtra("TIEN_COC", contract.getTienCoc());
+        intent.putExtra("CHI_SO_DIEN", contract.getChiSoDienDau());
+        intent.putExtra("DICH_VU_GUI_XE", contract.isDichVuGuiXe());
+        intent.putExtra("SO_LUONG_XE", contract.getSoLuongXe());
+        intent.putExtra("DICH_VU_INTERNET", contract.isDichVuInternet());
+        intent.putExtra("DICH_VU_GIAT_SAY", contract.isDichVuGiatSay());
+        intent.putExtra("GHI_CHU", contract.getGhiChu());
+        intent.putExtra("HIEN_THI_COC", contract.isHienThiTienCocTrenHoaDon());
+        intent.putExtra("HIEN_THI_GHI_CHU", contract.isHienThiGhiChuTrenHoaDon());
+        intent.putExtra("NHAC_TRUOC_1_THANG", contract.isNhacTruoc1Thang());
+        intent.putExtra("CCCD_FRONT_URL", contract.getCccdFrontUrl());
+        intent.putExtra("CCCD_BACK_URL", contract.getCccdBackUrl());
+        
+        context.startActivity(intent);
+    }
+
     private void showBottomSheetThuCoc(Context context, NguoiThue contract, int position) {
         BottomSheetDialog bottomSheet = new BottomSheetDialog(context);
         View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_thu_coc, null);
@@ -458,6 +514,75 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Yêu cầu thanh toán cọc phòng " + phong);
         
         context.startActivity(Intent.createChooser(shareIntent, "Gửi yêu cầu thanh toán"));
+    }
+
+    /**
+     * Hiển thị dialog xác nhận xóa hợp đồng
+     */
+    private void showDeleteConfirmDialog(Context context, NguoiThue contract, int position) {
+        if (contract == null || contract.getId() == null) {
+            Toast.makeText(context, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String roomName = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
+        String tenantName = contract.getHoTen() != null ? contract.getHoTen() : "?";
+        
+        new android.app.AlertDialog.Builder(context)
+                .setTitle("⚠️ Xác nhận xóa hợp đồng")
+                .setMessage("Bạn có chắc chắn muốn xóa hợp đồng của phòng " + roomName + 
+                           " (Khách: " + tenantName + ")?\n\n" +
+                           "⚠️ Thao tác này không thể hoàn tác.")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    deleteContract(context, contract, position);
+                })
+                .setNegativeButton("Hủy", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    /**
+     * Xóa hợp đồng khỏi Firestore và cập nhật UI
+     */
+    private void deleteContract(Context context, NguoiThue contract, int position) {
+        String contractId = contract.getId();
+        
+        // Hiển thị loading state
+        Toast.makeText(context, "Đang xóa hợp đồng...", Toast.LENGTH_SHORT).show();
+        
+        // Gọi listener để Activity xử lý xóa trên Firestore
+        if (deleteListener != null) {
+            deleteListener.onContractDeleted(contractId);
+        } else {
+            // Fallback: xóa trực tiếp từ adapter (không khuyến khích)
+            Toast.makeText(context, "Lỗi: Không thể xóa hợp đồng", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Xóa item khỏi danh sách hiển thị (được gọi từ Activity sau khi Firestore xóa thành công)
+     */
+    public void removeItem(int position) {
+        if (position >= 0 && position < displayList.size()) {
+            NguoiThue removed = displayList.remove(position);
+            fullList.remove(removed);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, displayList.size());
+        }
+    }
+
+    /**
+     * Xóa item theo ID (được gọi từ Activity sau khi Firestore xóa thành công)
+     */
+    public void removeItemById(String contractId) {
+        if (contractId == null) return;
+        
+        for (int i = 0; i < displayList.size(); i++) {
+            if (contractId.equals(displayList.get(i).getId())) {
+                removeItem(i);
+                return;
+            }
+        }
     }
 
     // ── ViewHolder ──────────────────────────────────────────────────────────

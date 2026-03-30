@@ -66,6 +66,9 @@ public class HopDongActivity extends AppCompatActivity {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private String phongId;
+    private String editContractId; // ID hợp đồng đang edit
+    private boolean isEditMode = false; // Flag để phân biệt mode CREATE/EDIT
+    
     private PhongTro currentPhong;
     private CanNha currentKhu;
 
@@ -115,11 +118,28 @@ public class HopDongActivity extends AppCompatActivity {
             windowInsetsController.setAppearanceLightStatusBars(false);
         }
 
-        phongId = getIntent().getStringExtra(EXTRA_PHONG_ID);
-        if (phongId == null || phongId.trim().isEmpty()) {
-            Toast.makeText(this, "Thiếu ID phòng", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        // Kiểm tra mode: CREATE hoặc EDIT
+        String mode = getIntent().getStringExtra("MODE");
+        isEditMode = "EDIT".equals(mode);
+        
+        if (isEditMode) {
+            // Mode EDIT: Lấy dữ liệu từ Intent
+            editContractId = getIntent().getStringExtra("CONTRACT_ID");
+            phongId = getIntent().getStringExtra("PHONG_ID");
+            
+            if (editContractId == null || editContractId.trim().isEmpty()) {
+                Toast.makeText(this, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+        } else {
+            // Mode CREATE: Lấy PHONG_ID như cũ
+            phongId = getIntent().getStringExtra(EXTRA_PHONG_ID);
+            if (phongId == null || phongId.trim().isEmpty()) {
+                Toast.makeText(this, "Thiếu ID phòng", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
         }
 
         imagePicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -351,6 +371,13 @@ public class HopDongActivity extends AppCompatActivity {
     }
 
     private void loadExistingContract() {
+        // Nếu đang ở EDIT mode, load theo ID hợp đồng
+        if (isEditMode && editContractId != null) {
+            loadContractById(editContractId);
+            return;
+        }
+        
+        // Mode CREATE: load existing contract theo phòng (như cũ)
         scopedCollection("nguoi_thue")
                 .whereEqualTo("idPhong", phongId)
                 .whereEqualTo("trangThaiHopDong", "ACTIVE")
@@ -369,6 +396,88 @@ public class HopDongActivity extends AppCompatActivity {
                     loadExistingContractLegacyFallback();
                 })
                 .addOnFailureListener(e -> loadExistingContractLegacyFallback());
+    }
+
+    /**
+     * Load hợp đồng theo ID (dùng cho EDIT mode)
+     */
+    private void loadContractById(String contractId) {
+        scopedCollection("nguoi_thue").document(contractId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc != null && doc.exists()) {
+                        NguoiThue n = doc.toObject(NguoiThue.class);
+                        if (n != null) {
+                            n.setId(doc.getId());
+                            currentContract = n;
+                            
+                            // Pre-fill tất cả dữ liệu từ Intent (fallback nếu Firestore thiếu)
+                            fillDataFromIntent();
+                            
+                            // Apply mode EDIT
+                            applyModeEdit();
+                            return;
+                        }
+                    }
+                    Toast.makeText(this, "Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Lỗi tải hợp đồng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+
+    /**
+     * Điền dữ liệu từ Intent khi EDIT
+     */
+    private void fillDataFromIntent() {
+        Intent intent = getIntent();
+        
+        if (currentContract == null) {
+            currentContract = new NguoiThue();
+        }
+        
+        // Lấy dữ liệu từ Intent và điền vào currentContract
+        if (intent.hasExtra("SO_HOP_DONG")) 
+            currentContract.setSoHopDong(intent.getStringExtra("SO_HOP_DONG"));
+        if (intent.hasExtra("HO_TEN")) 
+            currentContract.setHoTen(intent.getStringExtra("HO_TEN"));
+        if (intent.hasExtra("SO_DIEN_THOAI")) 
+            currentContract.setSoDienThoai(intent.getStringExtra("SO_DIEN_THOAI"));
+        if (intent.hasExtra("CCCD")) 
+            currentContract.setCccd(intent.getStringExtra("CCCD"));
+        if (intent.hasExtra("SO_THANH_VIEN")) 
+            currentContract.setSoThanhVien(intent.getIntExtra("SO_THANH_VIEN", 0));
+        if (intent.hasExtra("NGAY_BAT_DAU")) 
+            currentContract.setNgayBatDauThue(intent.getStringExtra("NGAY_BAT_DAU"));
+        if (intent.hasExtra("SO_THANG")) 
+            currentContract.setSoThangHopDong(intent.getIntExtra("SO_THANG", 0));
+        if (intent.hasExtra("GIA_THUE")) 
+            currentContract.setGiaThue(intent.getLongExtra("GIA_THUE", 0));
+        if (intent.hasExtra("TIEN_COC")) 
+            currentContract.setTienCoc(intent.getLongExtra("TIEN_COC", 0));
+        if (intent.hasExtra("CHI_SO_DIEN")) 
+            currentContract.setChiSoDienDau(intent.getIntExtra("CHI_SO_DIEN", 0));
+        if (intent.hasExtra("DICH_VU_GUI_XE")) 
+            currentContract.setDichVuGuiXe(intent.getBooleanExtra("DICH_VU_GUI_XE", false));
+        if (intent.hasExtra("SO_LUONG_XE")) 
+            currentContract.setSoLuongXe(intent.getIntExtra("SO_LUONG_XE", 0));
+        if (intent.hasExtra("DICH_VU_INTERNET")) 
+            currentContract.setDichVuInternet(intent.getBooleanExtra("DICH_VU_INTERNET", false));
+        if (intent.hasExtra("DICH_VU_GIAT_SAY")) 
+            currentContract.setDichVuGiatSay(intent.getBooleanExtra("DICH_VU_GIAT_SAY", false));
+        if (intent.hasExtra("GHI_CHU")) 
+            currentContract.setGhiChu(intent.getStringExtra("GHI_CHU"));
+        if (intent.hasExtra("HIEN_THI_COC")) 
+            currentContract.setHienThiTienCocTrenHoaDon(intent.getBooleanExtra("HIEN_THI_COC", false));
+        if (intent.hasExtra("HIEN_THI_GHI_CHU")) 
+            currentContract.setHienThiGhiChuTrenHoaDon(intent.getBooleanExtra("HIEN_THI_GHI_CHU", false));
+        if (intent.hasExtra("NHAC_TRUOC_1_THANG")) 
+            currentContract.setNhacTruoc1Thang(intent.getBooleanExtra("NHAC_TRUOC_1_THANG", false));
+        if (intent.hasExtra("CCCD_FRONT_URL")) 
+            currentContract.setCccdFrontUrl(intent.getStringExtra("CCCD_FRONT_URL"));
+        if (intent.hasExtra("CCCD_BACK_URL")) 
+            currentContract.setCccdBackUrl(intent.getStringExtra("CCCD_BACK_URL"));
     }
 
     private void loadExistingContractLegacyFallback() {
@@ -417,6 +526,28 @@ public class HopDongActivity extends AppCompatActivity {
         setUploadEnabled(true);
     }
 
+    /**
+     * Apply mode EDIT: Hiển thị nút "Cập nhật", ẩn các nút khác, pre-fill dữ liệu
+     */
+    private void applyModeEdit() {
+        btnSave.setVisibility(View.GONE);
+        btnPrint.setVisibility(View.GONE);
+        btnEnd.setVisibility(View.GONE);
+        btnUpdate.setVisibility(View.VISIBLE);
+        
+        // Đổi text nút thành "Cập nhật"
+        btnUpdate.setText("Cập nhật");
+        
+        // Đổi tiêu đề toolbar
+        if (tvTitleLine1 != null) {
+            tvTitleLine1.setText("Chỉnh sửa hợp đồng");
+        }
+        
+        // Pre-fill toàn bộ dữ liệu vào form
+        bindContractToUI(currentContract);
+        setUploadEnabled(true);
+    }
+
     private void updateFullToolbarHeader() {
         String title = "Hợp đồng";
         if (currentPhong != null)
@@ -441,10 +572,20 @@ public class HopDongActivity extends AppCompatActivity {
         etDienThoai.setText(nullToEmpty(c.getSoDienThoai()));
         etCccd.setText(nullToEmpty(c.getCccd()));
         etSoNguoi.setText(c.getSoThanhVien() > 0 ? String.valueOf(c.getSoThanhVien()) : "");
-        if (c.getTienPhong() > 0)
+        
+        // Sử dụng long fields nếu có, fallback về double cũ
+        if (c.getGiaThue() > 0) {
+            MoneyFormatter.setValue(etTienPhong, (double) c.getGiaThue());
+        } else if (c.getTienPhong() > 0) {
             MoneyFormatter.setValue(etTienPhong, c.getTienPhong());
-        if (c.getTienCoc() > 0)
-            MoneyFormatter.setValue(etTienCoc, c.getTienCoc());
+        }
+        
+        if (c.getTienCoc() > 0) {
+            MoneyFormatter.setValue(etTienCoc, (double) c.getTienCoc());
+        } else if (c.getTienCoc_old() > 0) {
+            MoneyFormatter.setValue(etTienCoc, c.getTienCoc_old());
+        }
+        
         cbShowDeposit.setChecked(c.isHienThiTienCocTrenHoaDon());
         etNgayKy.setText(nullToEmpty(c.getNgayBatDauThue()));
         etSoThang.setText(c.getSoThangHopDong() > 0 ? String.valueOf(c.getSoThangHopDong()) : "");
@@ -542,21 +683,34 @@ public class HopDongActivity extends AppCompatActivity {
             currentContract.setCreatedAt(now);
         currentContract.setUpdatedAt(now);
         if (isCreate || currentContract.getId() == null || currentContract.getId().trim().isEmpty()) {
+            // Mode CREATE: Thêm mới
             scopedCollection("nguoi_thue").add(currentContract)
                     .addOnSuccessListener(ref -> {
                         currentContract.setId(ref.getId());
                         markRoomStatus(RoomStatus.RENTED);
-                        Toast.makeText(this, "Đã lưu hợp đồng", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "✓ Đã lưu hợp đồng", Toast.LENGTH_SHORT).show();
                         navigateToRoomList(RoomStatus.RENTED);
                     })
-                    .addOnFailureListener(e -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "❌ Lưu thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
         } else {
-            scopedCollection("nguoi_thue").document(currentContract.getId()).set(currentContract)
+            // Mode UPDATE hoặc EDIT: Cập nhật
+            String updateId = isEditMode && editContractId != null ? editContractId : currentContract.getId();
+            
+            scopedCollection("nguoi_thue").document(updateId).set(currentContract)
                     .addOnSuccessListener(v -> {
                         markRoomStatus(RoomStatus.RENTED);
-                        Toast.makeText(this, "Đã cập nhật", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "✓ Đã cập nhật hợp đồng", Toast.LENGTH_SHORT).show();
+                        
+                        // Nếu đang ở EDIT mode, quay về màn hình danh sách
+                        if (isEditMode) {
+                            finish(); // Quay về HopDongListActivity
+                        }
                     })
-                    .addOnFailureListener(e -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "❌ Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
         }
     }
 
