@@ -74,21 +74,33 @@
                 app:tint="#666666"/>
         </RelativeLayout>
 
-        <!-- Chip Trạng thái -->
+        <!-- Chip Trạng thái Hợp đồng -->
         <com.google.android.material.chip.Chip
             android:id="@+id/chipTrangThai"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chờ thu cọc"
+            android:text="Đang hiệu lực"
             android:textSize="12sp"
             android:textColor="@color/white"
             app:chipCornerRadius="8dp"
             app:chipMinHeight="28dp"
-            app:chipBackgroundColor="#FF9800"
+            app:chipBackgroundColor="#4CAF50"
             app:chipStrokeWidth="0dp"
             android:clickable="false"
             android:focusable="false"
-            android:layout_marginBottom="12dp"/>
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Trạng thái Thu cọc -->
+        <TextView
+            android:id="@+id/tvDepositStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⏳ Chờ thu cọc"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#FF9800"
+            android:layout_marginBottom="12dp"
+            android:visibility="visible"/>
 
         <!-- Divider -->
         <View

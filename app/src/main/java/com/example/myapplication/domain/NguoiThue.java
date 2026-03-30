@@ -11,16 +11,25 @@ public class NguoiThue {
     private String soHopDong;
     private String cccdFrontUrl;
     private String cccdBackUrl;
+    
+    // Người đại diện hợp đồng (có thể khác với người thuê chính)
+    private String tenNguoiDaiDien;
+    private String idNguoiDaiDien;
 
     private String idPhong;         // tham chiếu tới PhongTro.id
     private String idPhongCu;       // lưu lịch sử khi kết thúc hợp đồng
 
     private int soThanhVien;
     private String ngayBatDauThue;  // định dạng "dd/MM/yyyy" (ngày ký HĐ)
-    private String ngayKetThucHopDong;
+    private String ngayKetThucHopDong; // String format (để tương thích cũ)
+    
+    // Firestore Int64 fields (ưu tiên sử dụng)
+    private long giaThue;           // Giá thuê (VND)
+    private long tienCoc;           // Tiền cọc (VND)  
+    private long ngayKetThuc;       // Timestamp milliseconds
 
-    private double tienPhong;
-    private double tienCoc;
+    private double tienPhong;       // @Deprecated: dùng giaThue thay thế
+    private double tienCoc_old;     // @Deprecated: dùng tienCoc thay thế
     private boolean hienThiTienCocTrenHoaDon = true;
 
     private int soThangHopDong;
@@ -57,7 +66,10 @@ public class NguoiThue {
         this.soThanhVien = soThanhVien;
         this.ngayBatDauThue = ngayBatDauThue;
         this.ngayKetThucHopDong = ngayKetThucHopDong;
-        this.tienCoc = tienCoc;
+        
+        // Convert double to long for new field
+        this.tienCoc = (long) tienCoc;
+        this.tienCoc_old = tienCoc; // Keep old value
     }
 
     public String getId() { return id; }
@@ -92,11 +104,34 @@ public class NguoiThue {
     public String getIdPhongCu() { return idPhongCu; }
     public void setIdPhongCu(String idPhongCu) { this.idPhongCu = idPhongCu; }
 
+    // Firestore Int64 getters/setters (ưu tiên)
+    public long getGiaThue() { 
+        // Fallback to tienPhong if giaThue not set
+        return giaThue > 0 ? giaThue : (long) tienPhong; 
+    }
+    public void setGiaThue(long giaThue) { 
+        this.giaThue = giaThue;
+        this.tienPhong = giaThue; // Keep sync for backward compatibility
+    }
+
+    public long getTienCoc() { 
+        // Fallback to old tienCoc if not set
+        return tienCoc > 0 ? tienCoc : (long) getTienCoc_old(); 
+    }
+    public void setTienCoc(long tienCoc) { 
+        this.tienCoc = tienCoc;
+        this.tienCoc_old = tienCoc; // Keep sync
+    }
+
+    public long getNgayKetThuc() { return ngayKetThuc; }
+    public void setNgayKetThuc(long ngayKetThuc) { this.ngayKetThuc = ngayKetThuc; }
+
+    // Old getters/setters (deprecated but kept for compatibility)
     public double getTienPhong() { return tienPhong; }
     public void setTienPhong(double tienPhong) { this.tienPhong = tienPhong; }
 
-    public double getTienCoc() { return tienCoc; }
-    public void setTienCoc(double tienCoc) { this.tienCoc = tienCoc; }
+    public double getTienCoc_old() { return tienCoc_old; }
+    public void setTienCoc_old(double tienCoc_old) { this.tienCoc_old = tienCoc_old; }
 
     public boolean isHienThiTienCocTrenHoaDon() { return hienThiTienCocTrenHoaDon; }
     public void setHienThiTienCocTrenHoaDon(boolean hienThiTienCocTrenHoaDon) { this.hienThiTienCocTrenHoaDon = hienThiTienCocTrenHoaDon; }
@@ -142,6 +177,12 @@ public class NguoiThue {
 
     public boolean isTrangThaiThuCoc() { return trangThaiThuCoc; }
     public void setTrangThaiThuCoc(boolean trangThaiThuCoc) { this.trangThaiThuCoc = trangThaiThuCoc; }
+
+    public String getTenNguoiDaiDien() { return tenNguoiDaiDien; }
+    public void setTenNguoiDaiDien(String tenNguoiDaiDien) { this.tenNguoiDaiDien = tenNguoiDaiDien; }
+
+    public String getIdNguoiDaiDien() { return idNguoiDaiDien; }
+    public void setIdNguoiDaiDien(String idNguoiDaiDien) { this.idNguoiDaiDien = idNguoiDaiDien; }
 
     // Tính năng Quản lý Khách Thuê Nâng cao
     private boolean isNguoiLienHe = false;

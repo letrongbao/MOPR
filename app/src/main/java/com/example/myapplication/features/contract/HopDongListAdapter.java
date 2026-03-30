@@ -139,36 +139,131 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         NguoiThue c = displayList.get(position);
         ContractStatus status = ContractStatusHelper.resolve(c);
+        long daysLeft = ContractStatusHelper.daysRemaining(c);
 
         // Tên phòng
         h.tvTenPhong.setText(c.getSoPhong() != null ? "Phòng " + c.getSoPhong() : "—");
 
-        // Giá thuê
-        NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
-        String giaThue = currencyFormat.format(c.getTienPhong()) + "đ";
-        h.tvGiaThue.setText(giaThue);
+        // Giá thuê - Format với dấu phân cách
+        long giaThue = c.getGiaThue();
+        String giaThueFormatted = String.format("%,dđ", giaThue).replace(',', '.');
+        h.tvGiaThue.setText(giaThueFormatted);
 
-        // Tiền cọc
-        String tienCoc = currencyFormat.format(c.getTienCoc()) + "đ";
-        h.tvTienCoc.setText(tienCoc);
+        // Tiền cọc - Format với dấu phân cách
+        long tienCoc = c.getTienCoc();
+        String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
+        h.tvTienCoc.setText(tienCocFormatted);
 
-        // Thông tin khách thuê
-        h.tvTenantName.setText(c.getHoTen() != null ? c.getHoTen() : "—");
+        // Thông tin người đại diện (nếu có), fallback về hoTen
+        String tenNguoiDaiDien = c.getTenNguoiDaiDien();
+        if (tenNguoiDaiDien == null || tenNguoiDaiDien.trim().isEmpty()) {
+            tenNguoiDaiDien = c.getHoTen(); // Fallback to hoTen if no representative
+        }
+        h.tvTenantName.setText(tenNguoiDaiDien != null ? tenNguoiDaiDien : "—");
         h.tvTenantPhone.setText(c.getSoDienThoai() != null ? c.getSoDienThoai() : "—");
 
-        // Chip trạng thái - Đổi màu theo trạng thái thu cọc
-        if (c.isTrangThaiThuCoc()) {
-            h.chipTrangThai.setText("✓ Đã thu cọc");
-            h.chipTrangThai.setChipBackgroundColor(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-        } else {
-            h.chipTrangThai.setText("Chờ thu cọc");
-            h.chipTrangThai.setChipBackgroundColor(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#FF9800")));
-        }
+        // Chip trạng thái hợp đồng - Logic tự động theo ngày kết thúc
+        updateContractStatusChip(h.chipTrangThai, status, daysLeft, c);
+
+        // Hiển thị trạng thái thu cọc (nếu chưa thu và hợp đồng còn hiệu lực)
+        updateDepositStatusDisplay(h, c, status);
 
         // Menu 3 chấm
-        h.btnMenu.setOnClickListener(v -> showPopupMenu(v, c, position));
+        h.btnMenu.setOnClickListener(v -> showPopupMenu(v, c, position, status));
+    }
+
+    /**
+     * Cập nhật chip trạng thái hợp đồng theo logic:
+     * - Hết hạn: Màu Xám
+     * - Sắp hết hạn (<30 ngày): Màu Đỏ rực
+     * - Đang hiệu lực: Màu Xanh lá
+     * 
+     * Kiểm tra thêm: Nếu có ngayKetThuc (long timestamp), dùng nó để tính chính xác
+     */
+    private void updateContractStatusChip(Chip chip, ContractStatus status, long daysLeft, NguoiThue contract) {
+        // Kiểm tra logic mới với ngayKetThuc (long timestamp)
+        long ngayKetThuc = contract.getNgayKetThuc();
+        if (ngayKetThuc > 0) {
+            long currentTime = System.currentTimeMillis();
+            long timeRemaining = ngayKetThuc - currentTime;
+            
+            // 30 ngày = 2,592,000,000 ms
+            final long THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000; // 2592000000
+            
+            if (timeRemaining < 0) {
+                // Hết hạn
+                chip.setText("Hết hạn");
+                chip.setChipBackgroundColor(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#9E9E9E"))); // Xám
+                chip.setTextColor(Color.WHITE);
+                return;
+            } else if (timeRemaining < THIRTY_DAYS_MS) {
+                // Sắp hết hạn (< 30 ngày)
+                long daysLeftNew = timeRemaining / (24 * 60 * 60 * 1000);
+                String text = "⚠ Còn " + daysLeftNew + " ngày";
+                chip.setText(text);
+                chip.setChipBackgroundColor(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336"))); // Đỏ rực
+                chip.setTextColor(Color.WHITE);
+                return;
+            } else {
+                // Đang hiệu lực
+                chip.setText("✓ Đang hiệu lực");
+                chip.setChipBackgroundColor(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))); // Xanh lá
+                chip.setTextColor(Color.WHITE);
+                return;
+            }
+        }
+        
+        // Fallback: dùng logic cũ nếu không có ngayKetThuc
+        switch (status) {
+            case DA_KET_THUC:
+                chip.setText("Hết hạn");
+                chip.setChipBackgroundColor(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#9E9E9E"))); // Xám
+                chip.setTextColor(Color.WHITE);
+                break;
+            
+            case SAP_HET_HAN:
+                String text = "⚠ Sắp hết hạn";
+                if (daysLeft >= 0) {
+                    text = "⚠ Còn " + daysLeft + " ngày";
+                }
+                chip.setText(text);
+                chip.setChipBackgroundColor(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336"))); // Đỏ rực
+                chip.setTextColor(Color.WHITE);
+                break;
+            
+            case DANG_THUE:
+            default:
+                chip.setText("✓ Đang hiệu lực");
+                chip.setChipBackgroundColor(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))); // Xanh lá
+                chip.setTextColor(Color.WHITE);
+                break;
+        }
+    }
+
+    /**
+     * Hiển thị trạng thái thu cọc bằng TextView phụ
+     */
+    private void updateDepositStatusDisplay(ViewHolder h, NguoiThue c, ContractStatus status) {
+        // Chỉ hiển thị trạng thái thu cọc nếu hợp đồng còn hiệu lực
+        if (status == ContractStatus.DA_KET_THUC) {
+            h.tvDepositStatus.setVisibility(View.GONE);
+            return;
+        }
+
+        h.tvDepositStatus.setVisibility(View.VISIBLE);
+        if (c.isTrangThaiThuCoc()) {
+            h.tvDepositStatus.setText("✓ Đã thu cọc");
+            h.tvDepositStatus.setTextColor(Color.parseColor("#4CAF50")); // Xanh
+        } else {
+            h.tvDepositStatus.setText("⏳ Chờ thu cọc");
+            h.tvDepositStatus.setTextColor(Color.parseColor("#FF9800")); // Cam
+        }
     }
 
     /** Mở Zalo với tin nhắn soạn sẵn, fallback sang Share chooser */
@@ -201,23 +296,104 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
         ctx.startActivity(Intent.createChooser(shareIntent, "Gửi nhắc nhở qua..."));
     }
 
-    private void showPopupMenu(View anchor, NguoiThue contract, int position) {
+    private void showPopupMenu(View anchor, NguoiThue contract, int position, ContractStatus status) {
         PopupMenu popup = new PopupMenu(anchor.getContext(), anchor);
         popup.getMenuInflater().inflate(R.menu.menu_hop_dong, popup.getMenu());
+        
+        // Hiển thị "Gửi nhắc tái ký" chỉ khi hợp đồng sắp hết hạn
+        android.view.MenuItem menuNhacTaiKy = popup.getMenu().findItem(R.id.menu_nhac_tai_ky);
+        if (menuNhacTaiKy != null) {
+            menuNhacTaiKy.setVisible(status == ContractStatus.SAP_HET_HAN);
+        }
+        
+        // Hiển thị "Xác nhận thu cọc" chỉ khi chưa thu cọc
+        android.view.MenuItem menuThuCoc = popup.getMenu().findItem(R.id.menu_thu_coc);
+        if (menuThuCoc != null) {
+            menuThuCoc.setVisible(!contract.isTrangThaiThuCoc() && status != ContractStatus.DA_KET_THUC);
+        }
         
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.menu_thu_coc) {
                 showBottomSheetThuCoc(anchor.getContext(), contract, position);
                 return true;
+            } else if (itemId == R.id.menu_xac_nhan_thu_coc) {
+                confirmDepositReceived(anchor.getContext(), contract, position);
+                return true;
+            } else if (itemId == R.id.menu_nhac_tai_ky) {
+                sendRenewalReminder(anchor.getContext(), contract);
+                return true;
             } else if (itemId == R.id.menu_xem_chi_tiet) {
-                Toast.makeText(anchor.getContext(), "Xem chi tiết hợp đồng", Toast.LENGTH_SHORT).show();
+                openContractDetail(anchor.getContext(), contract);
                 return true;
             }
             return false;
         });
         
         popup.show();
+    }
+
+    /**
+     * Xác nhận đã thu cọc - cập nhật trực tiếp lên Firestore
+     */
+    private void confirmDepositReceived(Context context, NguoiThue contract, int position) {
+        if (depositListener != null) {
+            contract.setTrangThaiThuCoc(true);
+            depositListener.onDepositUpdated(contract);
+            notifyItemChanged(position);
+            Toast.makeText(context, "✓ Đã xác nhận thu cọc", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Gửi nhắc nhở tái ký hợp đồng qua Zalo
+     */
+    private void sendRenewalReminder(Context context, NguoiThue contract) {
+        String soPhong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
+        String ngayKetThuc = contract.getNgayKetThucHopDong() != null ? contract.getNgayKetThucHopDong() : "?";
+        long daysLeft = ContractStatusHelper.daysRemaining(contract);
+        
+        String msg = "🏠 Thông báo tái ký hợp đồng\n\n" +
+                "Phòng: " + soPhong + "\n" +
+                "Ngày kết thúc: " + ngayKetThuc + "\n" +
+                "Còn lại: " + daysLeft + " ngày\n\n" +
+                "Quý khách vui lòng liên hệ chủ trọ để thực hiện thủ tục tái ký hợp đồng. Xin cảm ơn!";
+
+        String sdt = contract.getSoDienThoai();
+        if (sdt != null && !sdt.trim().isEmpty()) {
+            // Chuẩn hóa: 0xxx → 84xxx
+            String normalized = sdt.replaceAll("[^0-9]", "");
+            if (normalized.startsWith("0")) {
+                normalized = "84" + normalized.substring(1);
+            }
+            try {
+                Intent zaloIntent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://zalo.me/" + normalized + "?text=" + Uri.encode(msg)));
+                zaloIntent.setPackage("com.zing.zalo");
+                context.startActivity(zaloIntent);
+                return;
+            } catch (Exception ignored) { /* Zalo chưa cài */ }
+        }
+
+        // Fallback: Share chooser
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, msg);
+        context.startActivity(Intent.createChooser(shareIntent, "Gửi nhắc tái ký qua..."));
+    }
+
+    /**
+     * Mở màn hình chi tiết hợp đồng
+     */
+    private void openContractDetail(Context context, NguoiThue contract) {
+        if (contract == null || contract.getId() == null) {
+            Toast.makeText(context, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(context, ChiTietHopDongActivity.class);
+        intent.putExtra(ChiTietHopDongActivity.EXTRA_CONTRACT_ID, contract.getId());
+        context.startActivity(intent);
     }
 
     private void showBottomSheetThuCoc(Context context, NguoiThue contract, int position) {
@@ -240,9 +416,10 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
                 + " - " + (contract.getSoDienThoai() != null ? contract.getSoDienThoai() : "—");
         tvTenantInfo.setText(tenantText);
 
-        NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
-        String tienCoc = currencyFormat.format(contract.getTienCoc()) + "đ";
-        tvSoTienCoc.setText(tienCoc);
+        // Format tiền cọc với dấu phân cách
+        long tienCoc = contract.getTienCoc();
+        String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
+        tvSoTienCoc.setText(tienCocFormatted);
 
         // Nút Gửi QR & Liên hệ
         btnGuiQR.setOnClickListener(v -> {
@@ -267,11 +444,11 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
 
     private void shareQRAndMessage(Context context, NguoiThue contract) {
         String phong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
-        NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
-        String tienCoc = currencyFormat.format(contract.getTienCoc()) + "đ";
+        long tienCoc = contract.getTienCoc();
+        String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
         
         String message = "Yêu cầu thanh toán cọc phòng " + phong + "\n" +
-                "Số tiền: " + tienCoc + "\n" +
+                "Số tiền: " + tienCocFormatted + "\n" +
                 "Vui lòng thanh toán qua mã QR bên dưới.";
 
         // Share text (QR image would need FileProvider setup)
@@ -286,7 +463,7 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
     // ── ViewHolder ──────────────────────────────────────────────────────────
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTenPhong, tvGiaThue, tvTienCoc, tvTenantName, tvTenantPhone;
+        TextView tvTenPhong, tvGiaThue, tvTienCoc, tvTenantName, tvTenantPhone, tvDepositStatus;
         Chip chipTrangThai;
         ImageButton btnMenu;
 
@@ -297,6 +474,7 @@ public class HopDongListAdapter extends RecyclerView.Adapter<HopDongListAdapter.
             tvTienCoc = v.findViewById(R.id.tvTienCoc);
             tvTenantName = v.findViewById(R.id.tvTenantName);
             tvTenantPhone = v.findViewById(R.id.tvTenantPhone);
+            tvDepositStatus = v.findViewById(R.id.tvDepositStatus);
             chipTrangThai = v.findViewById(R.id.chipTrangThai);
             btnMenu = v.findViewById(R.id.btnMenu);
         }

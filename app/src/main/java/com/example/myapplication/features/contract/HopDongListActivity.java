@@ -119,14 +119,34 @@ public class HopDongListActivity extends AppCompatActivity {
         for (NguoiThue c : list) {
             ContractStatus s = ContractStatusHelper.resolve(c);
             switch (s) {
-                case DANG_THUE:   dangThue++; break;
-                case SAP_HET_HAN: sapHet++;   break;
-                case DA_KET_THUC: ketThuc++;  break;
+                case DANG_THUE:   
+                    dangThue++; 
+                    break;
+                case SAP_HET_HAN: 
+                    sapHet++;   
+                    break;
+                case DA_KET_THUC: 
+                    ketThuc++;  
+                    break;
             }
         }
-        if (tvCountDangThue != null) tvCountDangThue.setText(String.valueOf(dangThue));
-        if (tvCountSapHet   != null) tvCountSapHet.setText(String.valueOf(sapHet));
-        if (tvCountKetThuc  != null) tvCountKetThuc.setText(String.valueOf(ketThuc));
+        
+        // Cập nhật UI với màu sắc tương ứng
+        if (tvCountDangThue != null) {
+            tvCountDangThue.setText(String.valueOf(dangThue));
+            tvCountDangThue.setTextColor(Color.parseColor("#4CAF50")); // Xanh lá
+        }
+        if (tvCountSapHet != null) {
+            tvCountSapHet.setText(String.valueOf(sapHet));
+            tvCountSapHet.setTextColor(Color.parseColor("#F44336")); // Đỏ rực
+        }
+        if (tvCountKetThuc != null) {
+            tvCountKetThuc.setText(String.valueOf(ketThuc));
+            tvCountKetThuc.setTextColor(Color.parseColor("#9E9E9E")); // Xám
+        }
+        
+        Log.d(TAG, String.format("Stats updated - Active: %d, Expiring: %d, Ended: %d", 
+                dangThue, sapHet, ketThuc));
     }
 
     private void updateEmptyState(List<NguoiThue> list) {
