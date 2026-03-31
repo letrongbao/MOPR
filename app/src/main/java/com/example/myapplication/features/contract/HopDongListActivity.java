@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -28,6 +29,7 @@ import com.example.myapplication.core.repository.domain.NguoiThueRepository;
 import com.example.myapplication.core.util.ContractStatusHelper;
 import com.example.myapplication.domain.ContractStatus;
 import com.example.myapplication.domain.NguoiThue;
+import com.google.android.material.appbar.AppBarLayout;
 
 import java.util.List;
 
@@ -46,7 +48,7 @@ public class HopDongListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge
+        // Edge-to-edge đồng bộ với các trang khác
         Window window = getWindow();
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
@@ -55,21 +57,26 @@ public class HopDongListActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_hop_dong_list);
 
-        // Padding cho AppBar
-        View appBar = findViewById(R.id.appBarLayoutHd);
-        if (appBar != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBar, (v, insets) -> {
+        // Xử lý padding cho AppBarLayout để không bị lẹm thanh thông báo
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
                 Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
                 v.setPadding(0, sys.top, 0, 0);
                 return insets;
             });
         }
 
-        // Back button
-        View btnBack = findViewById(R.id.btnBackHd);
-        if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+        // Setup Toolbar và nút Back đồng nhất
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Hợp đồng thông minh");
+        }
+        toolbar.setNavigationOnClickListener(v -> finish());
 
-        // Summary TextViews
+        // Ánh xạ các View còn lại
         tvCountDangThue = findViewById(R.id.tvCountDangThue);
         tvCountSapHet   = findViewById(R.id.tvCountSapHet);
         tvCountKetThuc  = findViewById(R.id.tvCountKetThuc);
@@ -82,13 +89,13 @@ public class HopDongListActivity extends AppCompatActivity {
         rvHopDong.setAdapter(adapter);
 
         // Nhắc tái ký qua Zalo
-        adapter.setOnNhacTaiKyListener(contract -> sendZaloReminder(contract));
+        adapter.setOnNhacTaiKyListener(this::sendZaloReminder);
 
         // Xử lý cập nhật trạng thái thu cọc
-        adapter.setOnDepositUpdateListener(contract -> updateDepositStatus(contract));
+        adapter.setOnDepositUpdateListener(this::updateDepositStatus);
 
         // Xử lý xóa hợp đồng
-        adapter.setOnContractDeleteListener(contractId -> deleteContract(contractId));
+        adapter.setOnContractDeleteListener(this::deleteContract);
 
         // SearchView
         EditText etSearch = findViewById(R.id.etSearchHd);
@@ -108,7 +115,6 @@ public class HopDongListActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        // Dùng layDanhSachNguoiThue() có sẵn trong repository (lấy tất cả)
         repo.layDanhSachNguoiThue().observe(this, list -> {
             if (list == null) return;
             adapter.setData(list);
@@ -121,41 +127,23 @@ public class HopDongListActivity extends AppCompatActivity {
         int dangThue = 0, sapHet = 0, ketThuc = 0;
         for (NguoiThue c : list) {
             ContractStatus s = ContractStatusHelper.resolve(c);
+            if (s == null) continue;
             switch (s) {
-                case DANG_THUE:   
-                    dangThue++; 
-                    break;
-                case SAP_HET_HAN: 
-                    sapHet++;   
-                    break;
-                case DA_KET_THUC: 
-                    ketThuc++;  
-                    break;
+                case DANG_THUE:   dangThue++; break;
+                case SAP_HET_HAN: sapHet++;   break;
+                case DA_KET_THUC: ketThuc++;  break;
             }
         }
         
-        // Cập nhật UI với màu sắc tương ứng
-        if (tvCountDangThue != null) {
-            tvCountDangThue.setText(String.valueOf(dangThue));
-            tvCountDangThue.setTextColor(Color.parseColor("#4CAF50")); // Xanh lá
-        }
-        if (tvCountSapHet != null) {
-            tvCountSapHet.setText(String.valueOf(sapHet));
-            tvCountSapHet.setTextColor(Color.parseColor("#F44336")); // Đỏ rực
-        }
-        if (tvCountKetThuc != null) {
-            tvCountKetThuc.setText(String.valueOf(ketThuc));
-            tvCountKetThuc.setTextColor(Color.parseColor("#9E9E9E")); // Xám
-        }
-        
-        Log.d(TAG, String.format("Stats updated - Active: %d, Expiring: %d, Ended: %d", 
-                dangThue, sapHet, ketThuc));
+        if (tvCountDangThue != null) tvCountDangThue.setText(String.valueOf(dangThue));
+        if (tvCountSapHet != null)   tvCountSapHet.setText(String.valueOf(sapHet));
+        if (tvCountKetThuc != null)  tvCountKetThuc.setText(String.valueOf(ketThuc));
     }
 
     private void updateEmptyState(List<NguoiThue> list) {
         boolean isEmpty = list == null || list.isEmpty();
         rvHopDong.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-        layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        if (layoutEmpty != null) layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
     }
 
     private void sendZaloReminder(NguoiThue contract) {
@@ -176,7 +164,6 @@ public class HopDongListActivity extends AppCompatActivity {
             } catch (Exception ignored) {}
         }
 
-        // Fallback: share chooser
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
         share.putExtra(Intent.EXTRA_TEXT, msg);
@@ -184,53 +171,29 @@ public class HopDongListActivity extends AppCompatActivity {
     }
 
     private void updateDepositStatus(NguoiThue contract) {
-        if (contract == null || contract.getId() == null) {
-            Toast.makeText(this, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Log.d(TAG, "Updating deposit status for contract: " + contract.getId());
+        if (contract == null || contract.getId() == null) return;
 
         repo.capNhatTrangThaiThuCoc(contract.getId(), true)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Deposit status updated successfully");
                     Toast.makeText(this, "Đã cập nhật trạng thái thu cọc", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to update deposit status", e);
-                    Toast.makeText(this, "Lỗi: Không thể cập nhật - " + e.getMessage(), 
-                            Toast.LENGTH_LONG).show();
-                    // Revert UI change
+                    Toast.makeText(this, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     contract.setTrangThaiThuCoc(false);
                     adapter.notifyDataSetChanged();
                 });
     }
 
-    /**
-     * Xóa hợp đồng khỏi Firestore
-     */
     private void deleteContract(String contractId) {
-        if (contractId == null || contractId.trim().isEmpty()) {
-            Toast.makeText(this, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Log.d(TAG, "Deleting contract: " + contractId);
+        if (contractId == null || contractId.trim().isEmpty()) return;
 
         repo.xoaHopDong(contractId, 
             () -> {
-                // Thành công
-                Log.d(TAG, "Contract deleted successfully");
-                Toast.makeText(this, "✓ Đã xóa hợp đồng thành công", Toast.LENGTH_SHORT).show();
-                
-                // Xóa item khỏi adapter
+                Toast.makeText(this, "✓ Đã xóa hợp đồng", Toast.LENGTH_SHORT).show();
                 adapter.removeItemById(contractId);
             },
             () -> {
-                // Thất bại
-                Log.e(TAG, "Failed to delete contract");
-                Toast.makeText(this, "❌ Lỗi: Không thể xóa hợp đồng. Vui lòng kiểm tra kết nối mạng và thử lại.", 
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "❌ Lỗi: Không thể xóa hợp đồng", Toast.LENGTH_LONG).show();
             }
         );
     }

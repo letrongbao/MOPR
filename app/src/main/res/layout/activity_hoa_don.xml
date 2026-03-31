@@ -4,54 +4,64 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F0F0"
-    android:fitsSystemWindows="true">
+    android:background="#F5F5F5"
+    android:fitsSystemWindows="false">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        app:elevation="0dp">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary"
             app:title="Thống kê báo phí"
+            app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationIconTint="@color/white" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary"
+            app:tabSelectedTextColor="@color/white"
+            app:tabTextColor="#CCFFFFFF"
+            app:tabIndicatorColor="@color/white"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="fixed"
+            app:tabRippleColor="@null"/>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Chọn căn nhà để xem kết quả báo phí"
-            android:textSize="13sp"
-            android:textColor="#444444"
-            android:textStyle="italic"
-            android:layout_marginBottom="8dp"/>
-
+        <!-- Selection Bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:background="@color/white"
+            android:elevation="2dp">
 
             <RelativeLayout
                 android:id="@+id/btnSelectKhu"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="44dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_card_outline"
+                android:background="@drawable/bg_input_rounded"
                 android:paddingHorizontal="12dp"
                 android:clickable="true"
                 android:focusable="true">
@@ -59,33 +69,34 @@
                     android:id="@+id/tvSelectedKhu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Chọn căn nhà"
+                    android:text="Tất cả căn nhà"
                     android:layout_centerVertical="true"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp"
+                    android:textColor="#333333"/>
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:src="@drawable/ic_arrow_right"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:rotation="90"
-                    app:tint="@color/text_sub"/>
+                    app:tint="#888888"/>
             </RelativeLayout>
 
             <LinearLayout
                 android:id="@+id/btnDatePicker"
                 android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_height="44dp"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/bg_card_outline"
+                android:background="@drawable/bg_input_rounded"
                 android:paddingHorizontal="12dp"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:clickable="true"
                 android:focusable="true">
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:src="@drawable/baseline_receipt_24"
                     app:tint="@color/primary"/>
                 <TextView
@@ -94,40 +105,22 @@
                     android:layout_height="wrap_content"
                     android:text="3/2026"
                     android:layout_marginStart="8dp"
-                    android:textSize="14sp"/>
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_arrow_right"
-                    android:layout_marginStart="4dp"
-                    android:rotation="90"
-                    app:tint="@color/text_sub"/>
+                    android:textSize="14sp"
+                    android:textColor="#333333"
+                    android:textStyle="bold"/>
             </LinearLayout>
         </LinearLayout>
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabLayout"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_card_outline"
-            app:tabBackground="@drawable/tab_selector"
-            app:tabIndicatorHeight="0dp"
-            app:tabRippleColor="@null"
-            app:tabSelectedTextColor="@color/white"
-            app:tabTextColor="@color/primary"
-            app:tabTextAppearance="@style/TabTextAppearance"
-            app:tabMode="fixed"/>
-
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:clipToPadding="false"/>
 
             <LinearLayout
                 android:id="@+id/llEmpty"
@@ -138,17 +131,18 @@
                 android:orientation="vertical"
                 android:visibility="gone">
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
                     android:src="@drawable/baseline_receipt_24"
-                    app:tint="#888888"/>
+                    app:tint="#CCCCCC"/>
                 <TextView
                     android:id="@+id/tvEmpty"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Chưa có dữ liệu!"
-                    android:textColor="#666666"
-                    android:layout_marginTop="8dp"/>
+                    android:text="Chưa có dữ liệu hoá đơn"
+                    android:textColor="#AAAAAA"
+                    android:layout_marginTop="12dp"
+                    android:textSize="15sp"/>
             </LinearLayout>
         </FrameLayout>
 
@@ -170,7 +164,8 @@
             app:srcCompat="@drawable/baseline_receipt_24"
             app:backgroundTint="@color/btn_blue_action"
             app:tint="@color/white"
-            app:fabSize="mini" />
+            app:fabSize="mini"
+            android:contentDescription="Chốt kỳ"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabThem"
@@ -178,7 +173,8 @@
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_add"
             app:backgroundTint="@color/primary"
-            app:tint="@color/white"/>
+            app:tint="@color/white"
+            android:contentDescription="Thêm hoá đơn"/>
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -20,6 +20,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,6 +36,7 @@ import com.example.myapplication.domain.PhongTro;
 import com.example.myapplication.core.repository.domain.PaymentRepository;
 import com.example.myapplication.viewmodel.HoaDonViewModel;
 import com.example.myapplication.viewmodel.PhongTroViewModel;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -76,11 +78,28 @@ public class HoaDonActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Handle window insets properly for status bar
+        // Edge-to-edge
         Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, true);
+        WindowCompat.setDecorFitsSystemWindows(window, false);
+        window.setStatusBarColor(Color.TRANSPARENT);
+
+        // Ensure status bar icons are white
+        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
+                window.getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.setAppearanceLightStatusBars(false);
+        }
 
         setContentView(R.layout.activity_hoa_don);
+
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                return insets;
+            });
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -88,6 +107,7 @@ public class HoaDonActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Thống kê báo phí");
         }
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         tvEmpty = findViewById(R.id.tvEmpty);
         llEmpty = findViewById(R.id.llEmpty);
