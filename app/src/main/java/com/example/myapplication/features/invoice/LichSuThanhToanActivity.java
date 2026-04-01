@@ -103,8 +103,11 @@ public class LichSuThanhToanActivity extends AppCompatActivity {
                         .setTitle("Xác nhận xóa")
                         .setMessage("Xóa thanh toán " + fmtMoney(payment.getAmount()) + "?")
                         .setPositiveButton("Xóa", (d, w) -> repository.delete(payment.getId(),
-                                () -> runOnUiThread(() -> Toast.makeText(LichSuThanhToanActivity.this, "Đã xóa", Toast.LENGTH_SHORT).show()),
-                                () -> runOnUiThread(() -> Toast.makeText(LichSuThanhToanActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT).show())))
+                                () -> runOnUiThread(() -> Toast
+                                        .makeText(LichSuThanhToanActivity.this, "Đã xóa", Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(() -> Toast
+                                        .makeText(LichSuThanhToanActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT)
+                                        .show())))
                         .setNegativeButton("Hủy", null)
                         .show();
             }
@@ -114,14 +117,16 @@ public class LichSuThanhToanActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         repository.listByInvoice(invoiceId).observe(this, list -> {
-            if (list == null) return;
+            if (list == null)
+                return;
             List<Payment> sorted = new ArrayList<>(list);
             Collections.sort(sorted, (a, b) -> Long.compare(parseDate(b.getPaidAt()), parseDate(a.getPaidAt())));
             adapter.setDanhSach(sorted);
             tvEmpty.setVisibility(sorted.isEmpty() ? View.VISIBLE : View.GONE);
 
             double paid = 0;
-            for (Payment p : sorted) paid += p.getAmount();
+            for (Payment p : sorted)
+                paid += p.getAmount();
             double remaining = Math.max(0, invoiceTotal - paid);
 
             tvPaid.setText("Đã thu: " + fmtMoney(paid));
@@ -143,7 +148,7 @@ public class LichSuThanhToanActivity extends AppCompatActivity {
         etPaidAt.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
 
         android.widget.ArrayAdapter<String> methodAdapter = new android.widget.ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, new String[]{"Tiền mặt", "Chuyển khoản"});
+                android.R.layout.simple_spinner_item, new String[] { "Tiền mặt", "Chuyển khoản" });
         methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMethod.setAdapter(methodAdapter);
 
@@ -160,15 +165,18 @@ public class LichSuThanhToanActivity extends AppCompatActivity {
 
                         Payment p = new Payment();
                         p.setInvoiceId(invoiceId);
-                        if (roomId != null && !roomId.trim().isEmpty()) p.setRoomId(roomId);
+                        if (roomId != null && !roomId.trim().isEmpty())
+                            p.setRoomId(roomId);
                         p.setAmount(amount);
                         p.setMethod(spinnerMethod.getSelectedItemPosition() == 0 ? "CASH" : "BANK");
                         p.setPaidAt(etPaidAt.getText().toString().trim());
                         p.setNote(etNote.getText().toString().trim());
 
                         repository.add(p,
-                                () -> runOnUiThread(() -> Toast.makeText(this, "Đã lưu thanh toán", Toast.LENGTH_SHORT).show()),
-                                () -> runOnUiThread(() -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show()));
+                                () -> runOnUiThread(
+                                        () -> Toast.makeText(this, "Đã lưu thanh toán", Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(
+                                        () -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, "Số tiền không hợp lệ", Toast.LENGTH_SHORT).show();
                     }
@@ -183,7 +191,8 @@ public class LichSuThanhToanActivity extends AppCompatActivity {
     }
 
     private long parseDate(String s) {
-        if (s == null) return 0;
+        if (s == null)
+            return 0;
         try {
             Date d = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(s);
             return d != null ? d.getTime() : 0;
@@ -205,25 +214,29 @@ public class LichSuThanhToanActivity extends AppCompatActivity {
                     .collection("tenants").document(tenantId).collection(collection);
         }
 
-        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) throw new IllegalStateException("User not logged in");
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser();
+        if (user == null)
+            throw new IllegalStateException("User not logged in");
         return com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("users").document(user.getUid()).collection(collection);
     }
 
     private void maybeUpdateInvoiceStatus(double paid) {
-        if (invoiceId == null || invoiceId.trim().isEmpty()) return;
+        if (invoiceId == null || invoiceId.trim().isEmpty())
+            return;
 
         String st;
         if (paid <= 0) {
-            st = InvoiceStatus.UNPAID;
+            st = InvoiceStatus.REPORTED;
         } else if (paid + 0.01 < invoiceTotal) {
             st = InvoiceStatus.PARTIAL;
         } else {
             st = InvoiceStatus.PAID;
         }
 
-        if (st.equals(lastComputedStatus)) return;
+        if (st.equals(lastComputedStatus))
+            return;
         lastComputedStatus = st;
 
         try {
