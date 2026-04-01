@@ -8,13 +8,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -26,6 +24,7 @@ import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.domain.NguoiThue;
 import com.example.myapplication.domain.PhongTro;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -41,8 +40,8 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
     private ImageView imgPhong;
     private TextView tvSoPhong, tvLoaiPhong, tvDienTich, tvGiaThue, tvTrangThai, tvTrangThaiRow;
     private TextView tvTenNguoiThue, tvSdtNguoiThue;
-    private CardView cardNguoiThue;
-    private LinearLayout btnGoiDien, btnNhanTin, llActionButtons;
+    private View cardNguoiThue;
+    private View btnGoiDien, btnNhanTin, llActionButtons;
     private PhongTro currentPhong;
 
     private String soDienThoaiNguoiThue;
@@ -57,12 +56,21 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Transparent status bar
+        // Edge-to-edge layout
         Window window = getWindow();
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setStatusBarColor(Color.TRANSPARENT);
 
         setContentView(R.layout.activity_chi_tiet_phong_tro);
+
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(0, systemBars.top, 0, 0);
+                return insets;
+            });
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -70,19 +78,30 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Chi tiết phòng");
         }
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         imgPhong = findViewById(R.id.imgPhongChiTiet);
         tvSoPhong = findViewById(R.id.tvSoPhongChiTiet);
-        tvLoaiPhong = findViewById(R.id.tvLoaiPhongChiTiet);
-        tvDienTich = findViewById(R.id.tvDienTichChiTiet);
-        tvGiaThue = findViewById(R.id.tvGiaThueChiTiet);
         tvTrangThai = findViewById(R.id.tvTrangThaiChiTiet);
-        tvTrangThaiRow = findViewById(R.id.tvTrangThaiRow);
+
+        // Detail rows
+        View rowLoai = findViewById(R.id.rowLoaiPhong);
+        ((TextView)rowLoai.findViewById(R.id.tvLabel)).setText("Loại phòng");
+        tvLoaiPhong = rowLoai.findViewById(R.id.tvValue);
+
+        View rowDienTich = findViewById(R.id.rowDienTich);
+        ((TextView)rowDienTich.findViewById(R.id.tvLabel)).setText("Diện tích");
+        tvDienTich = rowDienTich.findViewById(R.id.tvValue);
+
+        View rowGia = findViewById(R.id.rowGiaThue);
+        ((TextView)rowGia.findViewById(R.id.tvLabel)).setText("Giá thuê");
+        tvGiaThue = rowGia.findViewById(R.id.tvValue);
+        tvGiaThue.setTextColor(getResources().getColor(R.color.primary));
+
+        View rowTrangThai = findViewById(R.id.rowTrangThai);
+        ((TextView)rowTrangThai.findViewById(R.id.tvLabel)).setText("Trạng thái");
+        tvTrangThaiRow = rowTrangThai.findViewById(R.id.tvValue);
+
         tvTenNguoiThue = findViewById(R.id.tvTenNguoiThue);
         tvSdtNguoiThue = findViewById(R.id.tvSdtNguoiThue);
         cardNguoiThue = findViewById(R.id.cardNguoiThue);
@@ -98,9 +117,6 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
             return;
         }
 
-        // === IMPLICIT INTENTS ===
-
-        // 1. Gọi điện cho người thuê (ACTION_DIAL)
         btnGoiDien.setOnClickListener(v -> {
             if (soDienThoaiNguoiThue == null || soDienThoaiNguoiThue.isEmpty()) {
                 Toast.makeText(this, "Phòng chưa có người thuê", Toast.LENGTH_SHORT).show();
@@ -111,7 +127,6 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // 2. Nhắn tin SMS cho người thuê (ACTION_SENDTO)
         btnNhanTin.setOnClickListener(v -> {
             if (soDienThoaiNguoiThue == null || soDienThoaiNguoiThue.isEmpty()) {
                 Toast.makeText(this, "Phòng chưa có người thuê", Toast.LENGTH_SHORT).show();
@@ -186,8 +201,8 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
                         if (nguoiThue != null) {
                             cardNguoiThue.setVisibility(View.VISIBLE);
                             llActionButtons.setVisibility(View.VISIBLE);
-                            tvTenNguoiThue.setText("Họ tên: " + nguoiThue.getHoTen());
-                            tvSdtNguoiThue.setText("SĐT: " + nguoiThue.getSoDienThoai());
+                            tvTenNguoiThue.setText(nguoiThue.getHoTen());
+                            tvSdtNguoiThue.setText(nguoiThue.getSoDienThoai());
                             soDienThoaiNguoiThue = nguoiThue.getSoDienThoai();
                             break;
                         }
@@ -222,7 +237,6 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         tvTrangThaiRow.setText(phong.getTrangThai());
         tvTrangThaiRow.setTextColor(color);
 
-        // Load full image (kiểm tra Activity còn sống)
         if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty() && !isDestroyed()) {
             Glide.with(this)
                     .load(phong.getHinhAnh())
@@ -251,4 +265,3 @@ public class ChiTietPhongTroActivity extends AppCompatActivity {
         return true;
     }
 }
-

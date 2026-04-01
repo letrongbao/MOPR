@@ -48,7 +48,7 @@ public class InvoiceReminderWorker extends Worker {
             com.google.firebase.firestore.QuerySnapshot qs = Tasks.await(
                     db.collection("tenants").document(tenantId)
                             .collection("hoa_don")
-                            .whereIn("trangThai", Arrays.asList(InvoiceStatus.UNPAID, InvoiceStatus.PARTIAL))
+                            .whereIn("trangThai", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
                             .get());
 
             int count = (qs != null) ? qs.size() : 0;
