@@ -77,7 +77,7 @@ public class HoaDonWidgetProvider extends AppWidgetProvider {
                 int chuaThanhToan = 0;
                 for (QueryDocumentSnapshot doc : hoaDonSnap) {
                     String trangThai = doc.getString("trangThai");
-                    if (InvoiceStatus.UNPAID.equals(trangThai) || InvoiceStatus.PARTIAL.equals(trangThai)) {
+                    if (InvoiceStatus.REPORTED.equals(trangThai) || InvoiceStatus.PARTIAL.equals(trangThai)) {
                         chuaThanhToan++;
                     }
                 }

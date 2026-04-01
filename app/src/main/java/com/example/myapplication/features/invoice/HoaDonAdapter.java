@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.R;
-import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.domain.HoaDon;
 import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
@@ -21,9 +20,12 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
     private List<HoaDon> danhSach = new ArrayList<>();
     private final OnItemActionListener listener;
     private boolean readOnly;
+    private int currentTab = 0;
 
     public interface OnItemActionListener {
         void onXoa(HoaDon hoaDon);
+
+        void onBaoPhi(HoaDon hoaDon);
 
         void onDoiTrangThai(HoaDon hoaDon);
 
@@ -46,6 +48,11 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
         notifyDataSetChanged();
     }
 
+    public void setCurrentTab(int tab) {
+        this.currentTab = tab;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -58,51 +65,71 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         HoaDon h = danhSach.get(position);
 
-        holder.tvPhong.setText(h.getSoPhong() != null ? h.getSoPhong() : "P.???");
+        holder.tvPhong.setText(h.getSoPhong() != null ? ("P." + h.getSoPhong()) : "P.???");
 
-        // In real app, tenant name would be in the model. Using placeholder to match
-        // UI.
-        holder.tvTenantName.setText("Người thuê: Đang cập nhật");
+        // Tenant info
+        holder.tvTenantName.setText("Người thuê: Đang cập nhật - ĐT: 0000000000");
 
-        holder.tvPriceMonth.setText("Giá: " + MoneyFormatter.format(h.getGiaThue()) + "/tháng");
-
-        holder.tvReportDate.setText("Tháng: " + h.getThangNam());
-
+        // Status ribbon
         String st = h.getTrangThai();
         if (st == null || st.trim().isEmpty())
-            st = InvoiceStatus.UNPAID;
+            st = InvoiceStatus.UNREPORTED;
 
         if (holder.tvRibbonStatus != null) {
             holder.tvRibbonStatus.setText(st);
             if (InvoiceStatus.PAID.equals(st)) {
-                holder.tvRibbonStatus.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.success));
+                holder.tvRibbonStatus.setBackgroundColor(
+                        ContextCompat.getColor(holder.itemView.getContext(), R.color.success));
             } else if (InvoiceStatus.PARTIAL.equals(st)) {
-                holder.tvRibbonStatus.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.btn_orange));
+                holder.tvRibbonStatus.setBackgroundColor(
+                        ContextCompat.getColor(holder.itemView.getContext(), R.color.btn_orange));
+            } else if (InvoiceStatus.REPORTED.equals(st)) {
+                holder.tvRibbonStatus.setBackgroundColor(
+                        ContextCompat.getColor(holder.itemView.getContext(), R.color.btn_blue_action));
             } else {
-                holder.tvRibbonStatus.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.warning));
+                holder.tvRibbonStatus.setBackgroundColor(
+                        ContextCompat.getColor(holder.itemView.getContext(), R.color.warning));
             }
         }
 
-        // Action visibility for read-only (Tenant)
-        holder.btnCancelInvoice.setVisibility(readOnly ? View.GONE : View.VISIBLE);
-        holder.btnConfirmPayment.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        // View reported fees link
+        holder.tvViewReportedFees.setOnClickListener(v -> listener.onXuat(h));
 
-        holder.btnConfirmPayment.setOnClickListener(v -> {
-            if (!readOnly)
-                listener.onDoiTrangThai(h);
-        });
+        // Main action button changes based on tab
+        String buttonText;
+        int buttonColor;
+        View.OnClickListener buttonAction;
 
-        holder.btnCancelInvoice.setOnClickListener(v -> {
-            if (!readOnly)
-                listener.onXoa(h);
-        });
+        if (currentTab == 0) {
+            // Tab "Chưa báo"
+            String month = h.getThangNam() != null ? h.getThangNam() : "X";
+            buttonText = "Báo phí tháng " + month + " cho khách";
+            buttonColor = R.color.purple_500;
+            buttonAction = v -> listener.onBaoPhi(h);
+        } else if (currentTab == 1) {
+            // Tab "Đã báo"
+            buttonText = "Xác nhận đã thu phí";
+            buttonColor = R.color.btn_orange;
+            buttonAction = v -> listener.onDoiTrangThai(h);
+        } else if (currentTab == 2) {
+            // Tab "Đóng một phần"
+            buttonText = "Xem lịch sử thanh toán";
+            buttonColor = R.color.btn_blue_action;
+            buttonAction = v -> listener.onDoiTrangThai(h);
+        } else {
+            // Tab "Đã đóng"
+            buttonText = "Xem lịch sử thanh toán";
+            buttonColor = R.color.success;
+            buttonAction = v -> listener.onDoiTrangThai(h);
+        }
 
-        holder.btnViewInvoice.setOnClickListener(v -> listener.onXuat(h));
+        holder.btnMainAction.setText(buttonText);
+        holder.btnMainAction.setBackgroundColor(
+                ContextCompat.getColor(holder.itemView.getContext(), buttonColor));
+        holder.btnMainAction.setOnClickListener(buttonAction);
 
-        holder.btnViewDetails.setOnClickListener(v -> {
-            // Logic to show fees details
-            listener.onXuat(h);
-        });
+        // Hide button for read-only users
+        holder.btnMainAction.setVisibility(readOnly ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -111,21 +138,16 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvPhong, tvTenantName, tvPriceMonth, tvReportDate, tvRibbonStatus;
-        MaterialButton btnViewDetails, btnViewInvoice, btnCancelInvoice, btnConfirmPayment;
+        TextView tvPhong, tvTenantName, tvRibbonStatus, tvViewReportedFees;
+        MaterialButton btnMainAction;
 
         ViewHolder(View v) {
             super(v);
             tvPhong = v.findViewById(R.id.tvPhong);
             tvTenantName = v.findViewById(R.id.tvTenantName);
-            tvPriceMonth = v.findViewById(R.id.tvPriceMonth);
-            tvReportDate = v.findViewById(R.id.tvReportDate);
             tvRibbonStatus = v.findViewById(R.id.tvRibbonStatus);
-
-            btnViewDetails = v.findViewById(R.id.btnViewDetails);
-            btnViewInvoice = v.findViewById(R.id.btnViewInvoice);
-            btnCancelInvoice = v.findViewById(R.id.btnCancelInvoice);
-            btnConfirmPayment = v.findViewById(R.id.btnConfirmPayment);
+            tvViewReportedFees = v.findViewById(R.id.tvViewReportedFees);
+            btnMainAction = v.findViewById(R.id.btnMainAction);
         }
     }
 }

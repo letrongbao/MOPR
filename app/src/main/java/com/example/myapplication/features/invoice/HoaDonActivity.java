@@ -9,6 +9,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +38,8 @@ import com.example.myapplication.core.repository.domain.PaymentRepository;
 import com.example.myapplication.viewmodel.HoaDonViewModel;
 import com.example.myapplication.viewmodel.PhongTroViewModel;
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -66,10 +69,14 @@ public class HoaDonActivity extends AppCompatActivity {
     private TextView tvEmpty;
     private View llEmpty;
     private List<PhongTro> danhSachPhong = new ArrayList<>();
-    private FloatingActionButton fabThem;
-    private FloatingActionButton fabChotKy;
 
     private TextView tvSelectedMonth;
+    private TextView tvSelectedKhu;
+    private View btnSelectKhu;
+    private View btnDatePicker;
+    
+    private String selectedKhuId = null;
+    private String selectedMonth = null;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final PaymentRepository paymentRepository = new PaymentRepository();
@@ -112,20 +119,24 @@ public class HoaDonActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvEmpty);
         llEmpty = findViewById(R.id.llEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        fabThem = findViewById(R.id.fabThem);
-        fabChotKy = findViewById(R.id.fabChotKy);
 
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
+        tvSelectedKhu = findViewById(R.id.tvSelectedKhu);
+        btnSelectKhu = findViewById(R.id.btnSelectKhu);
+        btnDatePicker = findViewById(R.id.btnDatePicker);
+        
         if (tvSelectedMonth != null) {
+            selectedMonth = new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date());
             tvSelectedMonth.setText(new SimpleDateFormat("M/yyyy", Locale.getDefault()).format(new Date()));
         }
 
         TabLayout tabLayout = findViewById(R.id.tabLayout);
         final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(0);
         if (tabLayout != null) {
-            tabLayout.addTab(tabLayout.newTab().setText("Chưa thanh toán"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đóng 1 phần"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đã thanh toán"));
+            tabLayout.addTab(tabLayout.newTab().setText("Chưa báo"));
+            tabLayout.addTab(tabLayout.newTab().setText("Đã báo"));
+            tabLayout.addTab(tabLayout.newTab().setText("Đóng một phần"));
+            tabLayout.addTab(tabLayout.newTab().setText("Đã đóng"));
         }
 
         adapter = new HoaDonAdapter(new HoaDonAdapter.OnItemActionListener() {
@@ -166,11 +177,16 @@ public class HoaDonActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onBaoPhi(HoaDon hoaDon) {
+                hienDialogBaoPhi(hoaDon);
+            }
+
+            @Override
             public void onDoiTrangThai(HoaDon hoaDon) {
                 if (hoaDon == null)
                     return;
                 String st = hoaDon.getTrangThai();
-                if (InvoiceStatus.PAID.equals(st)) {
+                if (InvoiceStatus.PAID.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
                     openPaymentHistory(hoaDon);
                     return;
                 }
@@ -220,12 +236,17 @@ public class HoaDonActivity extends AppCompatActivity {
                 }
             });
         }
+        
+        setupFilterListeners();
+    }
 
-        if (fabThem != null) {
-            fabThem.setOnClickListener(v -> hienDialogThemHoaDon());
+    private void setupFilterListeners() {
+        if (btnSelectKhu != null) {
+            btnSelectKhu.setOnClickListener(v -> hienDialogChonCanNha());
         }
-        if (fabChotKy != null) {
-            fabChotKy.setOnClickListener(v -> hienDialogChotKy());
+        
+        if (btnDatePicker != null) {
+            btnDatePicker.setOnClickListener(v -> hienDialogChonThang());
         }
     }
 
@@ -262,10 +283,6 @@ public class HoaDonActivity extends AppCompatActivity {
                         }
 
                         adapter.setReadOnly(true);
-                        if (fabThem != null)
-                            fabThem.setVisibility(View.GONE);
-                        if (fabChotKy != null)
-                            fabChotKy.setVisibility(View.GONE);
 
                         viewModel.getHoaDonTheoPhong(roomId).observe(this, onInvoicesChanged::accept);
                         return;
@@ -369,7 +386,7 @@ public class HoaDonActivity extends AppCompatActivity {
                                 hd.setPhiRac(phiRac);
                                 hd.setPhiWifi(phiWifi);
                                 hd.setPhiGuiXe(phiGuiXe);
-                                hd.setTrangThai(InvoiceStatus.UNPAID);
+                                hd.setTrangThai(InvoiceStatus.UNREPORTED);
 
                                 viewModel.themHoaDonUnique(hd,
                                         () -> saveMeterReadingFromInvoice(phong.getId(), period, elecEnd, elecEnd,
@@ -384,6 +401,65 @@ public class HoaDonActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
+    }
+
+    private void hienDialogBaoPhi(HoaDon hoaDon) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_bao_phi, null);
+
+        TextView tvPhong = dialogView.findViewById(R.id.tvPhong);
+        TextView tvNguoiThue = dialogView.findViewById(R.id.tvNguoiThue);
+        EditText etChiSoDienCu = dialogView.findViewById(R.id.etChiSoDienCu);
+        EditText etChiSoDienMoi = dialogView.findViewById(R.id.etChiSoDienMoi);
+        MaterialButton btnXemHoaDon = dialogView.findViewById(R.id.btnXemHoaDon);
+        ImageView btnClose = dialogView.findViewById(R.id.btnClose);
+
+        tvPhong.setText(hoaDon.getSoPhong() != null ? hoaDon.getSoPhong() : "???");
+        tvNguoiThue.setText("Đang cập nhật");
+        etChiSoDienCu.setText(String.valueOf((int) hoaDon.getChiSoDienDau()));
+
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(
+                this);
+        bottomSheet.setContentView(dialogView);
+
+        btnClose.setOnClickListener(v -> bottomSheet.dismiss());
+
+        btnXemHoaDon.setOnClickListener(v -> {
+            String chiSoMoiStr = etChiSoDienMoi.getText().toString().trim();
+            if (chiSoMoiStr.isEmpty()) {
+                Toast.makeText(this, "Vui lòng nhập chi số điện mới", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try {
+                double chiSoMoi = Double.parseDouble(chiSoMoiStr);
+                double chiSoCu = hoaDon.getChiSoDienDau();
+
+                if (chiSoMoi < chiSoCu) {
+                    Toast.makeText(this, "Chi số điện mới phải >= chi số cũ", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Update hóa đơn với chi số mới
+                hoaDon.setChiSoDienCuoi(chiSoMoi);
+
+                // Đổi trạng thái sang "Đã báo"
+                hoaDon.setTrangThai(InvoiceStatus.REPORTED);
+
+                // Lưu và hiển thị chi tiết
+                viewModel.capNhatHoaDon(hoaDon,
+                        () -> runOnUiThread(() -> {
+                            bottomSheet.dismiss();
+                            hienDialogXuatHoaDon(hoaDon);
+                        }),
+                        () -> runOnUiThread(
+                                () -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
+
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Chi số không hợp lệ", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        bottomSheet.show();
     }
 
     private void hienDialogXuatHoaDon(HoaDon h) {
@@ -607,7 +683,7 @@ public class HoaDonActivity extends AppCompatActivity {
                         hd.setPhiRac(parseDouble(etPhiRac));
                         hd.setPhiWifi(parseDouble(etPhiWifi));
                         hd.setPhiGuiXe(parseDouble(etPhiGuiXe));
-                        hd.setTrangThai(InvoiceStatus.UNPAID);
+                        hd.setTrangThai(InvoiceStatus.UNREPORTED);
                         viewModel.themHoaDonUnique(hd,
                                 () -> {
                                     saveMeterReadingFromInvoice(phongChon.getId(), hd.getThangNam(), dienDau, dienCuoi,
@@ -786,6 +862,97 @@ public class HoaDonActivity extends AppCompatActivity {
         scopedCollection("meterReadings").document(docId).set(data);
     }
 
+    private void hienDialogChonCanNha() {
+        // Lấy danh sách căn nhà từ Firebase
+        String tenantId = TenantSession.getActiveTenantId();
+        
+        com.google.firebase.firestore.Query canNhaQuery;
+        if (tenantId != null && !tenantId.isEmpty()) {
+            canNhaQuery = db.collection("tenants").document(tenantId).collection("can_nha");
+        } else {
+            canNhaQuery = db.collection("can_nha").whereEqualTo("userId", FirebaseAuth.getInstance().getUid());
+        }
+
+        canNhaQuery.get().addOnSuccessListener(querySnapshot -> {
+            List<String> canNhaNames = new ArrayList<>();
+            List<String> canNhaIds = new ArrayList<>();
+            
+            canNhaNames.add("Tất cả căn nhà");
+            canNhaIds.add(null);
+            
+            for (QueryDocumentSnapshot doc : querySnapshot) {
+                String tenCanNha = doc.getString("tenCanNha");
+                if (tenCanNha != null && !tenCanNha.isEmpty()) {
+                    canNhaNames.add(tenCanNha);
+                    canNhaIds.add(doc.getId());
+                }
+            }
+            
+            if (canNhaNames.size() == 1) {
+                Toast.makeText(this, "Chưa có căn nhà nào", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            String[] items = canNhaNames.toArray(new String[0]);
+            
+            new AlertDialog.Builder(this)
+                .setTitle("Chọn căn nhà")
+                .setItems(items, (dialog, which) -> {
+                    selectedKhuId = canNhaIds.get(which);
+                    tvSelectedKhu.setText(canNhaNames.get(which));
+                    
+                    // Reload data với filter mới
+                    applyInvoiceFilters(viewModel.getDanhSachHoaDon().getValue(), 
+                        ((TabLayout)findViewById(R.id.tabLayout)).getSelectedTabPosition());
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Không thể tải danh sách căn nhà", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void hienDialogChonThang() {
+        // Lấy tháng hiện tại
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        int currentYear = cal.get(java.util.Calendar.YEAR);
+        int currentMonth = cal.get(java.util.Calendar.MONTH); // 0-based
+        
+        // Tạo danh sách tháng (12 tháng gần nhất)
+        List<String> months = new ArrayList<>();
+        List<String> monthValues = new ArrayList<>();
+        
+        for (int i = 0; i < 12; i++) {
+            java.util.Calendar tempCal = java.util.Calendar.getInstance();
+            tempCal.add(java.util.Calendar.MONTH, -i);
+            
+            int month = tempCal.get(java.util.Calendar.MONTH) + 1; // Convert to 1-based
+            int year = tempCal.get(java.util.Calendar.YEAR);
+            
+            months.add(String.format(Locale.getDefault(), "Tháng %d/%d", month, year));
+            monthValues.add(String.format(Locale.getDefault(), "%02d/%d", month, year));
+        }
+        
+        new AlertDialog.Builder(this)
+            .setTitle("Chọn tháng")
+            .setItems(months.toArray(new String[0]), (dialog, which) -> {
+                selectedMonth = monthValues.get(which);
+                
+                // Format display: M/yyyy
+                String[] parts = selectedMonth.split("/");
+                if (parts.length == 2) {
+                    int m = Integer.parseInt(parts[0]);
+                    tvSelectedMonth.setText(String.format(Locale.getDefault(), "%d/%s", m, parts[1]));
+                }
+                
+                // Reload data với filter mới
+                applyInvoiceFilters(viewModel.getDanhSachHoaDon().getValue(), 
+                    ((TabLayout)findViewById(R.id.tabLayout)).getSelectedTabPosition());
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
+
     private String toPeriodKey(String period) {
         if (period == null)
             return "";
@@ -827,16 +994,38 @@ public class HoaDonActivity extends AppCompatActivity {
         for (HoaDon h : list) {
             if (h == null)
                 continue;
+                
+            // Filter by căn nhà (nếu có chọn)
+            if (selectedKhuId != null) {
+                // Cần check xem hóa đơn này thuộc căn nhà nào
+                // Tạm thời skip logic này vì cần thêm field canNhaId vào HoaDon
+                // hoặc query từ PhongTro
+            }
+            
+            // Filter by tháng (nếu có chọn)
+            if (selectedMonth != null && !selectedMonth.isEmpty()) {
+                String hoaDonMonth = h.getThangNam();
+                if (hoaDonMonth == null || !hoaDonMonth.equals(selectedMonth)) {
+                    continue;
+                }
+            }
+            
             String st = h.getTrangThai();
             if (st == null || st.trim().isEmpty())
-                st = InvoiceStatus.UNPAID;
+                st = InvoiceStatus.UNREPORTED;
 
             boolean match;
             if (tabIndex == 0) {
-                match = InvoiceStatus.UNPAID.equals(st);
+                // Tab "Chưa báo"
+                match = InvoiceStatus.UNREPORTED.equals(st);
             } else if (tabIndex == 1) {
+                // Tab "Đã báo"
+                match = InvoiceStatus.REPORTED.equals(st);
+            } else if (tabIndex == 2) {
+                // Tab "Đóng một phần"
                 match = InvoiceStatus.PARTIAL.equals(st);
             } else {
+                // Tab "Đã đóng"
                 match = InvoiceStatus.PAID.equals(st);
             }
 
@@ -845,6 +1034,7 @@ public class HoaDonActivity extends AppCompatActivity {
         }
 
         adapter.setDanhSach(out);
+        adapter.setCurrentTab(tabIndex);
         if (llEmpty != null)
             llEmpty.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
     }
@@ -878,7 +1068,7 @@ public class HoaDonActivity extends AppCompatActivity {
 
                     String newStatus;
                     if (paid <= 0) {
-                        newStatus = InvoiceStatus.UNPAID;
+                        newStatus = InvoiceStatus.REPORTED;
                     } else if (paid + 0.01 < hoaDon.getTongTien()) {
                         newStatus = InvoiceStatus.PARTIAL;
                     } else {

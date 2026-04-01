@@ -1,7 +1,6 @@
 package com.example.myapplication.features.contract;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -39,6 +38,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.core.widget.MonthYearPickerDialog;
 import com.example.myapplication.domain.CanNha;
 import com.example.myapplication.domain.NguoiThue;
 import com.example.myapplication.domain.PhongTro;
@@ -68,7 +68,7 @@ public class HopDongActivity extends AppCompatActivity {
     private String phongId;
     private String editContractId; // ID hợp đồng đang edit
     private boolean isEditMode = false; // Flag để phân biệt mode CREATE/EDIT
-    
+
     private PhongTro currentPhong;
     private CanNha currentKhu;
 
@@ -121,12 +121,12 @@ public class HopDongActivity extends AppCompatActivity {
         // Kiểm tra mode: CREATE hoặc EDIT
         String mode = getIntent().getStringExtra("MODE");
         isEditMode = "EDIT".equals(mode);
-        
+
         if (isEditMode) {
             // Mode EDIT: Lấy dữ liệu từ Intent
             editContractId = getIntent().getStringExtra("CONTRACT_ID");
             phongId = getIntent().getStringExtra("PHONG_ID");
-            
+
             if (editContractId == null || editContractId.trim().isEmpty()) {
                 Toast.makeText(this, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
                 finish();
@@ -376,7 +376,7 @@ public class HopDongActivity extends AppCompatActivity {
             loadContractById(editContractId);
             return;
         }
-        
+
         // Mode CREATE: load existing contract theo phòng (như cũ)
         scopedCollection("nguoi_thue")
                 .whereEqualTo("idPhong", phongId)
@@ -409,10 +409,10 @@ public class HopDongActivity extends AppCompatActivity {
                         if (n != null) {
                             n.setId(doc.getId());
                             currentContract = n;
-                            
+
                             // Pre-fill tất cả dữ liệu từ Intent (fallback nếu Firestore thiếu)
                             fillDataFromIntent();
-                            
+
                             // Apply mode EDIT
                             applyModeEdit();
                             return;
@@ -432,51 +432,51 @@ public class HopDongActivity extends AppCompatActivity {
      */
     private void fillDataFromIntent() {
         Intent intent = getIntent();
-        
+
         if (currentContract == null) {
             currentContract = new NguoiThue();
         }
-        
+
         // Lấy dữ liệu từ Intent và điền vào currentContract
-        if (intent.hasExtra("SO_HOP_DONG")) 
+        if (intent.hasExtra("SO_HOP_DONG"))
             currentContract.setSoHopDong(intent.getStringExtra("SO_HOP_DONG"));
-        if (intent.hasExtra("HO_TEN")) 
+        if (intent.hasExtra("HO_TEN"))
             currentContract.setHoTen(intent.getStringExtra("HO_TEN"));
-        if (intent.hasExtra("SO_DIEN_THOAI")) 
+        if (intent.hasExtra("SO_DIEN_THOAI"))
             currentContract.setSoDienThoai(intent.getStringExtra("SO_DIEN_THOAI"));
-        if (intent.hasExtra("CCCD")) 
+        if (intent.hasExtra("CCCD"))
             currentContract.setCccd(intent.getStringExtra("CCCD"));
-        if (intent.hasExtra("SO_THANH_VIEN")) 
+        if (intent.hasExtra("SO_THANH_VIEN"))
             currentContract.setSoThanhVien(intent.getIntExtra("SO_THANH_VIEN", 0));
-        if (intent.hasExtra("NGAY_BAT_DAU")) 
+        if (intent.hasExtra("NGAY_BAT_DAU"))
             currentContract.setNgayBatDauThue(intent.getStringExtra("NGAY_BAT_DAU"));
-        if (intent.hasExtra("SO_THANG")) 
+        if (intent.hasExtra("SO_THANG"))
             currentContract.setSoThangHopDong(intent.getIntExtra("SO_THANG", 0));
-        if (intent.hasExtra("GIA_THUE")) 
+        if (intent.hasExtra("GIA_THUE"))
             currentContract.setGiaThue(intent.getLongExtra("GIA_THUE", 0));
-        if (intent.hasExtra("TIEN_COC")) 
+        if (intent.hasExtra("TIEN_COC"))
             currentContract.setTienCoc(intent.getLongExtra("TIEN_COC", 0));
-        if (intent.hasExtra("CHI_SO_DIEN")) 
+        if (intent.hasExtra("CHI_SO_DIEN"))
             currentContract.setChiSoDienDau(intent.getIntExtra("CHI_SO_DIEN", 0));
-        if (intent.hasExtra("DICH_VU_GUI_XE")) 
+        if (intent.hasExtra("DICH_VU_GUI_XE"))
             currentContract.setDichVuGuiXe(intent.getBooleanExtra("DICH_VU_GUI_XE", false));
-        if (intent.hasExtra("SO_LUONG_XE")) 
+        if (intent.hasExtra("SO_LUONG_XE"))
             currentContract.setSoLuongXe(intent.getIntExtra("SO_LUONG_XE", 0));
-        if (intent.hasExtra("DICH_VU_INTERNET")) 
+        if (intent.hasExtra("DICH_VU_INTERNET"))
             currentContract.setDichVuInternet(intent.getBooleanExtra("DICH_VU_INTERNET", false));
-        if (intent.hasExtra("DICH_VU_GIAT_SAY")) 
+        if (intent.hasExtra("DICH_VU_GIAT_SAY"))
             currentContract.setDichVuGiatSay(intent.getBooleanExtra("DICH_VU_GIAT_SAY", false));
-        if (intent.hasExtra("GHI_CHU")) 
+        if (intent.hasExtra("GHI_CHU"))
             currentContract.setGhiChu(intent.getStringExtra("GHI_CHU"));
-        if (intent.hasExtra("HIEN_THI_COC")) 
+        if (intent.hasExtra("HIEN_THI_COC"))
             currentContract.setHienThiTienCocTrenHoaDon(intent.getBooleanExtra("HIEN_THI_COC", false));
-        if (intent.hasExtra("HIEN_THI_GHI_CHU")) 
+        if (intent.hasExtra("HIEN_THI_GHI_CHU"))
             currentContract.setHienThiGhiChuTrenHoaDon(intent.getBooleanExtra("HIEN_THI_GHI_CHU", false));
-        if (intent.hasExtra("NHAC_TRUOC_1_THANG")) 
+        if (intent.hasExtra("NHAC_TRUOC_1_THANG"))
             currentContract.setNhacTruoc1Thang(intent.getBooleanExtra("NHAC_TRUOC_1_THANG", false));
-        if (intent.hasExtra("CCCD_FRONT_URL")) 
+        if (intent.hasExtra("CCCD_FRONT_URL"))
             currentContract.setCccdFrontUrl(intent.getStringExtra("CCCD_FRONT_URL"));
-        if (intent.hasExtra("CCCD_BACK_URL")) 
+        if (intent.hasExtra("CCCD_BACK_URL"))
             currentContract.setCccdBackUrl(intent.getStringExtra("CCCD_BACK_URL"));
     }
 
@@ -534,15 +534,15 @@ public class HopDongActivity extends AppCompatActivity {
         btnPrint.setVisibility(View.GONE);
         btnEnd.setVisibility(View.GONE);
         btnUpdate.setVisibility(View.VISIBLE);
-        
+
         // Đổi text nút thành "Cập nhật"
         btnUpdate.setText("Cập nhật");
-        
+
         // Đổi tiêu đề toolbar
         if (tvTitleLine1 != null) {
             tvTitleLine1.setText("Chỉnh sửa hợp đồng");
         }
-        
+
         // Pre-fill toàn bộ dữ liệu vào form
         bindContractToUI(currentContract);
         setUploadEnabled(true);
@@ -572,22 +572,22 @@ public class HopDongActivity extends AppCompatActivity {
         etDienThoai.setText(nullToEmpty(c.getSoDienThoai()));
         etCccd.setText(nullToEmpty(c.getCccd()));
         etSoNguoi.setText(c.getSoThanhVien() > 0 ? String.valueOf(c.getSoThanhVien()) : "");
-        
+
         // Sử dụng long fields nếu có, fallback về double cũ
         if (c.getGiaThue() > 0) {
             MoneyFormatter.setValue(etTienPhong, (double) c.getGiaThue());
         } else if (c.getTienPhong() > 0) {
             MoneyFormatter.setValue(etTienPhong, c.getTienPhong());
         }
-        
+
         if (c.getTienCoc() > 0) {
             MoneyFormatter.setValue(etTienCoc, (double) c.getTienCoc());
         } else if (c.getTienCoc_old() > 0) {
             MoneyFormatter.setValue(etTienCoc, c.getTienCoc_old());
         }
-        
+
         cbShowDeposit.setChecked(c.isHienThiTienCocTrenHoaDon());
-        etNgayKy.setText(nullToEmpty(c.getNgayBatDauThue()));
+        etNgayKy.setText(formatMonthYearForInput(c.getNgayBatDauThue()));
         etSoThang.setText(c.getSoThangHopDong() > 0 ? String.valueOf(c.getSoThangHopDong()) : "");
         cbRemind.setChecked(c.isNhacTruoc1Thang());
         etChiSoDien.setText(c.getChiSoDienDau() > 0 ? String.valueOf(c.getChiSoDienDau()) : "");
@@ -608,31 +608,33 @@ public class HopDongActivity extends AppCompatActivity {
     private void showDatePicker() {
         final Calendar cal = Calendar.getInstance();
         String cur = etNgayKy.getText() != null ? etNgayKy.getText().toString().trim() : "";
-        try {
-            if (!cur.isEmpty()) {
-                Date d = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(cur);
-                if (d != null)
-                    cal.setTime(d);
-            }
-        } catch (Exception ignored) {
-        }
-        DatePickerDialog dlg = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-            Calendar c = Calendar.getInstance();
-            c.set(year, month, dayOfMonth);
-            etNgayKy.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime()));
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
-        dlg.show();
+        Calendar parsed = parseContractDate(cur);
+        if (parsed != null)
+            cal.setTimeInMillis(parsed.getTimeInMillis());
+
+        MonthYearPickerDialog.show(
+                this,
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                MonthYearPickerDialog.defaultMinYear(),
+                MonthYearPickerDialog.defaultMaxYear(),
+                (year, month) -> etNgayKy.setText(String.format(Locale.getDefault(), "%02d/%04d", month + 1, year)));
     }
 
     private void saveOrUpdate(boolean isCreate) {
         if (currentContract == null)
             currentContract = new NguoiThue();
         String soHD = text(etSoHopDong), ten = text(etTenKhach), sdt = text(etDienThoai), cccd = text(etCccd);
-        String soNguoiStr = text(etSoNguoi), ngayKy = text(etNgayKy), soThangStr = text(etSoThang),
+        String soNguoiStr = text(etSoNguoi), ngayKyInput = text(etNgayKy), soThangStr = text(etSoThang),
                 chiSoDienStr = text(etChiSoDien);
-        if (ten.isEmpty() || sdt.isEmpty() || cccd.isEmpty() || soNguoiStr.isEmpty() || ngayKy.isEmpty()
+        if (ten.isEmpty() || sdt.isEmpty() || cccd.isEmpty() || soNguoiStr.isEmpty() || ngayKyInput.isEmpty()
                 || soThangStr.isEmpty() || chiSoDienStr.isEmpty()) {
             Toast.makeText(this, "Vui lòng nhập đủ các trường bắt buộc (*)", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String ngayKy = normalizeMonthYearToStorage(ngayKyInput);
+        if (ngayKy.isEmpty()) {
+            Toast.makeText(this, "Ngày ký không hợp lệ (định dạng MM/yyyy)", Toast.LENGTH_SHORT).show();
             return;
         }
         if (cbGuiXe.isChecked() && text(etSoXe).isEmpty()) {
@@ -663,11 +665,11 @@ public class HopDongActivity extends AppCompatActivity {
         currentContract.setNgayBatDauThue(ngayKy);
         currentContract.setSoThangHopDong(soThang);
         currentContract.setNhacTruoc1Thang(cbRemind.isChecked());
-        
+
         // Set both old (double) and new (long) fields for compatibility
         currentContract.setTienPhong(tienPhong);
-        currentContract.setGiaThue((long) tienPhong);  // New long field
-        currentContract.setTienCoc((long) tienCoc);    // New long field
+        currentContract.setGiaThue((long) tienPhong); // New long field
+        currentContract.setTienCoc((long) tienCoc); // New long field
         currentContract.setHienThiTienCocTrenHoaDon(cbShowDeposit.isChecked());
         currentContract.setChiSoDienDau(chiSoDien);
         currentContract.setDichVuGuiXe(cbGuiXe.isChecked());
@@ -697,12 +699,12 @@ public class HopDongActivity extends AppCompatActivity {
         } else {
             // Mode UPDATE hoặc EDIT: Cập nhật
             String updateId = isEditMode && editContractId != null ? editContractId : currentContract.getId();
-            
+
             scopedCollection("nguoi_thue").document(updateId).set(currentContract)
                     .addOnSuccessListener(v -> {
                         markRoomStatus(RoomStatus.RENTED);
                         Toast.makeText(this, "✓ Đã cập nhật hợp đồng", Toast.LENGTH_SHORT).show();
-                        
+
                         // Nếu đang ở EDIT mode, quay về màn hình danh sách
                         if (isEditMode) {
                             finish(); // Quay về HopDongListActivity
@@ -945,15 +947,62 @@ public class HopDongActivity extends AppCompatActivity {
 
     private String computeEndDate(String start, int months) {
         try {
-            Date d = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(start);
-            if (d == null)
+            Calendar c = parseContractDate(start);
+            if (c == null)
                 return "";
-            Calendar c = Calendar.getInstance();
-            c.setTime(d);
             c.add(Calendar.MONTH, months);
             return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime());
         } catch (Exception e) {
             return "";
+        }
+    }
+
+    private String formatMonthYearForInput(String rawDate) {
+        Calendar c = parseContractDate(rawDate);
+        if (c == null)
+            return nullToEmpty(rawDate);
+        return String.format(Locale.getDefault(), "%02d/%04d", c.get(Calendar.MONTH) + 1, c.get(Calendar.YEAR));
+    }
+
+    private String normalizeMonthYearToStorage(String input) {
+        Calendar c = parseContractDate(input);
+        if (c == null)
+            return "";
+        c.set(Calendar.DAY_OF_MONTH, 1);
+        return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime());
+    }
+
+    private Calendar parseContractDate(String value) {
+        if (value == null)
+            return null;
+        String input = value.trim();
+        if (input.isEmpty())
+            return null;
+
+        Calendar parsed = parseWithPattern(input, "dd/MM/yyyy");
+        if (parsed != null)
+            return parsed;
+
+        parsed = parseWithPattern(input, "MM/yyyy");
+        if (parsed != null) {
+            parsed.set(Calendar.DAY_OF_MONTH, 1);
+            return parsed;
+        }
+        return null;
+    }
+
+    private Calendar parseWithPattern(String input, String pattern) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(pattern, Locale.getDefault());
+            sdf.setLenient(false);
+            Date d = sdf.parse(input);
+            if (d == null)
+                return null;
+            Calendar c = Calendar.getInstance();
+            c.setTime(d);
+            return c;
+        } catch (Exception e) {
+            return null;
         }
     }
 

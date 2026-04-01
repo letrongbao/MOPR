@@ -162,9 +162,9 @@ public class DoanhThuActivity extends AppCompatActivity {
 
             String st = h.getTrangThai();
             if (st == null || st.trim().isEmpty())
-                st = InvoiceStatus.UNPAID;
+                st = InvoiceStatus.UNREPORTED;
 
-            if (InvoiceStatus.UNPAID.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
+            if (InvoiceStatus.REPORTED.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
                 chuaThu++;
             }
         }

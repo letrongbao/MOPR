@@ -389,6 +389,7 @@
                                     android:background="@drawable/bg_input_rounded"
                                     android:paddingStart="14dp"
                                     android:paddingEnd="48dp"
+                                    android:hint="MM/yyyy"
                                     android:inputType="none"
                                     android:focusable="false"
                                     android:clickable="true"/>
