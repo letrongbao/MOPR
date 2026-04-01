@@ -1,7 +1,7 @@
 package com.example.myapplication.core.util;
 
 import com.example.myapplication.domain.ContractStatus;
-import com.example.myapplication.domain.NguoiThue;
+import com.example.myapplication.domain.Tenant;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,7 +26,7 @@ public class ContractStatusHelper {
      *   - Nếu còn <= 30 ngày               → SAP_HET_HAN
      *   - Nếu còn > 30 ngày                → DANG_THUE
      */
-    public static ContractStatus resolve(NguoiThue contract) {
+    public static ContractStatus resolve(Tenant contract) {
         if (contract == null) return ContractStatus.DA_KET_THUC;
 
         // Nếu đã kết thúc rõ ràng
@@ -63,7 +63,7 @@ public class ContractStatusHelper {
      * Tính số ngày còn lại đến ngày kết thúc hợp đồng.
      * @return số ngày (âm nếu đã qua), hoặc -999 nếu không parse được.
      */
-    public static long daysRemaining(NguoiThue contract) {
+    public static long daysRemaining(Tenant contract) {
         if (contract == null || contract.getNgayKetThucHopDong() == null) return -999;
         try {
             Date endDate = SDF.parse(contract.getNgayKetThucHopDong());
@@ -75,3 +75,4 @@ public class ContractStatusHelper {
         }
     }
 }
+

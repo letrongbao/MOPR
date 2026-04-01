@@ -77,7 +77,7 @@ public class RentalHistoryRepository {
      */
     public Task<QuerySnapshot> getHistoryByTenant(String tenantId) {
         return getHistoryCollection()
-                .whereEqualTo("idNguoiThue", tenantId)
+                .whereEqualTo("idTenant", tenantId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get();
     }
@@ -136,3 +136,4 @@ public class RentalHistoryRepository {
         void onStatistics(int totalContracts, double totalRevenue, int totalDays);
     }
 }
+

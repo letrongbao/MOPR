@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@android:color/white">
+
+    <!-- Close button -->
+    <ImageView
+        android:id="@+id/btnClose"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="end"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:clickable="true"
+        android:focusable="true"
+        app:tint="#333333"/>
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NHẬP CÁC CHI SỐ"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Info row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phòng: "
+            android:textSize="14sp"
+            android:textColor="#333333"/>
+
+        <TextView
+            android:id="@+id/tvPhong"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="101"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Người thuê: "
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:layout_marginStart="16dp"/>
+
+        <TextView
+            android:id="@+id/tvTenant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="A Minh"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- Chi số điện cũ -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Chi số điện cũ *"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="12dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoDienCu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="500"
+            android:enabled="false"
+            android:inputType="number"
+            android:textColor="#888888"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Chi số điện mới -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Chi số điện mới *"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="20dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoDienMoi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Xem hóa đơn button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnXemInvoice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Xem hoá đơn"
+        android:textAllCaps="false"
+        android:textSize="14sp"
+        app:cornerRadius="6dp"
+        app:backgroundTint="@color/btn_blue_action"
+        android:paddingVertical="12dp"/>
+
+</LinearLayout>
+

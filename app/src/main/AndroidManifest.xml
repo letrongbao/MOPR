@@ -36,28 +36,28 @@
         <activity android:name=".features.home.HomeMenuActivity" />
 
         <!-- Property -->
-        <activity android:name=".features.property.house.CanNhaActivity" />
-        <activity android:name=".features.property.room.PhongTroActivity" />
-        <activity android:name=".features.property.room.ChiTietPhongTroActivity" />
-        <activity android:name=".features.property.room.LichSuCongToActivity" />
+        <activity android:name=".features.property.house.HouseActivity" />
+        <activity android:name=".features.property.room.RoomActivity" />
+        <activity android:name=".features.property.room.RoomDetailsActivity" />
+        <activity android:name=".features.property.room.MeterReadingHistoryActivity" />
 
         <!-- Invoice -->
-        <activity android:name=".features.invoice.HoaDonActivity" />
-        <activity android:name=".features.invoice.LichSuThanhToanActivity" />
+        <activity android:name=".features.invoice.InvoiceActivity" />
+        <activity android:name=".features.invoice.PaymentHistoryActivity" />
 
         <!-- Tenant / Contract -->
-        <activity android:name=".features.tenant.NguoiThueActivity" />
-        <activity android:name=".features.contract.HopDongActivity" />
-        <activity android:name=".features.contract.HopDongListActivity" />
-        <activity android:name=".features.contract.ChiTietHopDongActivity" />
+        <activity android:name=".features.tenant.TenantActivity" />
+        <activity android:name=".features.contract.ContractActivity" />
+        <activity android:name=".features.contract.ContractListActivity" />
+        <activity android:name=".features.contract.ContractDetailsActivity" />
         <activity android:name=".features.contract.ContractPdfPreviewActivity" />
         
         <!-- History -->
         <activity android:name=".features.history.RentalHistoryActivity" />
 
         <!-- Finance -->
-        <activity android:name=".features.finance.ChiPhiActivity" />
-        <activity android:name=".features.finance.DoanhThuActivity" />
+        <activity android:name=".features.finance.ExpenseActivity" />
+        <activity android:name=".features.finance.RevenueActivity" />
 
         <!-- Settings -->
         <activity android:name=".features.settings.ProfileActivity" />
@@ -87,3 +87,4 @@
     </application>
 
 </manifest>
+

@@ -48,7 +48,7 @@ public class RentalHistoryAdapter extends RecyclerView.Adapter<RentalHistoryAdap
         
         String roomInfo = String.format("Phòng %s%s", 
                 history.getSoPhong() != null ? history.getSoPhong() : "N/A",
-                history.getCanNhaTen() != null && !history.getCanNhaTen().isEmpty() ? " - " + history.getCanNhaTen() : "");
+                history.getHouseTen() != null && !history.getHouseTen().isEmpty() ? " - " + history.getHouseTen() : "");
         holder.tvRoomInfo.setText(roomInfo);
         
         String rentalPeriod = String.format("%s - %s",
@@ -147,4 +147,5 @@ public class RentalHistoryAdapter extends RecyclerView.Adapter<RentalHistoryAdap
         }
     }
 }
+
 
