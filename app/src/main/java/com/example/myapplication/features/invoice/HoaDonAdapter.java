@@ -13,14 +13,17 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.domain.HoaDon;
 import com.google.android.material.button.MaterialButton;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder> {
 
     private List<HoaDon> danhSach = new ArrayList<>();
     private final OnItemActionListener listener;
     private boolean readOnly;
+    private Map<String, String> tenantDisplayByRoom = new HashMap<>();
 
     public interface OnItemActionListener {
         void onXoa(HoaDon hoaDon);
@@ -37,7 +40,12 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
     }
 
     public void setDanhSach(List<HoaDon> list) {
-        this.danhSach = list;
+        this.danhSach = list != null ? list : new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
+    public void setTenantDisplayByRoom(Map<String, String> tenantDisplayByRoom) {
+        this.tenantDisplayByRoom = tenantDisplayByRoom != null ? tenantDisplayByRoom : new HashMap<>();
         notifyDataSetChanged();
     }
 
@@ -60,9 +68,11 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
 
         holder.tvPhong.setText(h.getSoPhong() != null ? h.getSoPhong() : "P.???");
 
-        // In real app, tenant name would be in the model. Using placeholder to match
-        // UI.
-        holder.tvTenantName.setText("Người thuê: Đang cập nhật");
+        String tenantDisplay = tenantDisplayByRoom.get(h.getIdPhong());
+        if (tenantDisplay == null || tenantDisplay.trim().isEmpty()) {
+            tenantDisplay = "Người thuê: Đang cập nhật";
+        }
+        holder.tvTenantName.setText(tenantDisplay);
 
         holder.tvPriceMonth.setText("Giá: " + MoneyFormatter.format(h.getGiaThue()) + "/tháng");
 
@@ -75,11 +85,14 @@ public class HoaDonAdapter extends RecyclerView.Adapter<HoaDonAdapter.ViewHolder
         if (holder.tvRibbonStatus != null) {
             holder.tvRibbonStatus.setText(st);
             if (InvoiceStatus.PAID.equals(st)) {
-                holder.tvRibbonStatus.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.success));
+                holder.tvRibbonStatus
+                        .setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.success));
             } else if (InvoiceStatus.PARTIAL.equals(st)) {
-                holder.tvRibbonStatus.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.btn_orange));
+                holder.tvRibbonStatus
+                        .setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.btn_orange));
             } else {
-                holder.tvRibbonStatus.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.warning));
+                holder.tvRibbonStatus
+                        .setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.warning));
             }
         }
 

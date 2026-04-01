@@ -12,6 +12,18 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Căn nhà"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <Spinner
+            android:id="@+id/spinnerCanNha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Tháng / Năm"
             android:textStyle="bold"
             android:textColor="#212121"/>

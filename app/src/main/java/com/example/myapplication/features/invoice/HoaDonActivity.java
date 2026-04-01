@@ -3,6 +3,8 @@ package com.example.myapplication.features.invoice;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -27,10 +29,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.domain.CanNha;
 import com.example.myapplication.domain.HoaDon;
+import com.example.myapplication.domain.NguoiThue;
 import com.example.myapplication.domain.Payment;
 import com.example.myapplication.domain.PhongTro;
 import com.example.myapplication.core.repository.domain.PaymentRepository;
@@ -53,11 +59,41 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 
 public class HoaDonActivity extends AppCompatActivity {
+
+    private static final class AutoCreateTarget {
+        final PhongTro room;
+        final NguoiThue contract;
+
+        AutoCreateTarget(@NonNull PhongTro room, NguoiThue contract) {
+            this.room = room;
+            this.contract = contract;
+        }
+    }
+
+    private static final class FeePreset {
+        final double donGiaDien;
+        final double donGiaNuoc;
+        final double phiRac;
+        final double phiWifi;
+        final double phiGuiXe;
+
+        FeePreset(double donGiaDien, double donGiaNuoc, double phiRac, double phiWifi, double phiGuiXe) {
+            this.donGiaDien = donGiaDien;
+            this.donGiaNuoc = donGiaNuoc;
+            this.phiRac = phiRac;
+            this.phiWifi = phiWifi;
+            this.phiGuiXe = phiGuiXe;
+        }
+    }
 
     private boolean isTenantUser;
 
@@ -70,6 +106,20 @@ public class HoaDonActivity extends AppCompatActivity {
     private FloatingActionButton fabChotKy;
 
     private TextView tvSelectedMonth;
+    private TextView tvSelectedKhu;
+    private TextView tvFilterSummary;
+    private EditText etSearchInvoice;
+    private View btnSelectKhu;
+    private View btnDatePicker;
+
+    private String selectedMonth;
+    private String selectedKhuId;
+    private String searchQuery;
+    private int selectedTabIndex;
+    private List<HoaDon> cachedInvoices = new ArrayList<>();
+    private Map<String, String> tenantDisplayByRoom = new HashMap<>();
+    private Map<String, NguoiThue> activeContractsByRoom = new HashMap<>();
+    private Map<String, CanNha> housesById = new HashMap<>();
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final PaymentRepository paymentRepository = new PaymentRepository();
@@ -116,8 +166,22 @@ public class HoaDonActivity extends AppCompatActivity {
         fabChotKy = findViewById(R.id.fabChotKy);
 
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
+        tvSelectedKhu = findViewById(R.id.tvSelectedKhu);
+        tvFilterSummary = findViewById(R.id.tvFilterSummary);
+        etSearchInvoice = findViewById(R.id.etSearchInvoice);
+        btnSelectKhu = findViewById(R.id.btnSelectKhu);
+        btnDatePicker = findViewById(R.id.btnDatePicker);
+        selectedMonth = FinancePeriodUtil
+                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        selectedKhuId = null;
+        searchQuery = "";
+        selectedTabIndex = 0;
+
         if (tvSelectedMonth != null) {
             tvSelectedMonth.setText(new SimpleDateFormat("M/yyyy", Locale.getDefault()).format(new Date()));
+        }
+        if (tvSelectedKhu != null) {
+            tvSelectedKhu.setText("Tất cả căn nhà");
         }
 
         TabLayout tabLayout = findViewById(R.id.tabLayout);
@@ -199,8 +263,9 @@ public class HoaDonActivity extends AppCompatActivity {
 
         setupInvoiceObserverAndPermissions(list -> {
             java.util.List<HoaDon> safe = list != null ? list : new java.util.ArrayList<>();
+            cachedInvoices = safe;
             lastInvoicesRef.set(safe);
-            applyInvoiceFilters(safe, tabIdx.get());
+            applyInvoiceFilters(safe, selectedTabIndex);
         });
 
         if (tabLayout != null) {
@@ -208,7 +273,8 @@ public class HoaDonActivity extends AppCompatActivity {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
                     tabIdx.set(tab.getPosition());
-                    applyInvoiceFilters(lastInvoicesRef.get(), tabIdx.get());
+                    selectedTabIndex = tab.getPosition();
+                    applyInvoiceFilters(lastInvoicesRef.get(), selectedTabIndex);
                 }
 
                 @Override
@@ -225,7 +291,30 @@ public class HoaDonActivity extends AppCompatActivity {
             fabThem.setOnClickListener(v -> hienDialogThemHoaDon());
         }
         if (fabChotKy != null) {
-            fabChotKy.setOnClickListener(v -> hienDialogChotKy());
+            fabChotKy.setOnClickListener(v -> showClosePeriodOptions());
+        }
+        if (btnDatePicker != null) {
+            btnDatePicker.setOnClickListener(v -> showMonthFilterDialog());
+        }
+        if (btnSelectKhu != null) {
+            btnSelectKhu.setOnClickListener(v -> showHouseFilterDialog());
+        }
+        if (etSearchInvoice != null) {
+            etSearchInvoice.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    searchQuery = s != null ? s.toString().trim().toLowerCase(Locale.getDefault()) : "";
+                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+            });
         }
     }
 
@@ -262,27 +351,101 @@ public class HoaDonActivity extends AppCompatActivity {
                         }
 
                         adapter.setReadOnly(true);
+                        if (btnSelectKhu != null)
+                            btnSelectKhu.setVisibility(View.GONE);
                         if (fabThem != null)
                             fabThem.setVisibility(View.GONE);
                         if (fabChotKy != null)
                             fabChotKy.setVisibility(View.GONE);
+                        if (etSearchInvoice != null)
+                            etSearchInvoice.setHint("Tìm theo phòng");
 
                         viewModel.getHoaDonTheoPhong(roomId).observe(this, onInvoicesChanged::accept);
+                        refreshTenantDisplayData();
+                        refreshAutoFillSources();
                         return;
                     }
 
                     isTenantUser = false;
                     adapter.setReadOnly(false);
                     viewModel.getDanhSachHoaDon().observe(this, onInvoicesChanged::accept);
+                    refreshTenantDisplayData();
+                    refreshAutoFillSources();
 
                     new ViewModelProvider(this).get(PhongTroViewModel.class)
                             .getDanhSachPhong().observe(this, list -> danhSachPhong = list);
                 })
                 .addOnFailureListener(e -> {
                     viewModel.getDanhSachHoaDon().observe(this, onInvoicesChanged::accept);
+                    refreshTenantDisplayData();
+                    refreshAutoFillSources();
 
                     new ViewModelProvider(this).get(PhongTroViewModel.class)
                             .getDanhSachPhong().observe(this, list -> danhSachPhong = list);
+                });
+    }
+
+    private void refreshAutoFillSources() {
+        scopedCollection("nguoi_thue")
+                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null)
+                        return;
+
+                    Map<String, NguoiThue> map = new HashMap<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        NguoiThue c = doc.toObject(NguoiThue.class);
+                        if (c == null)
+                            continue;
+                        c.setId(doc.getId());
+                        String roomId = c.getIdPhong();
+                        if (roomId == null || roomId.trim().isEmpty())
+                            continue;
+
+                        NguoiThue old = map.get(roomId);
+                        if (old == null || isNewerContract(c, old)) {
+                            map.put(roomId, c);
+                        }
+                    }
+                    activeContractsByRoom = map;
+                });
+
+        scopedCollection("can_nha")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null)
+                        return;
+                    Map<String, CanNha> map = new HashMap<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        CanNha house = doc.toObject(CanNha.class);
+                        if (house == null)
+                            continue;
+                        house.setId(doc.getId());
+                        map.put(doc.getId(), house);
+                    }
+                    housesById = map;
+                });
+    }
+
+    private void refreshTenantDisplayData() {
+        scopedCollection("nguoi_thue")
+                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null)
+                        return;
+                    Map<String, String> map = new HashMap<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        NguoiThue n = doc.toObject(NguoiThue.class);
+                        if (n == null || n.getIdPhong() == null || n.getIdPhong().trim().isEmpty())
+                            continue;
+                        String name = n.getHoTen() != null ? n.getHoTen().trim() : "";
+                        String phone = n.getSoDienThoai() != null ? n.getSoDienThoai().trim() : "";
+                        String display = "Người thuê: " + (name.isEmpty() ? "Đang cập nhật" : name)
+                                + (phone.isEmpty() ? "" : " - ĐT: " + phone);
+                        map.put(n.getIdPhong(), display);
+                    }
+                    tenantDisplayByRoom = map;
+                    adapter.setTenantDisplayByRoom(tenantDisplayByRoom);
+                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
                 });
     }
 
@@ -328,6 +491,7 @@ public class HoaDonActivity extends AppCompatActivity {
         EditText etPhiRac = dialogView.findViewById(R.id.etPhiRac);
         EditText etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
         EditText etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
+        Spinner spinnerCanNha = dialogView.findViewById(R.id.spinnerCanNha);
 
         // Apply money formatters
         MoneyFormatter.applyTo(etDonGiaDien);
@@ -338,52 +502,350 @@ public class HoaDonActivity extends AppCompatActivity {
 
         etThangNam.setText(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
 
+        List<String> houseIds = new ArrayList<>();
+        List<String> houseLabels = new ArrayList<>();
+        houseIds.add("");
+        houseLabels.add("Tất cả căn nhà");
+        LinkedHashMap<String, String> houseMap = new LinkedHashMap<>();
+        for (PhongTro room : danhSachPhong) {
+            if (room == null)
+                continue;
+            String id = room.getCanNhaId();
+            if (id == null || id.trim().isEmpty() || houseMap.containsKey(id))
+                continue;
+            String name = room.getCanNhaTen();
+            if (name == null || name.trim().isEmpty())
+                name = "Căn nhà";
+            houseMap.put(id, name);
+        }
+        houseIds.addAll(houseMap.keySet());
+        houseLabels.addAll(houseMap.values());
+        ArrayAdapter<String> houseAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, houseLabels);
+        houseAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCanNha.setAdapter(houseAdapter);
+
+        spinnerCanNha.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedHouseId = houseIds.get(position);
+                if (selectedHouseId == null || selectedHouseId.isEmpty()) {
+                    return;
+                }
+                CanNha house = housesById.get(selectedHouseId);
+                if (house == null)
+                    return;
+                if (house.getGiaDien() > 0)
+                    MoneyFormatter.setValue(etDonGiaDien, house.getGiaDien());
+                if (house.getGiaNuoc() > 0)
+                    MoneyFormatter.setValue(etDonGiaNuoc, house.getGiaNuoc());
+                if (house.getGiaRac() > 0)
+                    MoneyFormatter.setValue(etPhiRac, house.getGiaRac());
+                if (house.getGiaInternet() > 0)
+                    MoneyFormatter.setValue(etPhiWifi, house.getGiaInternet());
+                if (house.getGiaXe() > 0)
+                    MoneyFormatter.setValue(etPhiGuiXe, house.getGiaXe());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         new AlertDialog.Builder(this)
                 .setTitle("Chốt kỳ (tạo nháp hoá đơn)")
                 .setView(dialogView)
                 .setPositiveButton("Tạo", (d, w) -> {
                     String period = etThangNam.getText().toString().trim();
+                    if (toPeriodKey(period).isEmpty()) {
+                        Toast.makeText(this, "Tháng/năm không hợp lệ (MM/yyyy)", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     double donGiaDien = MoneyFormatter.getValue(etDonGiaDien);
                     double donGiaNuoc = MoneyFormatter.getValue(etDonGiaNuoc);
                     double phiRac = MoneyFormatter.getValue(etPhiRac);
                     double phiWifi = MoneyFormatter.getValue(etPhiWifi);
                     double phiGuiXe = MoneyFormatter.getValue(etPhiGuiXe);
+                    String selectedHouseId = houseIds.get(spinnerCanNha.getSelectedItemPosition());
 
-                    ensureInvoiceQuotaThen(period, danhSachPhong.size(), () -> {
-                        Toast.makeText(this, "Đang tạo hoá đơn nháp...", Toast.LENGTH_SHORT).show();
+                    loadActiveContractsByRoom(activeContractsByRoom -> loadMissingAutoTargets(period,
+                            activeContractsByRoom, targets -> {
+                                List<AutoCreateTarget> effectiveTargets = targets;
+                                if (selectedHouseId != null && !selectedHouseId.trim().isEmpty()) {
+                                    List<AutoCreateTarget> filtered = new ArrayList<>();
+                                    for (AutoCreateTarget t : targets) {
+                                        if (t != null && t.room != null
+                                                && selectedHouseId.equals(t.room.getCanNhaId())) {
+                                            filtered.add(t);
+                                        }
+                                    }
+                                    effectiveTargets = filtered;
+                                }
 
-                        for (PhongTro phong : danhSachPhong) {
-                            loadLatestMeterEnds(phong.getId(), (elecEnd, waterEnd) -> {
-                                HoaDon hd = new HoaDon();
-                                hd.setIdPhong(phong.getId());
-                                hd.setSoPhong(phong.getSoPhong());
-                                hd.setGiaThue(phong.getGiaThue());
-                                hd.setThangNam(period);
+                                if (effectiveTargets.isEmpty()) {
+                                    Toast.makeText(this, "Không có hóa đơn mới cần tạo cho kỳ này", Toast.LENGTH_SHORT)
+                                            .show();
+                                    return;
+                                }
 
-                                hd.setChiSoDienDau(elecEnd);
-                                hd.setChiSoDienCuoi(elecEnd);
-                                hd.setDonGiaDien(donGiaDien);
-                                hd.setChiSoNuocDau(waterEnd);
-                                hd.setChiSoNuocCuoi(waterEnd);
-                                hd.setDonGiaNuoc(donGiaNuoc);
-                                hd.setPhiRac(phiRac);
-                                hd.setPhiWifi(phiWifi);
-                                hd.setPhiGuiXe(phiGuiXe);
-                                hd.setTrangThai(InvoiceStatus.UNPAID);
+                                final List<AutoCreateTarget> finalTargets = effectiveTargets;
 
-                                viewModel.themHoaDonUnique(hd,
-                                        () -> saveMeterReadingFromInvoice(phong.getId(), period, elecEnd, elecEnd,
-                                                waterEnd, waterEnd),
-                                        () -> {
-                                        },
-                                        () -> {
-                                        });
-                            });
-                        }
-                    });
+                                ensureInvoiceQuotaThen(period, finalTargets.size(), () -> createDraftInvoicesForTargets(
+                                        period,
+                                        donGiaDien,
+                                        donGiaNuoc,
+                                        phiRac,
+                                        phiWifi,
+                                        phiGuiXe,
+                                        finalTargets));
+                            }));
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
+    }
+
+    private void showClosePeriodOptions() {
+        String[] options = new String[] {
+                "Tạo nhanh tháng hiện tại",
+                "Mở cấu hình chốt kỳ"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Chốt kỳ")
+                .setItems(options, (d, which) -> {
+                    if (which == 0) {
+                        runQuickCloseForCurrentMonth();
+                    } else {
+                        hienDialogChotKy();
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void runQuickCloseForCurrentMonth() {
+        if (danhSachPhong == null || danhSachPhong.isEmpty()) {
+            Toast.makeText(this, "Chưa có phòng để chốt kỳ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String period = FinancePeriodUtil
+                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+
+        loadActiveContractsByRoom(
+                activeContractsByRoom -> loadMissingAutoTargets(period, activeContractsByRoom, targets -> {
+                    if (targets.isEmpty()) {
+                        Toast.makeText(this, "Không có hóa đơn mới cần tạo cho kỳ này", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    ensureInvoiceQuotaThen(period, targets.size(),
+                            () -> createDraftInvoicesQuickForTargets(period, targets));
+                }));
+    }
+
+    private void createDraftInvoicesQuickForTargets(@NonNull String period,
+            @NonNull List<AutoCreateTarget> targets) {
+        Toast.makeText(this, "Đang tạo nhanh hóa đơn tháng hiện tại...", Toast.LENGTH_SHORT).show();
+
+        final int[] pending = { targets.size() };
+        final int[] created = { 0 };
+        final int[] duplicated = { 0 };
+        final int[] failed = { 0 };
+
+        for (AutoCreateTarget target : targets) {
+            PhongTro room = target.room;
+            NguoiThue contract = target.contract;
+            FeePreset fee = resolveDefaultFeePreset(room);
+
+            loadLatestMeterEnds(room.getId(), (elecEnd, waterEnd) -> {
+                HoaDon hd = new HoaDon();
+                hd.setIdPhong(room.getId());
+                hd.setSoPhong(room.getSoPhong());
+                hd.setThangNam(period);
+
+                if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
+                    hd.setIdNguoiThue(contract.getId());
+                    long contractRent = contract.getGiaThue();
+                    hd.setGiaThue(contractRent > 0 ? contractRent : room.getGiaThue());
+                } else {
+                    hd.setGiaThue(room.getGiaThue());
+                }
+
+                hd.setChiSoDienDau(elecEnd);
+                hd.setChiSoDienCuoi(elecEnd);
+                hd.setDonGiaDien(fee.donGiaDien);
+                hd.setChiSoNuocDau(waterEnd);
+                hd.setChiSoNuocCuoi(waterEnd);
+                hd.setDonGiaNuoc(fee.donGiaNuoc);
+                hd.setPhiRac(fee.phiRac);
+                hd.setPhiWifi(fee.phiWifi);
+                hd.setPhiGuiXe(fee.phiGuiXe);
+                hd.setTrangThai(InvoiceStatus.UNPAID);
+
+                viewModel.themHoaDonUnique(hd,
+                        () -> {
+                            created[0]++;
+                            saveMeterReadingFromInvoice(room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
+                            onAutoCreateDone(pending, created, duplicated, failed);
+                        },
+                        () -> {
+                            duplicated[0]++;
+                            onAutoCreateDone(pending, created, duplicated, failed);
+                        },
+                        () -> {
+                            failed[0]++;
+                            onAutoCreateDone(pending, created, duplicated, failed);
+                        });
+            });
+        }
+    }
+
+    private interface ActiveContractsCallback {
+        void onDone(@NonNull Map<String, NguoiThue> activeContractsByRoom);
+    }
+
+    private interface AutoTargetsCallback {
+        void onDone(@NonNull List<AutoCreateTarget> targets);
+    }
+
+    private void loadActiveContractsByRoom(@NonNull ActiveContractsCallback callback) {
+        scopedCollection("nguoi_thue")
+                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    Map<String, NguoiThue> map = new HashMap<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        NguoiThue c = doc.toObject(NguoiThue.class);
+                        if (c == null)
+                            continue;
+                        c.setId(doc.getId());
+
+                        String roomId = c.getIdPhong();
+                        if (roomId == null || roomId.trim().isEmpty())
+                            continue;
+
+                        NguoiThue existing = map.get(roomId);
+                        if (existing == null || isNewerContract(c, existing)) {
+                            map.put(roomId, c);
+                        }
+                    }
+                    callback.onDone(map);
+                })
+                .addOnFailureListener(e -> callback.onDone(new HashMap<>()));
+    }
+
+    private boolean isNewerContract(@NonNull NguoiThue lhs, @NonNull NguoiThue rhs) {
+        long l = lhs.getUpdatedAt() != null ? lhs.getUpdatedAt()
+                : (lhs.getCreatedAt() != null ? lhs.getCreatedAt() : 0);
+        long r = rhs.getUpdatedAt() != null ? rhs.getUpdatedAt()
+                : (rhs.getCreatedAt() != null ? rhs.getCreatedAt() : 0);
+        return l >= r;
+    }
+
+    private void loadMissingAutoTargets(@NonNull String period,
+            @NonNull Map<String, NguoiThue> activeContractsByRoom,
+            @NonNull AutoTargetsCallback callback) {
+        scopedCollection("hoa_don")
+                .whereEqualTo("thangNam", period)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    Set<String> existingRoomIds = new HashSet<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        String roomId = doc.getString("idPhong");
+                        if (roomId != null && !roomId.trim().isEmpty())
+                            existingRoomIds.add(roomId);
+                    }
+
+                    List<AutoCreateTarget> targets = new ArrayList<>();
+                    for (PhongTro room : danhSachPhong) {
+                        if (room == null || room.getId() == null || room.getId().trim().isEmpty())
+                            continue;
+
+                        String roomId = room.getId();
+                        NguoiThue contract = activeContractsByRoom.get(roomId);
+                        boolean isRented = RoomStatus.RENTED.equals(room.getTrangThai()) || contract != null;
+                        if (!isRented)
+                            continue;
+
+                        if (existingRoomIds.contains(roomId))
+                            continue;
+
+                        targets.add(new AutoCreateTarget(room, contract));
+                    }
+
+                    callback.onDone(targets);
+                })
+                .addOnFailureListener(e -> callback.onDone(new ArrayList<>()));
+    }
+
+    private void createDraftInvoicesForTargets(@NonNull String period,
+            double donGiaDien,
+            double donGiaNuoc,
+            double phiRac,
+            double phiWifi,
+            double phiGuiXe,
+            @NonNull List<AutoCreateTarget> targets) {
+        Toast.makeText(this, "Đang tạo hoá đơn nháp...", Toast.LENGTH_SHORT).show();
+
+        final int[] pending = { targets.size() };
+        final int[] created = { 0 };
+        final int[] duplicated = { 0 };
+        final int[] failed = { 0 };
+
+        for (AutoCreateTarget target : targets) {
+            PhongTro room = target.room;
+            NguoiThue contract = target.contract;
+
+            loadLatestMeterEnds(room.getId(), (elecEnd, waterEnd) -> {
+                HoaDon hd = new HoaDon();
+                hd.setIdPhong(room.getId());
+                hd.setSoPhong(room.getSoPhong());
+                hd.setGiaThue(room.getGiaThue());
+                hd.setThangNam(period);
+                if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
+                    hd.setIdNguoiThue(contract.getId());
+                }
+
+                hd.setChiSoDienDau(elecEnd);
+                hd.setChiSoDienCuoi(elecEnd);
+                hd.setDonGiaDien(donGiaDien);
+                hd.setChiSoNuocDau(waterEnd);
+                hd.setChiSoNuocCuoi(waterEnd);
+                hd.setDonGiaNuoc(donGiaNuoc);
+                hd.setPhiRac(phiRac);
+                hd.setPhiWifi(phiWifi);
+                hd.setPhiGuiXe(phiGuiXe);
+                hd.setTrangThai(InvoiceStatus.UNPAID);
+
+                viewModel.themHoaDonUnique(hd,
+                        () -> {
+                            created[0]++;
+                            saveMeterReadingFromInvoice(room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
+                            onAutoCreateDone(pending, created, duplicated, failed);
+                        },
+                        () -> {
+                            duplicated[0]++;
+                            onAutoCreateDone(pending, created, duplicated, failed);
+                        },
+                        () -> {
+                            failed[0]++;
+                            onAutoCreateDone(pending, created, duplicated, failed);
+                        });
+            });
+        }
+    }
+
+    private void onAutoCreateDone(int[] pending, int[] created, int[] duplicated, int[] failed) {
+        pending[0]--;
+        if (pending[0] > 0)
+            return;
+
+        String summary = "Hoàn tất tạo nháp: " + created[0] + " mới"
+                + (duplicated[0] > 0 ? (", " + duplicated[0] + " trùng") : "")
+                + (failed[0] > 0 ? (", " + failed[0] + " lỗi") : "");
+        Toast.makeText(this, summary, Toast.LENGTH_LONG).show();
     }
 
     private void hienDialogXuatHoaDon(HoaDon h) {
@@ -530,6 +992,25 @@ public class HoaDonActivity extends AppCompatActivity {
         EditText etPhiRac = dialogView.findViewById(R.id.etPhiRac);
         EditText etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
         EditText etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
+        TextView tvEstimatedTotal = dialogView.findViewById(R.id.tvEstimatedTotal);
+
+        MoneyFormatter.applyTo(etDonGiaDien);
+        MoneyFormatter.applyTo(etDonGiaNuoc);
+        MoneyFormatter.applyTo(etPhiRac);
+        MoneyFormatter.applyTo(etPhiWifi);
+        MoneyFormatter.applyTo(etPhiGuiXe);
+        setupEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
+                etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+                () -> {
+                    int idx = spinnerPhong.getSelectedItemPosition();
+                    if (idx < 0 || idx >= danhSachPhong.size())
+                        return 0.0;
+                    PhongTro room = danhSachPhong.get(idx);
+                    NguoiThue c = activeContractsByRoom.get(room.getId());
+                    if (c != null && c.getGiaThue() > 0)
+                        return (double) c.getGiaThue();
+                    return room.getGiaThue();
+                });
 
         String[] phongNames = danhSachPhong.stream()
                 .map(p -> "Phòng " + p.getSoPhong()).toArray(String[]::new);
@@ -545,18 +1026,42 @@ public class HoaDonActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 PhongTro phongChon = danhSachPhong.get(position);
+                etDienDau.setEnabled(false);
+                etDienDau.setFocusable(false);
+                etDienDau.setAlpha(0.75f);
+                etNuocDau.setEnabled(false);
+                etNuocDau.setFocusable(false);
+                etNuocDau.setAlpha(0.75f);
+
+                suggestNextPeriodForRoom(phongChon.getId(), suggested -> {
+                    if (!suggested.isEmpty()) {
+                        etThangNam.setText(suggested);
+                    }
+                });
+
                 loadLatestMeterEnds(phongChon.getId(), (elecEnd, waterEnd) -> {
                     lastElecEnd[0] = elecEnd;
                     lastWaterEnd[0] = waterEnd;
-                    if (etDienDau.getText().toString().trim().isEmpty()
-                            || "0".equals(etDienDau.getText().toString().trim())) {
-                        etDienDau.setText(formatDouble(elecEnd));
+                    etDienDau.setText(formatDouble(elecEnd));
+                    etNuocDau.setText(formatDouble(waterEnd));
+
+                    if (etDienCuoi.getText().toString().trim().isEmpty()) {
+                        etDienCuoi.setText(formatDouble(elecEnd));
                     }
-                    if (etNuocDau.getText().toString().trim().isEmpty()
-                            || "0".equals(etNuocDau.getText().toString().trim())) {
-                        etNuocDau.setText(formatDouble(waterEnd));
+                    if (etNuocCuoi.getText().toString().trim().isEmpty()) {
+                        etNuocCuoi.setText(formatDouble(waterEnd));
                     }
                 });
+
+                applyDefaultFeeFromHouse(phongChon, etDonGiaDien, etDonGiaNuoc, etPhiRac, etPhiWifi, etPhiGuiXe);
+                updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
+                        etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+                        () -> {
+                            NguoiThue c = activeContractsByRoom.get(phongChon.getId());
+                            if (c != null && c.getGiaThue() > 0)
+                                return (double) c.getGiaThue();
+                            return phongChon.getGiaThue();
+                        });
             }
 
             @Override
@@ -578,7 +1083,19 @@ public class HoaDonActivity extends AppCompatActivity {
                         HoaDon hd = new HoaDon();
                         hd.setIdPhong(phongChon.getId());
                         hd.setSoPhong(phongChon.getSoPhong());
-                        hd.setGiaThue(phongChon.getGiaThue());
+                        NguoiThue activeContract = activeContractsByRoom.get(phongChon.getId());
+                        if (activeContract != null && activeContract.getId() != null
+                                && !activeContract.getId().trim().isEmpty()) {
+                            hd.setIdNguoiThue(activeContract.getId());
+                            long contractRent = activeContract.getGiaThue();
+                            if (contractRent > 0) {
+                                hd.setGiaThue(contractRent);
+                            } else {
+                                hd.setGiaThue(phongChon.getGiaThue());
+                            }
+                        } else {
+                            hd.setGiaThue(phongChon.getGiaThue());
+                        }
                         hd.setThangNam(etThangNam.getText().toString().trim());
 
                         double dienDau = parseDouble(etDienDau);
@@ -600,13 +1117,13 @@ public class HoaDonActivity extends AppCompatActivity {
 
                         hd.setChiSoDienDau(dienDau);
                         hd.setChiSoDienCuoi(dienCuoi);
-                        hd.setDonGiaDien(parseDouble(etDonGiaDien));
+                        hd.setDonGiaDien(MoneyFormatter.getValue(etDonGiaDien));
                         hd.setChiSoNuocDau(nuocDau);
                         hd.setChiSoNuocCuoi(nuocCuoi);
-                        hd.setDonGiaNuoc(parseDouble(etDonGiaNuoc));
-                        hd.setPhiRac(parseDouble(etPhiRac));
-                        hd.setPhiWifi(parseDouble(etPhiWifi));
-                        hd.setPhiGuiXe(parseDouble(etPhiGuiXe));
+                        hd.setDonGiaNuoc(MoneyFormatter.getValue(etDonGiaNuoc));
+                        hd.setPhiRac(MoneyFormatter.getValue(etPhiRac));
+                        hd.setPhiWifi(MoneyFormatter.getValue(etPhiWifi));
+                        hd.setPhiGuiXe(MoneyFormatter.getValue(etPhiGuiXe));
                         hd.setTrangThai(InvoiceStatus.UNPAID);
                         viewModel.themHoaDonUnique(hd,
                                 () -> {
@@ -648,6 +1165,25 @@ public class HoaDonActivity extends AppCompatActivity {
         EditText etPhiRac = dialogView.findViewById(R.id.etPhiRac);
         EditText etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
         EditText etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
+        TextView tvEstimatedTotal = dialogView.findViewById(R.id.tvEstimatedTotal);
+
+        MoneyFormatter.applyTo(etDonGiaDien);
+        MoneyFormatter.applyTo(etDonGiaNuoc);
+        MoneyFormatter.applyTo(etPhiRac);
+        MoneyFormatter.applyTo(etPhiWifi);
+        MoneyFormatter.applyTo(etPhiGuiXe);
+        setupEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
+                etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+                () -> {
+                    int idx = spinnerPhong.getSelectedItemPosition();
+                    if (idx < 0 || idx >= danhSachPhong.size())
+                        return hoaDon.getGiaThue();
+                    PhongTro room = danhSachPhong.get(idx);
+                    NguoiThue c = activeContractsByRoom.get(room.getId());
+                    if (c != null && c.getGiaThue() > 0)
+                        return (double) c.getGiaThue();
+                    return room.getGiaThue();
+                });
 
         String[] phongNames = danhSachPhong.stream()
                 .map(p -> "Phòng " + p.getSoPhong()).toArray(String[]::new);
@@ -677,6 +1213,20 @@ public class HoaDonActivity extends AppCompatActivity {
         spinnerPhong.setAlpha(0.6f);
         etThangNam.setEnabled(false);
         etThangNam.setAlpha(0.6f);
+        etDienDau.setEnabled(false);
+        etDienDau.setFocusable(false);
+        etDienDau.setAlpha(0.75f);
+        etNuocDau.setEnabled(false);
+        etNuocDau.setFocusable(false);
+        etNuocDau.setAlpha(0.75f);
+        updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
+                etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+                () -> {
+                    NguoiThue c = activeContractsByRoom.get(hoaDon.getIdPhong());
+                    if (c != null && c.getGiaThue() > 0)
+                        return (double) c.getGiaThue();
+                    return hoaDon.getGiaThue();
+                });
 
         new AlertDialog.Builder(this)
                 .setTitle("Chỉnh sửa hóa đơn tháng " + hoaDon.getThangNam())
@@ -691,6 +1241,7 @@ public class HoaDonActivity extends AppCompatActivity {
                         PhongTro phongChon = danhSachPhong.get(idx);
                         HoaDon updated = new HoaDon();
                         updated.setId(hoaDon.getId());
+                        updated.setIdNguoiThue(hoaDon.getIdNguoiThue());
                         updated.setIdPhong(phongChon.getId());
                         updated.setSoPhong(phongChon.getSoPhong());
                         updated.setGiaThue(phongChon.getGiaThue());
@@ -709,13 +1260,13 @@ public class HoaDonActivity extends AppCompatActivity {
 
                         updated.setChiSoDienDau(dienDau);
                         updated.setChiSoDienCuoi(dienCuoi);
-                        updated.setDonGiaDien(parseDouble(etDonGiaDien));
+                        updated.setDonGiaDien(MoneyFormatter.getValue(etDonGiaDien));
                         updated.setChiSoNuocDau(nuocDau);
                         updated.setChiSoNuocCuoi(nuocCuoi);
-                        updated.setDonGiaNuoc(parseDouble(etDonGiaNuoc));
-                        updated.setPhiRac(parseDouble(etPhiRac));
-                        updated.setPhiWifi(parseDouble(etPhiWifi));
-                        updated.setPhiGuiXe(parseDouble(etPhiGuiXe));
+                        updated.setDonGiaNuoc(MoneyFormatter.getValue(etDonGiaNuoc));
+                        updated.setPhiRac(MoneyFormatter.getValue(etPhiRac));
+                        updated.setPhiWifi(MoneyFormatter.getValue(etPhiWifi));
+                        updated.setPhiGuiXe(MoneyFormatter.getValue(etPhiGuiXe));
                         updated.setTrangThai(hoaDon.getTrangThai());
                         viewModel.capNhatHoaDon(updated,
                                 () -> runOnUiThread(
@@ -727,6 +1278,210 @@ public class HoaDonActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton("Hủy", null).show();
+    }
+
+    private void applyDefaultFeeFromHouse(@NonNull PhongTro room,
+            @NonNull EditText etDonGiaDien,
+            @NonNull EditText etDonGiaNuoc,
+            @NonNull EditText etPhiRac,
+            @NonNull EditText etPhiWifi,
+            @NonNull EditText etPhiGuiXe) {
+        if (room.getCanNhaId() == null || room.getCanNhaId().trim().isEmpty())
+            return;
+
+        CanNha house = housesById.get(room.getCanNhaId());
+        if (house == null)
+            return;
+
+        if (house.getGiaDien() > 0) {
+            MoneyFormatter.setValue(etDonGiaDien, house.getGiaDien());
+            lockFeeField(etDonGiaDien, true);
+        } else {
+            lockFeeField(etDonGiaDien, false);
+        }
+        if (house.getGiaNuoc() > 0) {
+            MoneyFormatter.setValue(etDonGiaNuoc, house.getGiaNuoc());
+            lockFeeField(etDonGiaNuoc, true);
+        } else {
+            lockFeeField(etDonGiaNuoc, false);
+        }
+        if (house.getGiaRac() > 0) {
+            MoneyFormatter.setValue(etPhiRac, house.getGiaRac());
+            lockFeeField(etPhiRac, true);
+        } else {
+            lockFeeField(etPhiRac, false);
+        }
+        if (house.getGiaInternet() > 0) {
+            MoneyFormatter.setValue(etPhiWifi, house.getGiaInternet());
+            lockFeeField(etPhiWifi, true);
+        } else {
+            lockFeeField(etPhiWifi, false);
+        }
+        if (house.getGiaXe() > 0) {
+            MoneyFormatter.setValue(etPhiGuiXe, house.getGiaXe());
+            lockFeeField(etPhiGuiXe, true);
+        } else {
+            lockFeeField(etPhiGuiXe, false);
+        }
+    }
+
+    private FeePreset resolveDefaultFeePreset(@NonNull PhongTro room) {
+        if (room.getCanNhaId() == null || room.getCanNhaId().trim().isEmpty()) {
+            return new FeePreset(0, 0, 0, 0, 0);
+        }
+        CanNha house = housesById.get(room.getCanNhaId());
+        if (house == null) {
+            return new FeePreset(0, 0, 0, 0, 0);
+        }
+        return new FeePreset(
+                Math.max(0, house.getGiaDien()),
+                Math.max(0, house.getGiaNuoc()),
+                Math.max(0, house.getGiaRac()),
+                Math.max(0, house.getGiaInternet()),
+                Math.max(0, house.getGiaXe()));
+    }
+
+    private interface SuggestedPeriodCallback {
+        void onResult(@NonNull String suggestedPeriod);
+    }
+
+    private void suggestNextPeriodForRoom(@NonNull String roomId, @NonNull SuggestedPeriodCallback callback) {
+        scopedCollection("hoa_don")
+                .whereEqualTo("idPhong", roomId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    String bestKey = null;
+                    String bestPeriod = "";
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            String period = doc.getString("thangNam");
+                            String key = toPeriodKey(period);
+                            if (key == null || key.isEmpty())
+                                continue;
+                            if (bestKey == null || key.compareTo(bestKey) > 0) {
+                                bestKey = key;
+                                bestPeriod = period != null ? period : "";
+                            }
+                        }
+                    }
+                    if (bestKey == null) {
+                        String current = FinancePeriodUtil
+                                .normalizeMonthYear(
+                                        new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+                        callback.onResult(current);
+                        return;
+                    }
+                    callback.onResult(nextMonth(bestPeriod));
+                })
+                .addOnFailureListener(e -> {
+                    String current = FinancePeriodUtil
+                            .normalizeMonthYear(
+                                    new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+                    callback.onResult(current);
+                });
+    }
+
+    private String nextMonth(String period) {
+        String normalized = FinancePeriodUtil.normalizeMonthYear(period);
+        String[] parts = normalized.split("/");
+        if (parts.length != 2) {
+            return FinancePeriodUtil
+                    .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        }
+        try {
+            int month = Integer.parseInt(parts[0]);
+            int year = Integer.parseInt(parts[1]);
+            month += 1;
+            if (month > 12) {
+                month = 1;
+                year += 1;
+            }
+            return String.format(Locale.US, "%02d/%04d", month, year);
+        } catch (Exception e) {
+            return FinancePeriodUtil
+                    .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        }
+    }
+
+    private void lockFeeField(@NonNull EditText et, boolean locked) {
+        et.setEnabled(!locked);
+        et.setFocusable(!locked);
+        et.setFocusableInTouchMode(!locked);
+        et.setAlpha(locked ? 0.75f : 1f);
+    }
+
+    private void setupEstimatedTotal(@NonNull EditText etDienDau,
+            @NonNull EditText etDienCuoi,
+            @NonNull EditText etDonGiaDien,
+            @NonNull EditText etNuocDau,
+            @NonNull EditText etNuocCuoi,
+            @NonNull EditText etDonGiaNuoc,
+            @NonNull EditText etPhiRac,
+            @NonNull EditText etPhiWifi,
+            @NonNull EditText etPhiGuiXe,
+            @NonNull TextView tvEstimatedTotal,
+            @NonNull Supplier<Double> rentSupplier) {
+        TextWatcher watcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
+                        etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal, rentSupplier);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+        etDienDau.addTextChangedListener(watcher);
+        etDienCuoi.addTextChangedListener(watcher);
+        etNuocDau.addTextChangedListener(watcher);
+        etNuocCuoi.addTextChangedListener(watcher);
+        etDonGiaDien.addTextChangedListener(watcher);
+        etDonGiaNuoc.addTextChangedListener(watcher);
+        etPhiRac.addTextChangedListener(watcher);
+        etPhiWifi.addTextChangedListener(watcher);
+        etPhiGuiXe.addTextChangedListener(watcher);
+    }
+
+    private void updateEstimatedTotal(@NonNull EditText etDienDau,
+            @NonNull EditText etDienCuoi,
+            @NonNull EditText etDonGiaDien,
+            @NonNull EditText etNuocDau,
+            @NonNull EditText etNuocCuoi,
+            @NonNull EditText etDonGiaNuoc,
+            @NonNull EditText etPhiRac,
+            @NonNull EditText etPhiWifi,
+            @NonNull EditText etPhiGuiXe,
+            @NonNull TextView tvEstimatedTotal,
+            @NonNull Supplier<Double> rentSupplier) {
+        double dienDau = parseDoubleSafe(etDienDau);
+        double dienCuoi = parseDoubleSafe(etDienCuoi);
+        double nuocDau = parseDoubleSafe(etNuocDau);
+        double nuocCuoi = parseDoubleSafe(etNuocCuoi);
+        double donGiaDien = MoneyFormatter.getValue(etDonGiaDien);
+        double donGiaNuoc = MoneyFormatter.getValue(etDonGiaNuoc);
+        double phiRac = MoneyFormatter.getValue(etPhiRac);
+        double phiWifi = MoneyFormatter.getValue(etPhiWifi);
+        double phiGuiXe = MoneyFormatter.getValue(etPhiGuiXe);
+        Double rent = rentSupplier.get();
+        double giaThue = rent != null ? rent : 0;
+
+        double soDien = Math.max(0, dienCuoi - dienDau);
+        double soNuoc = Math.max(0, nuocCuoi - nuocDau);
+        double total = giaThue + soDien * donGiaDien + soNuoc * donGiaNuoc + phiRac + phiWifi + phiGuiXe;
+        tvEstimatedTotal.setText(MoneyFormatter.format(total));
+    }
+
+    private double parseDoubleSafe(@NonNull EditText et) {
+        try {
+            return parseDouble(et);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private String formatDouble(double value) {
@@ -823,10 +1578,44 @@ public class HoaDonActivity extends AppCompatActivity {
             return;
         }
 
+        String normalizedSelectedMonth = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
+        Map<String, String> roomToHouse = new HashMap<>();
+        for (PhongTro room : danhSachPhong) {
+            if (room == null || room.getId() == null)
+                continue;
+            roomToHouse.put(room.getId(), room.getCanNhaId());
+        }
+
         java.util.List<HoaDon> out = new java.util.ArrayList<>();
         for (HoaDon h : list) {
             if (h == null)
                 continue;
+
+            // Month filter
+            String invoiceMonth = FinancePeriodUtil.normalizeMonthYear(h.getThangNam());
+            if (!normalizedSelectedMonth.isEmpty() && !normalizedSelectedMonth.equals(invoiceMonth)) {
+                continue;
+            }
+
+            // House filter
+            if (selectedKhuId != null && !selectedKhuId.trim().isEmpty()) {
+                String invoiceHouseId = roomToHouse.get(h.getIdPhong());
+                if (invoiceHouseId == null || !selectedKhuId.equals(invoiceHouseId)) {
+                    continue;
+                }
+            }
+
+            // Search filter
+            if (searchQuery != null && !searchQuery.isEmpty()) {
+                String room = h.getSoPhong() != null ? h.getSoPhong().toLowerCase(Locale.getDefault()) : "";
+                String tenant = tenantDisplayByRoom.get(h.getIdPhong());
+                tenant = tenant != null ? tenant.toLowerCase(Locale.getDefault()) : "";
+                String month = h.getThangNam() != null ? h.getThangNam().toLowerCase(Locale.getDefault()) : "";
+                if (!room.contains(searchQuery) && !tenant.contains(searchQuery) && !month.contains(searchQuery)) {
+                    continue;
+                }
+            }
+
             String st = h.getTrangThai();
             if (st == null || st.trim().isEmpty())
                 st = InvoiceStatus.UNPAID;
@@ -845,8 +1634,101 @@ public class HoaDonActivity extends AppCompatActivity {
         }
 
         adapter.setDanhSach(out);
+        adapter.setTenantDisplayByRoom(tenantDisplayByRoom);
+        updateFilterSummary(out);
         if (llEmpty != null)
             llEmpty.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateFilterSummary(@NonNull List<HoaDon> visibleInvoices) {
+        if (tvFilterSummary == null)
+            return;
+        double total = 0;
+        int unpaidCount = 0;
+        for (HoaDon h : visibleInvoices) {
+            if (h == null)
+                continue;
+            total += h.getTongTien();
+            String st = h.getTrangThai();
+            if (st == null || st.trim().isEmpty() || InvoiceStatus.UNPAID.equals(st)
+                    || InvoiceStatus.PARTIAL.equals(st)) {
+                unpaidCount++;
+            }
+        }
+        String totalFmt = MoneyFormatter.format(total);
+        tvFilterSummary.setText(visibleInvoices.size() + " hóa đơn | Tạm tính: " + totalFmt + " | Chưa thu: "
+                + unpaidCount);
+    }
+
+    private void showMonthFilterDialog() {
+        List<String> monthValues = new ArrayList<>();
+        List<String> monthLabels = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            java.util.Calendar c = java.util.Calendar.getInstance();
+            c.add(java.util.Calendar.MONTH, -i);
+            int m = c.get(java.util.Calendar.MONTH) + 1;
+            int y = c.get(java.util.Calendar.YEAR);
+            String normalized = String.format(Locale.US, "%02d/%04d", m, y);
+            monthValues.add(normalized);
+            monthLabels.add("Tháng " + m + "/" + y);
+        }
+
+        int checked = Math.max(0, monthValues.indexOf(FinancePeriodUtil.normalizeMonthYear(selectedMonth)));
+        new AlertDialog.Builder(this)
+                .setTitle("Chọn tháng")
+                .setSingleChoiceItems(monthLabels.toArray(new String[0]), checked, (dialog, which) -> {
+                    selectedMonth = monthValues.get(which);
+                    if (tvSelectedMonth != null) {
+                        String[] parts = selectedMonth.split("/");
+                        if (parts.length == 2) {
+                            tvSelectedMonth.setText(Integer.parseInt(parts[0]) + "/" + parts[1]);
+                        } else {
+                            tvSelectedMonth.setText(selectedMonth);
+                        }
+                    }
+                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void showHouseFilterDialog() {
+        if (danhSachPhong == null || danhSachPhong.isEmpty()) {
+            Toast.makeText(this, "Chưa có dữ liệu căn nhà", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        LinkedHashMap<String, String> houseMap = new LinkedHashMap<>();
+        houseMap.put("", "Tất cả căn nhà");
+        for (PhongTro room : danhSachPhong) {
+            if (room == null)
+                continue;
+            String houseId = room.getCanNhaId();
+            String houseName = room.getCanNhaTen();
+            if (houseId == null || houseId.trim().isEmpty())
+                continue;
+            if (houseName == null || houseName.trim().isEmpty())
+                houseName = "Căn nhà";
+            houseMap.put(houseId, houseName);
+        }
+
+        List<String> ids = new ArrayList<>(houseMap.keySet());
+        List<String> labels = new ArrayList<>(houseMap.values());
+        int checked = Math.max(0, ids.indexOf(selectedKhuId == null ? "" : selectedKhuId));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Chọn căn nhà")
+                .setSingleChoiceItems(labels.toArray(new String[0]), checked, (dialog, which) -> {
+                    String id = ids.get(which);
+                    selectedKhuId = id.isEmpty() ? null : id;
+                    if (tvSelectedKhu != null)
+                        tvSelectedKhu.setText(labels.get(which));
+                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 
     private void openPaymentHistory(@NonNull HoaDon hoaDon) {

@@ -29,14 +29,92 @@
         android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <TextView
-            android:id="@+id/tvSummary"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tổng chi tháng này: 0 đ"
-            android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface"
-            android:paddingBottom="10dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvSelectedMonth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tháng 01/2026"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/btnPickMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đổi tháng"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:padding="8dp"/>
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:id="@+id/tvSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tổng chi: 0 đ"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textColor="?attr/colorOnSurface"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <TextView
+                        android:id="@+id/tvSummaryCount"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Số khoản: 0"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"/>
+
+                    <TextView
+                        android:id="@+id/tvSummaryAvg"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="TB/khoản: 0 đ"
+                        android:gravity="end"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="13sp"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvTopCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Chi nhiều nhất: -"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/tvEmpty"
@@ -47,6 +125,7 @@
             android:textSize="16sp"
             android:textColor="#999999"
             android:padding="16dp"
+            android:layout_marginTop="8dp"
             android:visibility="gone"/>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -54,6 +133,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:layout_marginTop="8dp"
             android:clipToPadding="false"/>
 
     </LinearLayout>

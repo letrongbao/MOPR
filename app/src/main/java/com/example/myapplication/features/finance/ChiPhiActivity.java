@@ -34,11 +34,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ChiPhiActivity extends AppCompatActivity {
 
@@ -49,9 +52,16 @@ public class ChiPhiActivity extends AppCompatActivity {
 
     private TextView tvEmpty;
     private TextView tvSummary;
+    private TextView tvSummaryCount;
+    private TextView tvSummaryAvg;
+    private TextView tvTopCategory;
+    private TextView tvSelectedMonth;
+    private TextView btnPickMonth;
     private FloatingActionButton fabAdd;
 
     private boolean readOnly;
+    private String selectedMonth;
+    private List<ChiPhi> allExpenses = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +90,16 @@ public class ChiPhiActivity extends AppCompatActivity {
 
         tvEmpty = findViewById(R.id.tvEmpty);
         tvSummary = findViewById(R.id.tvSummary);
+        tvSummaryCount = findViewById(R.id.tvSummaryCount);
+        tvSummaryAvg = findViewById(R.id.tvSummaryAvg);
+        tvTopCategory = findViewById(R.id.tvTopCategory);
+        tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
+        btnPickMonth = findViewById(R.id.btnPickMonth);
         fabAdd = findViewById(R.id.fabAdd);
+
+        selectedMonth = FinancePeriodUtil
+                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        updateSelectedMonthLabel();
 
         RecyclerView rv = findViewById(R.id.recyclerView);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -115,6 +134,9 @@ public class ChiPhiActivity extends AppCompatActivity {
 
         if (fabAdd != null) {
             fabAdd.setOnClickListener(v -> hienDialogThem());
+        }
+        if (btnPickMonth != null) {
+            btnPickMonth.setOnClickListener(v -> showMonthPickerDialog());
         }
     }
 
@@ -153,29 +175,103 @@ public class ChiPhiActivity extends AppCompatActivity {
 
     private void bindListObserver() {
         viewModel.getDanhSach().observe(this, list -> {
-            adapter.setDanhSach(list);
-            tvEmpty.setVisibility(list == null || list.isEmpty() ? View.VISIBLE : View.GONE);
-            updateSummary(list);
+            allExpenses = list != null ? list : new ArrayList<>();
+            applyMonthFilterAndSummary();
         });
+    }
+
+    private void updateSelectedMonthLabel() {
+        if (tvSelectedMonth != null) {
+            tvSelectedMonth.setText("Tháng " + selectedMonth);
+        }
+    }
+
+    private void showMonthPickerDialog() {
+        List<String> monthValues = new ArrayList<>();
+        List<String> monthLabels = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            java.util.Calendar c = java.util.Calendar.getInstance();
+            c.add(java.util.Calendar.MONTH, -i);
+            int month = c.get(java.util.Calendar.MONTH) + 1;
+            int year = c.get(java.util.Calendar.YEAR);
+            String normalized = String.format(Locale.US, "%02d/%04d", month, year);
+            monthValues.add(normalized);
+            monthLabels.add("Tháng " + normalized);
+        }
+
+        int checked = Math.max(0, monthValues.indexOf(selectedMonth));
+        new AlertDialog.Builder(this)
+                .setTitle("Chọn tháng")
+                .setSingleChoiceItems(monthLabels.toArray(new String[0]), checked, (dialog, which) -> {
+                    selectedMonth = monthValues.get(which);
+                    updateSelectedMonthLabel();
+                    applyMonthFilterAndSummary();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void applyMonthFilterAndSummary() {
+        List<ChiPhi> filtered = new ArrayList<>();
+        for (ChiPhi cp : allExpenses) {
+            if (cp == null)
+                continue;
+            String month = FinancePeriodUtil.normalizeMonthYear(cp.getPaidAt());
+            if (selectedMonth.equals(month)) {
+                filtered.add(cp);
+            }
+        }
+
+        adapter.setDanhSach(filtered);
+        tvEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        updateSummary(filtered);
     }
 
     private void updateSummary(List<ChiPhi> list) {
         if (tvSummary == null)
             return;
-        String month = FinancePeriodUtil
-                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+
         double total = 0;
+        int count = 0;
+        Map<String, Double> byCategory = new HashMap<>();
         if (list != null) {
             for (ChiPhi cp : list) {
                 if (cp == null)
                     continue;
-                String my = FinancePeriodUtil.normalizeMonthYear(cp.getPaidAt());
-                if (month.equals(my))
-                    total += cp.getAmount();
+                total += cp.getAmount();
+                count++;
+
+                String category = cp.getCategory() != null && !cp.getCategory().trim().isEmpty()
+                        ? cp.getCategory().trim()
+                        : "Khác";
+                byCategory.put(category, byCategory.getOrDefault(category, 0.0) + cp.getAmount());
             }
         }
+
+        double avg = count > 0 ? (total / count) : 0;
+        String topCategory = "-";
+        double topAmount = 0;
+        for (Map.Entry<String, Double> entry : byCategory.entrySet()) {
+            if (entry.getValue() > topAmount) {
+                topAmount = entry.getValue();
+                topCategory = entry.getKey();
+            }
+        }
+
         NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-        tvSummary.setText("Tổng chi tháng " + month + ": " + fmt.format(total));
+        tvSummary.setText("Tổng chi: " + fmt.format(total));
+        if (tvSummaryCount != null)
+            tvSummaryCount.setText("Số khoản: " + count);
+        if (tvSummaryAvg != null)
+            tvSummaryAvg.setText("TB/khoản: " + fmt.format(avg));
+        if (tvTopCategory != null) {
+            if (count == 0) {
+                tvTopCategory.setText("Chi nhiều nhất: -");
+            } else {
+                tvTopCategory.setText("Chi nhiều nhất: " + topCategory + " (" + fmt.format(topAmount) + ")");
+            }
+        }
     }
 
     private void hienDialogThem() {

@@ -460,28 +460,6 @@
                 app:backgroundTint="@color/btn_orange"/>
         </LinearLayout>
 
-        <RadioGroup
-            android:id="@+id/rgRemindFee"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/rbRemindStartMonth"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Nhắc báo phí vào đầu tháng"/>
-
-            <RadioButton
-                android:id="@+id/rbRemindEndMonth"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Nhắc báo phí vào cuối tháng"/>
-        </RadioGroup>
-
     </LinearLayout>
 </ScrollView>
 
