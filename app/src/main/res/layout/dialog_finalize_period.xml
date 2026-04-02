@@ -12,8 +12,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-<<<<<<< Updated upstream:app/src/main/res/layout/dialog_chot_ky.xml
-=======
             android:text="Căn nhà"
             android:textStyle="bold"
             android:textColor="#212121"/>
@@ -26,7 +24,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
->>>>>>> Stashed changes:app/src/main/res/layout/dialog_finalize_period.xml
             android:text="Tháng / Năm"
             android:textStyle="bold"
             android:textColor="#212121"/>

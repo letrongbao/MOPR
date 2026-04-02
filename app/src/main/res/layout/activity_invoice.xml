@@ -89,7 +89,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/bg_input_rounded"
+                android:background="@drawable/bg_month_filter_chip"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
@@ -99,8 +99,8 @@
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:src="@drawable/baseline_receipt_24"
-                    app:tint="@color/primary" />
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/primary_dark" />
 
                 <TextView
                     android:id="@+id/tvSelectedMonth"
@@ -108,9 +108,17 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="3/2026"
-                    android:textColor="#333333"
+                    android:textColor="#0D47A1"
                     android:textSize="14sp"
                     android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="6dp"
+                    android:rotation="90"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="#0D47A1" />
             </LinearLayout>
         </LinearLayout>
 

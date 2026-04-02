@@ -51,26 +51,7 @@ public class InvoiceReminderWorker extends Worker {
                             .whereIn("trangThai", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
                             .get());
 
-<<<<<<< Updated upstream
             int count = (qs != null) ? qs.size() : 0;
-=======
-            int count = 0;
-            if (qs != null) {
-                for (QueryDocumentSnapshot doc : qs) {
-                    String contractId = doc.getString("idTenant");
-                    if (contractId != null && eligibleContractIds.contains(contractId)) {
-                        count++;
-                        continue;
-                    }
-
-                    String roomId = doc.getString("idPhong");
-                    if (roomId != null && eligibleRoomIds.contains(roomId)) {
-                        count++;
-                    }
-                }
-            }
-
->>>>>>> Stashed changes
             if (count > 0) {
                 showNotification(count);
             }
@@ -113,4 +94,3 @@ public class InvoiceReminderWorker extends Worker {
             nm.notify(1001, b.build());
     }
 }
-

@@ -540,6 +540,40 @@
                         android:layout_marginTop="6dp"
                         android:text="Hiển thị ghi chú trên hóa đơn"
                         android:checked="true"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nhắc báo phí vào"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginTop="12dp"/>
+
+                    <RadioGroup
+                        android:id="@+id/rgBillingReminder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/rbRemindStartMonth"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Đầu tháng"/>
+
+                        <RadioButton
+                            android:id="@+id/rbRemindMidMonth"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Giữa tháng"/>
+
+                        <RadioButton
+                            android:id="@+id/rbRemindEndMonth"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Cuối tháng"/>
+                    </RadioGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

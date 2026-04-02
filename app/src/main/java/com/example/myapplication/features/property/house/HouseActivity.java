@@ -372,16 +372,12 @@ public class HouseActivity extends AppCompatActivity {
                         waterMode = "phong";
                 }
 
-<<<<<<< Updated upstream:app/src/main/java/com/example/myapplication/features/property/house/CanNhaActivity.java
                 String remind = "start_month";
                 if (rgRemindFee != null && rgRemindFee.getCheckedRadioButtonId() == R.id.rbRemindEndMonth) {
                     remind = "end_month";
                 }
 
-                java.util.List<CanNha.PhiKhac> extraFees = collectExtraFees(llExtraFees);
-=======
                 java.util.List<House.PhiKhac> extraFees = collectExtraFees(llExtraFees);
->>>>>>> Stashed changes:app/src/main/java/com/example/myapplication/features/property/house/HouseActivity.java
 
                 House target = isEdit ? existing : new House();
                 target.setTenHouse(name);
@@ -534,4 +530,3 @@ public class HouseActivity extends AppCompatActivity {
         return true;
     }
 }
-

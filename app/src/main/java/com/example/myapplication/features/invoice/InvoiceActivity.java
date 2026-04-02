@@ -12,6 +12,7 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -1669,44 +1670,7 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void showMonthPickerDialog() {
-        // Lấy tháng hiện tại
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        int currentYear = cal.get(java.util.Calendar.YEAR);
-        int currentMonth = cal.get(java.util.Calendar.MONTH); // 0-based
-
-        // Tạo danh sách tháng (12 tháng gần nhất)
-        List<String> months = new ArrayList<>();
-        List<String> monthValues = new ArrayList<>();
-
-        for (int i = 0; i < 12; i++) {
-            java.util.Calendar tempCal = java.util.Calendar.getInstance();
-            tempCal.add(java.util.Calendar.MONTH, -i);
-
-            int month = tempCal.get(java.util.Calendar.MONTH) + 1; // Convert to 1-based
-            int year = tempCal.get(java.util.Calendar.YEAR);
-
-            months.add(String.format(Locale.getDefault(), "Tháng %d/%d", month, year));
-            monthValues.add(String.format(Locale.getDefault(), "%02d/%d", month, year));
-        }
-
-        new AlertDialog.Builder(this)
-                .setTitle("Chọn tháng")
-                .setItems(months.toArray(new String[0]), (dialog, which) -> {
-                    selectedMonth = monthValues.get(which);
-
-                    // Format display: M/yyyy
-                    String[] parts = selectedMonth.split("/");
-                    if (parts.length == 2) {
-                        int m = Integer.parseInt(parts[0]);
-                        tvSelectedMonth.setText(String.format(Locale.getDefault(), "%d/%s", m, parts[1]));
-                    }
-
-                    // Reload data với filter mới
-                    applyInvoiceFilters(viewModel.getInvoiceList().getValue(),
-                            ((TabLayout) findViewById(R.id.tabLayout)).getSelectedTabPosition());
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
+        showMonthFilterDialog();
     }
 
     private String toPeriodKey(String period) {
@@ -1835,36 +1799,83 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void showMonthFilterDialog() {
-        List<String> monthValues = new ArrayList<>();
-        List<String> monthLabels = new ArrayList<>();
-        for (int i = 0; i < 12; i++) {
-            java.util.Calendar c = java.util.Calendar.getInstance();
-            c.add(java.util.Calendar.MONTH, -i);
-            int m = c.get(java.util.Calendar.MONTH) + 1;
-            int y = c.get(java.util.Calendar.YEAR);
-            String normalized = String.format(Locale.US, "%02d/%04d", m, y);
-            monthValues.add(normalized);
-            monthLabels.add("Tháng " + m + "/" + y);
+        View content = LayoutInflater.from(this).inflate(R.layout.dialog_month_year_picker, null, false);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(content);
+
+        NumberPicker npMonth = content.findViewById(R.id.npMonth);
+        NumberPicker npYear = content.findViewById(R.id.npYear);
+        TextView tvPreviewMonth = content.findViewById(R.id.tvPreviewMonth);
+        MaterialButton btnCurrentMonth = content.findViewById(R.id.btnCurrentMonth);
+        MaterialButton btnPreviousMonth = content.findViewById(R.id.btnPreviousMonth);
+        MaterialButton btnCancel = content.findViewById(R.id.btnCancelMonthPicker);
+        MaterialButton btnApply = content.findViewById(R.id.btnApplyMonthPicker);
+
+        java.util.Calendar now = java.util.Calendar.getInstance();
+        String normalizedSelected = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
+
+        int selectedM = now.get(java.util.Calendar.MONTH) + 1;
+        int selectedY = now.get(java.util.Calendar.YEAR);
+        if (normalizedSelected != null && normalizedSelected.matches("\\d{2}/\\d{4}")) {
+            String[] parts = normalizedSelected.split("/");
+            selectedM = Integer.parseInt(parts[0]);
+            selectedY = Integer.parseInt(parts[1]);
         }
 
-        int checked = Math.max(0, monthValues.indexOf(FinancePeriodUtil.normalizeMonthYear(selectedMonth)));
-        new AlertDialog.Builder(this)
-                .setTitle("Chọn tháng")
-                .setSingleChoiceItems(monthLabels.toArray(new String[0]), checked, (dialog, which) -> {
-                    selectedMonth = monthValues.get(which);
-                    if (tvSelectedMonth != null) {
-                        String[] parts = selectedMonth.split("/");
-                        if (parts.length == 2) {
-                            tvSelectedMonth.setText(Integer.parseInt(parts[0]) + "/" + parts[1]);
-                        } else {
-                            tvSelectedMonth.setText(selectedMonth);
-                        }
-                    }
-                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
-                    dialog.dismiss();
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
+        int minYear = Math.max(2000, now.get(java.util.Calendar.YEAR) - 8);
+        int maxYear = now.get(java.util.Calendar.YEAR) + 1;
+        if (selectedY < minYear)
+            selectedY = minYear;
+        if (selectedY > maxYear)
+            selectedY = maxYear;
+
+        npMonth.setMinValue(1);
+        npMonth.setMaxValue(12);
+        npMonth.setValue(selectedM);
+        npMonth.setWrapSelectorWheel(true);
+
+        npYear.setMinValue(minYear);
+        npYear.setMaxValue(maxYear);
+        npYear.setValue(selectedY);
+        npYear.setWrapSelectorWheel(false);
+
+        Runnable updatePreview = () -> {
+            int monthValue = npMonth.getValue();
+            int yearValue = npYear.getValue();
+            tvPreviewMonth.setText(String.format(Locale.getDefault(), "Tháng %d/%d", monthValue, yearValue));
+        };
+        updatePreview.run();
+
+        npMonth.setOnValueChangedListener((picker, oldVal, newVal) -> updatePreview.run());
+        npYear.setOnValueChangedListener((picker, oldVal, newVal) -> updatePreview.run());
+
+        btnCurrentMonth.setOnClickListener(v -> {
+            npMonth.setValue(now.get(java.util.Calendar.MONTH) + 1);
+            npYear.setValue(now.get(java.util.Calendar.YEAR));
+            updatePreview.run();
+        });
+
+        btnPreviousMonth.setOnClickListener(v -> {
+            java.util.Calendar previous = java.util.Calendar.getInstance();
+            previous.add(java.util.Calendar.MONTH, -1);
+            npMonth.setValue(previous.get(java.util.Calendar.MONTH) + 1);
+            npYear.setValue(previous.get(java.util.Calendar.YEAR));
+            updatePreview.run();
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnApply.setOnClickListener(v -> {
+            String picked = String.format(Locale.US, "%02d/%04d", npMonth.getValue(), npYear.getValue());
+            selectedMonth = picked;
+            if (tvSelectedMonth != null) {
+                tvSelectedMonth.setText(npMonth.getValue() + "/" + npYear.getValue());
+            }
+            applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void showHouseFilterDialog() {

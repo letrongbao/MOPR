@@ -36,6 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -49,14 +50,12 @@ public class ExpenseActivity extends AppCompatActivity {
 
     private TextView tvEmpty;
     private TextView tvSummary;
+    private TextView tvSelectedMonth;
     private FloatingActionButton fabAdd;
 
     private boolean readOnly;
-<<<<<<< Updated upstream:app/src/main/java/com/example/myapplication/features/finance/ChiPhiActivity.java
-=======
     private String selectedMonth;
     private List<Expense> allExpenses = new ArrayList<>();
->>>>>>> Stashed changes:app/src/main/java/com/example/myapplication/features/finance/ExpenseActivity.java
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,7 +84,17 @@ public class ExpenseActivity extends AppCompatActivity {
 
         tvEmpty = findViewById(R.id.tvEmpty);
         tvSummary = findViewById(R.id.tvSummary);
+        tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
         fabAdd = findViewById(R.id.fabAdd);
+
+        selectedMonth = FinancePeriodUtil
+                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        updateSelectedMonthLabel();
+
+        TextView btnPickMonth = findViewById(R.id.btnPickMonth);
+        if (btnPickMonth != null) {
+            btnPickMonth.setOnClickListener(v -> showMonthPickerDialog());
+        }
 
         RecyclerView rv = findViewById(R.id.recyclerView);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -105,7 +114,8 @@ public class ExpenseActivity extends AppCompatActivity {
                         .setMessage("Xóa khoản chi này?")
                         .setPositiveButton("Xóa", (d, w) -> viewModel.deleteExpense(item.getId(),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(ExpenseActivity.this, "Đã xóa", Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(ExpenseActivity.this, "Đã xóa", Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(() -> Toast
                                         .makeText(ExpenseActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT).show())))
                         .setNegativeButton("Hủy", null)
@@ -157,16 +167,6 @@ public class ExpenseActivity extends AppCompatActivity {
     }
 
     private void bindListObserver() {
-<<<<<<< Updated upstream:app/src/main/java/com/example/myapplication/features/finance/ChiPhiActivity.java
-        viewModel.getDanhSach().observe(this, list -> {
-            adapter.setDanhSach(list);
-            tvEmpty.setVisibility(list == null || list.isEmpty() ? View.VISIBLE : View.GONE);
-            updateSummary(list);
-        });
-    }
-
-    private void updateSummary(List<ChiPhi> list) {
-=======
         viewModel.getExpenseList().observe(this, list -> {
             allExpenses = list != null ? list : new ArrayList<>();
             applyMonthFilterAndSummary();
@@ -222,11 +222,9 @@ public class ExpenseActivity extends AppCompatActivity {
     }
 
     private void updateSummary(List<Expense> list) {
->>>>>>> Stashed changes:app/src/main/java/com/example/myapplication/features/finance/ExpenseActivity.java
         if (tvSummary == null)
             return;
-        String month = FinancePeriodUtil
-                .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        String month = selectedMonth;
         double total = 0;
         if (list != null) {
             for (Expense cp : list) {
@@ -369,6 +367,3 @@ public class ExpenseActivity extends AppCompatActivity {
         return true;
     }
 }
-
-
-
