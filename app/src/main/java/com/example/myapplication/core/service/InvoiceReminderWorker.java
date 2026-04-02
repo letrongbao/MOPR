@@ -19,8 +19,12 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 public class InvoiceReminderWorker extends Worker {
 
@@ -37,6 +41,10 @@ public class InvoiceReminderWorker extends Worker {
             Context ctx = getApplicationContext();
             TenantSession.init(ctx);
 
+            String todayTiming = resolveTodayTimingKey();
+            if (todayTiming == null)
+                return Result.success();
+
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user == null)
                 return Result.success();
@@ -45,13 +53,55 @@ public class InvoiceReminderWorker extends Worker {
             if (tenantId == null || tenantId.trim().isEmpty())
                 return Result.success();
 
+            com.google.firebase.firestore.QuerySnapshot contracts = Tasks.await(
+                    db.collection("tenants").document(tenantId)
+                            .collection("nguoi_thue")
+                            .whereEqualTo("trangThaiHopDong", "ACTIVE")
+                            .get());
+
+            Set<String> eligibleContractIds = new HashSet<>();
+            Set<String> eligibleRoomIds = new HashSet<>();
+            if (contracts != null) {
+                for (QueryDocumentSnapshot doc : contracts) {
+                    String contractTiming = normalizeTiming(doc.getString("nhacBaoPhiVao"));
+                    if (!todayTiming.equals(contractTiming))
+                        continue;
+
+                    String contractId = doc.getId();
+                    if (contractId != null && !contractId.trim().isEmpty())
+                        eligibleContractIds.add(contractId);
+
+                    String roomId = doc.getString("idPhong");
+                    if (roomId != null && !roomId.trim().isEmpty())
+                        eligibleRoomIds.add(roomId);
+                }
+            }
+
+            if (eligibleContractIds.isEmpty() && eligibleRoomIds.isEmpty())
+                return Result.success();
+
             com.google.firebase.firestore.QuerySnapshot qs = Tasks.await(
                     db.collection("tenants").document(tenantId)
                             .collection("hoa_don")
                             .whereIn("trangThai", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
                             .get());
 
-            int count = (qs != null) ? qs.size() : 0;
+            int count = 0;
+            if (qs != null) {
+                for (QueryDocumentSnapshot doc : qs) {
+                    String contractId = doc.getString("idNguoiThue");
+                    if (contractId != null && eligibleContractIds.contains(contractId)) {
+                        count++;
+                        continue;
+                    }
+
+                    String roomId = doc.getString("idPhong");
+                    if (roomId != null && eligibleRoomIds.contains(roomId)) {
+                        count++;
+                    }
+                }
+            }
+
             if (count > 0) {
                 showNotification(count);
             }
@@ -61,6 +111,27 @@ public class InvoiceReminderWorker extends Worker {
             // Avoid noisy retries; app will try again next schedule.
             return Result.success();
         }
+    }
+
+    private String resolveTodayTimingKey() {
+        Calendar cal = Calendar.getInstance();
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+        int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+        if (day == 1)
+            return "start_month";
+        if (day == 15)
+            return "mid_month";
+        if (day == maxDay)
+            return "end_month";
+        return null;
+    }
+
+    private String normalizeTiming(String value) {
+        if ("end_month".equals(value) || "mid_month".equals(value) || "start_month".equals(value)) {
+            return value;
+        }
+        return "start_month";
     }
 
     private void showNotification(int unpaidCount) {

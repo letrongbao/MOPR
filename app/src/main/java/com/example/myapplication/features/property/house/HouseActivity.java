@@ -229,8 +229,6 @@ public class HouseActivity extends AppCompatActivity {
         TextView tvQr = v.findViewById(R.id.tvQrStatus);
         View btnPickQr = v.findViewById(R.id.btnPickQr);
 
-        RadioGroup rgRemindFee = v.findViewById(R.id.rgRemindFee);
-
         EditText etChuTK = v.findViewById(R.id.etChuTaiKhoan);
         EditText etNganHang = v.findViewById(R.id.etNganHang);
         EditText etSoTK = v.findViewById(R.id.etSoTaiKhoan);
@@ -307,25 +305,12 @@ public class HouseActivity extends AppCompatActivity {
 
             etNote.setText(existing.getGhiChu());
 
-            if (rgRemindFee != null) {
-                String remind = existing.getNhacBaoPhi();
-                if ("end_month".equals(remind)) {
-                    rgRemindFee.check(R.id.rbRemindEndMonth);
-                } else {
-                    rgRemindFee.check(R.id.rbRemindStartMonth);
-                }
-            }
-
             if (llExtraFees != null) {
                 java.util.List<House.PhiKhac> fees = existing.getPhiKhac();
                 if (fees != null && !fees.isEmpty()) {
                     for (House.PhiKhac f : fees)
                         addExtraFeeRow(llExtraFees, f);
                 }
-            }
-        } else {
-            if (rgRemindFee != null) {
-                rgRemindFee.check(R.id.rbRemindStartMonth);
             }
         }
 
@@ -372,11 +357,6 @@ public class HouseActivity extends AppCompatActivity {
                         waterMode = "phong";
                 }
 
-                String remind = "start_month";
-                if (rgRemindFee != null && rgRemindFee.getCheckedRadioButtonId() == R.id.rbRemindEndMonth) {
-                    remind = "end_month";
-                }
-
                 java.util.List<House.PhiKhac> extraFees = collectExtraFees(llExtraFees);
 
                 House target = isEdit ? existing : new House();
@@ -403,7 +383,6 @@ public class HouseActivity extends AppCompatActivity {
 
                 target.setPhiKhac(extraFees);
                 target.setQrThanhToanUrl(dialogQrUrl);
-                target.setNhacBaoPhi(remind);
 
                 if (isEdit) {
                     repo.update(target,

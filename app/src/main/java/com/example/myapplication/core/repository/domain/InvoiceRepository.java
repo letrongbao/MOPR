@@ -2,6 +2,7 @@ package com.example.myapplication.core.repository.domain;
 
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.core.repository.AuditLogRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.domain.Invoice;
@@ -161,7 +162,7 @@ public class InvoiceRepository {
         updates.put("updatedAt", com.google.firebase.Timestamp.now());
 
         // If marking as paid, set payment date
-        if ("Đã thanh toán".equals(trangThai)) {
+        if (InvoiceStatus.PAID.equals(trangThai)) {
             updates.put("ngayThanhToan", com.google.firebase.Timestamp.now());
         }
 
