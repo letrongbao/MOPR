@@ -136,6 +136,15 @@
                     android:layout_marginTop="16dp"
                     app:cornerRadius="14dp"/>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Tài khoản tạo từ ứng dụng sẽ mặc định là Khách thuê."
+                    android:textAlignment="center"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp"/>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -2,10 +2,8 @@ package com.example.myapplication.features.contract;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -24,25 +22,14 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapter.ViewHolder> {
 
     private List<Tenant> fullList = new ArrayList<>();
     private List<Tenant> displayList = new ArrayList<>();
     private String filterQuery = "";
-
-    // ── Chip colors ─────────────────────────────────────────────────────────
-    private static final int COLOR_DANG_THUE   = Color.parseColor("#4CAF50"); // Xanh lá
-    private static final int COLOR_SAP_HET     = Color.parseColor("#FF6D00"); // Cam đỏ
-    private static final int COLOR_KET_THUC    = Color.parseColor("#9E9E9E"); // Xám
-
-    // ── Card background tints ────────────────────────────────────────────────
-    private static final int CARD_SAP_HET_BG   = Color.parseColor("#FFF3E0"); // Cam nhạt
-    private static final int CARD_DEFAULT_BG    = Color.WHITE;
 
     public interface OnNhacTaiKyListener {
         void onNhacTaiKy(Tenant contract);
@@ -81,7 +68,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         this.fullList.sort((a, b) -> {
             int pa = priorityOf(ContractStatusHelper.resolve(a));
             int pb = priorityOf(ContractStatusHelper.resolve(b));
-            if (pa != pb) return Integer.compare(pa, pb);
+            if (pa != pb)
+                return Integer.compare(pa, pb);
             // Cùng priority → sắp theo ngày còn lại tăng dần
             long da = ContractStatusHelper.daysRemaining(a);
             long db = ContractStatusHelper.daysRemaining(b);
@@ -100,7 +88,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     public int countByStatus(ContractStatus status) {
         int count = 0;
         for (Tenant c : fullList) {
-            if (ContractStatusHelper.resolve(c) == status) count++;
+            if (ContractStatusHelper.resolve(c) == status)
+                count++;
         }
         return count;
     }
@@ -109,24 +98,30 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
     private int priorityOf(ContractStatus s) {
         switch (s) {
-            case SAP_HET_HAN:  return 0;
-            case DANG_THUE:    return 1;
-            case DA_KET_THUC:  return 2;
-            default:           return 3;
+            case SAP_HET_HAN:
+                return 0;
+            case DANG_THUE:
+                return 1;
+            case DA_KET_THUC:
+                return 2;
+            default:
+                return 3;
         }
     }
 
     private void rebuildDisplay() {
         List<Tenant> filtered = new ArrayList<>();
         for (Tenant c : fullList) {
-            if (matches(c)) filtered.add(c);
+            if (matches(c))
+                filtered.add(c);
         }
         this.displayList = filtered;
         notifyDataSetChanged();
     }
 
     private boolean matches(Tenant c) {
-        if (filterQuery.isEmpty()) return true;
+        if (filterQuery.isEmpty())
+            return true;
         String name = c.getHoTen() != null ? c.getHoTen().toLowerCase() : "";
         String room = c.getSoPhong() != null ? c.getSoPhong().toLowerCase() : "";
         return name.contains(filterQuery) || room.contains(filterQuery);
@@ -134,7 +129,10 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
     // ── RecyclerView ────────────────────────────────────────────────────────
 
-    @Override public int getItemCount() { return displayList.size(); }
+    @Override
+    public int getItemCount() {
+        return displayList.size();
+    }
 
     @NonNull
     @Override
@@ -155,129 +153,31 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
         // Giá thuê - Format với dấu phân cách
         long giaThue = c.getGiaThue();
-        String giaThueFormatted = String.format("%,dđ", giaThue).replace(',', '.');
+        String giaThueFormatted = ContractListItemUiHelper.formatMoney(giaThue);
         h.tvGiaThue.setText(giaThueFormatted);
 
         // Tiền cọc - Format với dấu phân cách
         long tienCoc = c.getTienCoc();
-        String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
+        String tienCocFormatted = ContractListItemUiHelper.formatMoney(tienCoc);
         h.tvTienCoc.setText(tienCocFormatted);
 
         // Thông tin người đại diện (nếu có), fallback về hoTen
-        String tenNguoiDaiDien = c.getTenNguoiDaiDien();
-        if (tenNguoiDaiDien == null || tenNguoiDaiDien.trim().isEmpty()) {
-            tenNguoiDaiDien = c.getHoTen(); // Fallback to hoTen if no representative
-        }
-        h.tvTenantName.setText(tenNguoiDaiDien != null ? tenNguoiDaiDien : "—");
+        h.tvTenantName.setText(ContractListItemUiHelper.displayRepresentativeName(c));
         h.tvTenantPhone.setText(c.getSoDienThoai() != null ? c.getSoDienThoai() : "—");
 
         // Chip trạng thái hợp đồng - Logic tự động theo ngày kết thúc
-        updateContractStatusChip(h.chipTrangThai, status, daysLeft, c);
+        ContractListItemUiHelper.updateContractStatusChip(h.chipTrangThai, status, daysLeft, c);
 
         // Hiển thị trạng thái thu cọc (nếu chưa thu và hợp đồng còn hiệu lực)
-        updateDepositStatusDisplay(h, c, status);
+        ContractListItemUiHelper.updateDepositStatusDisplay(h.tvDepositStatus, c, status);
 
         // Menu 3 chấm
         h.btnMenu.setOnClickListener(v -> showPopupMenu(v, c, position, status));
     }
 
-    /**
-     * Cập nhật chip trạng thái hợp đồng theo logic:
-     * - Hết hạn: Màu Xám
-     * - Sắp hết hạn (<30 ngày): Màu Đỏ rực
-     * - Đang hiệu lực: Màu Xanh lá
-     * 
-     * Kiểm tra thêm: Nếu có ngayKetThuc (long timestamp), dùng nó để tính chính xác
-     */
-    private void updateContractStatusChip(Chip chip, ContractStatus status, long daysLeft, Tenant contract) {
-        // Kiểm tra logic mới với ngayKetThuc (long timestamp)
-        long ngayKetThuc = contract.getNgayKetThuc();
-        if (ngayKetThuc > 0) {
-            long currentTime = System.currentTimeMillis();
-            long timeRemaining = ngayKetThuc - currentTime;
-            
-            // 30 ngày = 2,592,000,000 ms
-            final long THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000; // 2592000000
-            
-            if (timeRemaining < 0) {
-                // Hết hạn
-                chip.setText("Hết hạn");
-                chip.setChipBackgroundColor(
-                        android.content.res.ColorStateList.valueOf(Color.parseColor("#9E9E9E"))); // Xám
-                chip.setTextColor(Color.WHITE);
-                return;
-            } else if (timeRemaining < THIRTY_DAYS_MS) {
-                // Sắp hết hạn (< 30 ngày)
-                long daysLeftNew = timeRemaining / (24 * 60 * 60 * 1000);
-                String text = "⚠ Còn " + daysLeftNew + " ngày";
-                chip.setText(text);
-                chip.setChipBackgroundColor(
-                        android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336"))); // Đỏ rực
-                chip.setTextColor(Color.WHITE);
-                return;
-            } else {
-                // Đang hiệu lực
-                chip.setText("✓ Đang hiệu lực");
-                chip.setChipBackgroundColor(
-                        android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))); // Xanh lá
-                chip.setTextColor(Color.WHITE);
-                return;
-            }
-        }
-        
-        // Fallback: dùng logic cũ nếu không có ngayKetThuc
-        switch (status) {
-            case DA_KET_THUC:
-                chip.setText("Hết hạn");
-                chip.setChipBackgroundColor(
-                        android.content.res.ColorStateList.valueOf(Color.parseColor("#9E9E9E"))); // Xám
-                chip.setTextColor(Color.WHITE);
-                break;
-            
-            case SAP_HET_HAN:
-                String text = "⚠ Sắp hết hạn";
-                if (daysLeft >= 0) {
-                    text = "⚠ Còn " + daysLeft + " ngày";
-                }
-                chip.setText(text);
-                chip.setChipBackgroundColor(
-                        android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336"))); // Đỏ rực
-                chip.setTextColor(Color.WHITE);
-                break;
-            
-            case DANG_THUE:
-            default:
-                chip.setText("✓ Đang hiệu lực");
-                chip.setChipBackgroundColor(
-                        android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50"))); // Xanh lá
-                chip.setTextColor(Color.WHITE);
-                break;
-        }
-    }
-
-    /**
-     * Hiển thị trạng thái thu cọc bằng TextView phụ
-     */
-    private void updateDepositStatusDisplay(ViewHolder h, Tenant c, ContractStatus status) {
-        // Chỉ hiển thị trạng thái thu cọc nếu hợp đồng còn hiệu lực
-        if (status == ContractStatus.DA_KET_THUC) {
-            h.tvDepositStatus.setVisibility(View.GONE);
-            return;
-        }
-
-        h.tvDepositStatus.setVisibility(View.VISIBLE);
-        if (c.isTrangThaiThuCoc()) {
-            h.tvDepositStatus.setText("✓ Đã thu cọc");
-            h.tvDepositStatus.setTextColor(Color.parseColor("#4CAF50")); // Xanh
-        } else {
-            h.tvDepositStatus.setText("⏳ Chờ thu cọc");
-            h.tvDepositStatus.setTextColor(Color.parseColor("#FF9800")); // Cam
-        }
-    }
-
     /** Mở Zalo với tin nhắn soạn sẵn, fallback sang Share chooser */
     private void sendZaloReminder(Context ctx, Tenant c) {
-        String soPhong   = c.getSoPhong() != null ? c.getSoPhong() : "?";
+        String soPhong = c.getSoPhong() != null ? c.getSoPhong() : "?";
         String ngayKetThuc = c.getNgayKetThucHopDong() != null ? c.getNgayKetThucHopDong() : "?";
         String msg = "Hợp đồng phòng " + soPhong + " của bạn sắp hết hạn vào ngày "
                 + ngayKetThuc + ", vui lòng liên hệ chủ trọ để gia hạn.";
@@ -295,7 +195,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
                 zaloIntent.setPackage("com.zing.zalo");
                 ctx.startActivity(zaloIntent);
                 return;
-            } catch (Exception ignored) { /* Zalo chưa cài */ }
+            } catch (Exception ignored) {
+                /* Zalo chưa cài */ }
         }
 
         // Fallback: Share chooser
@@ -308,19 +209,19 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     private void showPopupMenu(View anchor, Tenant contract, int position, ContractStatus status) {
         PopupMenu popup = new PopupMenu(anchor.getContext(), anchor);
         popup.getMenuInflater().inflate(R.menu.menu_contract, popup.getMenu());
-        
+
         // Hiển thị "Gửi nhắc tái ký" chỉ khi hợp đồng sắp hết hạn
         android.view.MenuItem menuNhacTaiKy = popup.getMenu().findItem(R.id.menu_nhac_tai_ky);
         if (menuNhacTaiKy != null) {
             menuNhacTaiKy.setVisible(status == ContractStatus.SAP_HET_HAN);
         }
-        
+
         // Hiển thị "Xác nhận thu cọc" chỉ khi chưa thu cọc
         android.view.MenuItem menuThuCoc = popup.getMenu().findItem(R.id.menu_thu_coc);
         if (menuThuCoc != null) {
             menuThuCoc.setVisible(!contract.isTrangThaiThuCoc() && status != ContractStatus.DA_KET_THUC);
         }
-        
+
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.menu_thu_coc) {
@@ -344,7 +245,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
             }
             return false;
         });
-        
+
         popup.show();
     }
 
@@ -367,7 +268,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         String soPhong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
         String ngayKetThuc = contract.getNgayKetThucHopDong() != null ? contract.getNgayKetThucHopDong() : "?";
         long daysLeft = ContractStatusHelper.daysRemaining(contract);
-        
+
         String msg = "🏠 Thông báo tái ký hợp đồng\n\n" +
                 "Phòng: " + soPhong + "\n" +
                 "Ngày kết thúc: " + ngayKetThuc + "\n" +
@@ -387,7 +288,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
                 zaloIntent.setPackage("com.zing.zalo");
                 context.startActivity(zaloIntent);
                 return;
-            } catch (Exception ignored) { /* Zalo chưa cài */ }
+            } catch (Exception ignored) {
+                /* Zalo chưa cài */ }
         }
 
         // Fallback: Share chooser
@@ -421,10 +323,10 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         }
 
         Intent intent = new Intent(context, ContractActivity.class);
-        
+
         // Gửi flag để báo đây là mode EDIT
         intent.putExtra("MODE", "EDIT");
-        
+
         // Gửi toàn bộ thông tin hợp đồng
         intent.putExtra("CONTRACT_ID", contract.getId());
         intent.putExtra("PHONG_ID", contract.getIdPhong());
@@ -448,7 +350,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         intent.putExtra("NHAC_TRUOC_1_THANG", contract.isNhacTruoc1Thang());
         intent.putExtra("CCCD_FRONT_URL", contract.getCccdFrontUrl());
         intent.putExtra("CCCD_BACK_URL", contract.getCccdBackUrl());
-        
+
         context.startActivity(intent);
     }
 
@@ -468,7 +370,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         String phongText = contract.getSoPhong() != null ? "Phòng " + contract.getSoPhong() : "—";
         tvPhongInfo.setText(phongText);
 
-        String tenantText = "Khách: " + (contract.getHoTen() != null ? contract.getHoTen() : "—") 
+        String tenantText = "Khách: " + (contract.getHoTen() != null ? contract.getHoTen() : "—")
                 + " - " + (contract.getSoDienThoai() != null ? contract.getSoDienThoai() : "—");
         tvTenantInfo.setText(tenantText);
 
@@ -502,7 +404,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         String phong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
         long tienCoc = contract.getTienCoc();
         String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
-        
+
         String message = "Yêu cầu thanh toán cọc phòng " + phong + "\n" +
                 "Số tiền: " + tienCocFormatted + "\n" +
                 "Vui lòng thanh toán qua mã QR bên dưới.";
@@ -512,7 +414,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, message);
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Yêu cầu thanh toán cọc phòng " + phong);
-        
+
         context.startActivity(Intent.createChooser(shareIntent, "Gửi yêu cầu thanh toán"));
     }
 
@@ -527,12 +429,12 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
         String roomName = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
         String tenantName = contract.getHoTen() != null ? contract.getHoTen() : "?";
-        
+
         new android.app.AlertDialog.Builder(context)
                 .setTitle("⚠️ Xác nhận xóa hợp đồng")
-                .setMessage("Bạn có chắc chắn muốn xóa hợp đồng của phòng " + roomName + 
-                           " (Khách: " + tenantName + ")?\n\n" +
-                           "⚠️ Thao tác này không thể hoàn tác.")
+                .setMessage("Bạn có chắc chắn muốn xóa hợp đồng của phòng " + roomName +
+                        " (Khách: " + tenantName + ")?\n\n" +
+                        "⚠️ Thao tác này không thể hoàn tác.")
                 .setPositiveButton("Xóa", (dialog, which) -> {
                     deleteContract(context, contract, position);
                 })
@@ -546,10 +448,10 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
      */
     private void deleteContract(Context context, Tenant contract, int position) {
         String contractId = contract.getId();
-        
+
         // Hiển thị loading state
         Toast.makeText(context, "Đang xóa hợp đồng...", Toast.LENGTH_SHORT).show();
-        
+
         // Gọi listener để Activity xử lý xóa trên Firestore
         if (deleteListener != null) {
             deleteListener.onContractDeleted(contractId);
@@ -560,7 +462,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     }
 
     /**
-     * Xóa item khỏi danh sách hiển thị (được gọi từ Activity sau khi Firestore xóa thành công)
+     * Xóa item khỏi danh sách hiển thị (được gọi từ Activity sau khi Firestore xóa
+     * thành công)
      */
     public void removeItem(int position) {
         if (position >= 0 && position < displayList.size()) {
@@ -575,8 +478,9 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
      * Xóa item theo ID (được gọi từ Activity sau khi Firestore xóa thành công)
      */
     public void removeItemById(String contractId) {
-        if (contractId == null) return;
-        
+        if (contractId == null)
+            return;
+
         for (int i = 0; i < displayList.size(); i++) {
             if (contractId.equals(displayList.get(i).getId())) {
                 removeItem(i);
@@ -605,4 +509,3 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         }
     }
 }
-

@@ -23,7 +23,8 @@ public class PaymentRepository {
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) throw new IllegalStateException("User not logged in");
+        if (user == null)
+            throw new IllegalStateException("User not logged in");
         return db.collection("users").document(user.getUid()).collection(COLLECTION);
     }
 
@@ -31,7 +32,25 @@ public class PaymentRepository {
         MutableLiveData<List<Payment>> data = new MutableLiveData<>();
         getScopedCollection().whereEqualTo("invoiceId", invoiceId)
                 .addSnapshotListener((snapshot, e) -> {
-                    if (e != null || snapshot == null) return;
+                    if (e != null || snapshot == null)
+                        return;
+                    List<Payment> list = new ArrayList<>();
+                    snapshot.forEach(doc -> {
+                        Payment p = doc.toObject(Payment.class);
+                        p.setId(doc.getId());
+                        list.add(p);
+                    });
+                    data.setValue(list);
+                });
+        return data;
+    }
+
+    public MutableLiveData<List<Payment>> listByRoom(String roomId) {
+        MutableLiveData<List<Payment>> data = new MutableLiveData<>();
+        getScopedCollection().whereEqualTo("roomId", roomId)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null)
+                        return;
                     List<Payment> list = new ArrayList<>();
                     snapshot.forEach(doc -> {
                         Payment p = doc.toObject(Payment.class);

@@ -4,11 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -24,11 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +31,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.features.property.room.RoomActivity;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.core.repository.domain.HouseRepository;
@@ -66,36 +60,17 @@ public class HouseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge like Home
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
-
-        // Ensure status bar icons are white
-        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
-                window.getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setAppearanceLightStatusBars(false);
-        }
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_house);
 
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Các căn nhà của bạn");
-        }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Các căn nhà của bạn");
 
         tvEmpty = findViewById(R.id.tvEmpty);
 

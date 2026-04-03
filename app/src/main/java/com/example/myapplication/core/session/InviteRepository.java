@@ -31,6 +31,14 @@ public class InviteRepository {
     }
 
     public void createStaffInvite(@NonNull String tenantId, @NonNull String email, @NonNull InviteCallback cb) {
+        createStaffInvite(tenantId, email, null, null, cb);
+    }
+
+    public void createStaffInvite(@NonNull String tenantId,
+            @NonNull String email,
+            String houseId,
+            String houseCode,
+            @NonNull InviteCallback cb) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
             cb.onError(new IllegalStateException("User not logged in"));
@@ -44,6 +52,12 @@ public class InviteRepository {
         invite.put("email", email.toLowerCase(Locale.US));
         invite.put("role", TenantRoles.STAFF);
         invite.put("status", "PENDING");
+        if (houseId != null && !houseId.trim().isEmpty()) {
+            invite.put("houseId", houseId.trim());
+        }
+        if (houseCode != null && !houseCode.trim().isEmpty()) {
+            invite.put("houseCode", houseCode.trim());
+        }
         invite.put("createdAt", Timestamp.now());
         invite.put("createdBy", user.getUid());
 
@@ -124,6 +138,7 @@ public class InviteRepository {
                         role = TenantRoles.STAFF;
 
                     String roomId = snap.getString("roomId");
+                    String houseId = snap.getString("houseId");
                     if (TenantRoles.TENANT.equals(role) && (roomId == null || roomId.trim().isEmpty())) {
                         cb.onError(new IllegalStateException("Invite missing roomId"));
                         return;
@@ -132,10 +147,26 @@ public class InviteRepository {
                     Map<String, Object> memberDoc = new HashMap<>();
                     memberDoc.put("uid", user.getUid());
                     memberDoc.put("role", role);
+                    memberDoc.put("status", "ACTIVE");
                     memberDoc.put("inviteCode", code);
-                    if (TenantRoles.TENANT.equals(role))
+                    if (TenantRoles.TENANT.equals(role)) {
                         memberDoc.put("roomId", roomId);
+                        java.util.List<String> assignedRooms = new java.util.ArrayList<>();
+                        assignedRooms.add(roomId);
+                        memberDoc.put("assignedRoomIds", assignedRooms);
+                    } else {
+                        memberDoc.put("assignedRoomIds", new java.util.ArrayList<>());
+                    }
+                    if (houseId != null && !houseId.trim().isEmpty()) {
+                        memberDoc.put("houseId", houseId.trim());
+                        java.util.List<String> assignedHouses = new java.util.ArrayList<>();
+                        assignedHouses.add(houseId.trim());
+                        memberDoc.put("assignedHouseIds", assignedHouses);
+                    } else {
+                        memberDoc.put("assignedHouseIds", new java.util.ArrayList<>());
+                    }
                     memberDoc.put("createdAt", Timestamp.now());
+                    memberDoc.put("updatedAt", Timestamp.now());
 
                     Map<String, Object> inviteUpdate = new HashMap<>();
                     inviteUpdate.put("status", "ACCEPTED");
@@ -144,6 +175,8 @@ public class InviteRepository {
 
                     Map<String, Object> userUpdate = new HashMap<>();
                     userUpdate.put("activeTenantId", tenantId);
+                    userUpdate.put("primaryRole", role);
+                    userUpdate.put("updatedAt", Timestamp.now());
 
                     db.runBatch(batch -> {
                         batch.set(db.collection("tenants").document(tenantId).collection("members")

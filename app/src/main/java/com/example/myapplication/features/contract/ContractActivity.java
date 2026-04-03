@@ -5,13 +5,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
 import android.view.View;
-import android.view.Window;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.CheckBox;
@@ -26,11 +24,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
@@ -39,6 +32,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.core.widget.MonthYearPickerDialog;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Tenant;
@@ -110,15 +104,7 @@ public class ContractActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
-
-        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
-                window.getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setAppearanceLightStatusBars(false);
-        }
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         // Kiểm tra mode: CREATE hoặc EDIT
         String mode = getIntent().getStringExtra("MODE");
@@ -194,11 +180,7 @@ public class ContractActivity extends AppCompatActivity {
 
         View appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         bindViews();
@@ -592,7 +574,7 @@ public class ContractActivity extends AppCompatActivity {
         }
 
         cbShowDeposit.setChecked(c.isHienThiTienCocTrenInvoice());
-        etNgayKy.setText(formatMonthYearForInput(c.getNgayBatDauThue()));
+        etNgayKy.setText(ContractDateHelper.formatMonthYearForInput(c.getNgayBatDauThue()));
         etSoThang.setText(c.getSoThangHopDong() > 0 ? String.valueOf(c.getSoThangHopDong()) : "");
         cbRemind.setChecked(c.isNhacTruoc1Thang());
         bindBillingReminderSelection(c.getNhacBaoPhiVao());
@@ -614,7 +596,7 @@ public class ContractActivity extends AppCompatActivity {
     private void showDatePicker() {
         final Calendar cal = Calendar.getInstance();
         String cur = etNgayKy.getText() != null ? etNgayKy.getText().toString().trim() : "";
-        Calendar parsed = parseContractDate(cur);
+        Calendar parsed = ContractDateHelper.parseContractDate(cur);
         if (parsed != null)
             cal.setTimeInMillis(parsed.getTimeInMillis());
 
@@ -630,63 +612,41 @@ public class ContractActivity extends AppCompatActivity {
     private void saveOrUpdate(boolean isCreate) {
         if (currentContract == null)
             currentContract = new Tenant();
-        String soHD = text(etSoHopDong), ten = text(etTenKhach), sdt = text(etDienThoai), cccd = text(etCccd);
-        String soNguoiStr = text(etSoNguoi), ngayKyInput = text(etNgayKy), soThangStr = text(etSoThang),
-                chiSoDienStr = text(etChiSoDien);
-        if (ten.isEmpty() || sdt.isEmpty() || cccd.isEmpty() || soNguoiStr.isEmpty() || ngayKyInput.isEmpty()
-                || soThangStr.isEmpty() || chiSoDienStr.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đủ các trường bắt buộc (*)", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String ngayKy = normalizeMonthYearToStorage(ngayKyInput);
-        if (ngayKy.isEmpty()) {
-            Toast.makeText(this, "Ngày ký không hợp lệ (định dạng MM/yyyy)", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (cbGuiXe.isChecked() && text(etSoXe).isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập số lượng xe", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        int soNguoi, soThang, chiSoDien, soXe = 0;
+        ContractFormDataHelper.FormData formData;
         try {
-            soNguoi = Integer.parseInt(soNguoiStr);
-            soThang = Integer.parseInt(soThangStr);
-            chiSoDien = Integer.parseInt(chiSoDienStr);
-            if (cbGuiXe.isChecked())
-                soXe = Integer.parseInt(text(etSoXe));
-        } catch (Exception e) {
-            Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+            formData = ContractFormDataHelper.parseAndValidate(
+                    text(etSoHopDong),
+                    text(etTenKhach),
+                    text(etDienThoai),
+                    text(etCccd),
+                    text(etSoNguoi),
+                    text(etNgayKy),
+                    text(etSoThang),
+                    text(etChiSoDien),
+                    cbGuiXe.isChecked(),
+                    text(etSoXe),
+                    cbInternet.isChecked(),
+                    cbGiatSay.isChecked(),
+                    cbRemind.isChecked(),
+                    cbShowDeposit.isChecked(),
+                    cbShowNote.isChecked(),
+                    getSelectedBillingReminder(),
+                    MoneyFormatter.getValue(etTienPhong),
+                    MoneyFormatter.getValue(etTienCoc),
+                    text(etGhiChu),
+                    this::normalizeMonthYearToStorage);
+        } catch (ContractFormDataHelper.ValidationException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             return;
         }
-        double tienPhong = MoneyFormatter.getValue(etTienPhong);
-        double tienCoc = MoneyFormatter.getValue(etTienCoc);
-        currentContract.setSoHopDong(soHD);
-        currentContract.setHoTen(ten);
-        currentContract.setSoDienThoai(sdt);
-        currentContract.setDiaChi("");
-        currentContract.setCccd(cccd);
-        currentContract.setIdPhong(phongId);
-        currentContract.setSoPhong(currentPhong != null ? currentPhong.getSoPhong() : null);
-        currentContract.setSoThanhVien(soNguoi);
-        currentContract.setNgayBatDauThue(ngayKy);
-        currentContract.setSoThangHopDong(soThang);
-        currentContract.setNhacTruoc1Thang(cbRemind.isChecked());
-        currentContract.setNhacBaoPhiVao(getSelectedBillingReminder());
 
-        // Set both old (double) and new (long) fields for compatibility
-        currentContract.setTienPhong(tienPhong);
-        currentContract.setGiaThue((long) tienPhong); // New long field
-        currentContract.setTienCoc((long) tienCoc); // New long field
-        currentContract.setHienThiTienCocTrenInvoice(cbShowDeposit.isChecked());
-        currentContract.setChiSoDienDau(chiSoDien);
-        currentContract.setDichVuGuiXe(cbGuiXe.isChecked());
-        currentContract.setSoLuongXe(soXe);
-        currentContract.setDichVuInternet(cbInternet.isChecked());
-        currentContract.setDichVuGiatSay(cbGiatSay.isChecked());
-        currentContract.setGhiChu(text(etGhiChu));
-        currentContract.setHienThiGhiChuTrenInvoice(cbShowNote.isChecked());
-        currentContract.setTrangThaiHopDong("ACTIVE");
-        currentContract.setNgayKetThucHopDong(computeEndDate(ngayKy, soThang));
+        ContractFormDataHelper.applyToContract(
+                currentContract,
+                formData,
+                phongId,
+                currentPhong != null ? currentPhong.getSoPhong() : null,
+                this::computeEndDate);
+
         long now = System.currentTimeMillis();
         if (currentContract.getCreatedAt() == null)
             currentContract.setCreatedAt(now);
@@ -903,7 +863,7 @@ public class ContractActivity extends AppCompatActivity {
             Toast.makeText(this, "Chưa có dữ liệu", Toast.LENGTH_SHORT).show();
             return;
         }
-        String html = buildContractHtml(currentContract);
+        String html = ContractHtmlBuilder.buildContractHtml(currentContract, currentPhong, currentKhu);
         PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
         if (printManager == null) {
             Toast.makeText(this, "Thiết bị không hỗ trợ in", Toast.LENGTH_SHORT).show();
@@ -921,136 +881,12 @@ public class ContractActivity extends AppCompatActivity {
         webView.loadDataWithBaseURL(null, html, "text/HTML", "UTF-8", null);
     }
 
-    private String buildContractHtml(@NonNull Tenant c) {
-        String room = currentPhong != null ? nullToEmpty(currentPhong.getSoPhong()) : "";
-        String khuDiaChi = currentKhu != null ? nullToEmpty(currentKhu.getDiaChi()) : "";
-        String tenChuTro = currentKhu != null ? nullToEmpty(currentKhu.getTenHouse()) : "";
-        String sdtChuTro = currentKhu != null ? nullToEmpty(currentKhu.getSdtQuanLy()) : "";
-        String ngayKy = nullToEmpty(c.getNgayBatDauThue()), ngayKetThuc = nullToEmpty(c.getNgayKetThucHopDong());
-        int soThang = c.getSoThangHopDong();
-        StringBuilder chiPhi = new StringBuilder();
-        if (currentKhu != null) {
-            chiPhi.append("- Tiền điện: ").append(formatVndNumberOnly(currentKhu.getGiaDien()))
-                    .append("/kWh (Chỉ số ban đầu: ").append(c.getChiSoDienDau()).append(")<br/>");
-            String cachTinhNuoc = currentKhu.getCachTinhNuoc();
-            String donViNuoc = "nguoi".equals(cachTinhNuoc) ? "/người/tháng"
-                    : "dong_ho".equals(cachTinhNuoc) ? "/m³" : "/phòng";
-            chiPhi.append("- Tiền nước: ").append(formatVndNumberOnly(currentKhu.getGiaNuoc())).append(donViNuoc)
-                    .append("<br/>");
-            if (c.isDichVuGuiXe())
-                chiPhi.append("- Phí gửi xe: ").append(formatVndNumberOnly(currentKhu.getGiaXe()))
-                        .append("/chiếc (SL: ").append(c.getSoLuongXe()).append(")<br/>");
-            if (c.isDichVuInternet())
-                chiPhi.append("- Internet: ").append(formatVndNumberOnly(currentKhu.getGiaInternet()))
-                        .append("/tháng<br/>");
-            if (c.isDichVuGiatSay())
-                chiPhi.append("- Giặt sấy: ").append(formatVndNumberOnly(currentKhu.getGiaGiatSay()))
-                        .append("/tháng<br/>");
-        }
-        return "<!DOCTYPE html><html><head><meta charset='utf-8'/><style>body{font-family:'Times New Roman',serif;font-size:13px;padding:30px 40px;line-height:1.6;color:#000;}.header{text-align:center;margin-bottom:20px;}.header h3{margin:0;font-size:14px;font-weight:bold;text-transform:uppercase;}.header p{margin:2px 0;font-size:12px;font-style:italic;}.title{text-align:center;margin:25px 0;}.title h2{margin:0;font-size:18px;font-weight:bold;text-transform:uppercase;}.info{margin-bottom:8px;}.section{margin-top:15px;}.section-title{font-weight:bold;margin-bottom:5px;}.indent{padding-left:20px;}.gia-han-table{width:100%;border-collapse:collapse;margin:10px 0;}.gia-han-table th,.gia-han-table td{border:1px solid #000;padding:6px 8px;text-align:center;font-size:12px;}.gia-han-table th{background:#f5f5f5;font-weight:bold;}.signature{display:flex;justify-content:space-around;margin-top:40px;text-align:center;}.signature div{width:40%;}.signature .label{font-weight:bold;text-transform:uppercase;}.signature .note{font-style:italic;font-size:11px;}.signature .name{margin-top:60px;font-weight:bold;}</style></head><body><div class='header'><h3>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h3><p>Độc lập – Tự do – Hạnh phúc</p></div><div class='title'><h2>HỢP ĐỒNG THUÊ PHÒNG TRỌ</h2></div><p class='info'>Hôm nay, ngày "
-                + formatDateFull(ngayKy) + ", tại căn nhà số " + escape(khuDiaChi)
-                + "</p><p class='info'>Chúng tôi ký tên dưới đây gồm có:</p><div class='section'><p class='section-title'>BÊN CHO THUÊ PHÒNG TRỌ (gọi tắt là Bên A):</p><p class='indent'>Ông/bà: "
-                + escape(tenChuTro)
-                + "</p><p class='indent'>CMND/CCCD số: .................. cấp ngày: ............... nơi cấp: ...............</p><p class='indent'>Điện thoại: "
-                + escape(sdtChuTro) + "</p><p class='indent'>Thường trú tại: " + escape(khuDiaChi)
-                + "</p></div><div class='section'><p class='section-title'>BÊN THUÊ PHÒNG TRỌ (gọi tắt là Bên B):</p><p class='indent'>Ông/bà: "
-                + escape(c.getHoTen()) + "</p><p class='indent'>CMND/CCCD số: " + escape(c.getCccd())
-                + " cấp ngày: ............... nơi cấp: ...............</p><p class='indent'>Điện thoại: "
-                + escape(c.getSoDienThoai())
-                + "</p></div><p style='margin-top:15px;'>Sau khi thỏa thuận, hai bên thống nhất như sau:</p><div class='section'><p class='section-title'>1. Nội dung thuê phòng trọ</p><p class='indent'>Bên A cho Bên B thuê 01 phòng trọ số "
-                + escape(room) + " tại căn nhà số " + escape(khuDiaChi) + ".</p><p class='indent'>Với thời hạn là: "
-                + soThang + " tháng (Từ ngày " + escape(ngayKy) + " đến ngày " + escape(ngayKetThuc)
-                + ").</p><p class='indent'>Giá thuê: " + formatVnd(c.getTienPhong())
-                + "/tháng.</p><p class='indent'>Chưa bao gồm chi phí:</p><p class='indent'>" + chiPhi.toString()
-                + "</p></div><div class='section'><p class='section-title'>2. Trách nhiệm Bên A</p><p class='indent'>- Đảm bảo căn nhà cho thuê không có tranh chấp, khiếu kiện.</p><p class='indent'>- Đăng ký với chính quyền địa phương về thủ tục cho thuê phòng trọ.</p></div><div class='section'><p class='section-title'>3. Trách nhiệm Bên B</p><p class='indent'>- Đặt cọc với số tiền là "
-                + formatVnd(c.getTienCoc())
-                + ", thanh toán tiền thuê phòng hàng tháng + tiền điện + nước.</p><p class='indent'>- Đảm bảo các thiết bị và sửa chữa các hư hỏng trong phòng trong khi sử dụng. Nếu không sửa chữa thì khi trả phòng, bên A sẽ trừ vào tiền đặt cọc, giá trị cụ thể tính theo giá thị trường.</p><p class='indent'>- Chỉ sử dụng phòng trọ vào mục đích ở, với số lượng tối đa không quá "
-                + c.getSoThanhVien()
-                + " người; không chứa các thiết bị gây cháy nổ, hàng cấm; cung cấp giấy tờ tùy thân để đăng ký tạm trú theo quy định, giữ gìn an ninh trật tự, nếp sống văn hóa đô thị; không tụ tập nhậu nhẹt, cờ bạc và các hành vi vi phạm pháp luật khác.</p><p class='indent'>- Không được tự ý cải tạo kiến trúc phòng hoặc trang trí ảnh hưởng tới tường, cột, nền... Nếu có nhu cầu trên phải trao đổi với bên A để được thống nhất.</p></div><div class='section'><p class='section-title'>4. Điều khoản thực hiện</p><p class='indent'>Hai bên nghiêm túc thực hiện những quy định trên trong thời hạn cho thuê, nếu bên A lấy phòng phải báo cho bên B ít nhất 01 tháng, hoặc ngược lại.</p><p class='indent'>Sau thời hạn cho thuê "
-                + soThang
-                + " tháng nếu bên B có nhu cầu hai bên tiếp tục thương lượng giá thuê để gia hạn hợp đồng.</p></div><div class='section'><p class='section-title'>Bảng gia hạn hợp đồng:</p><table class='gia-han-table'><tr><th>Lần</th><th>Thời gian<br/>(tháng)</th><th>Từ ngày</th><th>Đến ngày</th><th>Giá thuê/tháng</th><th>Ký tên</th></tr><tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div class='signature'><div><p class='label'>BÊN B</p><p class='note'>(Ký, ghi rõ họ tên)</p><p class='name'>"
-                + escape(c.getHoTen())
-                + "</p></div><div><p class='label'>BÊN A</p><p class='note'>(Ký, ghi rõ họ tên)</p><p class='name'>"
-                + escape(tenChuTro) + "</p></div></div></body></html>";
-    }
-
-    private String formatDateFull(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty())
-            return "... tháng ... năm ...";
-        try {
-            String[] parts = dateStr.split("/");
-            if (parts.length == 3)
-                return parts[0] + " tháng " + parts[1] + " năm " + parts[2];
-        } catch (Exception ignored) {
-        }
-        return dateStr;
-    }
-
-    private String escape(String s) {
-        if (s == null)
-            return "";
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
     private String computeEndDate(String start, int months) {
-        try {
-            Calendar c = parseContractDate(start);
-            if (c == null)
-                return "";
-            c.add(Calendar.MONTH, months);
-            return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime());
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
-    private String formatMonthYearForInput(String rawDate) {
-        Calendar c = parseContractDate(rawDate);
-        if (c == null)
-            return nullToEmpty(rawDate);
-        return String.format(Locale.getDefault(), "%02d/%04d", c.get(Calendar.MONTH) + 1, c.get(Calendar.YEAR));
+        return ContractDateHelper.computeEndDate(start, months);
     }
 
     private String normalizeMonthYearToStorage(String input) {
-        Calendar c = parseContractDate(input);
-        if (c == null)
-            return "";
-        c.set(Calendar.DAY_OF_MONTH, 1);
-        return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime());
-    }
-
-    private Calendar parseContractDate(String value) {
-        if (value == null)
-            return null;
-        String input = value.trim();
-        if (input.isEmpty())
-            return null;
-
-        Calendar parsed = parseWithPattern(input, "dd/MM/yyyy");
-        if (parsed != null)
-            return parsed;
-
-        parsed = parseWithPattern(input, "MM/yyyy");
-        if (parsed != null) {
-            parsed.set(Calendar.DAY_OF_MONTH, 1);
-            return parsed;
-        }
-        return null;
-    }
-
-    private Calendar parseWithPattern(String input, String pattern) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat(pattern, Locale.getDefault());
-            sdf.setLenient(false);
-            Date d = sdf.parse(input);
-            if (d == null)
-                return null;
-            Calendar c = Calendar.getInstance();
-            c.setTime(d);
-            return c;
-        } catch (Exception e) {
-            return null;
-        }
+        return ContractDateHelper.normalizeMonthYearToStorage(input);
     }
 
     private String generateContractNo() {
@@ -1066,10 +902,6 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private String formatVnd(double value) {
-        return NumberFormat.getNumberInstance(new Locale("vi", "VN")).format((long) value) + " đ";
-    }
-
-    private String formatVndNumberOnly(double value) {
         return NumberFormat.getNumberInstance(new Locale("vi", "VN")).format((long) value) + " đ";
     }
 }

@@ -1,22 +1,21 @@
 package com.example.myapplication.features.history;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.WindowCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
 import com.example.myapplication.core.repository.domain.RentalHistoryRepository;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.RentalHistory;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -46,19 +45,17 @@ public class RentalHistoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Enable edge-to-edge but handle insets properly
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, true);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_rental_history);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Lịch sử cho thuê");
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
-        toolbar.setNavigationOnClickListener(v -> finish());
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Lịch sử cho thuê");
 
         repository = new RentalHistoryRepository();
 

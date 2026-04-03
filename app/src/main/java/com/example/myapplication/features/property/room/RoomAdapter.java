@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -46,16 +47,72 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
     }
 
     public void setDanhSach(List<Room> list) {
-        this.danhSach = list != null ? list : new ArrayList<>();
-        notifyDataSetChanged();
+        List<Room> newList = list != null ? list : new ArrayList<>();
+        final List<Room> oldList = this.danhSach;
+
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return oldList.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return newList.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                Room oldItem = oldList.get(oldItemPosition);
+                Room newItem = newList.get(newItemPosition);
+                String oldId = oldItem != null ? oldItem.getId() : null;
+                String newId = newItem != null ? newItem.getId() : null;
+                if (oldId == null || newId == null) {
+                    return oldItem == newItem;
+                }
+                return oldId.equals(newId);
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                Room oldItem = oldList.get(oldItemPosition);
+                Room newItem = newList.get(newItemPosition);
+                if (oldItem == null || newItem == null) {
+                    return oldItem == newItem;
+                }
+
+                return safeEq(oldItem.getSoPhong(), newItem.getSoPhong())
+                        && safeEq(oldItem.getTrangThai(), newItem.getTrangThai())
+                        && safeEq(oldItem.getHinhAnh(), newItem.getHinhAnh())
+                        && Double.compare(oldItem.getGiaThue(), newItem.getGiaThue()) == 0;
+            }
+        });
+
+        this.danhSach = newList;
+        diff.dispatchUpdatesTo(this);
     }
 
     public void setTenantByRoomId(@NonNull Map<String, String> map) {
-        tenantByRoomId = map;
-        notifyDataSetChanged();
+        Map<String, String> oldMap = tenantByRoomId != null ? tenantByRoomId : new HashMap<>();
+        tenantByRoomId = map != null ? map : new HashMap<>();
+
+        for (int i = 0; i < danhSach.size(); i++) {
+            Room room = danhSach.get(i);
+            if (room == null || room.getId() == null)
+                continue;
+            String roomId = room.getId();
+            String oldTenant = oldMap.get(roomId);
+            String newTenant = tenantByRoomId.get(roomId);
+            if (!safeEq(oldTenant, newTenant)) {
+                notifyItemChanged(i);
+            }
+        }
     }
 
     public void setReadOnly(boolean readOnly) {
+        if (this.readOnly == readOnly) {
+            return;
+        }
         this.readOnly = readOnly;
         notifyDataSetChanged();
     }
@@ -169,5 +226,10 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         float d = v.getResources().getDisplayMetrics().density;
         return (int) (dp * d);
     }
-}
 
+    private static boolean safeEq(String a, String b) {
+        if (a == null)
+            return b == null;
+        return a.equals(b);
+    }
+}

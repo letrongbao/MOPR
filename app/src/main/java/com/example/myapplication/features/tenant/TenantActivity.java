@@ -1,12 +1,10 @@
 package com.example.myapplication.features.tenant;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
-import android.view.Window;
 import android.widget.CheckBox;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -15,11 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +21,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Tenant;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.viewmodel.TenantViewModel;
@@ -63,36 +57,17 @@ public class TenantActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge like Home and House Management
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
-
-        // Ensure status bar icons are white
-        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
-                window.getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setAppearanceLightStatusBars(false);
-        }
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_tenant);
 
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Quản lý người thuê");
-        }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Quản lý người thuê");
 
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
@@ -124,8 +99,7 @@ public class TenantActivity extends AppCompatActivity {
         });
 
         // ── Callback nút [+ Thêm] trên header mỗi phòng ────────────────────
-        adapter.setOnAddToRoomListener((roomId, roomName) ->
-                showAddTenantDialog(roomId));
+        adapter.setOnAddToRoomListener((roomId, roomName) -> showAddTenantDialog(roomId));
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
@@ -135,8 +109,14 @@ public class TenantActivity extends AppCompatActivity {
         // ── Live-search: lọc danh sách khi người dùng gõ ──────────────────
         if (etTimKiem != null) {
             etTimKiem.addTextChangedListener(new TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
-                @Override public void afterTextChanged(Editable s) {}
+                @Override
+                public void beforeTextChanged(CharSequence s, int st, int c, int a) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+
                 @Override
                 public void onTextChanged(CharSequence s, int st, int b, int c) {
                     adapter.filter(s.toString());
@@ -187,19 +167,19 @@ public class TenantActivity extends AppCompatActivity {
             return;
         }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_tenant, null);
-        EditText etHoTen        = dialogView.findViewById(R.id.etHoTen);
-        EditText etCccd         = dialogView.findViewById(R.id.etCccd);
-        EditText etSdt          = dialogView.findViewById(R.id.etSdt);
-        Spinner  spinnerPhong   = dialogView.findViewById(R.id.spinnerPhong);
-        EditText etSoThanhVien  = dialogView.findViewById(R.id.etSoThanhVien);
-        EditText etNgayBatDau   = dialogView.findViewById(R.id.etNgayBatDau);
-        EditText etNgayKetThuc  = dialogView.findViewById(R.id.etNgayKetThuc);
-        EditText etTienCoc      = dialogView.findViewById(R.id.etTienCoc);
+        EditText etHoTen = dialogView.findViewById(R.id.etHoTen);
+        EditText etCccd = dialogView.findViewById(R.id.etCccd);
+        EditText etSdt = dialogView.findViewById(R.id.etSdt);
+        Spinner spinnerPhong = dialogView.findViewById(R.id.spinnerPhong);
+        EditText etSoThanhVien = dialogView.findViewById(R.id.etSoThanhVien);
+        EditText etNgayBatDau = dialogView.findViewById(R.id.etNgayBatDau);
+        EditText etNgayKetThuc = dialogView.findViewById(R.id.etNgayKetThuc);
+        EditText etTienCoc = dialogView.findViewById(R.id.etTienCoc);
         // ─ 4 Checkbox trạng thái mới ───────────────────────────────────────
-        CheckBox cbNguoiLienHe    = dialogView.findViewById(R.id.cbNguoiLienHe);
+        CheckBox cbNguoiLienHe = dialogView.findViewById(R.id.cbNguoiLienHe);
         CheckBox cbDaiDienHopDong = dialogView.findViewById(R.id.cbDaiDienHopDong);
-        CheckBox cbTamTru         = dialogView.findViewById(R.id.cbTamTru);
-        CheckBox cbDayDuGiayTo    = dialogView.findViewById(R.id.cbDayDuGiayTo);
+        CheckBox cbTamTru = dialogView.findViewById(R.id.cbTamTru);
+        CheckBox cbDayDuGiayTo = dialogView.findViewById(R.id.cbDayDuGiayTo);
 
         MoneyFormatter.applyTo(etTienCoc);
 
@@ -223,9 +203,9 @@ public class TenantActivity extends AppCompatActivity {
                 .setTitle("Thêm người thuê")
                 .setView(dialogView)
                 .setPositiveButton("Thêm", (d, w) -> {
-                    String hoTen  = etHoTen.getText().toString().trim();
-                    String cccd   = etCccd.getText().toString().trim();
-                    String sdt    = etSdt.getText().toString().trim();
+                    String hoTen = etHoTen.getText().toString().trim();
+                    String cccd = etCccd.getText().toString().trim();
+                    String sdt = etSdt.getText().toString().trim();
                     String ngayBD = etNgayBatDau.getText().toString().trim();
                     String ngayKT = etNgayKetThuc.getText().toString().trim();
                     double tienCoc = MoneyFormatter.getValue(etTienCoc);
@@ -255,8 +235,10 @@ public class TenantActivity extends AppCompatActivity {
 
                         // ─ Tạo thông báo đúng trạng thái ───────────────────────────
                         StringBuilder statusMsg = new StringBuilder("Thêm thành công!");
-                        if (!nt.isTamTru()) statusMsg.append(" Chưa đăng ký tạm trú.");
-                        if (!nt.isDayDuGiayTo()) statusMsg.append(" Chưa đủ giấy tờ.");
+                        if (!nt.isTamTru())
+                            statusMsg.append(" Chưa đăng ký tạm trú.");
+                        if (!nt.isDayDuGiayTo())
+                            statusMsg.append(" Chưa đủ giấy tờ.");
 
                         viewModel.addTenant(nt,
                                 () -> runOnUiThread(() -> {
@@ -278,19 +260,19 @@ public class TenantActivity extends AppCompatActivity {
             return;
         }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_tenant, null);
-        EditText etHoTen        = dialogView.findViewById(R.id.etHoTen);
-        EditText etCccd         = dialogView.findViewById(R.id.etCccd);
-        EditText etSdt          = dialogView.findViewById(R.id.etSdt);
-        Spinner  spinnerPhong   = dialogView.findViewById(R.id.spinnerPhong);
-        EditText etSoThanhVien  = dialogView.findViewById(R.id.etSoThanhVien);
-        EditText etNgayBatDau   = dialogView.findViewById(R.id.etNgayBatDau);
-        EditText etNgayKetThuc  = dialogView.findViewById(R.id.etNgayKetThuc);
-        EditText etTienCoc      = dialogView.findViewById(R.id.etTienCoc);
+        EditText etHoTen = dialogView.findViewById(R.id.etHoTen);
+        EditText etCccd = dialogView.findViewById(R.id.etCccd);
+        EditText etSdt = dialogView.findViewById(R.id.etSdt);
+        Spinner spinnerPhong = dialogView.findViewById(R.id.spinnerPhong);
+        EditText etSoThanhVien = dialogView.findViewById(R.id.etSoThanhVien);
+        EditText etNgayBatDau = dialogView.findViewById(R.id.etNgayBatDau);
+        EditText etNgayKetThuc = dialogView.findViewById(R.id.etNgayKetThuc);
+        EditText etTienCoc = dialogView.findViewById(R.id.etTienCoc);
         // ─ 4 Checkbox trạng thái ──────────────────────────────────────────
-        CheckBox cbNguoiLienHe    = dialogView.findViewById(R.id.cbNguoiLienHe);
+        CheckBox cbNguoiLienHe = dialogView.findViewById(R.id.cbNguoiLienHe);
         CheckBox cbDaiDienHopDong = dialogView.findViewById(R.id.cbDaiDienHopDong);
-        CheckBox cbTamTru         = dialogView.findViewById(R.id.cbTamTru);
-        CheckBox cbDayDuGiayTo    = dialogView.findViewById(R.id.cbDayDuGiayTo);
+        CheckBox cbTamTru = dialogView.findViewById(R.id.cbTamTru);
+        CheckBox cbDayDuGiayTo = dialogView.findViewById(R.id.cbDayDuGiayTo);
 
         MoneyFormatter.applyTo(etTienCoc);
 
@@ -326,9 +308,9 @@ public class TenantActivity extends AppCompatActivity {
                 .setTitle("Chỉnh sửa thông tin người thuê")
                 .setView(dialogView)
                 .setPositiveButton("Cập nhật", (d, w) -> {
-                    String hoTen  = etHoTen.getText().toString().trim();
-                    String cccd   = etCccd.getText().toString().trim();
-                    String sdt    = etSdt.getText().toString().trim();
+                    String hoTen = etHoTen.getText().toString().trim();
+                    String cccd = etCccd.getText().toString().trim();
+                    String sdt = etSdt.getText().toString().trim();
                     String ngayBD = etNgayBatDau.getText().toString().trim();
                     String ngayKT = etNgayKetThuc.getText().toString().trim();
                     double tienCoc = MoneyFormatter.getValue(etTienCoc);
@@ -360,8 +342,10 @@ public class TenantActivity extends AppCompatActivity {
 
                         // ─ Toast đúng trạng thái ───────────────────────────────────
                         StringBuilder statusMsg = new StringBuilder("Cập nhật thành công!");
-                        if (!updated.isTamTru()) statusMsg.append(" Chưa đăng ký tạm trú.");
-                        if (!updated.isDayDuGiayTo()) statusMsg.append(" Chưa đủ giấy tờ.");
+                        if (!updated.isTamTru())
+                            statusMsg.append(" Chưa đăng ký tạm trú.");
+                        if (!updated.isDayDuGiayTo())
+                            statusMsg.append(" Chưa đủ giấy tờ.");
 
                         viewModel.updateTenant(updated,
                                 () -> runOnUiThread(() -> {
@@ -534,6 +518,3 @@ public class TenantActivity extends AppCompatActivity {
         return true;
     }
 }
-
-
-

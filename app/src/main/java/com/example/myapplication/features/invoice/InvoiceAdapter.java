@@ -22,7 +22,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
     private List<Invoice> danhSach = new ArrayList<>();
     private final OnItemActionListener listener;
-    private boolean readOnly;
+    private boolean tenantMode;
     private Map<String, String> tenantDisplayByRoom = new HashMap<>();
     private int currentTab = 0;
 
@@ -52,8 +52,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         notifyDataSetChanged();
     }
 
-    public void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
+    public void setTenantMode(boolean tenantMode) {
+        this.tenantMode = tenantMode;
         notifyDataSetChanged();
     }
 
@@ -116,6 +116,28 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         int buttonColor;
         View.OnClickListener buttonAction;
 
+        if (tenantMode) {
+            if (InvoiceStatus.UNREPORTED.equals(st)) {
+                buttonText = "Chờ chủ báo phí";
+                buttonColor = R.color.warning;
+                buttonAction = null;
+            } else {
+                buttonText = (InvoiceStatus.PAID.equals(st) || InvoiceStatus.PARTIAL.equals(st))
+                        ? "Xem lịch sử thanh toán"
+                        : "Thanh toán ngay";
+                buttonColor = InvoiceStatus.PAID.equals(st) ? R.color.success : R.color.btn_blue_action;
+                buttonAction = v -> listener.onDoiTrangThai(h);
+            }
+
+            holder.btnMainAction.setText(buttonText);
+            holder.btnMainAction.setBackgroundColor(
+                    ContextCompat.getColor(holder.itemView.getContext(), buttonColor));
+            holder.btnMainAction.setVisibility(View.VISIBLE);
+            holder.btnMainAction.setEnabled(buttonAction != null);
+            holder.btnMainAction.setOnClickListener(buttonAction);
+            return;
+        }
+
         if (currentTab == 0) {
             // Tab "Chưa báo"
             String month = h.getThangNam() != null ? h.getThangNam() : "X";
@@ -143,9 +165,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         holder.btnMainAction.setBackgroundColor(
                 ContextCompat.getColor(holder.itemView.getContext(), buttonColor));
         holder.btnMainAction.setOnClickListener(buttonAction);
-
-        // Hide button for read-only users
-        holder.btnMainAction.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        holder.btnMainAction.setVisibility(View.VISIBLE);
+        holder.btnMainAction.setEnabled(true);
     }
 
     @Override

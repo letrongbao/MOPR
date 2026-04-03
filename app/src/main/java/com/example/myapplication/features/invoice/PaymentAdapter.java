@@ -24,13 +24,19 @@ public class PaymentAdapter extends RecyclerView.Adapter<PaymentAdapter.ViewHold
 
     private List<Payment> danhSach = new ArrayList<>();
     private final OnActionListener listener;
+    private boolean allowDelete = true;
 
     public PaymentAdapter(OnActionListener listener) {
         this.listener = listener;
     }
 
     public void setDanhSach(List<Payment> list) {
-        this.danhSach = list;
+        this.danhSach = list != null ? list : new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
+    public void setAllowDelete(boolean allowDelete) {
+        this.allowDelete = allowDelete;
         notifyDataSetChanged();
     }
 
@@ -53,7 +59,12 @@ public class PaymentAdapter extends RecyclerView.Adapter<PaymentAdapter.ViewHold
         holder.tvNote.setVisibility(note.isEmpty() ? View.GONE : View.VISIBLE);
         holder.tvNote.setText(note);
 
-        holder.btnXoa.setOnClickListener(v -> listener.onDelete(p));
+        holder.btnXoa.setVisibility(allowDelete ? View.VISIBLE : View.GONE);
+        if (allowDelete) {
+            holder.btnXoa.setOnClickListener(v -> listener.onDelete(p));
+        } else {
+            holder.btnXoa.setOnClickListener(null);
+        }
     }
 
     @Override

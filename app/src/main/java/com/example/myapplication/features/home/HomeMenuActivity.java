@@ -24,6 +24,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
+import com.example.myapplication.core.constants.TenantRoles;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
@@ -31,7 +33,9 @@ import com.example.myapplication.features.history.RentalHistoryActivity;
 import com.example.myapplication.features.finance.ExpenseActivity;
 import com.example.myapplication.features.finance.RevenueActivity;
 import com.example.myapplication.features.invoice.InvoiceActivity;
+import com.example.myapplication.features.invoice.TenantPaymentHistoryActivity;
 import com.example.myapplication.features.property.house.HouseActivity;
+import com.example.myapplication.features.ticket.TicketActivity;
 import com.example.myapplication.features.tenant.TenantActivity;
 import com.example.myapplication.features.contract.ContractListActivity;
 import com.example.myapplication.domain.Room;
@@ -52,6 +56,7 @@ public class HomeMenuActivity extends AppCompatActivity {
     private TextView drawerUserName, drawerUserEmail;
     private ShapeableImageView drawerAvatar;
     private ActivityResultLauncher<Intent> editProfileLauncher;
+    private String resolvedRole = TenantRoles.OWNER;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,21 +134,26 @@ public class HomeMenuActivity extends AppCompatActivity {
         // Load user info to drawer
         loadUserInfoToDrawer();
 
+        applyRoleUi(TenantRoles.OWNER);
         updateStatistics();
-
-        // Setup menu card click listeners
-        setupMenuCards();
+        setupMenuCards(TenantRoles.OWNER);
+        resolveRoleAndApplyUi();
     }
 
-    private void setupMenuCards() {
-        MaterialCardView cardHouse      = findViewById(R.id.cardHouse);
-        MaterialCardView cardInvoice    = findViewById(R.id.cardInvoice);
-        MaterialCardView cardExpense    = findViewById(R.id.cardExpense);
-        MaterialCardView cardReport     = findViewById(R.id.cardReport);
-        MaterialCardView cardKhachThue  = findViewById(R.id.cardKhachThue);
+    private void setupMenuCards(String role) {
+        MaterialCardView cardHouse = findViewById(R.id.cardHouse);
+        MaterialCardView cardInvoice = findViewById(R.id.cardInvoice);
+        MaterialCardView cardExpense = findViewById(R.id.cardExpense);
+        MaterialCardView cardReport = findViewById(R.id.cardReport);
+        MaterialCardView cardKhachThue = findViewById(R.id.cardKhachThue);
+        boolean isTenant = TenantRoles.TENANT.equals(role);
 
         if (cardHouse != null) {
-            cardHouse.setOnClickListener(v -> startActivity(new Intent(this, HouseActivity.class)));
+            if (isTenant) {
+                cardHouse.setOnClickListener(v -> startActivity(new Intent(this, HouseActivity.class)));
+            } else {
+                cardHouse.setOnClickListener(v -> startActivity(new Intent(this, HouseActivity.class)));
+            }
         }
 
         if (cardInvoice != null) {
@@ -151,11 +161,20 @@ public class HomeMenuActivity extends AppCompatActivity {
         }
 
         if (cardExpense != null) {
-            cardExpense.setOnClickListener(v -> startActivity(new Intent(this, ExpenseActivity.class)));
+            if (isTenant) {
+                cardExpense
+                        .setOnClickListener(v -> startActivity(new Intent(this, TenantPaymentHistoryActivity.class)));
+            } else {
+                cardExpense.setOnClickListener(v -> startActivity(new Intent(this, ExpenseActivity.class)));
+            }
         }
 
         if (cardReport != null) {
-            cardReport.setOnClickListener(v -> startActivity(new Intent(this, RevenueActivity.class)));
+            if (isTenant) {
+                cardReport.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
+            } else {
+                cardReport.setOnClickListener(v -> startActivity(new Intent(this, RevenueActivity.class)));
+            }
         }
 
         // ── Card Quản Lý Khách Thuê ───────────────────────────────────────
@@ -281,6 +300,7 @@ public class HomeMenuActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadUserInfoToDrawer();
+        resolveRoleAndApplyUi();
     }
 
     @Override
@@ -324,6 +344,62 @@ public class HomeMenuActivity extends AppCompatActivity {
         shareIntent.putExtra(Intent.EXTRA_TEXT, "Ứng dụng quản lý nhà trọ tuyệt vời dành cho bạn!");
         startActivity(Intent.createChooser(shareIntent, "Chia sẻ ứng dụng"));
     }
+
+    private void resolveRoleAndApplyUi() {
+        String tenantId = TenantSession.getActiveTenantId();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (tenantId == null || tenantId.trim().isEmpty() || user == null) {
+            applyRoleUi(TenantRoles.OWNER);
+            setupMenuCards(TenantRoles.OWNER);
+            return;
+        }
+
+        db.collection("tenants").document(tenantId)
+                .collection("members").document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    String role = doc != null ? doc.getString("role") : null;
+                    if (role == null || role.trim().isEmpty()) {
+                        role = TenantRoles.OWNER;
+                    }
+                    applyRoleUi(role);
+                    setupMenuCards(role);
+                })
+                .addOnFailureListener(e -> {
+                    applyRoleUi(TenantRoles.OWNER);
+                    setupMenuCards(TenantRoles.OWNER);
+                });
+    }
+
+    private void applyRoleUi(String role) {
+        resolvedRole = role;
+        boolean isTenant = TenantRoles.TENANT.equals(role);
+
+        View cardStats = findViewById(R.id.cardStats);
+        View rowBottom = findViewById(R.id.rowBottom);
+        TextView tvCardHouseLabel = findViewById(R.id.tvCardHouseLabel);
+        TextView tvCardInvoiceLabel = findViewById(R.id.tvCardInvoiceLabel);
+        TextView tvCardExpenseLabel = findViewById(R.id.tvCardExpenseLabel);
+        TextView tvCardReportLabel = findViewById(R.id.tvCardReportLabel);
+
+        if (cardStats != null) {
+            cardStats.setVisibility(isTenant ? View.GONE : View.VISIBLE);
+        }
+        if (rowBottom != null) {
+            rowBottom.setVisibility(isTenant ? View.GONE : View.VISIBLE);
+        }
+
+        if (tvCardHouseLabel != null) {
+            tvCardHouseLabel.setText(isTenant ? "Phòng\ncủa bạn" : "Quản lí\nnhà phòng");
+        }
+        if (tvCardInvoiceLabel != null) {
+            tvCardInvoiceLabel.setText(isTenant ? "Hóa đơn\ncủa bạn" : "Báo phí\nhóa đơn");
+        }
+        if (tvCardExpenseLabel != null) {
+            tvCardExpenseLabel.setText(isTenant ? "Lịch sử\nthanh toán" : "Quản lí\nchi phí");
+        }
+        if (tvCardReportLabel != null) {
+            tvCardReportLabel.setText(isTenant ? "Yêu cầu\nhỗ trợ" : "Thống kê\nbáo cáo");
+        }
+    }
 }
-
-

@@ -42,6 +42,20 @@ Tai lieu nay la huong dan luong lam viec chuan de agent khac trong team co the l
    - `idPhong`, `idTenant`, `invoiceId`
 4. Neu them man moi, phai map voi schema hien co, khong tao schema rieng
 
+## Quy tac khi lam role/onboarding
+
+1. Signup cong khai mac dinh la `TENANT`.
+2. `OWNER` va `STAFF` phai di qua bootstrap/invite, khong cho tu chon role tu do trong app public.
+3. Neu co lien quan den quyen truy cap, phai bam theo `membership` trong tenant scope.
+4. UI co the thay doi theo role, nhung source of truth van la membership + houseId/roomId.
+
+## Quy tac tai su dung UI (bat buoc uu tien)
+
+1. Truoc khi sua UI, tim helper/component dung chung co san (`core/util`, `core/widget`).
+2. Neu phat hien code scaffold lap lai (edge-to-edge, inset, toolbar/back), bat buoc dung helper chung.
+3. Khong copy/paste boilerplate UI giua cac man hinh neu da co helper.
+4. Neu man hinh dac thu khong dung helper duoc, phai ghi ro ly do trong mo ta batch.
+
 ## Definition Of Done (DoD)
 
 1. Build pass: `./gradlew.bat assembleDebug`

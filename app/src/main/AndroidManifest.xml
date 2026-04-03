@@ -44,6 +44,7 @@
         <!-- Invoice -->
         <activity android:name=".features.invoice.InvoiceActivity" />
         <activity android:name=".features.invoice.PaymentHistoryActivity" />
+        <activity android:name=".features.invoice.TenantPaymentHistoryActivity" />
 
         <!-- Tenant / Contract -->
         <activity android:name=".features.tenant.TenantActivity" />

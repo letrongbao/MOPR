@@ -1,11 +1,9 @@
 package com.example.myapplication.features.invoice;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -13,23 +11,18 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.core.constants.InvoiceStatus;
+import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Payment;
 import com.example.myapplication.core.repository.domain.PaymentRepository;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import com.example.myapplication.core.constants.InvoiceStatus;
-import com.example.myapplication.core.session.TenantSession;
-
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,6 +34,9 @@ import java.util.Locale;
 
 public class PaymentHistoryActivity extends AppCompatActivity {
 
+    // Keep owner/staff flow as default until tenant role is fully launched.
+    private static final boolean ENABLE_TENANT_SELF_SERVICE = false;
+
     private final PaymentRepository repository = new PaymentRepository();
     private PaymentAdapter adapter;
     private TextView tvEmpty;
@@ -50,6 +46,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
     private String invoiceId;
     private String roomId;
     private double invoiceTotal;
+    private boolean allowDeletePayments = true;
 
     private String lastComputedStatus;
 
@@ -57,24 +54,17 @@ public class PaymentHistoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_payment_history);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Lịch sử thanh toán");
+        com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Lịch sử thanh toán");
 
         invoiceId = getIntent().getStringExtra("INVOICE_ID");
         roomId = getIntent().getStringExtra("ROOM_ID");
@@ -99,6 +89,8 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         adapter = new PaymentAdapter(new PaymentAdapter.OnActionListener() {
             @Override
             public void onDelete(Payment payment) {
+                if (!allowDeletePayments)
+                    return;
                 new AlertDialog.Builder(PaymentHistoryActivity.this)
                         .setTitle("Xác nhận xóa")
                         .setMessage("Xóa thanh toán " + fmtMoney(payment.getAmount()) + "?")
@@ -135,7 +127,48 @@ public class PaymentHistoryActivity extends AppCompatActivity {
             maybeUpdateInvoiceStatus(paid);
         });
 
+        setupRolePermissions(fabThem);
+
         fabThem.setOnClickListener(v -> showAddPaymentDialog());
+    }
+
+    private void setupRolePermissions(@NonNull FloatingActionButton fabThem) {
+        if (!ENABLE_TENANT_SELF_SERVICE) {
+            allowDeletePayments = true;
+            adapter.setAllowDelete(true);
+            fabThem.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        String tenantId = TenantSession.getActiveTenantId();
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser();
+
+        if (tenantId == null || tenantId.trim().isEmpty() || user == null) {
+            allowDeletePayments = true;
+            adapter.setAllowDelete(true);
+            fabThem.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("tenants").document(tenantId)
+                .collection("members").document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    String role = doc != null ? doc.getString("role") : null;
+                    boolean isTenant = TenantRoles.TENANT.equals(role);
+
+                    // Tenant flow: self-pay allowed, deleting payment blocked.
+                    allowDeletePayments = !isTenant;
+                    adapter.setAllowDelete(allowDeletePayments);
+                    fabThem.setVisibility(View.VISIBLE);
+                })
+                .addOnFailureListener(e -> {
+                    allowDeletePayments = true;
+                    adapter.setAllowDelete(true);
+                    fabThem.setVisibility(View.VISIBLE);
+                });
     }
 
     private void showAddPaymentDialog() {
@@ -250,5 +283,3 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         return fmt.format(v);
     }
 }
-
-

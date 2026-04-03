@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -13,13 +12,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import android.widget.Toast;
+import com.google.android.material.appbar.AppBarLayout;
 import com.example.myapplication.core.util.FinancePeriodUtil;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Expense;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.domain.Room;
@@ -108,27 +105,19 @@ public class RevenueActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Làm status bar trong suốt giống HomeActivity
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_revenue);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Thống kê doanh thu");
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
-        // Tự động thêm padding cho Toolbar để tránh bị Status Bar che mất
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Thống kê doanh thu");
 
         tvTongPhong = findViewById(R.id.tvTongPhong);
         tvPhongDaThua = findViewById(R.id.tvPhongDaThua);

@@ -6,22 +6,18 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Tenant;
 import com.example.myapplication.domain.Room;
 import com.google.android.material.appbar.AppBarLayout;
@@ -56,29 +52,17 @@ public class RoomDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge layout
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_room_details);
 
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Chi tiết phòng");
-        }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Chi tiết phòng");
 
         imgPhong = findViewById(R.id.imgPhongChiTiet);
         tvSoPhong = findViewById(R.id.tvSoPhongChiTiet);

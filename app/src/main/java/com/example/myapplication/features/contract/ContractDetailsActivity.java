@@ -3,22 +3,17 @@ package com.example.myapplication.features.contract;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.example.myapplication.R;
 import com.example.myapplication.core.repository.domain.TenantRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ContractStatusHelper;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.ContractStatus;
 import com.example.myapplication.domain.Tenant;
 import com.google.android.material.chip.Chip;
@@ -48,12 +43,7 @@ public class ContractDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
-        WindowInsetsControllerCompat ctrl = WindowCompat.getInsetsController(window, window.getDecorView());
-        if (ctrl != null) ctrl.setAppearanceLightStatusBars(false);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_contract_details);
 
@@ -68,11 +58,7 @@ public class ContractDetailsActivity extends AppCompatActivity {
         // Padding cho AppBar
         View appBar = findViewById(R.id.appBarLayout);
         if (appBar != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBar, (v, insets) -> {
-                Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, sys.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBar);
         }
 
         // Initialize
@@ -107,7 +93,7 @@ public class ContractDetailsActivity extends AppCompatActivity {
     private void loadContractDetails() {
         String tenantId = TenantSession.getActiveTenantId();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        
+
         if (user == null) {
             Toast.makeText(this, "Lỗi: Chưa đăng nhập", Toast.LENGTH_SHORT).show();
             finish();
@@ -204,12 +190,12 @@ public class ContractDetailsActivity extends AppCompatActivity {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
                 String ngayHetHan = sdf.format(new Date(ngayKetThuc));
                 tvNgayHetHan.setText(ngayHetHan);
-                
+
                 // Logic màu: Đỏ nếu < 30 ngày
                 long currentTime = System.currentTimeMillis();
                 long timeRemaining = ngayKetThuc - currentTime;
                 final long THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000; // 2592000000
-                
+
                 if (timeRemaining < THIRTY_DAYS_MS && timeRemaining > 0) {
                     tvNgayHetHan.setTextColor(Color.parseColor("#F44336")); // Đỏ
                 } else {
@@ -269,4 +255,3 @@ public class ContractDetailsActivity extends AppCompatActivity {
         }
     }
 }
-
