@@ -19,6 +19,14 @@ Stabilize and finalize the English naming refactor while preserving runtime beha
 - Prefer small, verifiable batches.
 - Build after every risky batch.
 
+## Data Contract
+- Firestore source-of-truth for agents: `docs/FIRESTORE_DATA_CONTRACT.md`
+- Before adding/changing any screen that reads/writes business data, align with this contract.
+
+## Workflow Guide
+- Working process standard: `docs/WORKFLOW_GUIDE.md`
+- Follow this guide for batching changes, validation, and clean commits.
+
 ## Required Commands
 1. `git status --short`
 2. `./gradlew.bat assembleDebug`
@@ -27,10 +35,7 @@ Stabilize and finalize the English naming refactor while preserving runtime beha
 1. No `UU` in git status.
 2. Build successful.
 3. No broken references after rename/move.
-4. Docs updated:
-   - `docs/PROJECT_STATUS.md`
-   - `docs/OPEN_ISSUES.md`
-   - `project_file_summary.txt`
+4. Docs updated only when workflow/data contract changes.
 
 ## Suggested Work Order
 1. Conflict resolution (`UU`).
