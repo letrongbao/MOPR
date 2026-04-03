@@ -28,15 +28,15 @@ import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
 import com.example.myapplication.features.history.RentalHistoryActivity;
-import com.example.myapplication.features.finance.ChiPhiActivity;
-import com.example.myapplication.features.finance.DoanhThuActivity;
-import com.example.myapplication.features.invoice.HoaDonActivity;
-import com.example.myapplication.features.property.house.CanNhaActivity;
-import com.example.myapplication.features.tenant.NguoiThueActivity;
-import com.example.myapplication.features.contract.HopDongListActivity;
-import com.example.myapplication.domain.PhongTro;
-import com.example.myapplication.core.repository.domain.CanNhaRepository;
-import com.example.myapplication.viewmodel.PhongTroViewModel;
+import com.example.myapplication.features.finance.ExpenseActivity;
+import com.example.myapplication.features.finance.RevenueActivity;
+import com.example.myapplication.features.invoice.InvoiceActivity;
+import com.example.myapplication.features.property.house.HouseActivity;
+import com.example.myapplication.features.tenant.TenantActivity;
+import com.example.myapplication.features.contract.ContractListActivity;
+import com.example.myapplication.domain.Room;
+import com.example.myapplication.core.repository.domain.HouseRepository;
+import com.example.myapplication.viewmodel.RoomViewModel;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -143,30 +143,30 @@ public class HomeMenuActivity extends AppCompatActivity {
         MaterialCardView cardKhachThue  = findViewById(R.id.cardKhachThue);
 
         if (cardHouse != null) {
-            cardHouse.setOnClickListener(v -> startActivity(new Intent(this, CanNhaActivity.class)));
+            cardHouse.setOnClickListener(v -> startActivity(new Intent(this, HouseActivity.class)));
         }
 
         if (cardInvoice != null) {
-            cardInvoice.setOnClickListener(v -> startActivity(new Intent(this, HoaDonActivity.class)));
+            cardInvoice.setOnClickListener(v -> startActivity(new Intent(this, InvoiceActivity.class)));
         }
 
         if (cardExpense != null) {
-            cardExpense.setOnClickListener(v -> startActivity(new Intent(this, ChiPhiActivity.class)));
+            cardExpense.setOnClickListener(v -> startActivity(new Intent(this, ExpenseActivity.class)));
         }
 
         if (cardReport != null) {
-            cardReport.setOnClickListener(v -> startActivity(new Intent(this, DoanhThuActivity.class)));
+            cardReport.setOnClickListener(v -> startActivity(new Intent(this, RevenueActivity.class)));
         }
 
         // ── Card Quản Lý Khách Thuê ───────────────────────────────────────
         if (cardKhachThue != null) {
-            cardKhachThue.setOnClickListener(v -> startActivity(new Intent(this, NguoiThueActivity.class)));
+            cardKhachThue.setOnClickListener(v -> startActivity(new Intent(this, TenantActivity.class)));
         }
 
         // ── Card Hợp Đồng Thông Minh ──────────────────────────────────────
         MaterialCardView cardHopDong = findViewById(R.id.cardHopDong);
         if (cardHopDong != null) {
-            cardHopDong.setOnClickListener(v -> startActivity(new Intent(this, HopDongListActivity.class)));
+            cardHopDong.setOnClickListener(v -> startActivity(new Intent(this, ContractListActivity.class)));
         }
     }
 
@@ -293,17 +293,17 @@ public class HomeMenuActivity extends AppCompatActivity {
     }
 
     private void updateStatistics() {
-        new CanNhaRepository().listAll().observe(this, list -> {
+        new HouseRepository().listAll().observe(this, list -> {
             if (list != null && tvTotalHouses != null)
                 tvTotalHouses.setText(String.valueOf(list.size()));
         });
 
-        PhongTroViewModel phongViewModel = new ViewModelProvider(this).get(PhongTroViewModel.class);
-        phongViewModel.getDanhSachPhong().observe(this, list -> {
+        RoomViewModel phongViewModel = new ViewModelProvider(this).get(RoomViewModel.class);
+        phongViewModel.getRoomList().observe(this, list -> {
             if (list != null) {
                 long vacant = 0;
                 long rented = 0;
-                for (PhongTro p : list) {
+                for (Room p : list) {
                     if (RoomStatus.VACANT.equals(p.getTrangThai()))
                         vacant++;
                     else
@@ -325,3 +325,5 @@ public class HomeMenuActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(shareIntent, "Chia sẻ ứng dụng"));
     }
 }
+
+

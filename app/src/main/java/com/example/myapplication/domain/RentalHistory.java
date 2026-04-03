@@ -16,7 +16,7 @@ public class RentalHistory {
     private int tang; // Tang
 
     // Thong tin nguoi thue
-    private String idNguoiThue;
+    private String idTenant;
     private String hoTen;
     private String cccd;
     private String soDienThoai;
@@ -35,8 +35,8 @@ public class RentalHistory {
     private double tienPhong; // Gia thue hang thang
     private double tienCoc; // Tien coc
     private double tongTienDaThanhToan; // Tong tien da thanh toan trong thoi gian thue
-    private int soHoaDonDaThanhToan; // So hoa don da thanh toan
-    private int soHoaDonChuaThanhToan; // So hoa don chua thanh toan
+    private int soInvoiceDaThanhToan; // So hoa don da thanh toan
+    private int soInvoiceChuaThanhToan; // So hoa don chua thanh toan
 
     // Dich vu da su dung
     private boolean dichVuGuiXe;
@@ -90,12 +90,12 @@ public class RentalHistory {
     }
 
     @PropertyName("canNhaTen")
-    public String getCanNhaTen() {
+    public String getHouseTen() {
         return canNhaTen;
     }
 
     @PropertyName("canNhaTen")
-    public void setCanNhaTen(String canNhaTen) {
+    public void setHouseTen(String canNhaTen) {
         this.canNhaTen = canNhaTen;
     }
 
@@ -107,12 +107,12 @@ public class RentalHistory {
         this.tang = tang;
     }
 
-    public String getIdNguoiThue() {
-        return idNguoiThue;
+    public String getIdTenant() {
+        return idTenant;
     }
 
-    public void setIdNguoiThue(String idNguoiThue) {
-        this.idNguoiThue = idNguoiThue;
+    public void setIdTenant(String idTenant) {
+        this.idTenant = idTenant;
     }
 
     public String getHoTen() {
@@ -227,20 +227,20 @@ public class RentalHistory {
         this.tongTienDaThanhToan = tongTienDaThanhToan;
     }
 
-    public int getSoHoaDonDaThanhToan() {
-        return soHoaDonDaThanhToan;
+    public int getSoInvoiceDaThanhToan() {
+        return soInvoiceDaThanhToan;
     }
 
-    public void setSoHoaDonDaThanhToan(int soHoaDonDaThanhToan) {
-        this.soHoaDonDaThanhToan = soHoaDonDaThanhToan;
+    public void setSoInvoiceDaThanhToan(int soInvoiceDaThanhToan) {
+        this.soInvoiceDaThanhToan = soInvoiceDaThanhToan;
     }
 
-    public int getSoHoaDonChuaThanhToan() {
-        return soHoaDonChuaThanhToan;
+    public int getSoInvoiceChuaThanhToan() {
+        return soInvoiceChuaThanhToan;
     }
 
-    public void setSoHoaDonChuaThanhToan(int soHoaDonChuaThanhToan) {
-        this.soHoaDonChuaThanhToan = soHoaDonChuaThanhToan;
+    public void setSoInvoiceChuaThanhToan(int soInvoiceChuaThanhToan) {
+        this.soInvoiceChuaThanhToan = soInvoiceChuaThanhToan;
     }
 
     public boolean isDichVuGuiXe() {
@@ -315,3 +315,4 @@ public class RentalHistory {
         this.endTimestamp = endTimestamp;
     }
 }
+
