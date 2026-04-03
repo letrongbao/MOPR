@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.myapplication.R;
 import com.example.myapplication.features.home.HomeMenuActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -90,6 +91,10 @@ public class SignUpActivity extends AppCompatActivity {
                                 user.put("email", email);
                                 user.put("soDienThoai", soDienThoai);
                                 user.put("uid", uid);
+                                user.put("primaryRole", "TENANT");
+                                user.put("activeTenantId", null);
+                                user.put("createdAt", Timestamp.now());
+                                user.put("updatedAt", Timestamp.now());
 
                                 db.collection("users").document(uid)
                                         .set(user)

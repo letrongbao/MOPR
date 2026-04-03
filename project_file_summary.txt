@@ -1,0 +1,183 @@
+Project File Function Summary
+
+Purpose
+- This app is a rental/property management Android app.
+- Vietnamese domain data keys and Firestore collection names are kept for backward compatibility unless a future migration explicitly changes them.
+
+Core
+- app/src/main/java/com/example/myapplication/core/MyApplication.java: application bootstrap and global initialization.
+- app/src/main/java/com/example/myapplication/core/receiver/NetworkReceiver.java: listens for network state changes.
+- app/src/main/java/com/example/myapplication/core/service/ImageUploadService.java: uploads images.
+- app/src/main/java/com/example/myapplication/core/service/InvoiceReminderWorker.java: background invoice reminder notifications.
+- app/src/main/java/com/example/myapplication/core/widget/InvoiceWidgetProvider.java: home-screen widget provider for invoice status.
+- app/src/main/java/com/example/myapplication/core/util/ContractStatusHelper.java: contract status helper logic.
+- app/src/main/java/com/example/myapplication/core/util/ContactHelper.java: contact-related helper utilities.
+- app/src/main/java/com/example/myapplication/core/util/FinancePeriodUtil.java: month/year normalization and finance period helpers.
+- app/src/main/java/com/example/myapplication/core/util/MoneyFormatter.java: currency and amount formatting.
+- app/src/main/java/com/example/myapplication/core/util/NonScrollGridView.java: custom grid view that disables internal scrolling.
+- app/src/main/java/com/example/myapplication/core/constants/InvoiceStatus.java: invoice state constants.
+- app/src/main/java/com/example/myapplication/core/constants/RoomStatus.java: room state constants.
+- app/src/main/java/com/example/myapplication/core/constants/TenantRoles.java: tenant role constants.
+- app/src/main/java/com/example/myapplication/core/constants/TicketStatus.java: ticket state constants.
+- app/src/main/java/com/example/myapplication/core/repository/AuditLogRepository.java: audit log persistence.
+- app/src/main/java/com/example/myapplication/core/repository/domain/*Repository.java: data-layer repositories for invoices, expenses, houses, rooms, tenants, meter readings, rental history, tickets, and payments.
+- app/src/main/java/com/example/myapplication/core/session/*: tenant session and invite/session state.
+- app/src/main/java/com/example/myapplication/core/service/InvoiceReminderWorker.java: tracks unpaid invoices and sends reminders.
+
+API
+- app/src/main/java/com/example/myapplication/api/RetrofitClient.java: Retrofit client setup.
+- app/src/main/java/com/example/myapplication/api/NominatimApi.java: geocoding API interface.
+
+Domain Models
+- app/src/main/java/com/example/myapplication/domain/Invoice.java: invoice entity.
+- app/src/main/java/com/example/myapplication/domain/Expense.java: expense entity.
+- app/src/main/java/com/example/myapplication/domain/Tenant.java: tenant/contract entity.
+- app/src/main/java/com/example/myapplication/domain/House.java: house/building entity.
+- app/src/main/java/com/example/myapplication/domain/Room.java: room entity.
+- app/src/main/java/com/example/myapplication/domain/Payment.java: payment transaction entity.
+- app/src/main/java/com/example/myapplication/domain/MeterReading.java: meter reading entity.
+- app/src/main/java/com/example/myapplication/domain/RentalHistory.java: rental history record.
+- app/src/main/java/com/example/myapplication/domain/Ticket.java: support/feedback ticket entity.
+- app/src/main/java/com/example/myapplication/domain/ContractStatus.java: contract state model.
+- app/src/main/java/com/example/myapplication/domain/NominatimResult.java: geocoding API response model.
+
+Room Database
+- app/src/main/java/com/example/myapplication/room/AppDatabase.java: Room database entry point.
+- app/src/main/java/com/example/myapplication/room/FavoriteRoom.java: favorite room entity.
+- app/src/main/java/com/example/myapplication/room/FavoriteRoomDao.java: DAO for favorite rooms.
+
+ViewModels
+- app/src/main/java/com/example/myapplication/viewmodel/InvoiceViewModel.java: invoice orchestration for UI.
+- app/src/main/java/com/example/myapplication/viewmodel/ExpenseViewModel.java: expense UI state and actions.
+- app/src/main/java/com/example/myapplication/viewmodel/TenantViewModel.java: tenant UI state and actions.
+- app/src/main/java/com/example/myapplication/viewmodel/RoomViewModel.java: room UI state and actions.
+
+Auth
+- app/src/main/java/com/example/myapplication/features/auth/MainActivity.java: entry/login screen.
+- app/src/main/java/com/example/myapplication/features/auth/SignUpActivity.java: account registration screen.
+
+Home
+- app/src/main/java/com/example/myapplication/features/home/HomeMenuActivity.java: dashboard/home navigation.
+- app/src/main/java/com/example/myapplication/features/home/GridAdapter.java: grid menu adapter.
+
+Invoice Feature
+- app/src/main/java/com/example/myapplication/features/invoice/InvoiceActivity.java: invoice list, filtering, auto-create, payment collection, export, and summary logic.
+- app/src/main/java/com/example/myapplication/features/invoice/InvoiceAdapter.java: invoice list adapter.
+- app/src/main/java/com/example/myapplication/features/invoice/PaymentHistoryActivity.java: payment history for a specific invoice.
+- app/src/main/java/com/example/myapplication/features/invoice/PaymentAdapter.java: payment history adapter.
+
+Finance Feature
+- app/src/main/java/com/example/myapplication/features/finance/ExpenseActivity.java: expense management screen.
+- app/src/main/java/com/example/myapplication/features/finance/ExpenseAdapter.java: expense list adapter.
+- app/src/main/java/com/example/myapplication/features/finance/RevenueActivity.java: revenue and collection statistics.
+
+Tenant Feature
+- app/src/main/java/com/example/myapplication/features/tenant/TenantActivity.java: tenant management screen.
+- app/src/main/java/com/example/myapplication/features/tenant/TenantAdapter.java: tenant list adapter.
+
+Contract Feature
+- app/src/main/java/com/example/myapplication/features/contract/ContractActivity.java: contract create/edit screen and billing reminder settings.
+- app/src/main/java/com/example/myapplication/features/contract/ContractListActivity.java: contract list screen.
+- app/src/main/java/com/example/myapplication/features/contract/ContractListAdapter.java: contract list adapter.
+- app/src/main/java/com/example/myapplication/features/contract/ContractDetailsActivity.java: contract details and preview screen.
+- app/src/main/java/com/example/myapplication/features/contract/ContractPdfPreviewActivity.java: PDF preview for contracts.
+
+Property Feature
+- app/src/main/java/com/example/myapplication/features/property/house/HouseActivity.java: house/building management screen.
+- app/src/main/java/com/example/myapplication/features/property/house/HouseAdapter.java: house list adapter.
+- app/src/main/java/com/example/myapplication/features/property/room/RoomActivity.java: room management screen.
+- app/src/main/java/com/example/myapplication/features/property/room/RoomAdapter.java: room list adapter.
+- app/src/main/java/com/example/myapplication/features/property/room/RoomDetailsActivity.java: room details screen.
+- app/src/main/java/com/example/myapplication/features/property/room/MeterReadingHistoryActivity.java: meter reading history screen.
+- app/src/main/java/com/example/myapplication/features/property/room/MeterReadingAdapter.java: meter reading list adapter.
+
+History and Tickets
+- app/src/main/java/com/example/myapplication/features/history/RentalHistoryActivity.java: rental history screen.
+- app/src/main/java/com/example/myapplication/features/history/RentalHistoryAdapter.java: rental history adapter.
+- app/src/main/java/com/example/myapplication/features/ticket/TicketActivity.java: ticket list and handling screen.
+- app/src/main/java/com/example/myapplication/features/ticket/TicketAdapter.java: ticket list adapter.
+
+Organization
+- app/src/main/java/com/example/myapplication/features/org/OrgAdminActivity.java: organization admin screen.
+- app/src/main/java/com/example/myapplication/features/org/OrgMemberAdapter.java: organization member adapter.
+- app/src/main/java/com/example/myapplication/features/org/OrgInviteAdapter.java: organization invite adapter.
+
+Settings
+- app/src/main/java/com/example/myapplication/features/settings/ProfileActivity.java: profile overview.
+- app/src/main/java/com/example/myapplication/features/settings/EditProfileActivity.java: edit profile screen.
+- app/src/main/java/com/example/myapplication/features/settings/ChangePasswordActivity.java: password change screen.
+- app/src/main/java/com/example/myapplication/features/settings/BackupRestoreActivity.java: backup and restore screen.
+- app/src/main/java/com/example/myapplication/features/settings/BackupAdapter.java: backup item adapter.
+
+Key Layouts
+- app/src/main/res/layout/activity_invoice.xml: invoice management screen.
+- app/src/main/res/layout/activity_payment_history.xml: invoice payment history screen.
+- app/src/main/res/layout/activity_expense.xml: expense management screen.
+- app/src/main/res/layout/activity_revenue.xml: revenue dashboard screen.
+- app/src/main/res/layout/activity_tenant.xml: tenant management screen.
+- app/src/main/res/layout/activity_contract.xml: contract editor screen.
+- app/src/main/res/layout/activity_contract_list.xml: contract list screen.
+- app/src/main/res/layout/activity_contract_details.xml: contract details screen.
+- app/src/main/res/layout/activity_house.xml: house management screen.
+- app/src/main/res/layout/activity_room.xml: room management screen.
+- app/src/main/res/layout/activity_room_details.xml: room details screen.
+- app/src/main/res/layout/activity_meter_reading_history.xml: meter reading history screen.
+- app/src/main/res/layout/activity_rental_history.xml: rental history screen.
+- app/src/main/res/layout/activity_tickets.xml: ticket list screen.
+- app/src/main/res/layout/activity_org_admin.xml: organization admin screen.
+- app/src/main/res/layout/activity_profile.xml: profile screen.
+- app/src/main/res/layout/activity_edit_profile.xml: edit profile screen.
+- app/src/main/res/layout/activity_change_password.xml: change password screen.
+- app/src/main/res/layout/activity_backup_restore.xml: backup and restore screen.
+- app/src/main/res/layout/activity_home_menu.xml: home dashboard layout.
+- app/src/main/res/layout/activity_main.xml: auth entry screen.
+- app/src/main/res/layout/activity_sign_up.xml: registration screen.
+
+Reusable Item/Dialog Layouts
+- app/src/main/res/layout/item_invoice.xml: invoice row/card.
+- app/src/main/res/layout/item_payment.xml: payment row/card.
+- app/src/main/res/layout/item_expense.xml: expense row/card.
+- app/src/main/res/layout/item_tenant.xml: tenant row/card.
+- app/src/main/res/layout/item_contract.xml: contract row/card.
+- app/src/main/res/layout/item_contract_smart.xml: smart contract card variant.
+- app/src/main/res/layout/item_house.xml: house row/card.
+- app/src/main/res/layout/item_room.xml: room row/card.
+- app/src/main/res/layout/item_tenant_header.xml: tenant header section.
+- app/src/main/res/layout/item_tenant_card.xml: tenant summary card.
+- app/src/main/res/layout/item_meter_reading.xml: meter reading row/card.
+- app/src/main/res/layout/item_rental_history.xml: rental history row/card.
+- app/src/main/res/layout/item_ticket.xml: ticket row/card.
+- app/src/main/res/layout/item_backup.xml: backup row/card.
+- app/src/main/res/layout/item_home_menu_tile.xml: dashboard tile.
+- app/src/main/res/layout/item_org_member.xml: organization member row/card.
+- app/src/main/res/layout/item_org_invite.xml: organization invite row/card.
+- app/src/main/res/layout/row_additional_expense.xml: extra fee/expense row.
+- app/src/main/res/layout/row_detail_info.xml: generic detail row.
+- app/src/main/res/layout/dialog_add_invoice.xml: create invoice dialog.
+- app/src/main/res/layout/dialog_export_invoice.xml: export invoice dialog.
+- app/src/main/res/layout/dialog_add_expense.xml: create expense dialog.
+- app/src/main/res/layout/dialog_add_tenant.xml: create tenant dialog.
+- app/src/main/res/layout/dialog_add_room.xml: create room dialog.
+- app/src/main/res/layout/dialog_add_payment.xml: add payment dialog.
+- app/src/main/res/layout/dialog_finalize_meter_reading.xml: finalize meter reading dialog.
+- app/src/main/res/layout/dialog_finalize_period.xml: finalize billing period dialog.
+- app/src/main/res/layout/dialog_create_house.xml: create house dialog.
+- app/src/main/res/layout/dialog_create_backup.xml: create backup dialog.
+- app/src/main/res/layout/dialog_create_ticket.xml: create ticket dialog.
+- app/src/main/res/layout/dialog_edit_bank.xml: bank details edit dialog.
+- app/src/main/res/layout/dialog_vietqr.xml: VietQR payment QR dialog.
+- app/src/main/res/layout/bottom_sheet_deposit.xml: deposit collection bottom sheet.
+- app/src/main/res/layout/bottom_sheet_fee_notification.xml: fee-notification bottom sheet.
+- app/src/main/res/layout/widget_invoice.xml: invoice widget layout.
+
+Menu/XML
+- app/src/main/res/menu/menu_contract.xml: contract menu resource.
+- app/src/main/res/xml/widget_invoice_info.xml: widget configuration metadata.
+- app/src/main/res/xml/file_paths.xml: file provider paths.
+- app/src/main/res/xml/backup_rules.xml: backup configuration.
+- app/src/main/res/xml/data_extraction_rules.xml: data extraction rules.
+
+Notes for Contributors
+- Invoice statuses currently supported are UNREPORTED, REPORTED, PARTIAL, and PAID.
+- Some user-facing strings and Firestore field keys remain Vietnamese for compatibility.
+- Keep resource inflation paths aligned with the renamed layout names above.

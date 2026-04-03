@@ -6,12 +6,12 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {PhongYeuThich.class}, version = 1, exportSchema = false)
+@Database(entities = {FavoriteRoom.class}, version = 1, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase INSTANCE;
 
-    public abstract PhongYeuThichDao phongYeuThichDao();
+    public abstract FavoriteRoomDao phongYeuThichDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -28,3 +28,4 @@ public abstract class AppDatabase extends RoomDatabase {
         return INSTANCE;
     }
 }
+

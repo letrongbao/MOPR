@@ -13,6 +13,7 @@
 
     <!-- Restore purple for legacy layouts -->
     <color name="purple">#8692F7</color>
+    <color name="purple_500">#7B1FA2</color>
 
     <!-- Semantic colors -->
     <color name="success">#4CAF50</color>

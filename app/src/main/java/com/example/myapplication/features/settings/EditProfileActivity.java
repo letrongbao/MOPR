@@ -4,10 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
@@ -16,20 +14,21 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
+import com.google.android.material.appbar.AppBarLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
+import com.example.myapplication.core.session.InviteRepository;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.service.ImageUploadService;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -38,7 +37,9 @@ import java.util.Map;
 public class EditProfileActivity extends AppCompatActivity {
 
     private TextInputEditText edtProfileName, edtProfileEmail, edtProfilePhone;
+    private TextInputEditText edtInviteCode;
     private Button btnSaveProfile;
+    private Button btnApplyInvite;
     private ShapeableImageView imgAvatar;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -71,43 +72,39 @@ public class EditProfileActivity extends AppCompatActivity {
                     }
                 });
 
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_edit_profile);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Sửa thông tin");
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
-
-        toolbar.setNavigationOnClickListener(v -> finish());
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, "Quản lý tài khoản");
 
         imgAvatar = findViewById(R.id.imgAvatar);
         edtProfileName = findViewById(R.id.edtProfileName);
         edtProfileEmail = findViewById(R.id.edtProfileEmail);
         edtProfilePhone = findViewById(R.id.edtProfilePhone);
+        edtInviteCode = findViewById(R.id.edtInviteCode);
         btnSaveProfile = findViewById(R.id.btnSaveProfile);
+        btnApplyInvite = findViewById(R.id.btnApplyInvite);
 
         imgAvatar.setOnClickListener(v -> avatarPickerLauncher.launch("image/*"));
 
         loadUserInfo();
 
         btnSaveProfile.setOnClickListener(v -> startSaveProcess());
+        if (btnApplyInvite != null) {
+            btnApplyInvite.setOnClickListener(v -> applyInviteCode());
+        }
     }
 
     @Override
@@ -214,6 +211,10 @@ public class EditProfileActivity extends AppCompatActivity {
                             .addOnFailureListener(e -> {
                                 updates.put("email", user.getEmail());
                                 updates.put("uid", user.getUid());
+                                updates.put("primaryRole", "TENANT");
+                                updates.put("activeTenantId", null);
+                                updates.put("createdAt", Timestamp.now());
+                                updates.put("updatedAt", Timestamp.now());
                                 db.collection("users").document(user.getUid())
                                         .set(updates)
                                         .addOnSuccessListener(aVoid3 -> {
@@ -233,6 +234,47 @@ public class EditProfileActivity extends AppCompatActivity {
                     Toast.makeText(this, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     btnSaveProfile.setEnabled(true);
                 });
+    }
+
+    private void applyInviteCode() {
+        if (edtInviteCode == null || btnApplyInvite == null) {
+            return;
+        }
+
+        String code = edtInviteCode.getText() != null
+                ? edtInviteCode.getText().toString().trim().toUpperCase(java.util.Locale.US)
+                : "";
+        if (code.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập mã mời", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            Toast.makeText(this, "Chưa có tenant đang hoạt động", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        btnApplyInvite.setEnabled(false);
+        new InviteRepository().joinByInvite(this, tenantId, code, new InviteRepository.JoinCallback() {
+            @Override
+            public void onSuccess(@androidx.annotation.NonNull String joinedTenantId) {
+                runOnUiThread(() -> {
+                    Toast.makeText(EditProfileActivity.this, "Xác nhận mã mời thành công", Toast.LENGTH_SHORT).show();
+                    btnApplyInvite.setEnabled(true);
+                    setResult(RESULT_OK);
+                    finish();
+                });
+            }
+
+            @Override
+            public void onError(@androidx.annotation.NonNull Exception e) {
+                runOnUiThread(() -> {
+                    btnApplyInvite.setEnabled(true);
+                    Toast.makeText(EditProfileActivity.this, "Mã không hợp lệ", Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
     }
 
     @Override

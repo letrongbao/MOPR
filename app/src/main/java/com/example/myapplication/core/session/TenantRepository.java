@@ -108,10 +108,16 @@ public class TenantRepository {
         Map<String, Object> memberDoc = new HashMap<>();
         memberDoc.put("uid", ownerUid);
         memberDoc.put("role", TenantRoles.OWNER);
+        memberDoc.put("status", "ACTIVE");
+        memberDoc.put("assignedHouseIds", new java.util.ArrayList<>());
+        memberDoc.put("assignedRoomIds", new java.util.ArrayList<>());
         memberDoc.put("createdAt", Timestamp.now());
+        memberDoc.put("updatedAt", Timestamp.now());
 
         Map<String, Object> userUpdate = new HashMap<>();
         userUpdate.put("activeTenantId", tenantId);
+        userUpdate.put("primaryRole", TenantRoles.OWNER);
+        userUpdate.put("updatedAt", Timestamp.now());
 
         // 1) create tenant doc
         tenantRef.set(tenantDoc)
@@ -165,6 +171,7 @@ public class TenantRepository {
 
         Map<String, Object> update = new HashMap<>();
         update.put("activeTenantId", tenantId);
+        update.put("updatedAt", Timestamp.now());
         db.collection("users").document(user.getUid())
                 .set(update, SetOptions.merge())
                 .addOnSuccessListener(v -> cb.onReady(tenantId))
