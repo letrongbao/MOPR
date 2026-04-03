@@ -383,7 +383,7 @@ public class TenantActivity extends AppCompatActivity {
         if (scope == null)
             return;
 
-        scope.collection("phong_tro").document(roomId)
+        scope.collection("rooms").document(roomId)
                 .update("trangThai", status)
                 .addOnFailureListener(e -> {
                     // ignore
@@ -469,7 +469,7 @@ public class TenantActivity extends AppCompatActivity {
                 continue;
             }
 
-            scope.collection("nguoi_thue").document(tenantId)
+            scope.collection("contracts").document(tenantId)
                     .update("idPhong", newRoomId)
                     .addOnSuccessListener(v -> {
                         migrated.incrementAndGet();
@@ -499,7 +499,7 @@ public class TenantActivity extends AppCompatActivity {
         if (scope == null)
             return;
 
-        scope.collection("nguoi_thue")
+        scope.collection("contracts")
                 .whereEqualTo("idPhong", roomId)
                 .get()
                 .addOnSuccessListener(qs -> {

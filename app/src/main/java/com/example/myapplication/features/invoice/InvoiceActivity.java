@@ -382,7 +382,7 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void refreshAutoFillSources() {
-        scopedCollection("nguoi_thue")
+        scopedCollection("contracts")
                 .whereEqualTo("trangThaiHopDong", "ACTIVE")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
@@ -406,7 +406,7 @@ public class InvoiceActivity extends AppCompatActivity {
                     activeContractsByRoom = map;
                 });
 
-        scopedCollection("can_nha")
+        scopedCollection("houses")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
@@ -423,7 +423,7 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void refreshTenantDisplayData() {
-        scopedCollection("nguoi_thue")
+        scopedCollection("contracts")
                 .whereEqualTo("trangThaiHopDong", "ACTIVE")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
@@ -457,7 +457,7 @@ public class InvoiceActivity extends AppCompatActivity {
                     Long maxL = tdoc.getLong("maxInvoicesPerMonth");
                     int max = maxL != null ? maxL.intValue() : 200;
 
-                    db.collection("tenants").document(tenantId).collection("hoa_don")
+                    db.collection("tenants").document(tenantId).collection("invoices")
                             .whereEqualTo("thangNam", period)
                             .get()
                             .addOnSuccessListener(qs -> {
@@ -710,7 +710,7 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void loadActiveContractsByRoom(@NonNull ActiveContractsCallback callback) {
-        scopedCollection("nguoi_thue")
+        scopedCollection("contracts")
                 .whereEqualTo("trangThaiHopDong", "ACTIVE")
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -746,7 +746,7 @@ public class InvoiceActivity extends AppCompatActivity {
     private void loadMissingAutoTargets(@NonNull String period,
             @NonNull Map<String, Tenant> activeContractsByRoom,
             @NonNull AutoTargetsCallback callback) {
-        scopedCollection("hoa_don")
+        scopedCollection("invoices")
                 .whereEqualTo("thangNam", period)
                 .get()
                 .addOnSuccessListener(snapshot -> {

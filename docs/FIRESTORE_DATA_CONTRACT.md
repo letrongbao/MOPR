@@ -33,15 +33,15 @@ Pattern nay duoc dung nhat quan trong repository:
 
 Trong scope `tenants/{tenantId}` (va fallback `users/{uid}`), app dang dung cac collection sau:
 
-1. `can_nha`
-2. `phong_tro`
-3. `nguoi_thue`
-4. `hoa_don`
+1. `houses`
+2. `rooms`
+3. `contracts`
+4. `invoices`
 5. `payments`
 6. `meterReadings`
-7. `chi_phi`
+7. `expenses`
 8. `tickets`
-9. `rental_history`
+9. `rentalHistory`
 
 Ngoai ra o root tenant:
 
@@ -53,7 +53,7 @@ Ngoai ra o root tenant:
 
 ## 3) Schema cot loi cho Quan ly phong + Hoa don
 
-### 3.1 `phong_tro/{roomId}`
+### 3.1 `rooms/{roomId}`
 
 Nguon chinh: `domain/Room.java`
 
@@ -65,8 +65,8 @@ Field chinh:
 - `giaThue`: Number
 - `trangThai`: String (`"Trống"`, `"Đã thuê"`)
 - `hinhAnh`: String (URL)
-- `canNhaId`: String
-- `canNhaTen`: String
+- `houseId`: String
+- `houseName`: String
 - `tang`: Number
 - `moTa`: String
 - `tienNghi`: Array<String>
@@ -74,13 +74,13 @@ Field chinh:
 - `createdAt`: Timestamp
 - `updatedAt`: Timestamp
 
-### 3.2 `nguoi_thue/{tenantDocId}`
+### 3.2 `contracts/{contractId}`
 
 Nguon chinh: `domain/Tenant.java`
 
 Field lien ket phong/hop dong:
 
-- `idPhong`: String (FK -> `phong_tro/{roomId}`)
+- `idPhong`: String (FK -> `rooms/{roomId}`)
 - `idPhongCu`: String
 - `soPhong`: String (denormalized)
 - `trangThaiHopDong`: String (`ACTIVE`/`ENDED`)
@@ -94,14 +94,14 @@ Field thong tin nguoi thue + hop dong:
 - Flags: `trangThaiThuCoc`, `hienThiTienCocTrenHoaDon`, `hienThiGhiChuTrenHoaDon`
 - Dich vu: `dichVuGuiXe`, `soLuongXe`, `dichVuInternet`, `dichVuGiatSay`
 
-### 3.3 `hoa_don/{invoiceId}`
+### 3.3 `invoices/{invoiceId}`
 
 Nguon chinh: `domain/Invoice.java`
 
 Field chinh:
 
-- `idPhong`: String (FK -> `phong_tro/{roomId}`)
-- `idTenant`: String (FK -> `nguoi_thue/{tenantDocId}`)
+- `idPhong`: String (FK -> `rooms/{roomId}`)
+- `idTenant`: String (FK -> `contracts/{contractId}`)
 - `soPhong`: String (denormalized de hien thi)
 - `thangNam`: String (`MM/yyyy`, vi du `03/2026`)
 - Dien/nuoc: `chiSoDienDau`, `chiSoDienCuoi`, `donGiaDien`, `chiSoNuocDau`, `chiSoNuocCuoi`, `donGiaNuoc`
@@ -124,14 +124,14 @@ Nguon chinh: `domain/Payment.java`
 
 Field chinh:
 
-- `invoiceId`: String (FK -> `hoa_don/{invoiceId}`)
+- `invoiceId`: String (FK -> `invoices/{invoiceId}`)
 - `roomId`: String (ho tro phan quyen tenant-level)
 - `amount`: Number
 - `method`: String (`CASH`/`BANK`)
 - `paidAt`: String (`dd/MM/yyyy`)
 - `note`: String
 
-Khi tong payment thay doi, man lich su thanh toan cap nhat `hoa_don.trangThai`:
+Khi tong payment thay doi, man lich su thanh toan cap nhat `invoices.trangThai`:
 
 - 0 dong -> `Đã báo`
 - 0 < paid < tongTien -> `Đóng một phần`
@@ -139,14 +139,14 @@ Khi tong payment thay doi, man lich su thanh toan cap nhat `hoa_don.trangThai`:
 
 ## 4) Quan he du lieu lien trang (de man khac doc lai)
 
-1. Phong -> Nguoi thue:
-   - `nguoi_thue.idPhong == phong_tro.docId`
-2. Hoa don -> Phong:
-   - `hoa_don.idPhong == phong_tro.docId`
-3. Hoa don -> Nguoi thue:
-   - `hoa_don.idTenant == nguoi_thue.docId`
-4. Thanh toan -> Hoa don:
-   - `payments.invoiceId == hoa_don.docId`
+1. Room -> Contract:
+   - `contracts.idPhong == rooms.docId`
+2. Invoice -> Room:
+   - `invoices.idPhong == rooms.docId`
+3. Invoice -> Contract:
+   - `invoices.idTenant == contracts.docId`
+4. Payment -> Invoice:
+   - `payments.invoiceId == invoices.docId`
 
 Khi lam man moi, uu tien query theo `idPhong`, `invoiceId`, `idTenant` de bao toan dong bo voi man Hoa don hien tai.
 
@@ -172,13 +172,13 @@ private CollectionReference scopedCollection(String collection) {
 ### 5.2 Vi du doc phong + nguoi thue active + hoa don
 
 ```java
-scopedCollection("phong_tro").get();
+scopedCollection("rooms").get();
 
-scopedCollection("nguoi_thue")
+scopedCollection("contracts")
     .whereEqualTo("trangThaiHopDong", "ACTIVE")
     .get();
 
-scopedCollection("hoa_don")
+scopedCollection("invoices")
     .whereEqualTo("idPhong", roomId)
     .get();
 ```
@@ -200,7 +200,7 @@ Nhan su trong tenant:
 - `OWNER`, `STAFF`: doc/ghi phan lon collection nghiep vu
 - `TENANT`: doc du lieu bi gioi han theo `roomId` cua membership
 
-Co che an toan nay la ly do can luu `roomId` trong `payments`, `tickets`, `hoa_don`, ... de tenant user chi thay du lieu phong cua minh.
+Co che an toan nay la ly do can luu `roomId` trong `payments`, `tickets`, `invoices`, ... de tenant user chi thay du lieu phong cua minh.
 
 ## 7) "Du lieu hien dang co" nen hieu the nao
 
@@ -228,26 +228,9 @@ Neu can inventory du lieu live (so ban ghi thuc te), su dung:
 5. Khi sua trang thai hoa don tu payment, cap nhat dung 4 gia tri trong `InvoiceStatus`.
 6. Kiem tra quyen trong `firestore.rules` truoc khi them collection moi.
 
-## 9) ⚠️ Lỗi không đồng bộ: khu_tro vs can_nha
+## 9) Data audit
 
-**VẤN ĐỀ TÌM RA:**
-
-- `firestore.rules` có 2 collection:
-  - `khu_tro` (theo rules, dùng cho OWNER/STAFF, có `isTenantMember` read)
-  - `phong_tro` (các căn/phòng riêng lẻ)
-- Code Java (Repository + Backup) dùng:
-  - `can_nha` (trong `HouseRepository`, `BackupRestoreActivity`)
-  - `phong_tro` (đúng)
-
-**KẾT LUẬN:**
-- `can_nha` trong code = `khu_tro` trong rules (cùng là "khu/căn nhà")
-- **CẦN SỬA**: Đổi `can_nha` → `khu_tro` hoặc ngược lại để thống nhất
-- Migration plan nên là: tạo script batch copy `can_nha` → `khu_tro` trong Firestore, rồi xóa `can_nha`
-- Hoặc cập nhật rules để dùng `can_nha` thay `khu_tro`
-
-## 10) Kiểm tra dữ liệu live bằng audit script
-
-Mình đã tạo script Node.js để thống kê collection thực tế:
+Use the Node.js audit script to inspect live collection counts:
 
 ```bash
 cd scripts
@@ -258,22 +241,22 @@ node audit-firestore.js
 node audit-firestore.js <tenantId>
 ```
 
-Output sẽ show:
-- Số bản ghi từng collection
-- Tổng thống kê theo tenant
-- Phát hiện **collection nào thực sự được dùng** (can_nha hay khu_tro?)
+Output shows:
+- Record counts per collection
+- Tenant totals
+- Which collections are actually populated
 
 Ví dụ output:
 ```
-👤 Căn nhà A (ID: tenant_abc123)
+👤 Tenant A (ID: tenant_abc123)
 ========================================
-  ✓ can_nha              : 5 bản ghi
-  ✓ phong_tro           : 25 bản ghi
-  ✓ nguoi_thue          : 18 bản ghi
-  ✓ hoa_don             : 142 bản ghi
+   ✓ houses              : 5 records
+   ✓ rooms               : 25 records
+   ✓ contracts           : 18 records
+   ✓ invoices            : 142 records
   ✓ payments            : 87 bản ghi
   ○ meterReadings       : (trống)
-  Tổng cộng: 277 bản ghi
+   Total: 277 records
 ```
 
 ## 11) Role-based flow (roadmap, chua rollout tenant)

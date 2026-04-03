@@ -161,7 +161,7 @@ Thu tu thao tac khuyen nghi:
 3. Tao `tenants/{tenantId}` neu la owner tenant moi.
 4. Tao `tenants/{tenantId}/members/{uid}`.
 5. Tao invites neu can test luong join.
-6. Chi them `phong_tro`, `nguoi_thue`, `hoa_don`, `payments` sau khi role da dung.
+6. Chi them `houses`, `rooms`, `contracts`, `invoices`, `payments` sau khi role da dung.
 
 Quy tac:
 

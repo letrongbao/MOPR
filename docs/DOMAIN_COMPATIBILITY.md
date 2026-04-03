@@ -5,10 +5,11 @@ This project has live/legacy data. Some names must remain stable to avoid data l
 
 ## Keep Stable Unless Data Migration Is Planned
 - Firestore collection names currently used by runtime queries, such as:
-  - `hoa_don`
-  - `nguoi_thue`
-  - `phong_tro`
-  - `can_nha`
+  - `invoices`
+  - `contracts`
+  - `rooms`
+  - `houses`
+  - `expenses`
 - Existing Firestore field keys already persisted in production/test data.
 - Intent extra keys that are already shared across screens unless all call sites are updated.
 
@@ -18,7 +19,7 @@ This project has live/legacy data. Some names must remain stable to avoid data l
 - Method names in Activity/ViewModel/Repository classes.
 
 ## Migration Rule
-If changing a persisted key/collection is required:
+If changing a persisted key or collection is required:
 1. Add explicit migration plan.
 2. Add fallback read path for old key.
 3. Verify old and new data both load.

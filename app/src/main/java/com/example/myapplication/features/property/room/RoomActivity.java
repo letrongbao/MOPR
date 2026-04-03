@@ -228,7 +228,7 @@ public class RoomActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(RoomViewModel.class);
         // Listen tenants to enrich room list UI
         try {
-            tenantsListener = scopedCollection("nguoi_thue")
+            tenantsListener = scopedCollection("contracts")
                     .whereEqualTo("trangThaiHopDong", "ACTIVE")
                     .addSnapshotListener((snap, err) -> {
                         if (snap == null)
@@ -339,7 +339,7 @@ public class RoomActivity extends AppCompatActivity {
             String canNhaId,
             String excludeRoomId,
             @NonNull BoolCallback cb) {
-        com.google.firebase.firestore.Query q = scopedCollection("phong_tro")
+        com.google.firebase.firestore.Query q = scopedCollection("rooms")
                 .whereEqualTo("soPhong", soPhong.trim());
 
         q.get()
@@ -379,7 +379,7 @@ public class RoomActivity extends AppCompatActivity {
     private void hasTenantsInRoom(@NonNull String roomId, boolean failClosed, @NonNull BoolCallback cb) {
         com.google.firebase.firestore.CollectionReference col;
         try {
-            col = scopedCollection("nguoi_thue");
+            col = scopedCollection("contracts");
         } catch (Exception e) {
             cb.onResult(failClosed);
             return;
@@ -537,7 +537,7 @@ public class RoomActivity extends AppCompatActivity {
                     Long maxRoomsL = tdoc.getLong("maxRooms");
                     int maxRooms = maxRoomsL != null ? maxRoomsL.intValue() : 50;
 
-                    db.collection("tenants").document(tenantId).collection("phong_tro").get()
+                    db.collection("tenants").document(tenantId).collection("rooms").get()
                             .addOnSuccessListener(qs -> {
                                 int current = qs != null ? qs.size() : 0;
                                 if (current >= maxRooms) {
@@ -565,14 +565,14 @@ public class RoomActivity extends AppCompatActivity {
         com.google.firebase.firestore.CollectionReference col;
         if (tenantId != null && !tenantId.trim().isEmpty()) {
             col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("tenants").document(tenantId).collection("can_nha");
+                    .collection("tenants").document(tenantId).collection("houses");
         } else {
             com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
                     .getCurrentUser();
             if (user == null)
                 return;
             col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("users").document(user.getUid()).collection("can_nha");
+                    .collection("users").document(user.getUid()).collection("houses");
         }
 
         col.get().addOnSuccessListener(qs -> {

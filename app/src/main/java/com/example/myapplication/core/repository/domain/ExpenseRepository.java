@@ -17,7 +17,7 @@ import java.util.List;
 public class ExpenseRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "chi_phi";
+    private static final String COLLECTION = "expenses";
 
     private CollectionReference getScopedCollection() {
         String tenantId = TenantSession.getActiveTenantId();

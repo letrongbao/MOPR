@@ -23,7 +23,7 @@ public class InvoiceRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final AuditLogRepository audit = new AuditLogRepository();
-    private static final String COLLECTION = "hoa_don";
+    private static final String COLLECTION = "invoices";
 
     private CollectionReference getUserCollection() {
         String tenantId = TenantSession.getActiveTenantId();

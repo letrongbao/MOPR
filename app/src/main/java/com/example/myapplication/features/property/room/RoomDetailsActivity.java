@@ -141,7 +141,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
                 : FirebaseFirestore.getInstance().collection("users").document(uid);
 
         roomListener = scopeDoc
-                .collection("phong_tro").document(phongId)
+                .collection("rooms").document(phongId)
                 .addSnapshotListener((doc, e) -> {
                     if (isFinishing() || isDestroyed())
                         return;
@@ -169,7 +169,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
                 : FirebaseFirestore.getInstance().collection("users").document(uid);
 
         tenantListener = scopeDoc
-                .collection("nguoi_thue")
+                .collection("contracts")
                 .whereEqualTo("idPhong", phongId)
                 .addSnapshotListener((value, error) -> {
                     if (isFinishing() || isDestroyed())

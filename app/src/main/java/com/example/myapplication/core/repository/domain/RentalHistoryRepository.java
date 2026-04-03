@@ -19,7 +19,7 @@ import com.google.firebase.firestore.QuerySnapshot;
  */
 public class RentalHistoryRepository {
     private static final String TAG = "RentalHistoryRepository";
-    private static final String COLLECTION_RENTAL_HISTORY = "rental_history";
+    private static final String COLLECTION_RENTAL_HISTORY = "rentalHistory";
 
     private final FirebaseFirestore db;
 

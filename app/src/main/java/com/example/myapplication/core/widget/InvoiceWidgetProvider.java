@@ -70,8 +70,8 @@ public class InvoiceWidgetProvider extends AppWidgetProvider {
             try {
                 // Đếm hóa đơn chưa thanh toán (blocking call)
                 Task<QuerySnapshot> hoaDonTask = (tenantId != null && !tenantId.isEmpty())
-                        ? db.collection("tenants").document(tenantId).collection("hoa_don").get()
-                        : db.collection("users").document(uid).collection("hoa_don").get();
+                        ? db.collection("tenants").document(tenantId).collection("invoices").get()
+                        : db.collection("users").document(uid).collection("invoices").get();
                 QuerySnapshot hoaDonSnap = Tasks.await(hoaDonTask);
 
                 int chuaThanhToan = 0;
@@ -86,8 +86,8 @@ public class InvoiceWidgetProvider extends AppWidgetProvider {
 
                 // Đếm phòng (blocking call)
                 Task<QuerySnapshot> phongTask = (tenantId != null && !tenantId.isEmpty())
-                        ? db.collection("tenants").document(tenantId).collection("phong_tro").get()
-                        : db.collection("users").document(uid).collection("phong_tro").get();
+                        ? db.collection("tenants").document(tenantId).collection("rooms").get()
+                        : db.collection("users").document(uid).collection("rooms").get();
                 QuerySnapshot phongSnap = Tasks.await(phongTask);
 
                 views.setTextViewText(R.id.tvWidgetPhong,

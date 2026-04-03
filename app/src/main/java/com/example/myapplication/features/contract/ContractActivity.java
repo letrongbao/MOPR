@@ -295,7 +295,7 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void loadPhongThenContract() {
-        scopedCollection("phong_tro").document(phongId).get()
+        scopedCollection("rooms").document(phongId).get()
                 .addOnSuccessListener(doc -> {
                     currentPhong = doc != null && doc.exists() ? doc.toObject(Room.class) : null;
                     if (currentPhong == null) {
@@ -321,7 +321,7 @@ public class ContractActivity extends AppCompatActivity {
             loadExistingContract();
             return;
         }
-        scopedCollection("can_nha").document(canNhaId).get()
+        scopedCollection("houses").document(canNhaId).get()
                 .addOnSuccessListener(doc -> {
                     currentKhu = doc != null && doc.exists() ? doc.toObject(House.class) : null;
                     if (currentKhu != null)
@@ -363,7 +363,7 @@ public class ContractActivity extends AppCompatActivity {
         }
 
         // Mode CREATE: load existing contract theo phòng (như cũ)
-        scopedCollection("nguoi_thue")
+        scopedCollection("contracts")
                 .whereEqualTo("idPhong", phongId)
                 .whereEqualTo("trangThaiHopDong", "ACTIVE")
                 .limit(1).get()
@@ -387,7 +387,7 @@ public class ContractActivity extends AppCompatActivity {
      * Load hợp đồng theo ID (dùng cho EDIT mode)
      */
     private void loadContractById(String contractId) {
-        scopedCollection("nguoi_thue").document(contractId).get()
+        scopedCollection("contracts").document(contractId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc != null && doc.exists()) {
                         Tenant n = doc.toObject(Tenant.class);
@@ -468,7 +468,7 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void loadExistingContractLegacyFallback() {
-        scopedCollection("nguoi_thue").whereEqualTo("idPhong", phongId).limit(1).get()
+        scopedCollection("contracts").whereEqualTo("idPhong", phongId).limit(1).get()
                 .addOnSuccessListener(qs -> {
                     Tenant best = null;
                     if (qs != null && !qs.isEmpty()) {
@@ -653,7 +653,7 @@ public class ContractActivity extends AppCompatActivity {
         currentContract.setUpdatedAt(now);
         if (isCreate || currentContract.getId() == null || currentContract.getId().trim().isEmpty()) {
             // Mode CREATE: Thêm mới
-            scopedCollection("nguoi_thue").add(currentContract)
+            scopedCollection("contracts").add(currentContract)
                     .addOnSuccessListener(ref -> {
                         currentContract.setId(ref.getId());
                         markRoomStatus(RoomStatus.RENTED);
@@ -667,7 +667,7 @@ public class ContractActivity extends AppCompatActivity {
             // Mode UPDATE hoặc EDIT: Cập nhật
             String updateId = isEditMode && editContractId != null ? editContractId : currentContract.getId();
 
-            scopedCollection("nguoi_thue").document(updateId).set(currentContract)
+            scopedCollection("contracts").document(updateId).set(currentContract)
                     .addOnSuccessListener(v -> {
                         markRoomStatus(RoomStatus.RENTED);
                         Toast.makeText(this, "✓ Đã cập nhật hợp đồng", Toast.LENGTH_SHORT).show();
@@ -745,7 +745,7 @@ public class ContractActivity extends AppCompatActivity {
         currentContract.setIdPhongCu(oldRoomId);
         currentContract.setIdPhong("");
         currentContract.setUpdatedAt(now);
-        scopedCollection("nguoi_thue").document(currentContract.getId()).set(currentContract)
+        scopedCollection("contracts").document(currentContract.getId()).set(currentContract)
                 .addOnSuccessListener(v -> {
                     markRoomStatus(RoomStatus.VACANT);
                     Toast.makeText(this, "Đã kết thúc hợp đồng và lưu lịch sử", Toast.LENGTH_SHORT).show();
@@ -832,7 +832,7 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void calculateInvoiceStats(String tenantId, @NonNull InvoiceStatsCallback callback) {
-        scopedCollection("hoa_don").whereEqualTo("idTenant", tenantId).get()
+        scopedCollection("invoices").whereEqualTo("idTenant", tenantId).get()
                 .addOnSuccessListener(querySnapshot -> {
                     double totalPaid = 0;
                     int paidCount = 0, unpaidCount = 0;
@@ -855,7 +855,7 @@ public class ContractActivity extends AppCompatActivity {
         DocumentReference scope = scopedDoc();
         if (scope == null)
             return;
-        scope.collection("phong_tro").document(phongId).update("trangThai", status);
+        scope.collection("rooms").document(phongId).update("trangThai", status);
     }
 
     private void printContract() {

@@ -55,7 +55,7 @@ public class InvoiceReminderWorker extends Worker {
 
             com.google.firebase.firestore.QuerySnapshot contracts = Tasks.await(
                     db.collection("tenants").document(tenantId)
-                            .collection("nguoi_thue")
+                            .collection("contracts")
                             .whereEqualTo("trangThaiHopDong", "ACTIVE")
                             .get());
 
@@ -82,7 +82,7 @@ public class InvoiceReminderWorker extends Worker {
 
             com.google.firebase.firestore.QuerySnapshot qs = Tasks.await(
                     db.collection("tenants").document(tenantId)
-                            .collection("hoa_don")
+                            .collection("invoices")
                             .whereIn("trangThai", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
                             .get());
 

@@ -203,7 +203,7 @@ public class TicketActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerRoom.setAdapter(adapter);
 
-        db.collection("tenants").document(tenantId).collection("phong_tro")
+        db.collection("tenants").document(tenantId).collection("rooms")
                 .get()
                 .addOnSuccessListener(qs -> {
                     roomIds.clear();

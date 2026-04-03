@@ -13,7 +13,7 @@ import java.util.List;
 public class RoomRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "phong_tro";
+    private static final String COLLECTION = "rooms";
 
     private CollectionReference getUserCollection() {
         String tenantId = TenantSession.getActiveTenantId();

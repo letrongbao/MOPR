@@ -104,7 +104,7 @@ public class ContractDetailsActivity extends AppCompatActivity {
         if (tenantId != null && !tenantId.isEmpty()) {
             db.collection("tenants")
                     .document(tenantId)
-                    .collection("nguoi_thue")
+                    .collection("contracts")
                     .document(contractId)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
@@ -126,7 +126,7 @@ public class ContractDetailsActivity extends AppCompatActivity {
         } else {
             db.collection("users")
                     .document(user.getUid())
-                    .collection("nguoi_thue")
+                    .collection("contracts")
                     .document(contractId)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {

@@ -32,7 +32,7 @@ public final class InvoicePeriodSuggestionHelper {
             @NonNull PeriodKeyResolver periodKeyResolver,
             @NonNull String roomId,
             @NonNull SuggestedPeriodCallback callback) {
-        scopedCollection.get("hoa_don")
+        scopedCollection.get("invoices")
                 .whereEqualTo("idPhong", roomId)
                 .get()
                 .addOnSuccessListener(snapshot -> {

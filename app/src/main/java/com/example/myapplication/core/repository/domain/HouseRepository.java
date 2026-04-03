@@ -15,7 +15,7 @@ import java.util.List;
 public class HouseRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "can_nha";
+    private static final String COLLECTION = "houses";
 
     private CollectionReference scopedCollection() {
         String tenantId = TenantSession.getActiveTenantId();

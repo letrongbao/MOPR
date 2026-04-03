@@ -169,7 +169,7 @@ public class OrgAdminActivity extends AppCompatActivity {
     private void loadUsage(@NonNull String tenantId) {
         String period = new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date());
 
-        db.collection("tenants").document(tenantId).collection("phong_tro").get()
+        db.collection("tenants").document(tenantId).collection("rooms").get()
                 .addOnSuccessListener(rooms -> {
                     int roomCount = rooms != null ? rooms.size() : 0;
 
@@ -179,7 +179,7 @@ public class OrgAdminActivity extends AppCompatActivity {
                             .addOnSuccessListener(staff -> {
                                 int staffCount = staff != null ? staff.size() : 0;
 
-                                db.collection("tenants").document(tenantId).collection("hoa_don")
+                                db.collection("tenants").document(tenantId).collection("invoices")
                                         .whereEqualTo("thangNam", period)
                                         .get()
                                         .addOnSuccessListener(inv -> {

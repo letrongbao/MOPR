@@ -18,7 +18,7 @@ import java.util.Map;
 public class TenantRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "nguoi_thue";
+    private static final String COLLECTION = "contracts";
 
     private CollectionReference getUserCollection() {
         String tenantId = TenantSession.getActiveTenantId();
@@ -184,13 +184,13 @@ public class TenantRepository {
     private CollectionReference getRoomCollection() {
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId != null && !tenantId.isEmpty()) {
-            return db.collection("tenants").document(tenantId).collection("phong_tro");
+            return db.collection("tenants").document(tenantId).collection("rooms");
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null)
             throw new IllegalStateException("User not logged in");
-        return db.collection("users").document(user.getUid()).collection("phong_tro");
+        return db.collection("users").document(user.getUid()).collection("rooms");
     }
 
     public void deleteTenant(String id, Runnable onSuccess, Runnable onFail) {

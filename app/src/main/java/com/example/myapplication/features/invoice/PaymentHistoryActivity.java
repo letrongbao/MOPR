@@ -273,7 +273,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         lastComputedStatus = st;
 
         try {
-            scopedCollection("hoa_don").document(invoiceId).update("trangThai", st);
+            scopedCollection("invoices").document(invoiceId).update("trangThai", st);
         } catch (Exception ignored) {
         }
     }

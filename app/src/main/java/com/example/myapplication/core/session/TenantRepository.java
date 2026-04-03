@@ -224,8 +224,8 @@ public class TenantRepository {
     }
 
     private void migrateLegacyData(@NonNull String uid, @NonNull String tenantId, @NonNull Runnable onDone) {
-        migrateCollection(uid, tenantId, "phong_tro", () -> migrateCollection(uid, tenantId, "nguoi_thue",
-                () -> migrateCollection(uid, tenantId, "hoa_don", onDone)));
+        migrateCollection(uid, tenantId, "rooms", () -> migrateCollection(uid, tenantId, "contracts",
+            () -> migrateCollection(uid, tenantId, "invoices", onDone)));
     }
 
     private void migrateCollection(@NonNull String uid, @NonNull String tenantId, @NonNull String collectionName,
