@@ -30,7 +30,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Kỳ: 03/2026"
+                android:text="@string/item_meter_period_sample"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 android:textColor="?attr/colorOnSurface"/>
@@ -42,7 +42,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_delete"
                 app:tint="?attr/colorOnSurfaceVariant"
-                android:contentDescription="Xóa"/>
+                android:contentDescription="@string/delete"/>
         </LinearLayout>
 
         <TextView
@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Điện: 0 → 0 (0)"
+            android:text="@string/item_meter_electricity_sample"
             android:textColor="?attr/colorOnSurfaceVariant"/>
 
         <TextView
@@ -58,7 +58,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Nước: 0 → 0 (0)"
+            android:text="@string/item_meter_water_sample"
             android:textColor="?attr/colorOnSurfaceVariant"/>
 
     </LinearLayout>

@@ -1,0 +1,100 @@
+===== ALL NEW STRINGS NEEDED FOR strings.xml =====
+
+This file contains all Vietnamese strings that need to be added to app/src/main/res/values/strings.xml
+
+Format: <string name="key">Vietnamese text</string>
+
+===== PROFILE & ACCOUNT =====
+<string name="profile_title">Thông tin cá nhân</string>
+<string name="account_management">Quản lý tài khoản</string>
+<string name="change_password">Đổi mật khẩu</string>
+<string name="error_receive_image_link">Lỗi khi nhận link ảnh</string>
+<string name="uploading_image_to_system">Đang tải ảnh lên hệ thống...</string>
+<string name="uploading_image">Đang tải ảnh lên...</string>
+<string name="update_success">Cập nhật thành công!</string>
+<string name="error_update_profile">Lỗi cập nhật Profile: </string>
+<string name="error_update">Lỗi cập nhật: </string>
+<string name="error_upload_image">Lỗi khi tải ảnh lên</string>
+<string name="please_enter_invite_code">Vui lòng nhập mã mời</string>
+<string name="no_active_tenant">Chưa có tenant đang hoạt động</string>
+<string name="invite_code_success">Xác nhận mã mời thành công</string>
+<string name="invalid_code">Mã không hợp lệ</string>
+<string name="please_login_again">Vui lòng đăng nhập lại</string>
+<string name="please_login_again_to_change_password">Vui lòng đăng nhập lại để đổi mật khẩu</string>
+
+===== BACKUP & RESTORE =====
+<string name="backup_restore">Sao lưu &amp; phục hồi</string>
+<string name="restore_feature_coming_soon">Khôi phục sẽ được bổ sung sau (để tránh ghi đè dữ liệu)</string>
+<string name="create_backup">Tạo bản sao lưu</string>
+<string name="backup_description">Sao lưu dữ liệu hiện tại lên Firestore (không ghi đè dữ liệu đang dùng).</string>
+<string name="create">Tạo</string>
+<string name="cancel">Hủy</string>
+<string name="backing_up">Đang sao lưu</string>
+<string name="backup_failed">Tạo backup thất bại</string>
+<string name="backup_completed">Đã sao lưu xong</string>
+<string name="backup_failed_at">Sao lưu thất bại ở: </string>
+<string name="cannot_read_data">Không đọc được dữ liệu: </string>
+
+===== EXPENSE MANAGEMENT =====
+<string name="expense_management">Quản lý chi</string>
+<string name="other">Khác</string>
+<string name="total_expense">Tổng chi: </string>
+<string name="number_of_items">Số khoản: </string>
+<string name="avg_per_item">TB/khoản: </string>
+<string name="top_expense_category">Chi nhiều nhất: </string>
+<string name="top_expense_category_none">Chi nhiều nhất: -</string>
+<string name="add_expense">Thêm khoản chi</string>
+<string name="update_expense">Cập nhật khoản chi</string>
+<string name="please_enter_category">Vui lòng nhập hạng mục</string>
+<string name="please_enter_date">Vui lòng nhập ngày</string>
+<string name="edit">Chỉnh sửa</string>
+
+===== TENANT MANAGEMENT =====
+<string name="room">Phòng</string>
+<string name="cannot_identify_room_number">Không xác định được số phòng</string>
+<string name="room_no_tenant_add_first">Phòng chưa có khách thuê. Hãy thêm khách trước.</string>
+<string name="tenant_self_entry_message">Chào bạn, mời bạn nhập thông tin khách thuê cho Phòng %1$s tại đây: %2$s</string>
+<string name="send_link_via">Gửi link tự nhập qua...</string>
+<string name="is_primary_contact">✓ Là người liên hệ</string>
+<string name="primary_contact_label">Là người liên hệ</string>
+<string name="is_contract_representative">✓ Đại diện hợp đồng</string>
+<string name="contract_representative_label">Đại diện hợp đồng</string>
+<string name="temporary_residence_registered">Đã đăng ký tạm trú</string>
+<string name="temporary_residence_not_registered">Chưa đăng ký tạm trú</string>
+<string name="documents_complete">Đầy đủ giấy tờ</string>
+<string name="documents_incomplete">Chưa đầy đủ giấy tờ</string>
+
+===== IMAGE UPLOAD SERVICE =====
+<string name="uploading_image_notification">Đang tải ảnh lên...</string>
+<string name="please_wait_moment">Vui lòng đợi trong giây lát</string>
+<string name="sending_data">Đang gửi dữ liệu...</string>
+<string name="upload_failed_code">Tải ảnh thất bại! (Mã: %1$d)</string>
+<string name="image_upload_title">Upload ảnh</string>
+<string name="upload_channel_name">Tải ảnh lên</string>
+<string name="upload_channel_description">Hiển thị tiến trình tải ảnh lên Cloudinary</string>
+
+===== CORE UTILS & WIDGETS =====
+<string name="unpaid_invoices">Hóa đơn chưa thanh toán</string>
+<string name="total_rooms">Tổng số phòng</string>
+<string name="error_load_widget_data">Lỗi tải dữ liệu widget</string>
+
+===== REMAINING FILES (TO BE REFACTORED) =====
+<!-- The following files still contain Vietnamese strings and need refactoring:
+- TenantActivity.java
+- TicketActivity.java
+- TicketAdapter.java
+- InvoiceActivity.java
+- ContractActivity.java
+- ContractListActivity.java
+- ContractListAdapter.java  
+- RoomActivity.java
+- RoomAdapter.java
+- MeterReadingAdapter.java
+- MeterReadingHistoryActivity.java
+- HouseActivity.java
+- HomeMenuActivity.java
+- OrgAdminActivity.java
+- MoneyFormatter.java
+- InvoiceWidgetProvider.java
+-->
+

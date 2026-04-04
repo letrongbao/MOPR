@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Địa chỉ căn nhà *"
+            android:text="@string/house_address_required_label"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -27,12 +27,12 @@
             android:background="@drawable/custome_edittext"
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
-            android:hint="Nhập địa chỉ"/>
+            android:hint="@string/house_address_hint"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Thông tin quản lý căn nhà"
+            android:text="@string/house_management_info"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -41,7 +41,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tên quản lý *"
+            android:text="@string/house_manager_name_required_label"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -55,12 +55,12 @@
             android:background="@drawable/custome_edittext"
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
-            android:hint="Nhập tên quản lý"/>
+            android:hint="@string/house_manager_name_hint"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Số điện thoại quản lý *"
+            android:text="@string/house_manager_phone_required_label"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -74,13 +74,13 @@
             android:background="@drawable/custome_edittext"
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
-            android:hint="Nhập SĐT quản lý"
+            android:hint="@string/house_manager_phone_hint"
             android:inputType="phone"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Thông tin chuyển khoản"
+            android:text="@string/org_transfer_info_title"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -94,7 +94,7 @@
             android:background="@drawable/custome_edittext"
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
-            android:hint="Chủ TK"/>
+            android:hint="@string/house_account_owner_hint"/>
 
         <EditText
             android:id="@+id/etNganHang"
@@ -104,7 +104,7 @@
             android:background="@drawable/custome_edittext"
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
-            android:hint="Ngân hàng"/>
+            android:hint="@string/house_bank_hint"/>
 
         <EditText
             android:id="@+id/etSoTaiKhoan"
@@ -114,19 +114,19 @@
             android:background="@drawable/custome_edittext"
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
-            android:hint="Số tài khoản"
+            android:hint="@string/bank_account_number_hint"
             android:inputType="number"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bảng giá phí"
+            android:text="@string/house_fee_table_title"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
             android:layout_marginTop="16dp"/>
 
-        <!-- Điện -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -141,17 +141,17 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá điện"
+                android:hint="@string/house_electricity_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / KWH"
+                android:text="@string/unit_per_kwh"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Nước -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -166,12 +166,12 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá nước"
+                android:hint="@string/house_water_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" (xem chọn dưới)"
+                android:text="@string/house_water_method_note"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
@@ -185,19 +185,19 @@
                 android:id="@+id/rbNuocNguoi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tính theo người"
+                android:text="@string/water_by_person"
                 android:textSize="13sp"/>
             <RadioButton
                 android:id="@+id/rbNuocDongHo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tính theo đồng hồ"
+                android:text="@string/water_by_meter"
                 android:textSize="13sp"/>
             <RadioButton
                 android:id="@+id/rbNuocPhong"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tính theo phòng"
+                android:text="@string/water_by_room"
                 android:textSize="13sp"
                 android:checked="true"/>
         </RadioGroup>
@@ -217,12 +217,12 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá xe"
+                android:hint="@string/house_parking_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / chiếc"
+                android:text="@string/unit_per_vehicle"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
@@ -242,17 +242,17 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá internet"
+                android:hint="@string/house_internet_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / phòng"
+                android:text="@string/per_room"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Giặt sấy -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -267,17 +267,17 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá giặt sấy"
+                android:hint="@string/house_laundry_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / phòng"
+                android:text="@string/per_room"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Thang máy -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -292,17 +292,17 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá thang máy"
+                android:hint="@string/house_elevator_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / phòng"
+                android:text="@string/per_room"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Tivi cáp -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -317,17 +317,17 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá tivi cáp"
+                android:hint="@string/house_cable_tv_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / phòng"
+                android:text="@string/per_room"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Rác -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -342,17 +342,17 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá rác"
+                android:hint="@string/house_garbage_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / phòng"
+                android:text="@string/per_room"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Dịch vụ -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -367,12 +367,12 @@
                 android:background="@drawable/custome_edittext"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
-                android:hint="Giá dịch vụ"
+                android:hint="@string/house_service_price_hint"
                 android:inputType="number"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" / phòng"
+                android:text="@string/per_room"
                 android:textSize="13sp"
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
@@ -380,7 +380,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Thêm các phí khác"
+            android:text="@string/house_add_other_fees"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -391,7 +391,7 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_marginTop="8dp"
-            android:text="Thêm phí"
+            android:text="@string/house_add_fee"
             android:textAllCaps="false"
             android:textSize="13sp"
             app:cornerRadius="10dp"
@@ -407,7 +407,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ghi chú"
+            android:text="@string/note_label"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -422,12 +422,12 @@
             android:padding="12dp"
             android:gravity="top"
             android:textSize="13sp"
-            android:hint="Ghi chú (hiển thị trên hóa đơn)"/>
+            android:hint="@string/house_note_invoice_hint"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Mã thanh toán"
+            android:text="@string/house_payment_code_label"
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/black"
@@ -445,7 +445,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="(Chưa thêm mã)"
+                android:text="@string/house_qr_not_added"
                 android:textColor="#666666"
                 android:textSize="12sp"/>
 
@@ -453,7 +453,7 @@
                 android:id="@+id/btnPickQr"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:text="Quét mã"
+                android:text="@string/house_scan_code"
                 android:textAllCaps="false"
                 android:textSize="13sp"
                 app:cornerRadius="10dp"
@@ -462,6 +462,7 @@
 
     </LinearLayout>
 </ScrollView>
+
 
 
 

@@ -1,10 +1,8 @@
 package com.example.myapplication.features.property.room;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,14 +15,11 @@ import java.util.Locale;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.MeterReading;
 import com.example.myapplication.core.repository.domain.MeterReadingRepository;
 
@@ -46,28 +41,21 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_meter_reading_history);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Lịch sử công tơ");
+        com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.meter_history_title));
 
-        roomId = getIntent().getStringExtra("PHONG_ID");
+        roomId = getIntent().getStringExtra("ROOM_ID");
         if (roomId == null || roomId.trim().isEmpty()) {
-            Toast.makeText(this, "Thiếu PHONG_ID", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.meter_missing_room_id), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -80,12 +68,16 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
             @Override
             public void onDelete(MeterReading reading) {
                 new AlertDialog.Builder(MeterReadingHistoryActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Xóa chỉ số kỳ " + safe(reading.getPeriod()) + "?")
-                        .setPositiveButton("Xóa", (d, w) -> repository.delete(reading.getId(),
-                                () -> runOnUiThread(() -> Toast.makeText(MeterReadingHistoryActivity.this, "Đã xóa", Toast.LENGTH_SHORT).show()),
-                                () -> runOnUiThread(() -> Toast.makeText(MeterReadingHistoryActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT).show())))
-                        .setNegativeButton("Hủy", null)
+                        .setTitle(getString(R.string.confirm_delete))
+                        .setMessage(getString(R.string.meter_delete_confirm, safe(reading.getPeriod())))
+                        .setPositiveButton(getString(R.string.delete), (d, w) -> repository.delete(reading.getId(),
+                                () -> runOnUiThread(() -> Toast
+                                        .makeText(MeterReadingHistoryActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT)
+                                        .show()),
+                                () -> runOnUiThread(() -> Toast
+                                        .makeText(MeterReadingHistoryActivity.this, getString(R.string.delete_failed), Toast.LENGTH_SHORT)
+                                        .show())))
+                        .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             }
         });
@@ -94,11 +86,12 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         repository.listByRoom(roomId).observe(this, list -> {
-            if (list == null) return;
+            if (list == null)
+                return;
             List<MeterReading> sorted = new ArrayList<>(list);
             Collections.sort(sorted, (a, b) -> safe(a.getPeriodKey()).compareTo(safe(b.getPeriodKey())));
             Collections.reverse(sorted);
-            adapter.setDanhSach(sorted);
+            adapter.setDataList(sorted);
             tvEmpty.setVisibility(sorted.isEmpty() ? View.VISIBLE : View.GONE);
 
             if (!sorted.isEmpty()) {
@@ -126,18 +119,20 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
         etDienDau.setEnabled(false);
         etNuocDau.setEnabled(false);
 
-        if (etDienCuoi.getText().toString().trim().isEmpty()) etDienCuoi.setText(formatDouble(lastElecEnd));
-        if (etNuocCuoi.getText().toString().trim().isEmpty()) etNuocCuoi.setText(formatDouble(lastWaterEnd));
+        if (etDienCuoi.getText().toString().trim().isEmpty())
+            etDienCuoi.setText(formatDouble(lastElecEnd));
+        if (etNuocCuoi.getText().toString().trim().isEmpty())
+            etNuocCuoi.setText(formatDouble(lastWaterEnd));
 
         new AlertDialog.Builder(this)
-                .setTitle("Thêm chỉ số công tơ")
+                .setTitle(getString(R.string.meter_add_title))
                 .setView(dialogView)
-                .setPositiveButton("Lưu", (d, w) -> {
+                .setPositiveButton(getString(R.string.save), (d, w) -> {
                     try {
                         String period = etThangNam.getText().toString().trim();
                         String periodKey = toPeriodKey(period);
                         if (periodKey.isEmpty()) {
-                            Toast.makeText(this, "Kỳ không hợp lệ", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.meter_invalid_period), Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -147,7 +142,8 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
                         double waterEnd = parseDouble(etNuocCuoi);
 
                         if (elecEnd < elecStart || waterEnd < waterStart) {
-                            Toast.makeText(this, "Chỉ số cuối không được nhỏ hơn chỉ số đầu", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.meter_end_less_than_start), Toast.LENGTH_SHORT)
+                                    .show();
                             return;
                         }
 
@@ -162,14 +158,17 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
 
                         String docId = roomId + "_" + periodKey;
                         repository.createIfAbsent(docId, r,
-                                () -> runOnUiThread(() -> Toast.makeText(this, "Đã lưu công tơ", Toast.LENGTH_SHORT).show()),
-                                () -> runOnUiThread(() -> Toast.makeText(this, "Kỳ này đã tồn tại", Toast.LENGTH_SHORT).show()),
-                                () -> runOnUiThread(() -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show()));
+                                () -> runOnUiThread(
+                                        () -> Toast.makeText(this, getString(R.string.meter_saved), Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(
+                                        () -> Toast.makeText(this, getString(R.string.meter_period_exists), Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(
+                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -183,13 +182,16 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
     }
 
     private String toPeriodKey(String period) {
-        if (period == null) return "";
+        if (period == null)
+            return "";
         String[] parts = period.trim().split("/");
-        if (parts.length != 2) return "";
+        if (parts.length != 2)
+            return "";
         try {
             int month = Integer.parseInt(parts[0]);
             int year = Integer.parseInt(parts[1]);
-            if (month < 1 || month > 12) return "";
+            if (month < 1 || month > 12)
+                return "";
             return String.format(Locale.US, "%04d%02d", year, month);
         } catch (NumberFormatException e) {
             return "";
@@ -206,5 +208,3 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
         return s == null ? "" : s;
     }
 }
-
-

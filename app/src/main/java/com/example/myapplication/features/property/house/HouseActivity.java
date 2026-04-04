@@ -4,11 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -24,11 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,8 +29,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.core.service.ImageUploadService;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.TenantRoles;
+import com.example.myapplication.core.constants.WaterCalculationMode;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.features.property.room.RoomActivity;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.core.repository.domain.HouseRepository;
@@ -66,36 +61,17 @@ public class HouseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge like Home
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
-
-        // Ensure status bar icons are white
-        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
-                window.getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setAppearanceLightStatusBars(false);
-        }
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_house);
 
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Các căn nhà của bạn");
-        }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.house_list_title));
 
         tvEmpty = findViewById(R.id.tvEmpty);
 
@@ -110,7 +86,7 @@ public class HouseActivity extends AppCompatActivity {
             startService(i);
 
             if (dialogQrStatus != null) {
-                dialogQrStatus.setText("Đang tải mã thanh toán...");
+                dialogQrStatus.setText(getString(R.string.house_qr_uploading));
             }
         });
 
@@ -127,8 +103,8 @@ public class HouseActivity extends AppCompatActivity {
 
                 uploadingQr = false;
                 dialogQrUrl = imageUrl;
-                dialogQrStatus.setText("Đã thêm mã thanh toán");
-                Toast.makeText(HouseActivity.this, "Đã tải mã thanh toán", Toast.LENGTH_SHORT).show();
+                dialogQrStatus.setText(getString(R.string.payment_code_added));
+                Toast.makeText(HouseActivity.this, getString(R.string.house_qr_uploaded), Toast.LENGTH_SHORT).show();
             }
         };
         LocalBroadcastManager.getInstance(this)
@@ -154,9 +130,9 @@ public class HouseActivity extends AppCompatActivity {
             @Override
             public void onViewRooms(@NonNull House item) {
                 Intent it = new Intent(HouseActivity.this, RoomActivity.class);
-                it.putExtra("CAN_NHA_ID", item.getId());
-                it.putExtra("CAN_NHA_NAME", item.getTenHouse());
-                it.putExtra("CAN_NHA_ADDR", item.getDiaChi());
+                it.putExtra("HOUSE_ID", item.getId());
+                it.putExtra("HOUSE_NAME", item.getHouseName());
+                it.putExtra("HOUSE_ADDRESS", item.getAddress());
                 startActivity(it);
             }
         });
@@ -208,12 +184,14 @@ public class HouseActivity extends AppCompatActivity {
 
     private void confirmDelete(House k) {
         new AlertDialog.Builder(this)
-                .setTitle("Xóa nhà?")
-                .setMessage("Bạn có chắc chắn muốn xóa '" + k.getTenHouse() + "'?")
-                .setPositiveButton("Xóa", (d, w) -> repo.delete(k.getId(),
-                        () -> runOnUiThread(() -> Toast.makeText(this, "Đã xóa", Toast.LENGTH_SHORT).show()),
-                        () -> runOnUiThread(() -> Toast.makeText(this, "Xóa thất bại", Toast.LENGTH_SHORT).show())))
-                .setNegativeButton("Hủy", null)
+                .setTitle(getString(R.string.house_delete_title))
+                .setMessage(getString(R.string.house_delete_confirm, k.getHouseName()))
+                .setPositiveButton(getString(R.string.delete), (d, w) -> repo.delete(k.getId(),
+                        () -> runOnUiThread(
+                                () -> Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
+                        () -> runOnUiThread(() -> Toast
+                                .makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())))
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -229,36 +207,36 @@ public class HouseActivity extends AppCompatActivity {
         TextView tvQr = v.findViewById(R.id.tvQrStatus);
         View btnPickQr = v.findViewById(R.id.btnPickQr);
 
-        EditText etChuTK = v.findViewById(R.id.etChuTaiKhoan);
-        EditText etNganHang = v.findViewById(R.id.etNganHang);
-        EditText etSoTK = v.findViewById(R.id.etSoTaiKhoan);
+        EditText etBankAccountName = v.findViewById(R.id.etChuTaiKhoan);
+        EditText etBankName = v.findViewById(R.id.etNganHang);
+        EditText etBankAccountNo = v.findViewById(R.id.etSoTaiKhoan);
 
-        EditText etGiaDien = v.findViewById(R.id.etGiaDien);
-        EditText etGiaNuoc = v.findViewById(R.id.etGiaNuoc);
+        EditText etElectricityPrice = v.findViewById(R.id.etGiaDien);
+        EditText etWaterPrice = v.findViewById(R.id.etGiaNuoc);
         RadioGroup rgNuoc = v.findViewById(R.id.rgNuoc);
 
-        EditText etGiaXe = v.findViewById(R.id.etGiaXe);
-        EditText etGiaInternet = v.findViewById(R.id.etGiaInternet);
-        EditText etGiaGiatSay = v.findViewById(R.id.etGiaGiatSay);
-        EditText etGiaThangMay = v.findViewById(R.id.etGiaThangMay);
-        EditText etGiaTiviCap = v.findViewById(R.id.etGiaTiviCap);
-        EditText etGiaRac = v.findViewById(R.id.etGiaRac);
-        EditText etGiaDichVu = v.findViewById(R.id.etGiaDichVu);
+        EditText etParkingPrice = v.findViewById(R.id.etGiaXe);
+        EditText etInternetPrice = v.findViewById(R.id.etGiaInternet);
+        EditText etLaundryPrice = v.findViewById(R.id.etGiaGiatSay);
+        EditText etElevatorPrice = v.findViewById(R.id.etGiaThangMay);
+        EditText etCableTvPrice = v.findViewById(R.id.etGiaTiviCap);
+        EditText etTrashPrice = v.findViewById(R.id.etGiaRac);
+        EditText etServicePrice = v.findViewById(R.id.etGiaDichVu);
 
         EditText etNote = v.findViewById(R.id.etHouseNote);
 
         // Apply money formatters to all price fields
-        applyMoneyFormatters(etGiaDien, etGiaNuoc, etGiaXe, etGiaInternet,
-                etGiaGiatSay, etGiaThangMay, etGiaTiviCap, etGiaRac, etGiaDichVu);
+        applyMoneyFormatters(etElectricityPrice, etWaterPrice, etParkingPrice, etInternetPrice,
+                etLaundryPrice, etElevatorPrice, etCableTvPrice, etTrashPrice, etServicePrice);
 
         boolean isEdit = existing != null;
 
         dialogQrStatus = tvQr;
-        dialogQrUrl = isEdit ? existing.getQrThanhToanUrl() : null;
+        dialogQrUrl = isEdit ? existing.getPaymentQrUrl() : null;
         if (dialogQrStatus != null) {
             dialogQrStatus.setText(dialogQrUrl != null && !dialogQrUrl.trim().isEmpty()
-                    ? "Đã thêm mã thanh toán"
-                    : "(Chưa thêm mã)");
+                    ? getString(R.string.payment_code_added)
+                    : getString(R.string.house_qr_not_added));
         }
 
         if (btnPickQr != null) {
@@ -273,42 +251,42 @@ public class HouseActivity extends AppCompatActivity {
         }
 
         if (isEdit) {
-            etName.setText(existing.getTenHouse());
-            etPhone.setText(existing.getSdtQuanLy());
-            etAddr.setText(existing.getDiaChi());
+            etName.setText(existing.getHouseName());
+            etPhone.setText(existing.getManagerPhone());
+            etAddr.setText(existing.getAddress());
 
-            etChuTK.setText(existing.getChuTaiKhoan());
-            etNganHang.setText(existing.getNganHang());
-            etSoTK.setText(existing.getSoTaiKhoan());
+            etBankAccountName.setText(existing.getBankAccountName());
+            etBankName.setText(existing.getBankName());
+            etBankAccountNo.setText(existing.getBankAccountNo());
 
-            etGiaDien.setText(formatMoneyInput(existing.getGiaDien()));
-            etGiaNuoc.setText(formatMoneyInput(existing.getGiaNuoc()));
+            etElectricityPrice.setText(formatMoneyInput(existing.getElectricityPrice()));
+            etWaterPrice.setText(formatMoneyInput(existing.getWaterPrice()));
 
-            String waterMode = existing.getCachTinhNuoc();
+            String waterMode = existing.getWaterCalculationMethod();
             if (waterMode != null) {
-                if (waterMode.equals("nguoi")) {
+                if (WaterCalculationMode.isPerPerson(waterMode)) {
                     ((android.widget.RadioButton) v.findViewById(R.id.rbNuocNguoi)).setChecked(true);
-                } else if (waterMode.equals("dong_ho")) {
+                } else if (WaterCalculationMode.isMeter(waterMode)) {
                     ((android.widget.RadioButton) v.findViewById(R.id.rbNuocDongHo)).setChecked(true);
                 } else {
                     ((android.widget.RadioButton) v.findViewById(R.id.rbNuocPhong)).setChecked(true);
                 }
             }
 
-            etGiaXe.setText(formatMoneyInput(existing.getGiaXe()));
-            etGiaInternet.setText(formatMoneyInput(existing.getGiaInternet()));
-            etGiaGiatSay.setText(formatMoneyInput(existing.getGiaGiatSay()));
-            etGiaThangMay.setText(formatMoneyInput(existing.getGiaThangMay()));
-            etGiaTiviCap.setText(formatMoneyInput(existing.getGiaTiviCap()));
-            etGiaRac.setText(formatMoneyInput(existing.getGiaRac()));
-            etGiaDichVu.setText(formatMoneyInput(existing.getGiaDichVu()));
+            etParkingPrice.setText(formatMoneyInput(existing.getParkingPrice()));
+            etInternetPrice.setText(formatMoneyInput(existing.getInternetPrice()));
+            etLaundryPrice.setText(formatMoneyInput(existing.getLaundryPrice()));
+            etElevatorPrice.setText(formatMoneyInput(existing.getElevatorPrice()));
+            etCableTvPrice.setText(formatMoneyInput(existing.getCableTvPrice()));
+            etTrashPrice.setText(formatMoneyInput(existing.getTrashPrice()));
+            etServicePrice.setText(formatMoneyInput(existing.getServicePrice()));
 
-            etNote.setText(existing.getGhiChu());
+            etNote.setText(existing.getNote());
 
             if (llExtraFees != null) {
-                java.util.List<House.PhiKhac> fees = existing.getPhiKhac();
+                java.util.List<House.ExtraFee> fees = existing.getExtraFees();
                 if (fees != null && !fees.isEmpty()) {
-                    for (House.PhiKhac f : fees)
+                    for (House.ExtraFee f : fees)
                         addExtraFeeRow(llExtraFees, f);
                 }
             }
@@ -319,80 +297,84 @@ public class HouseActivity extends AppCompatActivity {
         }
 
         AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle(isEdit ? "Cập nhật căn nhà" : "Tạo thông tin căn nhà")
+                .setTitle(isEdit ? getString(R.string.house_update_title) : getString(R.string.house_create_title))
                 .setView(v)
-                .setNegativeButton("Hủy", null)
-                .setPositiveButton("Lưu thông tin", null)
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.house_save_info), null)
                 .create();
 
         dlg.setOnShowListener(dd -> {
             dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(btn -> {
                 String addr = etAddr.getText().toString().trim();
                 if (addr.isEmpty()) {
-                    Toast.makeText(this, "Vui lòng nhập địa chỉ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.please_enter_address), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 String name = etName.getText().toString().trim();
                 if (name.isEmpty()) {
-                    Toast.makeText(this, "Vui lòng nhập tên quản lý", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.please_enter_manager_name), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 String phone = etPhone.getText().toString().trim();
                 if (phone.isEmpty()) {
-                    Toast.makeText(this, "Vui lòng nhập số điện thoại quản lý", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.please_enter_manager_phone), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 String note = etNote.getText().toString().trim();
 
-                String waterMode = "phong";
+                String waterMode = "room";
                 if (rgNuoc != null) {
                     int checkedId = rgNuoc.getCheckedRadioButtonId();
                     if (checkedId == R.id.rbNuocNguoi)
-                        waterMode = "nguoi";
+                        waterMode = WaterCalculationMode.PER_PERSON;
                     else if (checkedId == R.id.rbNuocDongHo)
-                        waterMode = "dong_ho";
+                        waterMode = WaterCalculationMode.METER;
                     else
-                        waterMode = "phong";
+                        waterMode = WaterCalculationMode.ROOM;
                 }
 
-                java.util.List<House.PhiKhac> extraFees = collectExtraFees(llExtraFees);
+                java.util.List<House.ExtraFee> extraFees = collectExtraFees(llExtraFees);
 
                 House target = isEdit ? existing : new House();
-                target.setTenHouse(name);
-                target.setSdtQuanLy(phone);
-                target.setDiaChi(addr);
-                target.setGhiChu(note);
+                target.setHouseName(name);
+                target.setManagerPhone(phone);
+                target.setAddress(addr);
+                target.setNote(note);
 
-                target.setChuTaiKhoan(etChuTK.getText().toString().trim());
-                target.setNganHang(etNganHang.getText().toString().trim());
-                target.setSoTaiKhoan(etSoTK.getText().toString().trim());
+                target.setBankAccountName(etBankAccountName.getText().toString().trim());
+                target.setBankName(etBankName.getText().toString().trim());
+                target.setBankAccountNo(etBankAccountNo.getText().toString().trim());
 
-                target.setGiaDien(parseMoney(etGiaDien));
-                target.setGiaNuoc(parseMoney(etGiaNuoc));
-                target.setCachTinhNuoc(waterMode);
+                target.setElectricityPrice(parseMoney(etElectricityPrice));
+                target.setWaterPrice(parseMoney(etWaterPrice));
+                target.setWaterCalculationMethod(waterMode);
 
-                target.setGiaXe(parseMoney(etGiaXe));
-                target.setGiaInternet(parseMoney(etGiaInternet));
-                target.setGiaGiatSay(parseMoney(etGiaGiatSay));
-                target.setGiaThangMay(parseMoney(etGiaThangMay));
-                target.setGiaTiviCap(parseMoney(etGiaTiviCap));
-                target.setGiaRac(parseMoney(etGiaRac));
-                target.setGiaDichVu(parseMoney(etGiaDichVu));
+                target.setParkingPrice(parseMoney(etParkingPrice));
+                target.setInternetPrice(parseMoney(etInternetPrice));
+                target.setLaundryPrice(parseMoney(etLaundryPrice));
+                target.setElevatorPrice(parseMoney(etElevatorPrice));
+                target.setCableTvPrice(parseMoney(etCableTvPrice));
+                target.setTrashPrice(parseMoney(etTrashPrice));
+                target.setServicePrice(parseMoney(etServicePrice));
 
-                target.setPhiKhac(extraFees);
-                target.setQrThanhToanUrl(dialogQrUrl);
+                target.setExtraFees(extraFees);
+                target.setPaymentQrUrl(dialogQrUrl);
 
                 if (isEdit) {
                     repo.update(target,
-                            () -> runOnUiThread(() -> Toast.makeText(this, "Đã lưu", Toast.LENGTH_SHORT).show()),
-                            () -> runOnUiThread(() -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show()));
+                            () -> runOnUiThread(
+                                    () -> Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
                 } else {
                     repo.add(target,
-                            () -> runOnUiThread(() -> Toast.makeText(this, "Đã thêm", Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.house_added), Toast.LENGTH_SHORT).show()),
                             () -> runOnUiThread(
-                                    () -> Toast.makeText(this, "Thêm thất bại", Toast.LENGTH_LONG).show()));
+                                    () -> Toast.makeText(this, getString(R.string.house_add_failed), Toast.LENGTH_LONG)
+                                            .show()));
                 }
 
                 dlg.dismiss();
@@ -409,28 +391,28 @@ public class HouseActivity extends AppCompatActivity {
         dlg.show();
     }
 
-    private void addExtraFeeRow(@NonNull LinearLayout container, House.PhiKhac existing) {
+    private void addExtraFeeRow(@NonNull LinearLayout container, House.ExtraFee existing) {
         View row = LayoutInflater.from(this).inflate(R.layout.row_additional_expense, container, false);
 
-        EditText etTenPhi = row.findViewById(R.id.etTenPhi);
-        Spinner spDonVi = row.findViewById(R.id.spDonViTinh);
+        EditText etFeeName = row.findViewById(R.id.etTenPhi);
+        Spinner spUnit = row.findViewById(R.id.spDonViTinh);
         EditText etGia = row.findViewById(R.id.etGia);
         ImageView ivRemove = row.findViewById(R.id.ivRemove);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.extra_fee_units, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spDonVi.setAdapter(adapter);
+        spUnit.setAdapter(adapter);
 
         if (existing != null) {
-            etTenPhi.setText(existing.getTenPhi());
-            etGia.setText(formatMoneyInput(existing.getGia()));
+            etFeeName.setText(existing.getFeeName());
+            etGia.setText(formatMoneyInput(existing.getPrice()));
 
-            String unit = existing.getDonViTinh();
+            String unit = existing.getUnit();
             if (unit != null) {
                 for (int i = 0; i < adapter.getCount(); i++) {
                     if (unit.equalsIgnoreCase(String.valueOf(adapter.getItem(i)))) {
-                        spDonVi.setSelection(i);
+                        spUnit.setSelection(i);
                         break;
                     }
                 }
@@ -442,8 +424,8 @@ public class HouseActivity extends AppCompatActivity {
         container.addView(row);
     }
 
-    private java.util.List<House.PhiKhac> collectExtraFees(LinearLayout container) {
-        java.util.List<House.PhiKhac> out = new java.util.ArrayList<>();
+    private java.util.List<House.ExtraFee> collectExtraFees(LinearLayout container) {
+        java.util.List<House.ExtraFee> out = new java.util.ArrayList<>();
         if (container == null)
             return out;
 
@@ -452,19 +434,19 @@ public class HouseActivity extends AppCompatActivity {
             if (row == null)
                 continue;
 
-            EditText etTenPhi = row.findViewById(R.id.etTenPhi);
-            Spinner spDonVi = row.findViewById(R.id.spDonViTinh);
+            EditText etFeeName = row.findViewById(R.id.etTenPhi);
+            Spinner spUnit = row.findViewById(R.id.spDonViTinh);
             EditText etGia = row.findViewById(R.id.etGia);
 
-            String ten = etTenPhi != null && etTenPhi.getText() != null ? etTenPhi.getText().toString().trim() : "";
+            String ten = etFeeName != null && etFeeName.getText() != null ? etFeeName.getText().toString().trim() : "";
             if (ten.isEmpty())
                 continue;
 
-            String unit = spDonVi != null && spDonVi.getSelectedItem() != null ? spDonVi.getSelectedItem().toString()
+            String unit = spUnit != null && spUnit.getSelectedItem() != null ? spUnit.getSelectedItem().toString()
                     : "";
             double gia = parseMoney(etGia);
 
-            out.add(new House.PhiKhac(ten, unit, gia));
+            out.add(new House.ExtraFee(ten, unit, gia));
         }
         return out;
     }

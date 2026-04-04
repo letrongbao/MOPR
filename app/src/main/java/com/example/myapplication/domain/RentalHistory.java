@@ -4,54 +4,54 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.PropertyName;
 
 /**
- * Model luu tru lich su cho thue (log cua cac hop dong da hoan thanh)
- * Duoc tao tu dong khi ket thuc hop dong
+ * Internal note.
+ * Internal note.
  */
 public class RentalHistory {
     private String id;
-    private String idHopDong; // ID cua hop dong goc
-    private String idPhong; // ID phong da thue
-    private String soPhong; // So phong (VD: "P101")
-    private String canNhaTen; // Ten can nha
-    private int tang; // Tang
+    private String contractId;
+    private String roomId;
+    private String roomNumber; // Room code (e.g., "P101")
+    private String houseName; // House/property name
+    private int floor; // Floor number
 
-    // Thong tin nguoi thue
-    private String idTenant;
-    private String hoTen;
-    private String cccd;
-    private String soDienThoai;
-    private String diaChi;
-    private String soHopDong;
-    private int soThanhVien;
+    // Internal note.
+    private String tenantId;
+    private String fullName;
+    private String personalId;
+    private String phoneNumber;
+    private String address;
+    private String contractNumber;
+    private int memberCount;
 
-    // Thong tin hop dong
-    private String ngayBatDauThue; // Format: "dd/MM/yyyy"
-    private String ngayKetThucHopDong; // Format: "dd/MM/yyyy"
-    private String ngayKetThucThucTe; // Ngay ket thuc thuc te
-    private int soThangHopDong; // So thang hop dong
-    private int soNgayThueThucTe; // So ngay thue thuc te
+    // Internal note.
+    private String rentalStartDate; // Format: "dd/MM/yyyy"
+    private String contractEndDate; // Format: "dd/MM/yyyy"
+    private String actualEndDate;
+    private int contractDurationMonths;
+    private int rentalDaysCount;
 
-    // Thong tin tai chinh
-    private double tienPhong; // Gia thue hang thang
-    private double tienCoc; // Tien coc
-    private double tongTienDaThanhToan; // Tong tien da thanh toan trong thoi gian thue
-    private int soInvoiceDaThanhToan; // So hoa don da thanh toan
-    private int soInvoiceChuaThanhToan; // So hoa don chua thanh toan
+    // Financial information
+    private double roomPrice;
+    private double depositAmount; // Deposit amount
+    private double totalPaidAmount;
+    private int paidInvoiceCount; // Number of paid invoices
+    private int unpaidInvoiceCount;
 
-    // Dich vu da su dung
-    private boolean dichVuGuiXe;
-    private boolean dichVuInternet;
-    private boolean dichVuGiatSay;
-    private int soLuongXe;
+    // Services used
+    private boolean hasParkingService;
+    private boolean hasInternetService;
+    private boolean hasLaundryService;
+    private int vehicleCount;
 
-    // Ghi chu va ly do ket thuc
-    private String ghiChu;
-    private String lyDoKetThuc; // "Het han hop dong", "Nguoi thue yeu cau", "Chu tro yeu cau", "Khac"
+    // Internal note.
+    private String note;
+    private String terminationReason;
 
     // Timestamps
-    private Timestamp createdAt; // Thoi diem tao log (= thoi diem ket thuc hop dong)
-    private Long startTimestamp; // Timestamp bat dau thue
-    private Long endTimestamp; // Timestamp ket thuc thue
+    private Timestamp createdAt;
+    private Long startTimestamp;
+    private Long endTimestamp;
 
     public RentalHistory() {
         // Required for Firestore
@@ -65,230 +65,238 @@ public class RentalHistory {
         this.id = id;
     }
 
-    public String getIdHopDong() {
-        return idHopDong;
+    @PropertyName("contractId")
+    public String getContractId() {
+        return contractId;
     }
 
-    public void setIdHopDong(String idHopDong) {
-        this.idHopDong = idHopDong;
+    @PropertyName("contractId")
+    public void setContractId(String contractId) {
+        this.contractId = contractId;
     }
 
-    public String getIdPhong() {
-        return idPhong;
+    @PropertyName("roomId")
+    public String getRoomId() {
+        return roomId;
     }
 
-    public void setIdPhong(String idPhong) {
-        this.idPhong = idPhong;
+    @PropertyName("roomId")
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
-    public String getSoPhong() {
-        return soPhong;
+    @PropertyName("roomNumber")
+    public String getRoomNumber() {
+        return roomNumber;
     }
 
-    public void setSoPhong(String soPhong) {
-        this.soPhong = soPhong;
+    @PropertyName("roomNumber")
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
     }
 
-    @PropertyName("canNhaTen")
-    public String getHouseTen() {
-        return canNhaTen;
+    @PropertyName("houseName")
+    public String getHouseName() {
+        return houseName;
     }
 
-    @PropertyName("canNhaTen")
-    public void setHouseTen(String canNhaTen) {
-        this.canNhaTen = canNhaTen;
+    @PropertyName("houseName")
+    public void setHouseName(String houseName) {
+        this.houseName = houseName;
     }
 
-    public int getTang() {
-        return tang;
+    public int getFloor() {
+        return floor;
     }
 
-    public void setTang(int tang) {
-        this.tang = tang;
+    public void setFloor(int floor) {
+        this.floor = floor;
     }
 
-    public String getIdTenant() {
-        return idTenant;
+    @PropertyName("tenantId")
+    public String getTenantId() {
+        return tenantId;
     }
 
-    public void setIdTenant(String idTenant) {
-        this.idTenant = idTenant;
+    @PropertyName("tenantId")
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
-    public String getHoTen() {
-        return hoTen;
+    public String getFullName() {
+        return fullName;
     }
 
-    public void setHoTen(String hoTen) {
-        this.hoTen = hoTen;
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
-    public String getCccd() {
-        return cccd;
+    public String getPersonalId() {
+        return personalId;
     }
 
-    public void setCccd(String cccd) {
-        this.cccd = cccd;
+    public void setPersonalId(String personalId) {
+        this.personalId = personalId;
     }
 
-    public String getSoDienThoai() {
-        return soDienThoai;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setSoDienThoai(String soDienThoai) {
-        this.soDienThoai = soDienThoai;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
-    public String getDiaChi() {
-        return diaChi;
+    public String getAddress() {
+        return address;
     }
 
-    public void setDiaChi(String diaChi) {
-        this.diaChi = diaChi;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
-    public String getSoHopDong() {
-        return soHopDong;
+    public String getContractNumber() {
+        return contractNumber;
     }
 
-    public void setSoHopDong(String soHopDong) {
-        this.soHopDong = soHopDong;
+    public void setContractNumber(String contractNumber) {
+        this.contractNumber = contractNumber;
     }
 
-    public int getSoThanhVien() {
-        return soThanhVien;
+    public int getMemberCount() {
+        return memberCount;
     }
 
-    public void setSoThanhVien(int soThanhVien) {
-        this.soThanhVien = soThanhVien;
+    public void setMemberCount(int memberCount) {
+        this.memberCount = memberCount;
     }
 
-    public String getNgayBatDauThue() {
-        return ngayBatDauThue;
+    public String getRentalStartDate() {
+        return rentalStartDate;
     }
 
-    public void setNgayBatDauThue(String ngayBatDauThue) {
-        this.ngayBatDauThue = ngayBatDauThue;
+    public void setRentalStartDate(String rentalStartDate) {
+        this.rentalStartDate = rentalStartDate;
     }
 
-    public String getNgayKetThucHopDong() {
-        return ngayKetThucHopDong;
+    public String getContractEndDate() {
+        return contractEndDate;
     }
 
-    public void setNgayKetThucHopDong(String ngayKetThucHopDong) {
-        this.ngayKetThucHopDong = ngayKetThucHopDong;
+    public void setContractEndDate(String contractEndDate) {
+        this.contractEndDate = contractEndDate;
     }
 
-    public String getNgayKetThucThucTe() {
-        return ngayKetThucThucTe;
+    public String getActualEndDate() {
+        return actualEndDate;
     }
 
-    public void setNgayKetThucThucTe(String ngayKetThucThucTe) {
-        this.ngayKetThucThucTe = ngayKetThucThucTe;
+    public void setActualEndDate(String actualEndDate) {
+        this.actualEndDate = actualEndDate;
     }
 
-    public int getSoThangHopDong() {
-        return soThangHopDong;
+    public int getContractMonths() {
+        return contractDurationMonths;
     }
 
-    public void setSoThangHopDong(int soThangHopDong) {
-        this.soThangHopDong = soThangHopDong;
+    public void setContractMonths(int contractDurationMonths) {
+        this.contractDurationMonths = contractDurationMonths;
     }
 
-    public int getSoNgayThueThucTe() {
-        return soNgayThueThucTe;
+    public int getActualRentalDays() {
+        return rentalDaysCount;
     }
 
-    public void setSoNgayThueThucTe(int soNgayThueThucTe) {
-        this.soNgayThueThucTe = soNgayThueThucTe;
+    public void setActualRentalDays(int rentalDaysCount) {
+        this.rentalDaysCount = rentalDaysCount;
     }
 
-    public double getTienPhong() {
-        return tienPhong;
+    public double getRoomPrice() {
+        return roomPrice;
     }
 
-    public void setTienPhong(double tienPhong) {
-        this.tienPhong = tienPhong;
+    public void setRoomPrice(double roomPrice) {
+        this.roomPrice = roomPrice;
     }
 
-    public double getTienCoc() {
-        return tienCoc;
+    public double getDepositAmount() {
+        return depositAmount;
     }
 
-    public void setTienCoc(double tienCoc) {
-        this.tienCoc = tienCoc;
+    public void setDepositAmount(double depositAmount) {
+        this.depositAmount = depositAmount;
     }
 
-    public double getTongTienDaThanhToan() {
-        return tongTienDaThanhToan;
+    public double getTotalPaidAmount() {
+        return totalPaidAmount;
     }
 
-    public void setTongTienDaThanhToan(double tongTienDaThanhToan) {
-        this.tongTienDaThanhToan = tongTienDaThanhToan;
+    public void setTotalPaidAmount(double totalPaidAmount) {
+        this.totalPaidAmount = totalPaidAmount;
     }
 
-    public int getSoInvoiceDaThanhToan() {
-        return soInvoiceDaThanhToan;
+    public int getPaidInvoiceCount() {
+        return paidInvoiceCount;
     }
 
-    public void setSoInvoiceDaThanhToan(int soInvoiceDaThanhToan) {
-        this.soInvoiceDaThanhToan = soInvoiceDaThanhToan;
+    public void setPaidInvoiceCount(int paidInvoiceCount) {
+        this.paidInvoiceCount = paidInvoiceCount;
     }
 
-    public int getSoInvoiceChuaThanhToan() {
-        return soInvoiceChuaThanhToan;
+    public int getUnpaidInvoiceCount() {
+        return unpaidInvoiceCount;
     }
 
-    public void setSoInvoiceChuaThanhToan(int soInvoiceChuaThanhToan) {
-        this.soInvoiceChuaThanhToan = soInvoiceChuaThanhToan;
+    public void setUnpaidInvoiceCount(int unpaidInvoiceCount) {
+        this.unpaidInvoiceCount = unpaidInvoiceCount;
     }
 
-    public boolean isDichVuGuiXe() {
-        return dichVuGuiXe;
+    public boolean hasParkingService() {
+        return hasParkingService;
     }
 
-    public void setDichVuGuiXe(boolean dichVuGuiXe) {
-        this.dichVuGuiXe = dichVuGuiXe;
+    public void setHasParkingService(boolean hasParkingService) {
+        this.hasParkingService = hasParkingService;
     }
 
-    public boolean isDichVuInternet() {
-        return dichVuInternet;
+    public boolean hasInternetService() {
+        return hasInternetService;
     }
 
-    public void setDichVuInternet(boolean dichVuInternet) {
-        this.dichVuInternet = dichVuInternet;
+    public void setHasInternetService(boolean hasInternetService) {
+        this.hasInternetService = hasInternetService;
     }
 
-    public boolean isDichVuGiatSay() {
-        return dichVuGiatSay;
+    public boolean hasLaundryService() {
+        return hasLaundryService;
     }
 
-    public void setDichVuGiatSay(boolean dichVuGiatSay) {
-        this.dichVuGiatSay = dichVuGiatSay;
+    public void setHasLaundryService(boolean hasLaundryService) {
+        this.hasLaundryService = hasLaundryService;
     }
 
-    public int getSoLuongXe() {
-        return soLuongXe;
+    public int getVehicleCount() {
+        return vehicleCount;
     }
 
-    public void setSoLuongXe(int soLuongXe) {
-        this.soLuongXe = soLuongXe;
+    public void setVehicleCount(int vehicleCount) {
+        this.vehicleCount = vehicleCount;
     }
 
-    public String getGhiChu() {
-        return ghiChu;
+    public String getNote() {
+        return note;
     }
 
-    public void setGhiChu(String ghiChu) {
-        this.ghiChu = ghiChu;
+    public void setNote(String note) {
+        this.note = note;
     }
 
-    public String getLyDoKetThuc() {
-        return lyDoKetThuc;
+    public String getEndReason() {
+        return terminationReason;
     }
 
-    public void setLyDoKetThuc(String lyDoKetThuc) {
-        this.lyDoKetThuc = lyDoKetThuc;
+    public void setEndReason(String terminationReason) {
+        this.terminationReason = terminationReason;
     }
 
     public Timestamp getCreatedAt() {
@@ -315,4 +323,3 @@ public class RentalHistory {
         this.endTimestamp = endTimestamp;
     }
 }
-

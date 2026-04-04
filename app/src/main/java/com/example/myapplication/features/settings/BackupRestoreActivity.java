@@ -1,10 +1,8 @@
 package com.example.myapplication.features.settings;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -13,15 +11,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -51,39 +46,33 @@ public class BackupRestoreActivity extends AppCompatActivity {
     private String tenantId;
 
     private static final String[] BACKUP_COLLECTIONS = new String[] {
-            "can_nha",
-            "phong_tro",
-            "nguoi_thue",
-            "hoa_don",
-            "rental_history",
+            "houses",
+            "rooms",
+            "contracts",
+            "invoices",
+            "rentalHistory",
             "payments",
             "meterReadings",
-            "chi_phi"
+            "expenses"
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_backup_restore);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Sao lưu & phục hồi");
+        com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.backup_restore));
 
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView rv = findViewById(R.id.recyclerView);
@@ -91,7 +80,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
 
         rv.setLayoutManager(new LinearLayoutManager(this));
         adapter = new BackupAdapter(item -> {
-            Toast.makeText(this, "Khôi phục sẽ được bổ sung sau (để tránh ghi đè dữ liệu)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.restore_feature_coming_soon), Toast.LENGTH_SHORT).show();
         });
         rv.setAdapter(adapter);
 
@@ -100,14 +89,14 @@ public class BackupRestoreActivity extends AppCompatActivity {
         TenantSession.init(this);
         tenantId = TenantSession.getActiveTenantId();
         if (tenantId == null || tenantId.trim().isEmpty()) {
-            Toast.makeText(this, "Vui lòng chọn tổ chức (tenant) để dùng sao lưu", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.please_select_org_for_backup), Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Toast.makeText(this, "Chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.not_logged_in), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -129,7 +118,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
                         it.createdBy = doc.getString("createdBy");
                         list.add(it);
                     }
-                    adapter.setDanhSach(list);
+                    adapter.setDataList(list);
                     tvEmpty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
                 });
     }
@@ -139,11 +128,11 @@ public class BackupRestoreActivity extends AppCompatActivity {
         EditText etNote = dialogView.findViewById(R.id.etNote);
 
         new AlertDialog.Builder(this)
-                .setTitle("Tạo bản sao lưu")
-                .setMessage("Sao lưu dữ liệu hiện tại lên Firestore (không ghi đè dữ liệu đang dùng).")
+                .setTitle(getString(R.string.create_backup))
+                .setMessage(getString(R.string.backup_description))
                 .setView(dialogView)
-                .setPositiveButton("Tạo", (d, w) -> startBackup(etNote.getText().toString().trim()))
-                .setNegativeButton("Hủy", null)
+                .setPositiveButton(getString(R.string.create), (d, w) -> startBackup(etNote.getText().toString().trim()))
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -162,8 +151,8 @@ public class BackupRestoreActivity extends AppCompatActivity {
         meta.put("version", 1);
 
         AlertDialog progress = new AlertDialog.Builder(this)
-                .setTitle("Đang sao lưu")
-                .setMessage("Vui lòng chờ...")
+                .setTitle(getString(R.string.backing_up))
+                .setMessage(getString(R.string.please_wait))
                 .setCancelable(false)
                 .create();
         progress.show();
@@ -173,7 +162,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     if (progress.isShowing())
                         progress.dismiss();
-                    Toast.makeText(this, "Tạo backup thất bại", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.backup_failed), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -184,7 +173,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
         if (idx >= collections.length) {
             if (progressDialog.isShowing())
                 progressDialog.dismiss();
-            Toast.makeText(this, "Đã sao lưu xong", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.backup_completed), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -195,12 +184,12 @@ public class BackupRestoreActivity extends AppCompatActivity {
                         () -> {
                             if (progressDialog.isShowing())
                                 progressDialog.dismiss();
-                            Toast.makeText(this, "Sao lưu thất bại ở: " + col, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.backup_failed_at) + col, Toast.LENGTH_SHORT).show();
                         }))
                 .addOnFailureListener(e -> {
                     if (progressDialog.isShowing())
                         progressDialog.dismiss();
-                    Toast.makeText(this, "Không đọc được dữ liệu: " + col, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.cannot_read_data) + col, Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -214,7 +203,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
             int startIndex,
             @NonNull SimpleCallback onSuccess,
             @NonNull SimpleCallback onFail) {
-        // Commit theo batch để tránh giới hạn 500 writes
+        // Commit in batches to avoid the 500 writes limit
         final int BATCH_SIZE = 400;
 
         List<com.google.firebase.firestore.DocumentSnapshot> docs = snapshot.getDocuments();
@@ -227,7 +216,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
         int end = Math.min(docs.size(), startIndex + BATCH_SIZE);
         for (int i = startIndex; i < end; i++) {
             com.google.firebase.firestore.DocumentSnapshot d = docs.get(i);
-            // Ghi vào: backups/{backupId}/{collection}/{docId}
+            // Write to: backups/{backupId}/{collection}/{docId}
             DocumentReference dst = backupDoc.collection(col).document(d.getId());
             Map<String, Object> data = d.getData() != null ? new HashMap<>(d.getData()) : new HashMap<>();
             data.put("_backupAt", Timestamp.now());

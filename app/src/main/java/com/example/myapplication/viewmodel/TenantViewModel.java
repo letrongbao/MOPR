@@ -9,30 +9,28 @@ import java.util.List;
 public class TenantViewModel extends ViewModel {
 
     private final TenantRepository repository = new TenantRepository();
-    private LiveData<List<Tenant>> danhSachTenant;
+    private LiveData<List<Tenant>> tenantList;
 
     public LiveData<List<Tenant>> getTenantList() {
-        if (danhSachTenant == null) {
-            danhSachTenant = repository.getTenantList();
+        if (tenantList == null) {
+            tenantList = repository.getTenantList();
         }
-        return danhSachTenant;
+        return tenantList;
     }
 
-    public LiveData<List<Tenant>> getTenantTheoPhong(String idPhong) {
-        return repository.layTenantTheoPhong(idPhong);
+    public LiveData<List<Tenant>> getTenantsByRoom(String roomId) {
+        return repository.getTenantsByRoom(roomId);
     }
 
-    public void addTenant(Tenant nguoiThue, Runnable onSuccess, Runnable onFail) {
-        repository.addTenant(nguoiThue, onSuccess, onFail);
+    public void addTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {
+        repository.addTenant(tenant, onSuccess, onFail);
     }
 
-    public void updateTenant(Tenant nguoiThue, Runnable onSuccess, Runnable onFail) {
-        repository.updateTenant(nguoiThue, onSuccess, onFail);
+    public void updateTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {
+        repository.updateTenant(tenant, onSuccess, onFail);
     }
 
     public void deleteTenant(String id, Runnable onSuccess, Runnable onFail) {
         repository.deleteTenant(id, onSuccess, onFail);
     }
 }
-
-

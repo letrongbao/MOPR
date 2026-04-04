@@ -4,11 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,16 +18,13 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.core.service.ImageUploadService;
 import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
@@ -50,16 +45,16 @@ public class ProfileActivity extends AppCompatActivity {
     private Uri selectedAvatarUri;
     private ActivityResultLauncher<String> avatarPickerLauncher;
 
-    // Receiver để nhận kết quả từ ImageUploadService
+    // Receiver for ImageUploadService results
     private final BroadcastReceiver uploadReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String imageUrl = intent.getStringExtra(ImageUploadService.EXTRA_IMAGE_URL);
             if (imageUrl != null) {
-                // Sau khi upload lên Cloudinary thành công, lưu URL vào Firebase
+                // After successful Cloudinary upload, save URL to Firebase
                 saveUserInfoToFirebase(imageUrl);
             } else {
-                Toast.makeText(ProfileActivity.this, "Lỗi khi nhận link ảnh", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.error_receive_image_link), Toast.LENGTH_SHORT).show();
                 btnSaveProfile.setEnabled(true);
             }
         }
@@ -79,11 +74,9 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 });
 
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_profile);
 
@@ -91,19 +84,8 @@ public class ProfileActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Thông tin cá nhân");
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
-
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.applyTopInset(toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.profile_title));
 
         tvDisplayName = findViewById(R.id.tvDisplayName);
         tvEmail = findViewById(R.id.tvEmail);
@@ -159,16 +141,16 @@ public class ProfileActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        String hoTen = doc.getString("hoTen");
-                        String soDienThoai = doc.getString("soDienThoai");
+                        String fullName = doc.getString("fullName");
+                        String phoneNumber = doc.getString("phoneNumber");
                         String avatarUrl = doc.getString("avatarUrl");
 
-                        if (hoTen != null && !hoTen.isEmpty()) {
-                            edtProfileName.setText(hoTen);
-                            tvDisplayName.setText(hoTen);
+                        if (fullName != null && !fullName.isEmpty()) {
+                            edtProfileName.setText(fullName);
+                            tvDisplayName.setText(fullName);
                         }
-                        if (soDienThoai != null) {
-                            edtProfilePhone.setText(soDienThoai);
+                        if (phoneNumber != null) {
+                            edtProfilePhone.setText(phoneNumber);
                         }
                         if (avatarUrl != null && !avatarUrl.isEmpty()) {
                             Glide.with(this).load(avatarUrl).circleCrop().into(imgAvatar);
@@ -179,20 +161,20 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void startSaveProcess() {
-        String hoTen = edtProfileName.getText().toString().trim();
-        if (hoTen.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập họ tên", Toast.LENGTH_SHORT).show();
+        String fullName = edtProfileName.getText().toString().trim();
+        if (fullName.isEmpty()) {
+            Toast.makeText(this, getString(R.string.please_enter_full_name), Toast.LENGTH_SHORT).show();
             return;
         }
 
         btnSaveProfile.setEnabled(false);
 
         if (selectedAvatarUri != null) {
-            // Sử dụng Service để upload (Đảm bảo thành công như ảnh phòng)
+            // Use Service-based upload flow for consistent reliability
             Intent serviceIntent = new Intent(this, ImageUploadService.class);
             serviceIntent.putExtra(ImageUploadService.EXTRA_IMAGE_URI, selectedAvatarUri.toString());
             startService(serviceIntent);
-            Toast.makeText(this, "Đang tải ảnh lên hệ thống...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.uploading_image_to_system), Toast.LENGTH_SHORT).show();
         } else {
             saveUserInfoToFirebase(null);
         }
@@ -205,11 +187,11 @@ public class ProfileActivity extends AppCompatActivity {
             return;
         }
 
-        String hoTen = edtProfileName.getText().toString().trim();
-        String soDienThoai = edtProfilePhone.getText().toString().trim();
+        String fullName = edtProfileName.getText().toString().trim();
+        String phoneNumber = edtProfilePhone.getText().toString().trim();
 
         UserProfileChangeRequest.Builder profileBuilder = new UserProfileChangeRequest.Builder()
-                .setDisplayName(hoTen);
+                .setDisplayName(fullName);
         if (avatarUrl != null) {
             profileBuilder.setPhotoUri(Uri.parse(avatarUrl));
         }
@@ -217,8 +199,8 @@ public class ProfileActivity extends AppCompatActivity {
         user.updateProfile(profileBuilder.build())
                 .addOnSuccessListener(aVoid -> {
                     Map<String, Object> updates = new HashMap<>();
-                    updates.put("hoTen", hoTen);
-                    updates.put("soDienThoai", soDienThoai);
+                    updates.put("fullName", fullName);
+                    updates.put("phoneNumber", phoneNumber);
                     if (avatarUrl != null) {
                         updates.put("avatarUrl", avatarUrl);
                     }
@@ -226,31 +208,31 @@ public class ProfileActivity extends AppCompatActivity {
                     db.collection("users").document(user.getUid())
                             .update(updates)
                             .addOnSuccessListener(aVoid2 -> {
-                                tvDisplayName.setText(hoTen);
+                                tvDisplayName.setText(fullName);
                                 selectedAvatarUri = null;
-                                Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT).show();
                                 btnSaveProfile.setEnabled(true);
                             })
                             .addOnFailureListener(e -> {
-                                // Nếu chưa có doc thì tạo mới
+                                // Create document if it does not exist
                                 updates.put("email", user.getEmail());
                                 updates.put("uid", user.getUid());
                                 db.collection("users").document(user.getUid())
                                         .set(updates)
                                         .addOnSuccessListener(aVoid3 -> {
-                                            tvDisplayName.setText(hoTen);
+                                            tvDisplayName.setText(fullName);
                                             selectedAvatarUri = null;
-                                            Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT).show();
                                             btnSaveProfile.setEnabled(true);
                                         })
                                         .addOnFailureListener(e2 -> {
-                                            Toast.makeText(this, "Lỗi: " + e2.getMessage(), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.error_colon) + e2.getMessage(), Toast.LENGTH_SHORT).show();
                                             btnSaveProfile.setEnabled(true);
                                         });
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi cập nhật Profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_update_profile) + e.getMessage(), Toast.LENGTH_SHORT).show();
                     btnSaveProfile.setEnabled(true);
                 });
     }
@@ -260,17 +242,17 @@ public class ProfileActivity extends AppCompatActivity {
         String confirmPass = edtConfirmNewPassword.getText().toString().trim();
 
         if (newPass.isEmpty() || confirmPass.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!newPass.equals(confirmPass)) {
-            Toast.makeText(this, "Mật khẩu xác nhận không khớp", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.password_confirmation_mismatch), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (newPass.length() < 6) {
-            Toast.makeText(this, "Mật khẩu phải có ít nhất 6 ký tự", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.password_min_6_chars), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -282,13 +264,13 @@ public class ProfileActivity extends AppCompatActivity {
 
         user.updatePassword(newPass)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.password_changed_success), Toast.LENGTH_SHORT).show();
                     edtNewPassword.setText("");
                     edtConfirmNewPassword.setText("");
                     btnChangePassword.setEnabled(true);
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_SHORT).show();
                     btnChangePassword.setEnabled(true);
                 });
     }

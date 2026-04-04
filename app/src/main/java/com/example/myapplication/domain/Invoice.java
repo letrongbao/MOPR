@@ -1,27 +1,29 @@
 package com.example.myapplication.domain;
 
+import com.google.firebase.firestore.PropertyName;
+
 public class Invoice {
     private String id;
-    private String idPhong;
-    private String idTenant;
-    private String thangNam; // "03/2026"
-    private double chiSoDienDau;
-    private double chiSoDienCuoi;
-    private double donGiaDien;
-    private double chiSoNuocDau;
-    private double chiSoNuocCuoi;
-    private double donGiaNuoc;
-    private double phiRac;
-    private double phiWifi;
-    private double phiGuiXe;
-    private double giaThue;
-    private double tongTien;
-    private String trangThai; // "Chưa thanh toán", "Đã thanh toán"
+    private String roomId;
+    private String contractId;
+    private String billingPeriod; // "03/2026"
+    private double electricStartReading;
+    private double electricEndReading;
+    private double electricUnitPrice;
+    private double waterStartReading;
+    private double waterEndReading;
+    private double waterUnitPrice;
+    private double trashFee;
+    private double wifiFee;
+    private double parkingFee;
+    private double rentAmount;
+    private double totalAmount;
+    private String status; // "Unpaid", "Paid"
 
     // Enhanced payment tracking
-    private com.google.firebase.Timestamp ngayThanhToan; // Payment date
-    private String phuongThucThanhToan; // "cash", "transfer", "momo", "bank"
-    private double soTienDaThanhToan; // Amount paid (for partial payments)
+    private com.google.firebase.Timestamp paymentDate; // Payment date
+    private String paymentMethod; // "cash", "transfer", "momo", "bank"
+    private double paidAmount; // Amount paid (for partial payments)
 
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;
@@ -30,11 +32,11 @@ public class Invoice {
     public Invoice() {
     }
 
-    // Tính tổng tiền tự động
-    public void tinhTongTien() {
-        double tienDien = (chiSoDienCuoi - chiSoDienDau) * donGiaDien;
-        double tienNuoc = (chiSoNuocCuoi - chiSoNuocDau) * donGiaNuoc;
-        this.tongTien = giaThue + tienDien + tienNuoc + phiRac + phiWifi + phiGuiXe;
+    // Automatically compute total amount
+    public void calculateTotalAmount() {
+        double electricityAmount = (electricEndReading - electricStartReading) * electricUnitPrice;
+        double waterAmount = (waterEndReading - waterStartReading) * waterUnitPrice;
+        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + wifiFee + parkingFee;
     }
 
     public String getId() {
@@ -45,159 +47,165 @@ public class Invoice {
         this.id = id;
     }
 
-    public String getIdPhong() {
-        return idPhong;
+    @PropertyName("roomId")
+    public String getRoomId() {
+        return roomId;
     }
 
-    public void setIdPhong(String idPhong) {
-        this.idPhong = idPhong;
+    @PropertyName("roomId")
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
-    public String getIdTenant() {
-        return idTenant;
+    @PropertyName("contractId")
+    public String getContractId() {
+        return contractId;
     }
 
-    public void setIdTenant(String idTenant) {
-        this.idTenant = idTenant;
+    @PropertyName("contractId")
+    public void setContractId(String contractId) {
+        this.contractId = contractId;
     }
 
-    public String getThangNam() {
-        return thangNam;
+    public String getBillingPeriod() {
+        return billingPeriod;
     }
 
-    public void setThangNam(String thangNam) {
-        this.thangNam = thangNam;
+    public void setBillingPeriod(String billingPeriod) {
+        this.billingPeriod = billingPeriod;
     }
 
-    public double getChiSoDienDau() {
-        return chiSoDienDau;
+    public double getElectricStartReading() {
+        return electricStartReading;
     }
 
-    public void setChiSoDienDau(double chiSoDienDau) {
-        this.chiSoDienDau = chiSoDienDau;
+    public void setElectricStartReading(double electricStartReading) {
+        this.electricStartReading = electricStartReading;
     }
 
-    public double getChiSoDienCuoi() {
-        return chiSoDienCuoi;
+    public double getElectricEndReading() {
+        return electricEndReading;
     }
 
-    public void setChiSoDienCuoi(double chiSoDienCuoi) {
-        this.chiSoDienCuoi = chiSoDienCuoi;
+    public void setElectricEndReading(double electricEndReading) {
+        this.electricEndReading = electricEndReading;
     }
 
-    public double getDonGiaDien() {
-        return donGiaDien;
+    public double getElectricUnitPrice() {
+        return electricUnitPrice;
     }
 
-    public void setDonGiaDien(double donGiaDien) {
-        this.donGiaDien = donGiaDien;
+    public void setElectricUnitPrice(double electricUnitPrice) {
+        this.electricUnitPrice = electricUnitPrice;
     }
 
-    public double getChiSoNuocDau() {
-        return chiSoNuocDau;
+    public double getWaterStartReading() {
+        return waterStartReading;
     }
 
-    public void setChiSoNuocDau(double chiSoNuocDau) {
-        this.chiSoNuocDau = chiSoNuocDau;
+    public void setWaterStartReading(double waterStartReading) {
+        this.waterStartReading = waterStartReading;
     }
 
-    public double getChiSoNuocCuoi() {
-        return chiSoNuocCuoi;
+    public double getWaterEndReading() {
+        return waterEndReading;
     }
 
-    public void setChiSoNuocCuoi(double chiSoNuocCuoi) {
-        this.chiSoNuocCuoi = chiSoNuocCuoi;
+    public void setWaterEndReading(double waterEndReading) {
+        this.waterEndReading = waterEndReading;
     }
 
-    public double getDonGiaNuoc() {
-        return donGiaNuoc;
+    public double getWaterUnitPrice() {
+        return waterUnitPrice;
     }
 
-    public void setDonGiaNuoc(double donGiaNuoc) {
-        this.donGiaNuoc = donGiaNuoc;
+    public void setWaterUnitPrice(double waterUnitPrice) {
+        this.waterUnitPrice = waterUnitPrice;
     }
 
-    public double getPhiRac() {
-        return phiRac;
+    public double getTrashFee() {
+        return trashFee;
     }
 
-    public void setPhiRac(double phiRac) {
-        this.phiRac = phiRac;
+    public void setTrashFee(double trashFee) {
+        this.trashFee = trashFee;
     }
 
-    public double getPhiWifi() {
-        return phiWifi;
+    public double getWifiFee() {
+        return wifiFee;
     }
 
-    public void setPhiWifi(double phiWifi) {
-        this.phiWifi = phiWifi;
+    public void setWifiFee(double wifiFee) {
+        this.wifiFee = wifiFee;
     }
 
-    public double getPhiGuiXe() {
-        return phiGuiXe;
+    public double getParkingFee() {
+        return parkingFee;
     }
 
-    public void setPhiGuiXe(double phiGuiXe) {
-        this.phiGuiXe = phiGuiXe;
+    public void setParkingFee(double parkingFee) {
+        this.parkingFee = parkingFee;
     }
 
-    public double getGiaThue() {
-        return giaThue;
+    public double getRentAmount() {
+        return rentAmount;
     }
 
-    public void setGiaThue(double giaThue) {
-        this.giaThue = giaThue;
+    public void setRentAmount(double rentAmount) {
+        this.rentAmount = rentAmount;
     }
 
-    public double getTongTien() {
-        return tongTien;
+    public double getTotalAmount() {
+        return totalAmount;
     }
 
-    public void setTongTien(double tongTien) {
-        this.tongTien = tongTien;
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
-    public String getTrangThai() {
-        return trangThai;
+    public String getStatus() {
+        return status;
     }
 
-    public void setTrangThai(String trangThai) {
-        this.trangThai = trangThai;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
-    // Tên phòng lưu kèm để hiển thị (denormalized)
-    private String soPhong;
+    // Store room name for display (denormalized)
+    private String roomNumber;
 
-    public String getSoPhong() {
-        return soPhong;
+    @PropertyName("roomNumber")
+    public String getRoomNumber() {
+        return roomNumber;
     }
 
-    public void setSoPhong(String soPhong) {
-        this.soPhong = soPhong;
+    @PropertyName("roomNumber")
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
     }
 
-    public com.google.firebase.Timestamp getNgayThanhToan() {
-        return ngayThanhToan;
+    public com.google.firebase.Timestamp getPaymentDate() {
+        return paymentDate;
     }
 
-    public void setNgayThanhToan(com.google.firebase.Timestamp ngayThanhToan) {
-        this.ngayThanhToan = ngayThanhToan;
+    public void setPaymentDate(com.google.firebase.Timestamp paymentDate) {
+        this.paymentDate = paymentDate;
     }
 
-    public String getPhuongThucThanhToan() {
-        return phuongThucThanhToan;
+    public String getPaymentMethod() {
+        return paymentMethod;
     }
 
-    public void setPhuongThucThanhToan(String phuongThucThanhToan) {
-        this.phuongThucThanhToan = phuongThucThanhToan;
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 
-    public double getSoTienDaThanhToan() {
-        return soTienDaThanhToan;
+    public double getPaidAmount() {
+        return paidAmount;
     }
 
-    public void setSoTienDaThanhToan(double soTienDaThanhToan) {
-        this.soTienDaThanhToan = soTienDaThanhToan;
+    public void setPaidAmount(double paidAmount) {
+        this.paidAmount = paidAmount;
     }
 
     public com.google.firebase.Timestamp getCreatedAt() {
@@ -216,4 +224,3 @@ public class Invoice {
         this.updatedAt = updatedAt;
     }
 }
-

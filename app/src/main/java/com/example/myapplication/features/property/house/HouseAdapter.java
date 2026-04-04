@@ -12,6 +12,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.WaterCalculationMode;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.domain.House;
 
@@ -61,53 +62,62 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
         House k = items.get(position);
+        android.content.Context context = h.itemView.getContext();
 
-        String addr = k.getDiaChi() != null && !k.getDiaChi().trim().isEmpty() ? k.getDiaChi() : "Chưa có địa chỉ";
+        String addr = k.getAddress() != null && !k.getAddress().trim().isEmpty()
+                ? k.getAddress()
+                : context.getString(R.string.house_no_address);
         h.tvHouseAddr.setText(addr);
 
-        String manager = k.getTenHouse() != null ? k.getTenHouse().trim() : "";
-        String phone = k.getSdtQuanLy() != null ? k.getSdtQuanLy().trim() : "";
-        String managerDisplay = manager.isEmpty() ? "Chưa có tên quản lý" : manager;
+        String manager = k.getHouseName() != null ? k.getHouseName().trim() : "";
+        String phone = k.getManagerPhone() != null ? k.getManagerPhone().trim() : "";
+        String managerDisplay = manager.isEmpty() ? context.getString(R.string.house_no_manager_name) : manager;
         h.tvHouseName.setText(phone.isEmpty() ? managerDisplay : (managerDisplay + "  •  " + phone));
 
         // Bank info (fallback to manager name)
-        String chuTk = (k.getChuTaiKhoan() != null && !k.getChuTaiKhoan().trim().isEmpty()) ? k.getChuTaiKhoan().trim()
+        String chuTk = (k.getBankAccountName() != null && !k.getBankAccountName().trim().isEmpty())
+                ? k.getBankAccountName().trim()
                 : manager;
-        String nganHang = k.getNganHang() != null ? k.getNganHang().trim() : "";
-        String soTk = k.getSoTaiKhoan() != null ? k.getSoTaiKhoan().trim() : "";
+        String bankName = k.getBankName() != null ? k.getBankName().trim() : "";
+        String soTk = k.getBankAccountNo() != null ? k.getBankAccountNo().trim() : "";
 
         StringBuilder bank = new StringBuilder();
         if (!chuTk.isEmpty())
-            bank.append("Chủ TK: ").append(chuTk);
-        if (!nganHang.isEmpty())
-            bank.append(bank.length() > 0 ? "\n" : "").append("Ngân hàng ").append(nganHang);
+            bank.append(context.getString(R.string.bank_account_owner_prefix)).append(chuTk);
+        if (!bankName.isEmpty())
+            bank.append(bank.length() > 0 ? "\n" : "").append(context.getString(R.string.bank_name_prefix))
+                    .append(bankName);
         if (!soTk.isEmpty())
-            bank.append(bank.length() > 0 ? "\n" : "").append("STK: ").append(soTk);
+            bank.append(bank.length() > 0 ? "\n" : "").append(context.getString(R.string.bank_account_number_prefix))
+                    .append(soTk);
         if (bank.length() == 0) {
-            bank.append("Chủ TK: ").append(manager.isEmpty() ? "Chủ trọ" : manager)
-                    .append("\nNgân hàng")
-                    .append("\nSTK:");
+            bank.append(context.getString(R.string.bank_account_owner_prefix))
+                    .append(manager.isEmpty() ? context.getString(R.string.landlord_fallback) : manager)
+                    .append("\n")
+                    .append(context.getString(R.string.bank_name_line_fallback))
+                    .append("\n")
+                    .append(context.getString(R.string.bank_account_number_line_fallback));
         }
         h.tvBankInfo.setText(bank);
 
         // Fee values
-        h.tvFeeDien.setText(formatVnd(k.getGiaDien()));
-        h.tvFeeNuoc.setText(formatVnd(k.getGiaNuoc()));
-        h.tvFeeXe.setText(formatVnd(k.getGiaXe()));
-        h.tvFeeInternet.setText(formatVnd(k.getGiaInternet()));
-        h.tvFeeGiatSay.setText(formatVnd(k.getGiaGiatSay()));
-        h.tvFeeThangMay.setText(formatVnd(k.getGiaThangMay()));
-        h.tvFeeTiviCap.setText(formatVnd(k.getGiaTiviCap()));
-        h.tvFeeRac.setText(formatVnd(k.getGiaRac()));
-        h.tvFeeDichVu.setText(formatVnd(k.getGiaDichVu()));
+        h.tvFeeDien.setText(formatVnd(k.getElectricityPrice()));
+        h.tvFeeNuoc.setText(formatVnd(k.getWaterPrice()));
+        h.tvFeeXe.setText(formatVnd(k.getParkingPrice()));
+        h.tvFeeInternet.setText(formatVnd(k.getInternetPrice()));
+        h.tvFeeGiatSay.setText(formatVnd(k.getLaundryPrice()));
+        h.tvFeeThangMay.setText(formatVnd(k.getElevatorPrice()));
+        h.tvFeeTiviCap.setText(formatVnd(k.getCableTvPrice()));
+        h.tvFeeRac.setText(formatVnd(k.getTrashPrice()));
+        h.tvFeeDichVu.setText(formatVnd(k.getServicePrice()));
 
-        String nuocUnit = "phòng";
-        String mode = k.getCachTinhNuoc();
+        String nuocUnit = context.getString(R.string.item_house_unit_room);
+        String mode = k.getWaterCalculationMethod();
         if (mode != null) {
-            if (mode.equals("nguoi"))
-                nuocUnit = "người";
-            else if (mode.equals("dong_ho"))
-                nuocUnit = "m³";
+            if (WaterCalculationMode.isPerPerson(mode))
+                nuocUnit = context.getString(R.string.unit_person);
+            else if (WaterCalculationMode.isMeter(mode))
+                nuocUnit = context.getString(R.string.unit_cubic_meter);
         }
         h.tvFeeNuocUnit.setText(nuocUnit);
 
@@ -139,7 +149,7 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
         h.llEditAction.setOnClickListener(v -> actionCb.onEdit(k));
         h.btnMore.setOnClickListener(v -> {
             PopupMenu pm = new PopupMenu(v.getContext(), v);
-            pm.getMenu().add(0, 1, 0, "Xoá nhà");
+            pm.getMenu().add(0, 1, 0, context.getString(R.string.house_delete_menu));
             pm.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == 1) {
                     actionCb.onDelete(k);
@@ -153,7 +163,7 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
 
     private String formatVnd(double value) {
         if (value <= 0)
-            return "0 đ";
+            return MoneyFormatter.format(0);
         return MoneyFormatter.format(value);
     }
 
@@ -200,4 +210,3 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
         }
     }
 }
-

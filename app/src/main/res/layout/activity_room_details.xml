@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Chi tiết phòng"
+            app:title="@string/room_details_title"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
@@ -49,7 +49,7 @@
                     android:scaleType="centerCrop"
                     android:src="@drawable/baseline_home_24"
                     android:background="#E0E0E0"
-                    android:contentDescription="Ảnh phòng"/>
+                    android:contentDescription="@string/room_image"/>
 
                 <View
                     android:layout_width="match_parent"
@@ -98,7 +98,7 @@
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="#212121"
-                            android:text="Phòng 101"/>
+                            android:text="@string/room_number_placeholder"/>
 
                         <View
                             android:layout_width="match_parent"
@@ -135,7 +135,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Thông tin khách thuê"
+                            android:text="@string/tenant_info"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@color/primary"/>
@@ -188,7 +188,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Gọi điện"
+                        android:text="@string/call"
                         android:textAllCaps="false"
                         app:icon="@drawable/ic_phone"
                         app:iconGravity="top"
@@ -201,7 +201,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Nhắn tin"
+                        android:text="@string/message"
                         android:textAllCaps="false"
                         app:icon="@drawable/ic_email"
                         app:iconGravity="top"

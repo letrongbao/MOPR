@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.example.myapplication.R;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -108,10 +109,16 @@ public class TenantRepository {
         Map<String, Object> memberDoc = new HashMap<>();
         memberDoc.put("uid", ownerUid);
         memberDoc.put("role", TenantRoles.OWNER);
+        memberDoc.put("status", "ACTIVE");
+        memberDoc.put("assignedHouseIds", new java.util.ArrayList<>());
+        memberDoc.put("assignedRoomIds", new java.util.ArrayList<>());
         memberDoc.put("createdAt", Timestamp.now());
+        memberDoc.put("updatedAt", Timestamp.now());
 
         Map<String, Object> userUpdate = new HashMap<>();
         userUpdate.put("activeTenantId", tenantId);
+        userUpdate.put("primaryRole", TenantRoles.OWNER);
+        userUpdate.put("updatedAt", Timestamp.now());
 
         // 1) create tenant doc
         tenantRef.set(tenantDoc)
@@ -138,8 +145,8 @@ public class TenantRepository {
             @NonNull TenantReadyCallback cb) {
         String displayName = user.getDisplayName();
         String defaultName = (displayName != null && !displayName.trim().isEmpty())
-                ? ("Nhà trọ của " + displayName.trim())
-                : "Nhà trọ";
+                ? context.getString(R.string.default_tenant_name_with_owner, displayName.trim())
+                : context.getString(R.string.default_tenant_name);
 
         createTenant(context, defaultName, new TenantReadyCallback() {
             @Override
@@ -165,6 +172,7 @@ public class TenantRepository {
 
         Map<String, Object> update = new HashMap<>();
         update.put("activeTenantId", tenantId);
+        update.put("updatedAt", Timestamp.now());
         db.collection("users").document(user.getUid())
                 .set(update, SetOptions.merge())
                 .addOnSuccessListener(v -> cb.onReady(tenantId))
@@ -217,8 +225,8 @@ public class TenantRepository {
     }
 
     private void migrateLegacyData(@NonNull String uid, @NonNull String tenantId, @NonNull Runnable onDone) {
-        migrateCollection(uid, tenantId, "phong_tro", () -> migrateCollection(uid, tenantId, "nguoi_thue",
-                () -> migrateCollection(uid, tenantId, "hoa_don", onDone)));
+        migrateCollection(uid, tenantId, "rooms", () -> migrateCollection(uid, tenantId, "contracts",
+                () -> migrateCollection(uid, tenantId, "invoices", onDone)));
     }
 
     private void migrateCollection(@NonNull String uid, @NonNull String tenantId, @NonNull String collectionName,

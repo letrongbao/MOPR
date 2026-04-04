@@ -1,18 +1,15 @@
 package com.example.myapplication.features.invoice;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,11 +17,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,16 +28,15 @@ import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.domain.Tenant;
-import com.example.myapplication.domain.Payment;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.core.repository.domain.PaymentRepository;
 import com.example.myapplication.viewmodel.InvoiceViewModel;
 import com.example.myapplication.viewmodel.RoomViewModel;
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
@@ -57,8 +48,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import android.widget.AdapterView;
 
-import java.nio.charset.StandardCharsets;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,9 +58,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public class InvoiceActivity extends AppCompatActivity {
+
+    // Current rollout strategy: owner/staff flow first.
+    // Tenant self-service UI is prepared but intentionally disabled for now.
+    private static final boolean ENABLE_TENANT_SELF_SERVICE = false;
 
     private static final class AutoCreateTarget {
         final Room room;
@@ -84,18 +76,18 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private static final class FeePreset {
-        final double donGiaDien;
-        final double donGiaNuoc;
-        final double phiRac;
-        final double phiWifi;
-        final double phiGuiXe;
+        final double electricUnitPrice;
+        final double waterUnitPrice;
+        final double trashFee;
+        final double wifiFee;
+        final double parkingFee;
 
-        FeePreset(double donGiaDien, double donGiaNuoc, double phiRac, double phiWifi, double phiGuiXe) {
-            this.donGiaDien = donGiaDien;
-            this.donGiaNuoc = donGiaNuoc;
-            this.phiRac = phiRac;
-            this.phiWifi = phiWifi;
-            this.phiGuiXe = phiGuiXe;
+        FeePreset(double electricUnitPrice, double waterUnitPrice, double trashFee, double wifiFee, double parkingFee) {
+            this.electricUnitPrice = electricUnitPrice;
+            this.waterUnitPrice = waterUnitPrice;
+            this.trashFee = trashFee;
+            this.wifiFee = wifiFee;
+            this.parkingFee = parkingFee;
         }
     }
 
@@ -132,36 +124,17 @@ public class InvoiceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
-
-        // Ensure status bar icons are white
-        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window,
-                window.getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setAppearanceLightStatusBars(false);
-        }
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_invoice);
 
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Thống kê báo phí");
-        }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.invoice_statistics));
 
         tvEmpty = findViewById(R.id.tvEmpty);
         llEmpty = findViewById(R.id.llEmpty);
@@ -185,28 +158,31 @@ public class InvoiceActivity extends AppCompatActivity {
             tvSelectedMonth.setText(new SimpleDateFormat("M/yyyy", Locale.getDefault()).format(new Date()));
         }
         if (tvSelectedKhu != null) {
-            tvSelectedKhu.setText("Tất cả căn nhà");
+            tvSelectedKhu.setText(getString(R.string.all_houses));
         }
 
         TabLayout tabLayout = findViewById(R.id.tabLayout);
         final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(0);
         if (tabLayout != null) {
-            tabLayout.addTab(tabLayout.newTab().setText("Chưa báo"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đã báo"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đóng một phần"));
-            tabLayout.addTab(tabLayout.newTab().setText("Đã đóng"));
+            tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.not_reported)));
+            tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.reported)));
+            tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.partially_paid)));
+            tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.paid)));
         }
 
         adapter = new InvoiceAdapter(new InvoiceAdapter.OnItemActionListener() {
             @Override
-            public void onXoa(Invoice hoaDon) {
+            public void onDelete(Invoice invoice) {
+                if (isTenantUser)
+                    return;
                 new AlertDialog.Builder(InvoiceActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Xóa hóa đơn tháng " + hoaDon.getThangNam() + "?")
-                        .setPositiveButton("Xóa", (d2, w2) -> {
-                            String invoiceId = hoaDon.getId();
+                        .setTitle(getString(R.string.confirm_delete))
+                        .setMessage(getString(R.string.delete_invoice_month, invoice.getBillingPeriod()))
+                        .setPositiveButton(getString(R.string.delete), (d2, w2) -> {
+                            String invoiceId = invoice.getId();
                             if (invoiceId == null || invoiceId.trim().isEmpty()) {
-                                Toast.makeText(InvoiceActivity.this, "Thiếu ID hoá đơn", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(InvoiceActivity.this, getString(R.string.missing_invoice_id),
+                                        Toast.LENGTH_SHORT).show();
                                 return;
                             }
 
@@ -217,49 +193,60 @@ public class InvoiceActivity extends AppCompatActivity {
                                     .addOnSuccessListener(qs -> {
                                         if (qs != null && !qs.isEmpty()) {
                                             Toast.makeText(InvoiceActivity.this,
-                                                    "Không thể xóa: hoá đơn đã có thanh toán", Toast.LENGTH_LONG)
+                                                    getString(R.string.cannot_delete_has_payment), Toast.LENGTH_LONG)
                                                     .show();
                                             return;
                                         }
                                         viewModel.deleteInvoice(invoiceId,
                                                 () -> runOnUiThread(() -> Toast
-                                                        .makeText(InvoiceActivity.this, "Đã xóa", Toast.LENGTH_SHORT)
+                                                        .makeText(InvoiceActivity.this, getString(R.string.deleted),
+                                                                Toast.LENGTH_SHORT)
                                                         .show()),
                                                 () -> runOnUiThread(() -> Toast.makeText(InvoiceActivity.this,
-                                                        "Xóa thất bại", Toast.LENGTH_SHORT).show()));
+                                                        getString(R.string.delete_failed), Toast.LENGTH_SHORT).show()));
                                     })
                                     .addOnFailureListener(e -> Toast.makeText(InvoiceActivity.this,
-                                            "Không thể kiểm tra thanh toán", Toast.LENGTH_SHORT).show());
+                                            getString(R.string.cannot_check_payment), Toast.LENGTH_SHORT).show());
                         })
-                        .setNegativeButton("Hủy", null).show();
+                        .setNegativeButton(getString(R.string.cancel), null).show();
             }
 
             @Override
-            public void onBaoPhi(Invoice hoaDon) {
-                showFeeNotificationDialog(hoaDon);
-            }
-
-            @Override
-            public void onDoiTrangThai(Invoice hoaDon) {
-                if (hoaDon == null)
+            public void onBaoPhi(Invoice invoice) {
+                if (isTenantUser)
                     return;
-                String st = hoaDon.getTrangThai();
-                if (InvoiceStatus.PAID.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
-                    openPaymentHistory(hoaDon);
+                showFeeNotificationDialog(invoice);
+            }
+
+            @Override
+            public void onDoiTrangThai(Invoice invoice) {
+                if (invoice == null)
+                    return;
+
+                if (isTenantUser) {
+                    openPaymentHistory(invoice);
                     return;
                 }
 
-                showCollectPaymentDialog(hoaDon);
+                String st = invoice.getStatus();
+                if (InvoiceStatus.PAID.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
+                    openPaymentHistory(invoice);
+                    return;
+                }
+
+                showCollectPaymentDialog(invoice);
             }
 
             @Override
-            public void onSua(Invoice hoaDon) {
-                showEditInvoiceDialog(hoaDon);
+            public void onSua(Invoice invoice) {
+                if (isTenantUser)
+                    return;
+                showEditInvoiceDialog(invoice);
             }
 
             @Override
-            public void onXuat(Invoice hoaDon) {
-                showInvoiceExportDialog(hoaDon);
+            public void onXuat(Invoice invoice) {
+                showInvoiceExportDialog(invoice);
             }
         });
 
@@ -310,9 +297,6 @@ public class InvoiceActivity extends AppCompatActivity {
         if (btnDatePicker != null) {
             btnDatePicker.setOnClickListener(v -> showMonthFilterDialog());
         }
-        if (btnSelectKhu != null) {
-            btnSelectKhu.setOnClickListener(v -> showHouseFilterDialog());
-        }
         if (etSearchInvoice != null) {
             etSearchInvoice.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -337,71 +321,72 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void setupInvoiceObserverAndPermissions(@NonNull InvoiceListConsumer onInvoicesChanged) {
-        String tenantId = TenantSession.getActiveTenantId();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (tenantId == null || tenantId.isEmpty() || user == null) {
-            viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
-
-            new ViewModelProvider(this).get(RoomViewModel.class)
-                    .getRoomList().observe(this, list -> danhSachPhong = list);
-            return;
-        }
-
-        db.collection("tenants").document(tenantId)
-                .collection("members").document(user.getUid())
-                .get()
-                .addOnSuccessListener(doc -> {
-                    String role = doc.getString("role");
-                    boolean isTenant = TenantRoles.TENANT.equals(role);
-
-                    if (isTenant) {
-                        isTenantUser = true;
-                        String roomId = doc.getString("roomId");
-                        if (roomId == null || roomId.trim().isEmpty()) {
-                            Toast.makeText(this, "Thiếu roomId cho tài khoản TENANT", Toast.LENGTH_SHORT).show();
-                            finish();
-                            return;
-                        }
-
-                        adapter.setReadOnly(true);
-                        if (btnSelectKhu != null)
-                            btnSelectKhu.setVisibility(View.GONE);
-                        if (fabThem != null)
-                            fabThem.setVisibility(View.GONE);
-                        if (fabChotKy != null)
-                            fabChotKy.setVisibility(View.GONE);
-                        if (etSearchInvoice != null)
-                            etSearchInvoice.setHint("Tìm theo phòng");
-
-                        viewModel.getInvoicesByRoom(roomId).observe(this, onInvoicesChanged::accept);
-                        refreshTenantDisplayData();
-                        refreshAutoFillSources();
-                        return;
+        InvoicePermissionResolver.resolve(db, ENABLE_TENANT_SELF_SERVICE,
+                new InvoicePermissionResolver.Callback() {
+                    @Override
+                    public void onNoTenantContext() {
+                        applyLegacyMode(onInvoicesChanged);
                     }
 
-                    isTenantUser = false;
-                    adapter.setReadOnly(false);
-                    viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
-                    refreshTenantDisplayData();
-                    refreshAutoFillSources();
+                    @Override
+                    public void onTenantSelfService(@NonNull String roomId) {
+                        applyTenantSelfServiceMode(roomId, onInvoicesChanged);
+                    }
 
-                    new ViewModelProvider(this).get(RoomViewModel.class)
-                            .getRoomList().observe(this, list -> danhSachPhong = list);
-                })
-                .addOnFailureListener(e -> {
-                    viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
-                    refreshTenantDisplayData();
-                    refreshAutoFillSources();
+                    @Override
+                    public void onTenantMissingRoom() {
+                        Toast.makeText(InvoiceActivity.this, getString(R.string.missing_room_for_tenant),
+                                Toast.LENGTH_SHORT)
+                                .show();
+                        finish();
+                    }
 
-                    new ViewModelProvider(this).get(RoomViewModel.class)
-                            .getRoomList().observe(this, list -> danhSachPhong = list);
+                    @Override
+                    public void onOwnerOrStaff() {
+                        applyOwnerStaffMode(onInvoicesChanged);
+                    }
                 });
     }
 
+    private void applyLegacyMode(@NonNull InvoiceListConsumer onInvoicesChanged) {
+        viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
+        observeRoomList();
+    }
+
+    private void applyTenantSelfServiceMode(@NonNull String roomId, @NonNull InvoiceListConsumer onInvoicesChanged) {
+        isTenantUser = true;
+        adapter.setTenantMode(true);
+        if (btnSelectKhu != null)
+            btnSelectKhu.setVisibility(View.GONE);
+        if (fabThem != null)
+            fabThem.setVisibility(View.GONE);
+        if (fabChotKy != null)
+            fabChotKy.setVisibility(View.GONE);
+        if (etSearchInvoice != null)
+            etSearchInvoice.setHint(getString(R.string.search_by_room));
+
+        viewModel.getInvoicesByRoom(roomId).observe(this, onInvoicesChanged::accept);
+        refreshTenantDisplayData();
+        refreshAutoFillSources();
+    }
+
+    private void applyOwnerStaffMode(@NonNull InvoiceListConsumer onInvoicesChanged) {
+        isTenantUser = false;
+        adapter.setTenantMode(false);
+        viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
+        refreshTenantDisplayData();
+        refreshAutoFillSources();
+        observeRoomList();
+    }
+
+    private void observeRoomList() {
+        new ViewModelProvider(this).get(RoomViewModel.class)
+                .getRoomList().observe(this, list -> danhSachPhong = list);
+    }
+
     private void refreshAutoFillSources() {
-        scopedCollection("nguoi_thue")
-                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+        scopedCollection("contracts")
+                .whereEqualTo("contractStatus", "ACTIVE")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
@@ -412,7 +397,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         if (c == null)
                             continue;
                         c.setId(doc.getId());
-                        String roomId = c.getIdPhong();
+                        String roomId = c.getRoomId();
                         if (roomId == null || roomId.trim().isEmpty())
                             continue;
 
@@ -424,7 +409,7 @@ public class InvoiceActivity extends AppCompatActivity {
                     activeContractsByRoom = map;
                 });
 
-        scopedCollection("can_nha")
+        scopedCollection("houses")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
@@ -441,21 +426,22 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void refreshTenantDisplayData() {
-        scopedCollection("nguoi_thue")
-                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+        scopedCollection("contracts")
+                .whereEqualTo("contractStatus", "ACTIVE")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
                     Map<String, String> map = new HashMap<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
                         Tenant n = doc.toObject(Tenant.class);
-                        if (n == null || n.getIdPhong() == null || n.getIdPhong().trim().isEmpty())
+                        if (n == null || n.getRoomId() == null || n.getRoomId().trim().isEmpty())
                             continue;
-                        String name = n.getHoTen() != null ? n.getHoTen().trim() : "";
-                        String phone = n.getSoDienThoai() != null ? n.getSoDienThoai().trim() : "";
-                        String display = "Người thuê: " + (name.isEmpty() ? "Đang cập nhật" : name)
-                                + (phone.isEmpty() ? "" : " - ĐT: " + phone);
-                        map.put(n.getIdPhong(), display);
+                        String name = n.getFullName() != null ? n.getFullName().trim() : "";
+                        String phone = n.getPhoneNumber() != null ? n.getPhoneNumber().trim() : "";
+                        String display = getString(R.string.tenant_colon)
+                                + (name.isEmpty() ? getString(R.string.updating) : name)
+                                + (phone.isEmpty() ? "" : getString(R.string.phone_separator) + phone);
+                        map.put(n.getRoomId(), display);
                     }
                     tenantDisplayByRoom = map;
                     adapter.setTenantDisplayByRoom(tenantDisplayByRoom);
@@ -475,13 +461,14 @@ public class InvoiceActivity extends AppCompatActivity {
                     Long maxL = tdoc.getLong("maxInvoicesPerMonth");
                     int max = maxL != null ? maxL.intValue() : 200;
 
-                    db.collection("tenants").document(tenantId).collection("hoa_don")
-                            .whereEqualTo("thangNam", period)
+                    db.collection("tenants").document(tenantId).collection("invoices")
+                            .whereEqualTo("billingPeriod", period)
                             .get()
                             .addOnSuccessListener(qs -> {
                                 int current = qs != null ? qs.size() : 0;
                                 if (current + toCreate > max) {
-                                    Toast.makeText(this, "Đã vượt quota hoá đơn/tháng (" + max + ")", Toast.LENGTH_LONG)
+                                    Toast.makeText(this, getString(R.string.exceeded_invoice_quota, max),
+                                            Toast.LENGTH_LONG)
                                             .show();
                                     return;
                                 }
@@ -494,7 +481,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void showBillingCycleDialog() {
         if (danhSachPhong == null || danhSachPhong.isEmpty()) {
-            Toast.makeText(this, "Chưa có phòng để chốt kỳ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_rooms_to_settle_period), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -519,7 +506,7 @@ public class InvoiceActivity extends AppCompatActivity {
         List<String> houseIds = new ArrayList<>();
         List<String> houseLabels = new ArrayList<>();
         houseIds.add("");
-        houseLabels.add("Tất cả căn nhà");
+        houseLabels.add(getString(R.string.all_houses));
         LinkedHashMap<String, String> houseMap = new LinkedHashMap<>();
         for (Room room : danhSachPhong) {
             if (room == null)
@@ -527,9 +514,9 @@ public class InvoiceActivity extends AppCompatActivity {
             String id = room.getHouseId();
             if (id == null || id.trim().isEmpty() || houseMap.containsKey(id))
                 continue;
-            String name = room.getHouseTen();
+            String name = room.getHouseName();
             if (name == null || name.trim().isEmpty())
-                name = "Căn nhà";
+                name = getString(R.string.house);
             houseMap.put(id, name);
         }
         houseIds.addAll(houseMap.keySet());
@@ -549,16 +536,16 @@ public class InvoiceActivity extends AppCompatActivity {
                 House house = housesById.get(selectedHouseId);
                 if (house == null)
                     return;
-                if (house.getGiaDien() > 0)
-                    MoneyFormatter.setValue(etDonGiaDien, house.getGiaDien());
-                if (house.getGiaNuoc() > 0)
-                    MoneyFormatter.setValue(etDonGiaNuoc, house.getGiaNuoc());
-                if (house.getGiaRac() > 0)
-                    MoneyFormatter.setValue(etPhiRac, house.getGiaRac());
-                if (house.getGiaInternet() > 0)
-                    MoneyFormatter.setValue(etPhiWifi, house.getGiaInternet());
-                if (house.getGiaXe() > 0)
-                    MoneyFormatter.setValue(etPhiGuiXe, house.getGiaXe());
+                if (house.getElectricityPrice() > 0)
+                    MoneyFormatter.setValue(etDonGiaDien, house.getElectricityPrice());
+                if (house.getWaterPrice() > 0)
+                    MoneyFormatter.setValue(etDonGiaNuoc, house.getWaterPrice());
+                if (house.getTrashPrice() > 0)
+                    MoneyFormatter.setValue(etPhiRac, house.getTrashPrice());
+                if (house.getInternetPrice() > 0)
+                    MoneyFormatter.setValue(etPhiWifi, house.getInternetPrice());
+                if (house.getParkingPrice() > 0)
+                    MoneyFormatter.setValue(etPhiGuiXe, house.getParkingPrice());
             }
 
             @Override
@@ -567,20 +554,20 @@ public class InvoiceActivity extends AppCompatActivity {
         });
 
         new AlertDialog.Builder(this)
-                .setTitle("Chốt kỳ (tạo nháp hoá đơn)")
+                .setTitle(getString(R.string.settle_period_create_draft))
                 .setView(dialogView)
-                .setPositiveButton("Tạo", (d, w) -> {
+                .setPositiveButton(getString(R.string.create), (d, w) -> {
                     String period = etThangNam.getText().toString().trim();
                     if (toPeriodKey(period).isEmpty()) {
-                        Toast.makeText(this, "Tháng/năm không hợp lệ (MM/yyyy)", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_month_year_format), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    double donGiaDien = MoneyFormatter.getValue(etDonGiaDien);
-                    double donGiaNuoc = MoneyFormatter.getValue(etDonGiaNuoc);
-                    double phiRac = MoneyFormatter.getValue(etPhiRac);
-                    double phiWifi = MoneyFormatter.getValue(etPhiWifi);
-                    double phiGuiXe = MoneyFormatter.getValue(etPhiGuiXe);
+                    double electricUnitPrice = MoneyFormatter.getValue(etDonGiaDien);
+                    double waterUnitPrice = MoneyFormatter.getValue(etDonGiaNuoc);
+                    double trashFee = MoneyFormatter.getValue(etPhiRac);
+                    double wifiFee = MoneyFormatter.getValue(etPhiWifi);
+                    double parkingFee = MoneyFormatter.getValue(etPhiGuiXe);
                     String selectedHouseId = houseIds.get(spinnerHouse.getSelectedItemPosition());
 
                     loadActiveContractsByRoom(activeContractsByRoom -> loadMissingAutoTargets(period,
@@ -598,7 +585,8 @@ public class InvoiceActivity extends AppCompatActivity {
                                 }
 
                                 if (effectiveTargets.isEmpty()) {
-                                    Toast.makeText(this, "Không có hóa đơn mới cần tạo cho kỳ này", Toast.LENGTH_SHORT)
+                                    Toast.makeText(this, getString(R.string.no_new_invoices_for_period),
+                                            Toast.LENGTH_SHORT)
                                             .show();
                                     return;
                                 }
@@ -607,26 +595,26 @@ public class InvoiceActivity extends AppCompatActivity {
 
                                 ensureInvoiceQuotaThen(period, finalTargets.size(), () -> createDraftInvoicesForTargets(
                                         period,
-                                        donGiaDien,
-                                        donGiaNuoc,
-                                        phiRac,
-                                        phiWifi,
-                                        phiGuiXe,
+                                        electricUnitPrice,
+                                        waterUnitPrice,
+                                        trashFee,
+                                        wifiFee,
+                                        parkingFee,
                                         finalTargets));
                             }));
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
     private void showClosePeriodOptions() {
         String[] options = new String[] {
-                "Tạo nhanh tháng hiện tại",
-                "Mở cấu hình chốt kỳ"
+                getString(R.string.quick_create_current_month),
+                getString(R.string.open_settle_config)
         };
 
         new AlertDialog.Builder(this)
-                .setTitle("Chốt kỳ")
+                .setTitle(getString(R.string.settle_period))
                 .setItems(options, (d, which) -> {
                     if (which == 0) {
                         runQuickCloseForCurrentMonth();
@@ -634,13 +622,13 @@ public class InvoiceActivity extends AppCompatActivity {
                         showBillingCycleDialog();
                     }
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
     private void runQuickCloseForCurrentMonth() {
         if (danhSachPhong == null || danhSachPhong.isEmpty()) {
-            Toast.makeText(this, "Chưa có phòng để chốt kỳ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_rooms_to_settle_period), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -650,7 +638,7 @@ public class InvoiceActivity extends AppCompatActivity {
         loadActiveContractsByRoom(
                 activeContractsByRoom -> loadMissingAutoTargets(period, activeContractsByRoom, targets -> {
                     if (targets.isEmpty()) {
-                        Toast.makeText(this, "Không có hóa đơn mới cần tạo cho kỳ này", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.no_new_invoices_for_period), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -661,7 +649,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void createDraftInvoicesQuickForTargets(@NonNull String period,
             @NonNull List<AutoCreateTarget> targets) {
-        Toast.makeText(this, "Đang tạo nhanh hóa đơn tháng hiện tại...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.creating_quick_invoices), Toast.LENGTH_SHORT).show();
 
         final int[] pending = { targets.size() };
         final int[] created = { 0 };
@@ -673,46 +661,49 @@ public class InvoiceActivity extends AppCompatActivity {
             Tenant contract = target.contract;
             FeePreset fee = resolveDefaultFeePreset(room);
 
-            loadLatestMeterEnds(room.getId(), (elecEnd, waterEnd) -> {
-                Invoice hd = new Invoice();
-                hd.setIdPhong(room.getId());
-                hd.setSoPhong(room.getSoPhong());
-                hd.setThangNam(period);
+            InvoiceMeterHelper.loadLatestMeterEnds(this::scopedCollection, this::toPeriodKey, room.getId(),
+                    (elecEnd, waterEnd) -> {
+                        Invoice hd = new Invoice();
+                        hd.setRoomId(room.getId());
+                        hd.setRoomNumber(room.getRoomNumber());
+                        hd.setBillingPeriod(period);
 
-                if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
-                    hd.setIdTenant(contract.getId());
-                    long contractRent = contract.getGiaThue();
-                    hd.setGiaThue(contractRent > 0 ? contractRent : room.getGiaThue());
-                } else {
-                    hd.setGiaThue(room.getGiaThue());
-                }
+                        if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
+                            hd.setContractId(contract.getId());
+                            long contractRent = contract.getRentAmount();
+                            hd.setRentAmount(contractRent > 0 ? contractRent : room.getRentAmount());
+                        } else {
+                            hd.setRentAmount(room.getRentAmount());
+                        }
 
-                hd.setChiSoDienDau(elecEnd);
-                hd.setChiSoDienCuoi(elecEnd);
-                hd.setDonGiaDien(fee.donGiaDien);
-                hd.setChiSoNuocDau(waterEnd);
-                hd.setChiSoNuocCuoi(waterEnd);
-                hd.setDonGiaNuoc(fee.donGiaNuoc);
-                hd.setPhiRac(fee.phiRac);
-                hd.setPhiWifi(fee.phiWifi);
-                hd.setPhiGuiXe(fee.phiGuiXe);
-                hd.setTrangThai(InvoiceStatus.UNREPORTED);
+                        hd.setElectricStartReading(elecEnd);
+                        hd.setElectricEndReading(elecEnd);
+                        hd.setElectricUnitPrice(fee.electricUnitPrice);
+                        hd.setWaterStartReading(waterEnd);
+                        hd.setWaterEndReading(waterEnd);
+                        hd.setWaterUnitPrice(fee.waterUnitPrice);
+                        hd.setTrashFee(fee.trashFee);
+                        hd.setWifiFee(fee.wifiFee);
+                        hd.setParkingFee(fee.parkingFee);
+                        hd.setStatus(InvoiceStatus.UNREPORTED);
 
-                viewModel.addInvoiceUnique(hd,
-                        () -> {
-                            created[0]++;
-                            saveMeterReadingFromInvoice(room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
-                            onAutoCreateDone(pending, created, duplicated, failed);
-                        },
-                        () -> {
-                            duplicated[0]++;
-                            onAutoCreateDone(pending, created, duplicated, failed);
-                        },
-                        () -> {
-                            failed[0]++;
-                            onAutoCreateDone(pending, created, duplicated, failed);
-                        });
-            });
+                        viewModel.addInvoiceUnique(hd,
+                                () -> {
+                                    created[0]++;
+                                    InvoiceMeterHelper.saveMeterReadingFromInvoice(this::scopedCollection,
+                                            this::toPeriodKey,
+                                            room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
+                                    onAutoCreateDone(pending, created, duplicated, failed);
+                                },
+                                () -> {
+                                    duplicated[0]++;
+                                    onAutoCreateDone(pending, created, duplicated, failed);
+                                },
+                                () -> {
+                                    failed[0]++;
+                                    onAutoCreateDone(pending, created, duplicated, failed);
+                                });
+                    });
         }
     }
 
@@ -725,8 +716,8 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void loadActiveContractsByRoom(@NonNull ActiveContractsCallback callback) {
-        scopedCollection("nguoi_thue")
-                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+        scopedCollection("contracts")
+                .whereEqualTo("contractStatus", "ACTIVE")
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     Map<String, Tenant> map = new HashMap<>();
@@ -736,7 +727,7 @@ public class InvoiceActivity extends AppCompatActivity {
                             continue;
                         c.setId(doc.getId());
 
-                        String roomId = c.getIdPhong();
+                        String roomId = c.getRoomId();
                         if (roomId == null || roomId.trim().isEmpty())
                             continue;
 
@@ -761,13 +752,13 @@ public class InvoiceActivity extends AppCompatActivity {
     private void loadMissingAutoTargets(@NonNull String period,
             @NonNull Map<String, Tenant> activeContractsByRoom,
             @NonNull AutoTargetsCallback callback) {
-        scopedCollection("hoa_don")
-                .whereEqualTo("thangNam", period)
+        scopedCollection("invoices")
+                .whereEqualTo("billingPeriod", period)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     Set<String> existingRoomIds = new HashSet<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        String roomId = doc.getString("idPhong");
+                        String roomId = doc.getString("roomId");
                         if (roomId != null && !roomId.trim().isEmpty())
                             existingRoomIds.add(roomId);
                     }
@@ -779,7 +770,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
                         String roomId = room.getId();
                         Tenant contract = activeContractsByRoom.get(roomId);
-                        boolean isRented = RoomStatus.RENTED.equals(room.getTrangThai()) || contract != null;
+                        boolean isRented = RoomStatus.RENTED.equals(room.getStatus()) || contract != null;
                         if (!isRented)
                             continue;
 
@@ -795,13 +786,13 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void createDraftInvoicesForTargets(@NonNull String period,
-            double donGiaDien,
-            double donGiaNuoc,
-            double phiRac,
-            double phiWifi,
-            double phiGuiXe,
+            double electricUnitPrice,
+            double waterUnitPrice,
+            double trashFee,
+            double wifiFee,
+            double parkingFee,
             @NonNull List<AutoCreateTarget> targets) {
-        Toast.makeText(this, "Đang tạo hoá đơn nháp...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.creating_draft_invoices_short), Toast.LENGTH_SHORT).show();
 
         final int[] pending = { targets.size() };
         final int[] created = { 0 };
@@ -812,42 +803,45 @@ public class InvoiceActivity extends AppCompatActivity {
             Room room = target.room;
             Tenant contract = target.contract;
 
-            loadLatestMeterEnds(room.getId(), (elecEnd, waterEnd) -> {
-                Invoice hd = new Invoice();
-                hd.setIdPhong(room.getId());
-                hd.setSoPhong(room.getSoPhong());
-                hd.setGiaThue(room.getGiaThue());
-                hd.setThangNam(period);
-                if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
-                    hd.setIdTenant(contract.getId());
-                }
+            InvoiceMeterHelper.loadLatestMeterEnds(this::scopedCollection, this::toPeriodKey, room.getId(),
+                    (elecEnd, waterEnd) -> {
+                        Invoice hd = new Invoice();
+                        hd.setRoomId(room.getId());
+                        hd.setRoomNumber(room.getRoomNumber());
+                        hd.setRentAmount(room.getRentAmount());
+                        hd.setBillingPeriod(period);
+                        if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
+                            hd.setContractId(contract.getId());
+                        }
 
-                hd.setChiSoDienDau(elecEnd);
-                hd.setChiSoDienCuoi(elecEnd);
-                hd.setDonGiaDien(donGiaDien);
-                hd.setChiSoNuocDau(waterEnd);
-                hd.setChiSoNuocCuoi(waterEnd);
-                hd.setDonGiaNuoc(donGiaNuoc);
-                hd.setPhiRac(phiRac);
-                hd.setPhiWifi(phiWifi);
-                hd.setPhiGuiXe(phiGuiXe);
-                hd.setTrangThai(InvoiceStatus.UNREPORTED);
+                        hd.setElectricStartReading(elecEnd);
+                        hd.setElectricEndReading(elecEnd);
+                        hd.setElectricUnitPrice(electricUnitPrice);
+                        hd.setWaterStartReading(waterEnd);
+                        hd.setWaterEndReading(waterEnd);
+                        hd.setWaterUnitPrice(waterUnitPrice);
+                        hd.setTrashFee(trashFee);
+                        hd.setWifiFee(wifiFee);
+                        hd.setParkingFee(parkingFee);
+                        hd.setStatus(InvoiceStatus.UNREPORTED);
 
-                viewModel.addInvoiceUnique(hd,
-                        () -> {
-                            created[0]++;
-                            saveMeterReadingFromInvoice(room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
-                            onAutoCreateDone(pending, created, duplicated, failed);
-                        },
-                        () -> {
-                            duplicated[0]++;
-                            onAutoCreateDone(pending, created, duplicated, failed);
-                        },
-                        () -> {
-                            failed[0]++;
-                            onAutoCreateDone(pending, created, duplicated, failed);
-                        });
-            });
+                        viewModel.addInvoiceUnique(hd,
+                                () -> {
+                                    created[0]++;
+                                    InvoiceMeterHelper.saveMeterReadingFromInvoice(this::scopedCollection,
+                                            this::toPeriodKey,
+                                            room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
+                                    onAutoCreateDone(pending, created, duplicated, failed);
+                                },
+                                () -> {
+                                    duplicated[0]++;
+                                    onAutoCreateDone(pending, created, duplicated, failed);
+                                },
+                                () -> {
+                                    failed[0]++;
+                                    onAutoCreateDone(pending, created, duplicated, failed);
+                                });
+                    });
         }
     }
 
@@ -856,285 +850,115 @@ public class InvoiceActivity extends AppCompatActivity {
         if (pending[0] > 0)
             return;
 
-        String summary = "Hoàn tất tạo nháp: " + created[0] + " mới"
-                + (duplicated[0] > 0 ? (", " + duplicated[0] + " trùng") : "")
-                + (failed[0] > 0 ? (", " + failed[0] + " lỗi") : "");
-        Toast.makeText(this, summary, Toast.LENGTH_LONG).show();
+        StringBuilder summary = new StringBuilder(getString(R.string.draft_complete_summary, created[0]));
+        if (duplicated[0] > 0) {
+            summary.append(getString(R.string.draft_complete_duplicate_fragment, duplicated[0]));
+        }
+        if (failed[0] > 0) {
+            summary.append(getString(R.string.draft_complete_failed_fragment, failed[0]));
+        }
+        Toast.makeText(this, summary.toString(), Toast.LENGTH_LONG).show();
 
     }
 
-    private void showFeeNotificationDialog(Invoice hoaDon) {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_fee_notification, null);
-
-        TextView tvPhong = dialogView.findViewById(R.id.tvPhong);
-        TextView tvTenant = dialogView.findViewById(R.id.tvTenant);
-        EditText etChiSoDienCu = dialogView.findViewById(R.id.etChiSoDienCu);
-        EditText etChiSoDienMoi = dialogView.findViewById(R.id.etChiSoDienMoi);
-        MaterialButton btnXemInvoice = dialogView.findViewById(R.id.btnXemInvoice);
-        ImageView btnClose = dialogView.findViewById(R.id.btnClose);
-
-        tvPhong.setText(hoaDon.getSoPhong() != null ? hoaDon.getSoPhong() : "???");
-        tvTenant.setText("Đang cập nhật");
-        etChiSoDienCu.setText(String.valueOf((int) hoaDon.getChiSoDienDau()));
-
-        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(
-                this);
-        bottomSheet.setContentView(dialogView);
-
-        btnClose.setOnClickListener(v -> bottomSheet.dismiss());
-
-        btnXemInvoice.setOnClickListener(v -> {
-            String chiSoMoiStr = etChiSoDienMoi.getText().toString().trim();
-            if (chiSoMoiStr.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập chi số điện mới", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            try {
-                double chiSoMoi = Double.parseDouble(chiSoMoiStr);
-                double chiSoCu = hoaDon.getChiSoDienDau();
-
-                if (chiSoMoi < chiSoCu) {
-                    Toast.makeText(this, "Chi số điện mới phải >= chi số cũ", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Update hóa đơn với chi số mới
-                hoaDon.setChiSoDienCuoi(chiSoMoi);
-
-                // Đổi trạng thái sang "Đã báo"
-                hoaDon.setTrangThai(InvoiceStatus.REPORTED);
-
-                // Lưu và hiển thị chi tiết
-                viewModel.updateInvoice(hoaDon,
-                        () -> runOnUiThread(() -> {
-                            bottomSheet.dismiss();
-                            showInvoiceExportDialog(hoaDon);
-                        }),
-                        () -> runOnUiThread(
-                                () -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
-
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, "Chi số không hợp lệ", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        bottomSheet.show();
+    private void showFeeNotificationDialog(Invoice invoice) {
+        InvoiceFeeNotificationHelper.showFeeNotificationDialog(
+                this,
+                invoice,
+                viewModel,
+                this::showInvoiceExportDialog);
     }
 
     private void showInvoiceExportDialog(Invoice h) {
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_export_invoice, null);
-
-        TextView tvTitle = view.findViewById(R.id.tvBillTitle);
-        TextView tvChiTiet = view.findViewById(R.id.tvBillDetails);
-        TextView tvTong = view.findViewById(R.id.tvBillTotal);
-
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-
-        tvTitle.setText("HÓA ĐƠN PHÒNG " + h.getSoPhong());
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Tháng: ").append(h.getThangNam()).append("\n\n");
-        sb.append("- Tiền phòng: ").append(fmt.format(h.getGiaThue())).append("\n");
-
-        double tienDien = (h.getChiSoDienCuoi() - h.getChiSoDienDau()) * h.getDonGiaDien();
-        sb.append("- Tiền điện: ").append(fmt.format(tienDien))
-                .append(" (").append((int) h.getChiSoDienDau()).append(" -> ").append((int) h.getChiSoDienCuoi())
-                .append(")\n");
-
-        double tienNuoc = (h.getChiSoNuocCuoi() - h.getChiSoNuocDau()) * h.getDonGiaNuoc();
-        sb.append("- Tiền nước: ").append(fmt.format(tienNuoc))
-                .append(" (").append((int) h.getChiSoNuocDau()).append(" -> ").append((int) h.getChiSoNuocCuoi())
-                .append(")\n");
-
-        if (h.getPhiRac() > 0)
-            sb.append("- Phí rác: ").append(fmt.format(h.getPhiRac())).append("\n");
-        if (h.getPhiWifi() > 0)
-            sb.append("- Phí Wifi: ").append(fmt.format(h.getPhiWifi())).append("\n");
-        if (h.getPhiGuiXe() > 0)
-            sb.append("- Phí gửi xe: ").append(fmt.format(h.getPhiGuiXe())).append("\n");
-
-        tvChiTiet.setText(sb + "\n\n(Đang tải thanh toán...) ");
-        tvTong.setText("TỔNG CỘNG: " + fmt.format(h.getTongTien()));
-
-        paymentRepository.listByInvoice(h.getId()).observe(this, payments -> {
-            if (payments == null)
-                return;
-            double paid = 0;
-            for (Payment p : payments) {
-                paid += p.getAmount();
-            }
-            double remaining = Math.max(0, h.getTongTien() - paid);
-            String extra = "\n\n── Thanh toán ──\n" +
-                    "Đã thu: " + fmt.format(paid) + "\n" +
-                    "Còn lại: " + fmt.format(remaining);
-            tvChiTiet.setText(sb + extra);
-        });
-
-        AlertDialog.Builder b = new AlertDialog.Builder(this)
-                .setView(view)
-                .setPositiveButton("Đóng", null)
-                .setNegativeButton("Lịch sử thanh toán", (d, w) -> {
-                    android.content.Intent intent = new android.content.Intent(InvoiceActivity.this,
-                            PaymentHistoryActivity.class);
-                    intent.putExtra("INVOICE_ID", h.getId());
-                    intent.putExtra("INVOICE_TOTAL", h.getTongTien());
-                    intent.putExtra("ROOM_ID", h.getIdPhong());
-                    intent.putExtra("TITLE", "Thanh toán • Phòng " + h.getSoPhong() + " • " + h.getThangNam());
-                    startActivity(intent);
-                });
-
-        if (isTenantUser) {
-            b.setNeutralButton("Xác nhận công tơ", (d, w) -> showTenantConfirmMeterDialog(h));
-        } else {
-            b.setNeutralButton("Chụp màn hình",
-                    (d, w) -> Toast.makeText(this, "Hãy chụp màn hình để gửi hóa đơn", Toast.LENGTH_LONG).show());
-        }
-
-        b.show();
+        InvoiceExportDialogHelper.showInvoiceExportDialog(
+                this,
+                this,
+                h,
+                paymentRepository,
+                isTenantUser,
+                this::openPaymentHistory,
+                this::showTenantConfirmMeterDialog);
     }
 
     private void showTenantConfirmMeterDialog(Invoice h) {
         if (!isTenantUser)
             return;
-        if (h == null || h.getIdPhong() == null)
+        if (h == null)
             return;
 
-        String periodKey = toPeriodKey(h.getThangNam());
-        if (periodKey.isEmpty()) {
-            Toast.makeText(this, "Kỳ không hợp lệ", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
-        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
-        layout.setPadding(50, 30, 50, 10);
-
-        android.widget.RadioGroup rg = new android.widget.RadioGroup(this);
-        android.widget.RadioButton rbOk = new android.widget.RadioButton(this);
-        rbOk.setId(View.generateViewId());
-        rbOk.setText("Đồng ý chỉ số");
-        android.widget.RadioButton rbNo = new android.widget.RadioButton(this);
-        rbNo.setId(View.generateViewId());
-        rbNo.setText("Không đồng ý");
-        rg.addView(rbOk);
-        rg.addView(rbNo);
-        rg.check(rbOk.getId());
-        layout.addView(rg);
-
-        EditText etNote = new EditText(this);
-        etNote.setHint("Ghi chú (tuỳ chọn)");
-        layout.addView(etNote);
-
-        new AlertDialog.Builder(this)
-                .setTitle("Xác nhận chốt số")
-                .setView(layout)
-                .setNegativeButton("Hủy", null)
-                .setPositiveButton("Gửi", (d, w) -> {
-                    String status = (rg.getCheckedRadioButtonId() == rbNo.getId()) ? "DISPUTED" : "APPROVED";
-                    String note = etNote.getText().toString().trim();
-
-                    String docId = h.getIdPhong() + "_" + periodKey;
-                    java.util.Map<String, Object> update = new java.util.HashMap<>();
-                    update.put("tenantConfirmStatus", status);
-                    update.put("tenantConfirmNote", note);
-                    update.put("tenantConfirmAt", com.google.firebase.Timestamp.now());
-
-                    scopedCollection("meterReadings").document(docId)
-                            .update(update)
-                            .addOnSuccessListener(
-                                    v -> Toast.makeText(this, "Đã gửi xác nhận", Toast.LENGTH_SHORT).show())
-                            .addOnFailureListener(e -> Toast.makeText(this, "Gửi thất bại", Toast.LENGTH_SHORT).show());
-                })
-                .show();
+        InvoiceExportDialogHelper.showTenantConfirmMeterDialog(
+                this,
+                h,
+                this::scopedCollection);
     }
 
     private void showAddInvoiceDialog() {
         if (danhSachPhong.isEmpty()) {
-            Toast.makeText(this, "Vui lòng thêm phòng trước", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.please_add_rooms_first), Toast.LENGTH_SHORT).show();
             return;
         }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_invoice, null);
         Spinner spinnerPhong = dialogView.findViewById(R.id.spinnerPhong);
-        EditText etThangNam = dialogView.findViewById(R.id.etThangNam);
-        EditText etDienDau = dialogView.findViewById(R.id.etDienDau);
-        EditText etDienCuoi = dialogView.findViewById(R.id.etDienCuoi);
-        EditText etDonGiaDien = dialogView.findViewById(R.id.etDonGiaDien);
-        EditText etNuocDau = dialogView.findViewById(R.id.etNuocDau);
-        EditText etNuocCuoi = dialogView.findViewById(R.id.etNuocCuoi);
-        EditText etDonGiaNuoc = dialogView.findViewById(R.id.etDonGiaNuoc);
-        EditText etPhiRac = dialogView.findViewById(R.id.etPhiRac);
-        EditText etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
-        EditText etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
+        InvoiceDialogSubmitHelper.FormRefs form = InvoiceDialogSubmitHelper.bind(dialogView);
         TextView tvEstimatedTotal = dialogView.findViewById(R.id.tvEstimatedTotal);
 
-        MoneyFormatter.applyTo(etDonGiaDien);
-        MoneyFormatter.applyTo(etDonGiaNuoc);
-        MoneyFormatter.applyTo(etPhiRac);
-        MoneyFormatter.applyTo(etPhiWifi);
-        MoneyFormatter.applyTo(etPhiGuiXe);
-        setupEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+        form.applyMoneyFormatting();
+        InvoiceDialogUiHelper.setupEstimatedTotal(form, tvEstimatedTotal,
                 () -> {
                     int idx = spinnerPhong.getSelectedItemPosition();
                     if (idx < 0 || idx >= danhSachPhong.size())
                         return 0.0;
                     Room room = danhSachPhong.get(idx);
                     Tenant c = activeContractsByRoom.get(room.getId());
-                    if (c != null && c.getGiaThue() > 0)
-                        return (double) c.getGiaThue();
-                    return room.getGiaThue();
+                    if (c != null && c.getRentAmount() > 0)
+                        return (double) c.getRentAmount();
+                    return room.getRentAmount();
                 });
 
-        String[] phongNames = danhSachPhong.stream()
-                .map(p -> "Phòng " + p.getSoPhong()).toArray(String[]::new);
-        ArrayAdapter<String> phongAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, phongNames);
-        phongAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerPhong.setAdapter(phongAdapter);
-        etThangNam.setText(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
+        InvoiceDialogUiHelper.bindRoomSpinner(this, spinnerPhong, danhSachPhong);
+        form.etThangNam.setText(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
 
         final double[] lastElecEnd = { 0 };
         final double[] lastWaterEnd = { 0 };
         spinnerPhong.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Room phongChon = danhSachPhong.get(position);
-                etDienDau.setEnabled(false);
-                etDienDau.setFocusable(false);
-                etDienDau.setAlpha(0.75f);
-                etNuocDau.setEnabled(false);
-                etNuocDau.setFocusable(false);
-                etNuocDau.setAlpha(0.75f);
+                Room selectedRoom = danhSachPhong.get(position);
+                InvoiceDialogUiHelper.setMeterStartReadOnly(form);
 
-                suggestNextPeriodForRoom(phongChon.getId(), suggested -> {
-                    if (!suggested.isEmpty()) {
-                        etThangNam.setText(suggested);
-                    }
-                });
+                InvoicePeriodSuggestionHelper.suggestNextPeriodForRoom(InvoiceActivity.this::scopedCollection,
+                        InvoiceActivity.this::toPeriodKey,
+                        selectedRoom.getId(), suggested -> {
+                            if (!suggested.isEmpty()) {
+                                form.etThangNam.setText(suggested);
+                            }
+                        });
 
-                loadLatestMeterEnds(phongChon.getId(), (elecEnd, waterEnd) -> {
-                    lastElecEnd[0] = elecEnd;
-                    lastWaterEnd[0] = waterEnd;
-                    etDienDau.setText(formatDouble(elecEnd));
-                    etNuocDau.setText(formatDouble(waterEnd));
+                InvoiceMeterHelper.loadLatestMeterEnds(InvoiceActivity.this::scopedCollection,
+                        InvoiceActivity.this::toPeriodKey,
+                        selectedRoom.getId(),
+                        (elecEnd, waterEnd) -> {
+                            lastElecEnd[0] = elecEnd;
+                            lastWaterEnd[0] = waterEnd;
+                            form.etDienDau.setText(InvoiceFormValueHelper.formatDouble(elecEnd));
+                            form.etNuocDau.setText(InvoiceFormValueHelper.formatDouble(waterEnd));
 
-                    if (etDienCuoi.getText().toString().trim().isEmpty()) {
-                        etDienCuoi.setText(formatDouble(elecEnd));
-                    }
-                    if (etNuocCuoi.getText().toString().trim().isEmpty()) {
-                        etNuocCuoi.setText(formatDouble(waterEnd));
-                    }
-                });
+                            if (form.etDienCuoi.getText().toString().trim().isEmpty()) {
+                                form.etDienCuoi.setText(InvoiceFormValueHelper.formatDouble(elecEnd));
+                            }
+                            if (form.etNuocCuoi.getText().toString().trim().isEmpty()) {
+                                form.etNuocCuoi.setText(InvoiceFormValueHelper.formatDouble(waterEnd));
+                            }
+                        });
 
-                applyDefaultFeeFromHouse(phongChon, etDonGiaDien, etDonGiaNuoc, etPhiRac, etPhiWifi, etPhiGuiXe);
-                updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                        etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+                applyDefaultFeeFromHouse(selectedRoom, form.etDonGiaDien, form.etDonGiaNuoc, form.etPhiRac,
+                        form.etPhiWifi, form.etPhiGuiXe);
+                InvoiceDialogUiHelper.refreshEstimatedTotal(form, tvEstimatedTotal,
                         () -> {
-                            Tenant c = activeContractsByRoom.get(phongChon.getId());
-                            if (c != null && c.getGiaThue() > 0)
-                                return (double) c.getGiaThue();
-                            return phongChon.getGiaThue();
+                            Tenant c = activeContractsByRoom.get(selectedRoom.getId());
+                            if (c != null && c.getRentAmount() > 0)
+                                return (double) c.getRentAmount();
+                            return selectedRoom.getRentAmount();
                         });
             }
 
@@ -1144,218 +968,124 @@ public class InvoiceActivity extends AppCompatActivity {
         });
 
         new AlertDialog.Builder(this)
-                .setTitle("Tạo hóa đơn")
+                .setTitle(getString(R.string.create_invoice))
                 .setView(dialogView)
-                .setPositiveButton("Tạo", (d, w) -> {
+                .setPositiveButton(getString(R.string.create), (d, w) -> {
                     try {
                         int idx = spinnerPhong.getSelectedItemPosition();
                         if (idx < 0 || idx >= danhSachPhong.size()) {
-                            Toast.makeText(this, "Vui lòng chọn phòng", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.please_select_room), Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        Room phongChon = danhSachPhong.get(idx);
-                        Invoice hd = new Invoice();
-                        hd.setIdPhong(phongChon.getId());
-                        hd.setSoPhong(phongChon.getSoPhong());
-                        Tenant activeContract = activeContractsByRoom.get(phongChon.getId());
-                        if (activeContract != null && activeContract.getId() != null
-                                && !activeContract.getId().trim().isEmpty()) {
-                            hd.setIdTenant(activeContract.getId());
-                            long contractRent = activeContract.getGiaThue();
-                            if (contractRent > 0) {
-                                hd.setGiaThue(contractRent);
-                            } else {
-                                hd.setGiaThue(phongChon.getGiaThue());
-                            }
-                        } else {
-                            hd.setGiaThue(phongChon.getGiaThue());
-                        }
-                        hd.setThangNam(etThangNam.getText().toString().trim());
+                        Room selectedRoom = danhSachPhong.get(idx);
+                        Tenant activeContract = activeContractsByRoom.get(selectedRoom.getId());
+                        Invoice hd = InvoiceDialogSubmitHelper.buildNewInvoice(
+                                selectedRoom,
+                                activeContract,
+                                form,
+                                lastElecEnd[0],
+                                lastWaterEnd[0],
+                                getString(R.string.meter_start_must_gte_previous_end),
+                                getString(R.string.meter_end_less_than_start));
 
-                        double dienDau = parseDouble(etDienDau);
-                        double dienCuoi = parseDouble(etDienCuoi);
-                        double nuocDau = parseDouble(etNuocDau);
-                        double nuocCuoi = parseDouble(etNuocCuoi);
-
-                        if (dienDau < lastElecEnd[0] || nuocDau < lastWaterEnd[0]) {
-                            Toast.makeText(this, "Chỉ số đầu kỳ phải >= chỉ số cuối kỳ trước", Toast.LENGTH_SHORT)
-                                    .show();
-                            return;
-                        }
-
-                        if (dienCuoi < dienDau || nuocCuoi < nuocDau) {
-                            Toast.makeText(this, "Chỉ số cuối không được nhỏ hơn chỉ số đầu", Toast.LENGTH_SHORT)
-                                    .show();
-                            return;
-                        }
-
-                        hd.setChiSoDienDau(dienDau);
-                        hd.setChiSoDienCuoi(dienCuoi);
-                        hd.setDonGiaDien(MoneyFormatter.getValue(etDonGiaDien));
-                        hd.setChiSoNuocDau(nuocDau);
-                        hd.setChiSoNuocCuoi(nuocCuoi);
-                        hd.setDonGiaNuoc(MoneyFormatter.getValue(etDonGiaNuoc));
-                        hd.setPhiRac(MoneyFormatter.getValue(etPhiRac));
-                        hd.setPhiWifi(MoneyFormatter.getValue(etPhiWifi));
-                        hd.setPhiGuiXe(MoneyFormatter.getValue(etPhiGuiXe));
-                        hd.setDonGiaNuoc(parseDouble(etDonGiaNuoc));
-                        hd.setPhiRac(parseDouble(etPhiRac));
-                        hd.setPhiWifi(parseDouble(etPhiWifi));
-                        hd.setPhiGuiXe(parseDouble(etPhiGuiXe));
-                        hd.setTrangThai(InvoiceStatus.UNREPORTED);
                         viewModel.addInvoiceUnique(hd,
                                 () -> {
-                                    saveMeterReadingFromInvoice(phongChon.getId(), hd.getThangNam(), dienDau, dienCuoi,
-                                            nuocDau, nuocCuoi);
+                                    InvoiceMeterHelper.saveMeterReadingFromInvoice(this::scopedCollection,
+                                            this::toPeriodKey,
+                                            selectedRoom.getId(), hd.getBillingPeriod(), hd.getElectricStartReading(),
+                                            hd.getElectricEndReading(),
+                                            hd.getWaterStartReading(), hd.getWaterEndReading());
                                     runOnUiThread(() -> Toast
-                                            .makeText(this, "Tạo hóa đơn thành công!", Toast.LENGTH_SHORT).show());
+                                            .makeText(this, getString(R.string.invoice_created_success),
+                                                    Toast.LENGTH_SHORT)
+                                            .show());
                                 },
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(this, "Hóa đơn kỳ này đã tồn tại", Toast.LENGTH_SHORT).show()),
+                                        .makeText(this, getString(R.string.invoice_period_exists), Toast.LENGTH_SHORT)
+                                        .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(this, "Thất bại — kiểm tra Firebase", Toast.LENGTH_LONG).show()));
+                                        .makeText(this, getString(R.string.failed_check_firebase), Toast.LENGTH_LONG)
+                                        .show()));
+                    } catch (InvoiceDialogSubmitHelper.ValidationException e) {
+                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null).show();
+                .setNegativeButton(getString(R.string.cancel), null).show();
     }
 
-    private double parseDouble(EditText et) {
-        String s = et.getText().toString().trim();
-        return s.isEmpty() ? 0 : Double.parseDouble(s);
-    }
-
-    private void showEditInvoiceDialog(Invoice hoaDon) {
+    private void showEditInvoiceDialog(Invoice invoice) {
         if (danhSachPhong.isEmpty()) {
-            Toast.makeText(this, "Không tải được danh sách phòng", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.failed_load_rooms), Toast.LENGTH_SHORT).show();
             return;
         }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_invoice, null);
         Spinner spinnerPhong = dialogView.findViewById(R.id.spinnerPhong);
-        EditText etThangNam = dialogView.findViewById(R.id.etThangNam);
-        EditText etDienDau = dialogView.findViewById(R.id.etDienDau);
-        EditText etDienCuoi = dialogView.findViewById(R.id.etDienCuoi);
-        EditText etDonGiaDien = dialogView.findViewById(R.id.etDonGiaDien);
-        EditText etNuocDau = dialogView.findViewById(R.id.etNuocDau);
-        EditText etNuocCuoi = dialogView.findViewById(R.id.etNuocCuoi);
-        EditText etDonGiaNuoc = dialogView.findViewById(R.id.etDonGiaNuoc);
-        EditText etPhiRac = dialogView.findViewById(R.id.etPhiRac);
-        EditText etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
-        EditText etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
+        InvoiceDialogSubmitHelper.FormRefs form = InvoiceDialogSubmitHelper.bind(dialogView);
         TextView tvEstimatedTotal = dialogView.findViewById(R.id.tvEstimatedTotal);
 
-        MoneyFormatter.applyTo(etDonGiaDien);
-        MoneyFormatter.applyTo(etDonGiaNuoc);
-        MoneyFormatter.applyTo(etPhiRac);
-        MoneyFormatter.applyTo(etPhiWifi);
-        MoneyFormatter.applyTo(etPhiGuiXe);
-        setupEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+        form.applyMoneyFormatting();
+        InvoiceDialogUiHelper.setupEstimatedTotal(form, tvEstimatedTotal,
                 () -> {
                     int idx = spinnerPhong.getSelectedItemPosition();
                     if (idx < 0 || idx >= danhSachPhong.size())
-                        return hoaDon.getGiaThue();
+                        return invoice.getRentAmount();
                     Room room = danhSachPhong.get(idx);
                     Tenant c = activeContractsByRoom.get(room.getId());
-                    if (c != null && c.getGiaThue() > 0)
-                        return (double) c.getGiaThue();
-                    return room.getGiaThue();
+                    if (c != null && c.getRentAmount() > 0)
+                        return (double) c.getRentAmount();
+                    return room.getRentAmount();
                 });
 
-        String[] phongNames = danhSachPhong.stream()
-                .map(p -> "Phòng " + p.getSoPhong()).toArray(String[]::new);
-        ArrayAdapter<String> phongAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, phongNames);
-        phongAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerPhong.setAdapter(phongAdapter);
+        InvoiceDialogUiHelper.bindRoomSpinner(this, spinnerPhong, danhSachPhong);
 
-        for (int i = 0; i < danhSachPhong.size(); i++) {
-            if (danhSachPhong.get(i).getId().equals(hoaDon.getIdPhong())) {
-                spinnerPhong.setSelection(i);
-                break;
-            }
+        int roomIndex = InvoiceDialogUiHelper.findRoomIndexById(danhSachPhong, invoice.getRoomId());
+        if (roomIndex >= 0) {
+            spinnerPhong.setSelection(roomIndex);
         }
-        etThangNam.setText(hoaDon.getThangNam());
-        etDienDau.setText(formatDouble(hoaDon.getChiSoDienDau()));
-        etDienCuoi.setText(formatDouble(hoaDon.getChiSoDienCuoi()));
-        etDonGiaDien.setText(formatDouble(hoaDon.getDonGiaDien()));
-        etNuocDau.setText(formatDouble(hoaDon.getChiSoNuocDau()));
-        etNuocCuoi.setText(formatDouble(hoaDon.getChiSoNuocCuoi()));
-        etDonGiaNuoc.setText(formatDouble(hoaDon.getDonGiaNuoc()));
-        etPhiRac.setText(formatDouble(hoaDon.getPhiRac()));
-        etPhiWifi.setText(formatDouble(hoaDon.getPhiWifi()));
-        etPhiGuiXe.setText(formatDouble(hoaDon.getPhiGuiXe()));
+        InvoiceDialogUiHelper.fillFormFromInvoice(form, invoice);
 
-        spinnerPhong.setEnabled(false);
-        spinnerPhong.setAlpha(0.6f);
-        etThangNam.setEnabled(false);
-        etThangNam.setAlpha(0.6f);
-        etDienDau.setEnabled(false);
-        etDienDau.setFocusable(false);
-        etDienDau.setAlpha(0.75f);
-        etNuocDau.setEnabled(false);
-        etNuocDau.setFocusable(false);
-        etNuocDau.setAlpha(0.75f);
-        updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal,
+        InvoiceDialogUiHelper.lockIdentityAndMeterStartFields(spinnerPhong, form);
+        InvoiceDialogUiHelper.refreshEstimatedTotal(form, tvEstimatedTotal,
                 () -> {
-                    Tenant c = activeContractsByRoom.get(hoaDon.getIdPhong());
-                    if (c != null && c.getGiaThue() > 0)
-                        return (double) c.getGiaThue();
-                    return hoaDon.getGiaThue();
+                    Tenant c = activeContractsByRoom.get(invoice.getRoomId());
+                    if (c != null && c.getRentAmount() > 0)
+                        return (double) c.getRentAmount();
+                    return invoice.getRentAmount();
                 });
 
         new AlertDialog.Builder(this)
-                .setTitle("Chỉnh sửa hóa đơn tháng " + hoaDon.getThangNam())
+                .setTitle(getString(R.string.edit_invoice_month, invoice.getBillingPeriod()))
                 .setView(dialogView)
-                .setPositiveButton("Cập nhật", (d, w) -> {
+                .setPositiveButton(getString(R.string.update), (d, w) -> {
                     try {
                         int idx = spinnerPhong.getSelectedItemPosition();
                         if (idx < 0 || idx >= danhSachPhong.size()) {
-                            Toast.makeText(this, "Vui lòng chọn phòng", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.please_select_room), Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        Room phongChon = danhSachPhong.get(idx);
-                        Invoice updated = new Invoice();
-                        updated.setId(hoaDon.getId());
-                        updated.setIdTenant(hoaDon.getIdTenant());
-                        updated.setIdPhong(phongChon.getId());
-                        updated.setSoPhong(phongChon.getSoPhong());
-                        updated.setGiaThue(phongChon.getGiaThue());
-                        updated.setThangNam(etThangNam.getText().toString().trim());
-
-                        double dienDau = parseDouble(etDienDau);
-                        double dienCuoi = parseDouble(etDienCuoi);
-                        double nuocDau = parseDouble(etNuocDau);
-                        double nuocCuoi = parseDouble(etNuocCuoi);
-
-                        if (dienCuoi < dienDau || nuocCuoi < nuocDau) {
-                            Toast.makeText(this, "Chỉ số cuối không được nhỏ hơn chỉ số đầu", Toast.LENGTH_SHORT)
-                                    .show();
-                            return;
-                        }
-
-                        updated.setChiSoDienDau(dienDau);
-                        updated.setChiSoDienCuoi(dienCuoi);
-                        updated.setDonGiaDien(MoneyFormatter.getValue(etDonGiaDien));
-                        updated.setChiSoNuocDau(nuocDau);
-                        updated.setChiSoNuocCuoi(nuocCuoi);
-                        updated.setDonGiaNuoc(MoneyFormatter.getValue(etDonGiaNuoc));
-                        updated.setPhiRac(MoneyFormatter.getValue(etPhiRac));
-                        updated.setPhiWifi(MoneyFormatter.getValue(etPhiWifi));
-                        updated.setPhiGuiXe(MoneyFormatter.getValue(etPhiGuiXe));
-                        updated.setTrangThai(hoaDon.getTrangThai());
+                        Room selectedRoom = danhSachPhong.get(idx);
+                        Invoice updated = InvoiceDialogSubmitHelper.buildUpdatedInvoice(
+                                invoice,
+                                selectedRoom,
+                                form,
+                                getString(R.string.meter_end_less_than_start));
                         viewModel.updateInvoice(updated,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
+                                        () -> Toast
+                                                .makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT)
+                                                .show()));
+                    } catch (InvoiceDialogSubmitHelper.ValidationException e) {
+                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null).show();
+                .setNegativeButton(getString(R.string.cancel), null).show();
     }
 
     private void applyDefaultFeeFromHouse(@NonNull Room room,
@@ -1371,32 +1101,32 @@ public class InvoiceActivity extends AppCompatActivity {
         if (house == null)
             return;
 
-        if (house.getGiaDien() > 0) {
-            MoneyFormatter.setValue(etDonGiaDien, house.getGiaDien());
+        if (house.getElectricityPrice() > 0) {
+            MoneyFormatter.setValue(etDonGiaDien, house.getElectricityPrice());
             lockFeeField(etDonGiaDien, true);
         } else {
             lockFeeField(etDonGiaDien, false);
         }
-        if (house.getGiaNuoc() > 0) {
-            MoneyFormatter.setValue(etDonGiaNuoc, house.getGiaNuoc());
+        if (house.getWaterPrice() > 0) {
+            MoneyFormatter.setValue(etDonGiaNuoc, house.getWaterPrice());
             lockFeeField(etDonGiaNuoc, true);
         } else {
             lockFeeField(etDonGiaNuoc, false);
         }
-        if (house.getGiaRac() > 0) {
-            MoneyFormatter.setValue(etPhiRac, house.getGiaRac());
+        if (house.getTrashPrice() > 0) {
+            MoneyFormatter.setValue(etPhiRac, house.getTrashPrice());
             lockFeeField(etPhiRac, true);
         } else {
             lockFeeField(etPhiRac, false);
         }
-        if (house.getGiaInternet() > 0) {
-            MoneyFormatter.setValue(etPhiWifi, house.getGiaInternet());
+        if (house.getInternetPrice() > 0) {
+            MoneyFormatter.setValue(etPhiWifi, house.getInternetPrice());
             lockFeeField(etPhiWifi, true);
         } else {
             lockFeeField(etPhiWifi, false);
         }
-        if (house.getGiaXe() > 0) {
-            MoneyFormatter.setValue(etPhiGuiXe, house.getGiaXe());
+        if (house.getParkingPrice() > 0) {
+            MoneyFormatter.setValue(etPhiGuiXe, house.getParkingPrice());
             lockFeeField(etPhiGuiXe, true);
         } else {
             lockFeeField(etPhiGuiXe, false);
@@ -1412,73 +1142,11 @@ public class InvoiceActivity extends AppCompatActivity {
             return new FeePreset(0, 0, 0, 0, 0);
         }
         return new FeePreset(
-                Math.max(0, house.getGiaDien()),
-                Math.max(0, house.getGiaNuoc()),
-                Math.max(0, house.getGiaRac()),
-                Math.max(0, house.getGiaInternet()),
-                Math.max(0, house.getGiaXe()));
-    }
-
-    private interface SuggestedPeriodCallback {
-        void onResult(@NonNull String suggestedPeriod);
-    }
-
-    private void suggestNextPeriodForRoom(@NonNull String roomId, @NonNull SuggestedPeriodCallback callback) {
-        scopedCollection("hoa_don")
-                .whereEqualTo("idPhong", roomId)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    String bestKey = null;
-                    String bestPeriod = "";
-                    if (snapshot != null) {
-                        for (QueryDocumentSnapshot doc : snapshot) {
-                            String period = doc.getString("thangNam");
-                            String key = toPeriodKey(period);
-                            if (key == null || key.isEmpty())
-                                continue;
-                            if (bestKey == null || key.compareTo(bestKey) > 0) {
-                                bestKey = key;
-                                bestPeriod = period != null ? period : "";
-                            }
-                        }
-                    }
-                    if (bestKey == null) {
-                        String current = FinancePeriodUtil
-                                .normalizeMonthYear(
-                                        new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
-                        callback.onResult(current);
-                        return;
-                    }
-                    callback.onResult(nextMonth(bestPeriod));
-                })
-                .addOnFailureListener(e -> {
-                    String current = FinancePeriodUtil
-                            .normalizeMonthYear(
-                                    new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
-                    callback.onResult(current);
-                });
-    }
-
-    private String nextMonth(String period) {
-        String normalized = FinancePeriodUtil.normalizeMonthYear(period);
-        String[] parts = normalized.split("/");
-        if (parts.length != 2) {
-            return FinancePeriodUtil
-                    .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
-        }
-        try {
-            int month = Integer.parseInt(parts[0]);
-            int year = Integer.parseInt(parts[1]);
-            month += 1;
-            if (month > 12) {
-                month = 1;
-                year += 1;
-            }
-            return String.format(Locale.US, "%02d/%04d", month, year);
-        } catch (Exception e) {
-            return FinancePeriodUtil
-                    .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
-        }
+                Math.max(0, house.getElectricityPrice()),
+                Math.max(0, house.getWaterPrice()),
+                Math.max(0, house.getTrashPrice()),
+                Math.max(0, house.getInternetPrice()),
+                Math.max(0, house.getParkingPrice()));
     }
 
     private void lockFeeField(@NonNull EditText et, boolean locked) {
@@ -1486,191 +1154,6 @@ public class InvoiceActivity extends AppCompatActivity {
         et.setFocusable(!locked);
         et.setFocusableInTouchMode(!locked);
         et.setAlpha(locked ? 0.75f : 1f);
-    }
-
-    private void setupEstimatedTotal(@NonNull EditText etDienDau,
-            @NonNull EditText etDienCuoi,
-            @NonNull EditText etDonGiaDien,
-            @NonNull EditText etNuocDau,
-            @NonNull EditText etNuocCuoi,
-            @NonNull EditText etDonGiaNuoc,
-            @NonNull EditText etPhiRac,
-            @NonNull EditText etPhiWifi,
-            @NonNull EditText etPhiGuiXe,
-            @NonNull TextView tvEstimatedTotal,
-            @NonNull Supplier<Double> rentSupplier) {
-        TextWatcher watcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                        etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal, rentSupplier);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        };
-        etDienDau.addTextChangedListener(watcher);
-        etDienCuoi.addTextChangedListener(watcher);
-        etNuocDau.addTextChangedListener(watcher);
-        etNuocCuoi.addTextChangedListener(watcher);
-        etDonGiaDien.addTextChangedListener(watcher);
-        etDonGiaNuoc.addTextChangedListener(watcher);
-        etPhiRac.addTextChangedListener(watcher);
-        etPhiWifi.addTextChangedListener(watcher);
-        etPhiGuiXe.addTextChangedListener(watcher);
-    }
-
-    private void updateEstimatedTotal(@NonNull EditText etDienDau,
-            @NonNull EditText etDienCuoi,
-            @NonNull EditText etDonGiaDien,
-            @NonNull EditText etNuocDau,
-            @NonNull EditText etNuocCuoi,
-            @NonNull EditText etDonGiaNuoc,
-            @NonNull EditText etPhiRac,
-            @NonNull EditText etPhiWifi,
-            @NonNull EditText etPhiGuiXe,
-            @NonNull TextView tvEstimatedTotal,
-            @NonNull Supplier<Double> rentSupplier) {
-        double dienDau = parseDoubleSafe(etDienDau);
-        double dienCuoi = parseDoubleSafe(etDienCuoi);
-        double nuocDau = parseDoubleSafe(etNuocDau);
-        double nuocCuoi = parseDoubleSafe(etNuocCuoi);
-        double donGiaDien = MoneyFormatter.getValue(etDonGiaDien);
-        double donGiaNuoc = MoneyFormatter.getValue(etDonGiaNuoc);
-        double phiRac = MoneyFormatter.getValue(etPhiRac);
-        double phiWifi = MoneyFormatter.getValue(etPhiWifi);
-        double phiGuiXe = MoneyFormatter.getValue(etPhiGuiXe);
-        Double rent = rentSupplier.get();
-        double giaThue = rent != null ? rent : 0;
-
-        double soDien = Math.max(0, dienCuoi - dienDau);
-        double soNuoc = Math.max(0, nuocCuoi - nuocDau);
-        double total = giaThue + soDien * donGiaDien + soNuoc * donGiaNuoc + phiRac + phiWifi + phiGuiXe;
-        tvEstimatedTotal.setText(MoneyFormatter.format(total));
-    }
-
-    private double parseDoubleSafe(@NonNull EditText et) {
-        try {
-            return parseDouble(et);
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private String formatDouble(double value) {
-        return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
-    }
-
-    private interface MeterEndCallback {
-        void onResult(double elecEnd, double waterEnd);
-    }
-
-    private void loadLatestMeterEnds(String roomId, MeterEndCallback callback) {
-        scopedCollection("meterReadings").whereEqualTo("roomId", roomId).get()
-                .addOnSuccessListener(snapshot -> {
-                    String bestKey = null;
-                    double bestElecEnd = 0;
-                    double bestWaterEnd = 0;
-
-                    for (QueryDocumentSnapshot doc : snapshot) {
-                        String key = doc.getString("periodKey");
-                        if (key == null) {
-                            String period = doc.getString("period");
-                            key = toPeriodKey(period);
-                        }
-                        if (key == null)
-                            key = "";
-
-                        if (bestKey == null || key.compareTo(bestKey) > 0) {
-                            bestKey = key;
-                            Double e = doc.getDouble("elecEnd");
-                            Double w = doc.getDouble("waterEnd");
-                            bestElecEnd = e != null ? e : 0;
-                            bestWaterEnd = w != null ? w : 0;
-                        }
-                    }
-
-                    callback.onResult(bestElecEnd, bestWaterEnd);
-                })
-                .addOnFailureListener(e -> callback.onResult(0, 0));
-    }
-
-    private void saveMeterReadingFromInvoice(String roomId, String period, double elecStart, double elecEnd,
-            double waterStart, double waterEnd) {
-        String periodKey = toPeriodKey(period);
-        if (periodKey == null || periodKey.isEmpty())
-            return;
-
-        String docId = roomId + "_" + periodKey;
-        Map<String, Object> data = new HashMap<>();
-        data.put("roomId", roomId);
-        data.put("period", period);
-        data.put("periodKey", periodKey);
-        data.put("elecStart", elecStart);
-        data.put("elecEnd", elecEnd);
-        data.put("waterStart", waterStart);
-        data.put("waterEnd", waterEnd);
-
-        scopedCollection("meterReadings").document(docId).set(data);
-    }
-
-    private void showHousePickerDialog() {
-        // Lấy danh sách căn nhà từ Firebase
-        String tenantId = TenantSession.getActiveTenantId();
-
-        com.google.firebase.firestore.Query canNhaQuery;
-        if (tenantId != null && !tenantId.isEmpty()) {
-            canNhaQuery = db.collection("tenants").document(tenantId).collection("can_nha");
-        } else {
-            canNhaQuery = db.collection("can_nha").whereEqualTo("userId", FirebaseAuth.getInstance().getUid());
-        }
-
-        canNhaQuery.get().addOnSuccessListener(querySnapshot -> {
-            List<String> canNhaNames = new ArrayList<>();
-            List<String> canNhaIds = new ArrayList<>();
-
-            canNhaNames.add("Tất cả căn nhà");
-            canNhaIds.add(null);
-
-            for (QueryDocumentSnapshot doc : querySnapshot) {
-                String tenHouse = doc.getString("tenHouse");
-                if (tenHouse != null && !tenHouse.isEmpty()) {
-                    canNhaNames.add(tenHouse);
-                    canNhaIds.add(doc.getId());
-                }
-            }
-
-            if (canNhaNames.size() == 1) {
-                Toast.makeText(this, "Chưa có căn nhà nào", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String[] items = canNhaNames.toArray(new String[0]);
-
-            new AlertDialog.Builder(this)
-                    .setTitle("Chọn căn nhà")
-                    .setItems(items, (dialog, which) -> {
-                        selectedKhuId = canNhaIds.get(which);
-                        tvSelectedKhu.setText(canNhaNames.get(which));
-
-                        // Reload data với filter mới
-                        applyInvoiceFilters(viewModel.getInvoiceList().getValue(),
-                                ((TabLayout) findViewById(R.id.tabLayout)).getSelectedTabPosition());
-                    })
-                    .setNegativeButton("Hủy", null)
-                    .show();
-        }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Không thể tải danh sách căn nhà", Toast.LENGTH_SHORT).show();
-        });
-    }
-
-    private void showMonthPickerDialog() {
-        showMonthFilterDialog();
     }
 
     private String toPeriodKey(String period) {
@@ -1704,427 +1187,76 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void applyInvoiceFilters(java.util.List<Invoice> list, int tabIndex) {
         if (list == null) {
-            adapter.setDanhSach(new java.util.ArrayList<>());
+            adapter.setDataList(new java.util.ArrayList<>());
             if (llEmpty != null)
                 llEmpty.setVisibility(View.VISIBLE);
             return;
         }
 
-        String normalizedSelectedMonth = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
-        Map<String, String> roomToHouse = new HashMap<>();
-        for (Room room : danhSachPhong) {
-            if (room == null || room.getId() == null)
-                continue;
-            roomToHouse.put(room.getId(), room.getHouseId());
-        }
+        java.util.List<Invoice> out = InvoiceFilterCoordinator.filter(
+                list,
+                danhSachPhong,
+                tenantDisplayByRoom,
+                selectedMonth,
+                selectedKhuId,
+                searchQuery,
+                tabIndex);
 
-        java.util.List<Invoice> out = new java.util.ArrayList<>();
-        for (Invoice h : list) {
-            if (h == null)
-                continue;
-
-            // Month filter
-            String invoiceMonth = FinancePeriodUtil.normalizeMonthYear(h.getThangNam());
-            if (!normalizedSelectedMonth.isEmpty() && !normalizedSelectedMonth.equals(invoiceMonth)) {
-                continue;
-            }
-
-            // House filter
-            if (selectedKhuId != null && !selectedKhuId.trim().isEmpty()) {
-                String invoiceHouseId = roomToHouse.get(h.getIdPhong());
-                if (invoiceHouseId == null || !selectedKhuId.equals(invoiceHouseId)) {
-                    continue;
-                }
-            }
-
-            // Search filter
-            if (searchQuery != null && !searchQuery.isEmpty()) {
-                String room = h.getSoPhong() != null ? h.getSoPhong().toLowerCase(Locale.getDefault()) : "";
-                String tenant = tenantDisplayByRoom.get(h.getIdPhong());
-                tenant = tenant != null ? tenant.toLowerCase(Locale.getDefault()) : "";
-                String month = h.getThangNam() != null ? h.getThangNam().toLowerCase(Locale.getDefault()) : "";
-                if (!room.contains(searchQuery) && !tenant.contains(searchQuery) && !month.contains(searchQuery)) {
-                    continue;
-                }
-            }
-            String st = h.getTrangThai();
-            if (st == null || st.trim().isEmpty())
-                st = InvoiceStatus.UNREPORTED;
-
-            boolean match;
-            if (tabIndex == 0) {
-                // Tab "Chưa báo"
-                match = InvoiceStatus.UNREPORTED.equals(st);
-            } else if (tabIndex == 1) {
-                // Tab "Đã báo"
-                match = InvoiceStatus.REPORTED.equals(st);
-            } else if (tabIndex == 2) {
-                // Tab "Đóng một phần"
-                match = InvoiceStatus.PARTIAL.equals(st);
-            } else {
-                // Tab "Đã đóng"
-                match = InvoiceStatus.PAID.equals(st);
-            }
-
-            if (match)
-                out.add(h);
-        }
-
-        adapter.setDanhSach(out);
+        adapter.setDataList(out);
         adapter.setTenantDisplayByRoom(tenantDisplayByRoom);
-        updateFilterSummary(out);
+        if (tvFilterSummary != null) {
+            tvFilterSummary.setText(InvoiceFilterCoordinator.buildSummaryText(this, out));
+        }
         adapter.setCurrentTab(tabIndex);
         if (llEmpty != null)
             llEmpty.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    private void updateFilterSummary(@NonNull List<Invoice> visibleInvoices) {
-        if (tvFilterSummary == null)
-            return;
-        double total = 0;
-        int unpaidCount = 0;
-        for (Invoice h : visibleInvoices) {
-            if (h == null)
-                continue;
-            total += h.getTongTien();
-            String st = h.getTrangThai();
-            if (st == null || st.trim().isEmpty() || InvoiceStatus.UNREPORTED.equals(st)
-                    || InvoiceStatus.REPORTED.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
-                unpaidCount++;
-            }
-        }
-        String totalFmt = MoneyFormatter.format(total);
-        tvFilterSummary.setText(visibleInvoices.size() + " hóa đơn | Tạm tính: " + totalFmt + " | Chưa thu: "
-                + unpaidCount);
-    }
-
     private void showMonthFilterDialog() {
-        View content = LayoutInflater.from(this).inflate(R.layout.dialog_month_year_picker, null, false);
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        dialog.setContentView(content);
-
-        NumberPicker npMonth = content.findViewById(R.id.npMonth);
-        NumberPicker npYear = content.findViewById(R.id.npYear);
-        TextView tvPreviewMonth = content.findViewById(R.id.tvPreviewMonth);
-        MaterialButton btnCurrentMonth = content.findViewById(R.id.btnCurrentMonth);
-        MaterialButton btnPreviousMonth = content.findViewById(R.id.btnPreviousMonth);
-        MaterialButton btnCancel = content.findViewById(R.id.btnCancelMonthPicker);
-        MaterialButton btnApply = content.findViewById(R.id.btnApplyMonthPicker);
-
-        java.util.Calendar now = java.util.Calendar.getInstance();
-        String normalizedSelected = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
-
-        int selectedM = now.get(java.util.Calendar.MONTH) + 1;
-        int selectedY = now.get(java.util.Calendar.YEAR);
-        if (normalizedSelected != null && normalizedSelected.matches("\\d{2}/\\d{4}")) {
-            String[] parts = normalizedSelected.split("/");
-            selectedM = Integer.parseInt(parts[0]);
-            selectedY = Integer.parseInt(parts[1]);
-        }
-
-        int minYear = Math.max(2000, now.get(java.util.Calendar.YEAR) - 8);
-        int maxYear = now.get(java.util.Calendar.YEAR) + 1;
-        if (selectedY < minYear)
-            selectedY = minYear;
-        if (selectedY > maxYear)
-            selectedY = maxYear;
-
-        npMonth.setMinValue(1);
-        npMonth.setMaxValue(12);
-        npMonth.setValue(selectedM);
-        npMonth.setWrapSelectorWheel(true);
-
-        npYear.setMinValue(minYear);
-        npYear.setMaxValue(maxYear);
-        npYear.setValue(selectedY);
-        npYear.setWrapSelectorWheel(false);
-
-        Runnable updatePreview = () -> {
-            int monthValue = npMonth.getValue();
-            int yearValue = npYear.getValue();
-            tvPreviewMonth.setText(String.format(Locale.getDefault(), "Tháng %d/%d", monthValue, yearValue));
-        };
-        updatePreview.run();
-
-        npMonth.setOnValueChangedListener((picker, oldVal, newVal) -> updatePreview.run());
-        npYear.setOnValueChangedListener((picker, oldVal, newVal) -> updatePreview.run());
-
-        btnCurrentMonth.setOnClickListener(v -> {
-            npMonth.setValue(now.get(java.util.Calendar.MONTH) + 1);
-            npYear.setValue(now.get(java.util.Calendar.YEAR));
-            updatePreview.run();
-        });
-
-        btnPreviousMonth.setOnClickListener(v -> {
-            java.util.Calendar previous = java.util.Calendar.getInstance();
-            previous.add(java.util.Calendar.MONTH, -1);
-            npMonth.setValue(previous.get(java.util.Calendar.MONTH) + 1);
-            npYear.setValue(previous.get(java.util.Calendar.YEAR));
-            updatePreview.run();
-        });
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        btnApply.setOnClickListener(v -> {
-            String picked = String.format(Locale.US, "%02d/%04d", npMonth.getValue(), npYear.getValue());
+        InvoiceFilterDialogHelper.showMonthFilterDialog(this, selectedMonth, (picked, month, year) -> {
             selectedMonth = picked;
             if (tvSelectedMonth != null) {
-                tvSelectedMonth.setText(npMonth.getValue() + "/" + npYear.getValue());
+                tvSelectedMonth.setText(month + "/" + year);
             }
             applyInvoiceFilters(cachedInvoices, selectedTabIndex);
-            dialog.dismiss();
         });
-
-        dialog.show();
     }
 
     private void showHouseFilterDialog() {
-        if (danhSachPhong == null || danhSachPhong.isEmpty()) {
-            Toast.makeText(this, "Chưa có dữ liệu căn nhà", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        LinkedHashMap<String, String> houseMap = new LinkedHashMap<>();
-        houseMap.put("", "Tất cả căn nhà");
-        for (Room room : danhSachPhong) {
-            if (room == null)
-                continue;
-            String houseId = room.getHouseId();
-            String houseName = room.getHouseTen();
-            if (houseId == null || houseId.trim().isEmpty())
-                continue;
-            if (houseName == null || houseName.trim().isEmpty())
-                houseName = "Căn nhà";
-            houseMap.put(houseId, houseName);
-        }
-
-        List<String> ids = new ArrayList<>(houseMap.keySet());
-        List<String> labels = new ArrayList<>(houseMap.values());
-        int checked = Math.max(0, ids.indexOf(selectedKhuId == null ? "" : selectedKhuId));
-
-        new AlertDialog.Builder(this)
-                .setTitle("Chọn căn nhà")
-                .setSingleChoiceItems(labels.toArray(new String[0]), checked, (dialog, which) -> {
-                    String id = ids.get(which);
-                    selectedKhuId = id.isEmpty() ? null : id;
-                    if (tvSelectedKhu != null)
-                        tvSelectedKhu.setText(labels.get(which));
-                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
-                    dialog.dismiss();
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    private void openPaymentHistory(@NonNull Invoice hoaDon) {
-        android.content.Intent intent = new android.content.Intent(InvoiceActivity.this, PaymentHistoryActivity.class);
-        intent.putExtra("INVOICE_ID", hoaDon.getId());
-        intent.putExtra("INVOICE_TOTAL", hoaDon.getTongTien());
-        intent.putExtra("ROOM_ID", hoaDon.getIdPhong());
-        intent.putExtra("TITLE", "Thanh toán • Phòng " + hoaDon.getSoPhong() + " • " + hoaDon.getThangNam());
-        startActivity(intent);
-    }
-
-    private void recomputeAndUpdateInvoiceStatus(@NonNull Invoice hoaDon) {
-        String invoiceId = hoaDon.getId();
-        if (invoiceId == null || invoiceId.trim().isEmpty())
-            return;
-
-        scopedCollection("payments")
-                .whereEqualTo("invoiceId", invoiceId)
-                .get()
-                .addOnSuccessListener(qs -> {
-                    double paid = 0;
-                    if (qs != null) {
-                        for (com.google.firebase.firestore.QueryDocumentSnapshot doc : qs) {
-                            Double amt = doc.getDouble("amount");
-                            if (amt != null)
-                                paid += amt;
-                        }
-                    }
-
-                    String newStatus;
-                    if (paid <= 0) {
-                        newStatus = InvoiceStatus.REPORTED;
-                    } else if (paid + 0.01 < hoaDon.getTongTien()) {
-                        newStatus = InvoiceStatus.PARTIAL;
-                    } else {
-                        newStatus = InvoiceStatus.PAID;
-                    }
-
-                    viewModel.updateStatus(invoiceId, newStatus,
-                            () -> {
-                            },
-                            () -> {
-                            });
-                });
-    }
-
-    private void showCollectPaymentDialog(Invoice hoaDon) {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_payment, null);
-        EditText etAmount = dialogView.findViewById(R.id.etAmount);
-        Spinner spinnerMethod = dialogView.findViewById(R.id.spinnerMethod);
-        EditText etPaidAt = dialogView.findViewById(R.id.etPaidAt);
-        EditText etNote = dialogView.findViewById(R.id.etNote);
-
-        etAmount.setText(formatDouble(hoaDon.getTongTien()));
-        etPaidAt.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
-
-        if (hoaDon.getId() != null && !hoaDon.getId().trim().isEmpty()) {
-            scopedCollection("payments")
-                    .whereEqualTo("invoiceId", hoaDon.getId())
-                    .get()
-                    .addOnSuccessListener(qs -> {
-                        double paid = 0;
-                        if (qs != null) {
-                            for (com.google.firebase.firestore.QueryDocumentSnapshot doc : qs) {
-                                Double amt = doc.getDouble("amount");
-                                if (amt != null)
-                                    paid += amt;
-                            }
-                        }
-                        double remaining = Math.max(0, hoaDon.getTongTien() - paid);
-                        if (remaining > 0) {
-                            etAmount.setText(formatDouble(remaining));
-                        }
-                    });
-        }
-
-        ArrayAdapter<String> methodAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, new String[] { "Tiền mặt", "Chuyển khoản" });
-        methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerMethod.setAdapter(methodAdapter);
-
-        new AlertDialog.Builder(this)
-                .setTitle("Thu tiền — Phòng " + hoaDon.getSoPhong())
-                .setView(dialogView)
-                .setPositiveButton("Xác nhận", (d, w) -> {
-                    try {
-                        double amount = parseDouble(etAmount);
-                        if (amount <= 0) {
-                            Toast.makeText(this, "Số tiền phải > 0", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        String method = spinnerMethod.getSelectedItemPosition() == 0 ? "CASH" : "BANK";
-                        String paidAt = etPaidAt.getText().toString().trim();
-                        String note = etNote.getText().toString().trim();
-
-                        submitPayment(hoaDon, amount, method, paidAt, note);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNeutralButton("QR chuyển khoản", (d, w) -> showVietQrDialog(hoaDon))
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    private void showVietQrDialog(@NonNull Invoice hoaDon) {
-        String tenantId = TenantSession.getActiveTenantId();
-        if (tenantId == null || tenantId.trim().isEmpty()) {
-            Toast.makeText(this, "Chỉ hỗ trợ VietQR khi dùng tenant scope", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        db.collection("tenants").document(tenantId).get().addOnSuccessListener(tdoc -> {
-            String bankCode = tdoc.getString("bankCode");
-            String bankNo = tdoc.getString("bankAccountNo");
-            String bankName = tdoc.getString("bankAccountName");
-
-            if (bankCode == null || bankCode.trim().isEmpty() || bankNo == null || bankNo.trim().isEmpty()) {
-                Toast.makeText(this, "Chưa cấu hình thông tin chuyển khoản (Org Admin)", Toast.LENGTH_LONG).show();
-                return;
+        InvoiceFilterDialogHelper.showHouseFilterDialog(this, danhSachPhong, selectedKhuId, (houseId, label) -> {
+            selectedKhuId = (houseId == null || houseId.isEmpty()) ? null : houseId;
+            if (tvSelectedKhu != null) {
+                tvSelectedKhu.setText(label);
             }
-
-            String addInfo = "HD " + hoaDon.getSoPhong() + " " + hoaDon.getThangNam();
-            String url = buildVietQrUrl(
-                    bankCode.trim(),
-                    bankNo.trim(),
-                    bankName != null ? bankName.trim() : "",
-                    (long) hoaDon.getTongTien(),
-                    addInfo);
-
-            View v = getLayoutInflater().inflate(R.layout.dialog_vietqr, null);
-            android.widget.ImageView img = v.findViewById(R.id.imgQr);
-            android.widget.TextView tvBank = v.findViewById(R.id.tvQrBank);
-            android.widget.TextView tvNote = v.findViewById(R.id.tvQrNote);
-
-            tvBank.setText("CK: " + bankCode + " - " + bankNo
-                    + (bankName != null && !bankName.isEmpty() ? (" (" + bankName + ")") : ""));
-            tvNote.setText("Nội dung: " + addInfo + "\nSố tiền: " + formatDouble(hoaDon.getTongTien()));
-
-            com.bumptech.glide.Glide.with(this).load(url).into(img);
-
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("VietQR")
-                    .setView(v)
-                    .setPositiveButton("Đóng", null)
-                    .show();
+            applyInvoiceFilters(cachedInvoices, selectedTabIndex);
         });
     }
 
-    private String buildVietQrUrl(@NonNull String bankCode, @NonNull String accountNo, @NonNull String accountName,
-            long amount, @NonNull String addInfo) {
-        try {
-            String base = "https://img.vietqr.io/image/" + bankCode + "-" + accountNo + "-compact2.png";
-            String q = "?amount=" + amount
-                    + "&addInfo=" + java.net.URLEncoder.encode(addInfo, StandardCharsets.UTF_8.name())
-                    + "&accountName=" + java.net.URLEncoder.encode(accountName, StandardCharsets.UTF_8.name());
-            return base + q;
-        } catch (Exception e) {
-            return "";
-        }
+    private void openPaymentHistory(@NonNull Invoice invoice) {
+        android.content.Intent intent = new android.content.Intent(InvoiceActivity.this, PaymentHistoryActivity.class);
+        intent.putExtra("INVOICE_ID", invoice.getId());
+        intent.putExtra("INVOICE_TOTAL", invoice.getTotalAmount());
+        intent.putExtra("ROOM_ID", invoice.getRoomId());
+        intent.putExtra("TITLE",
+                getString(R.string.payment_title_format, invoice.getRoomNumber(), invoice.getBillingPeriod()));
+        startActivity(intent);
     }
 
-    private void submitPayment(@NonNull Invoice hoaDon, double amount, @NonNull String method,
-            @NonNull String paidAt, @NonNull String note) {
-        String invoiceId = hoaDon.getId();
-        if (invoiceId == null || invoiceId.trim().isEmpty()) {
-            Toast.makeText(this, "Thiếu ID hoá đơn", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void recomputeAndUpdateInvoiceStatus(@NonNull Invoice invoice) {
+        InvoicePaymentFlowHelper.recomputeAndUpdateInvoiceStatus(
+                invoice,
+                this::scopedCollection,
+                viewModel);
+    }
 
-        scopedCollection("payments")
-                .whereEqualTo("invoiceId", invoiceId)
-                .get()
-                .addOnSuccessListener(qs -> {
-                    double paid = 0;
-                    if (qs != null) {
-                        for (QueryDocumentSnapshot doc : qs) {
-                            Double amt = doc.getDouble("amount");
-                            if (amt != null)
-                                paid += amt;
-                        }
-                    }
-
-                    double remaining = Math.max(0, hoaDon.getTongTien() - paid);
-                    if (amount > remaining + 0.01) {
-                        Toast.makeText(this,
-                                "Số tiền thu vượt phần còn lại: " + formatDouble(remaining),
-                                Toast.LENGTH_LONG).show();
-                        return;
-                    }
-
-                    Payment p = new Payment();
-                    p.setInvoiceId(invoiceId);
-                    p.setRoomId(hoaDon.getIdPhong());
-                    p.setAmount(amount);
-                    p.setMethod(method);
-                    p.setPaidAt(paidAt);
-                    p.setNote(note);
-
-                    paymentRepository.add(p,
-                            () -> {
-                                recomputeAndUpdateInvoiceStatus(hoaDon);
-                                runOnUiThread(() -> Toast
-                                        .makeText(this, "Đã ghi nhận thanh toán", Toast.LENGTH_SHORT).show());
-                            },
-                            () -> runOnUiThread(() -> Toast
-                                    .makeText(this, "Ghi nhận thanh toán thất bại", Toast.LENGTH_SHORT).show()));
-                })
-                .addOnFailureListener(e -> Toast
-                        .makeText(this, "Không thể kiểm tra công nợ hiện tại", Toast.LENGTH_SHORT).show());
+    private void showCollectPaymentDialog(Invoice invoice) {
+        InvoicePaymentFlowHelper.showCollectPaymentDialog(
+                this,
+                db,
+                invoice,
+                this::scopedCollection,
+                paymentRepository,
+                viewModel);
     }
 
     @Override

@@ -25,6 +25,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 public class ContractPdfPreviewActivity extends AppCompatActivity {
 
@@ -151,19 +152,19 @@ public class ContractPdfPreviewActivity extends AppCompatActivity {
             return;
         }
         if (!pageReady) {
-            callback.onError("Vui lòng đợi tải nội dung xong rồi thử lại");
+            callback.onError(getString(R.string.pdf_wait_for_content));
             return;
         }
 
         File outDir = new File(getCacheDir(), "contracts");
         if (!outDir.exists() && !outDir.mkdirs()) {
-            callback.onError("Không thể tạo thư mục PDF");
+            callback.onError(getString(R.string.pdf_create_folder_failed));
             return;
         }
 
         File outFile = new File(outDir, fileName);
         if (!writePdfFromWebViewToFile(outFile)) {
-            callback.onError("Xuất PDF thất bại");
+            callback.onError(getString(R.string.pdf_export_failed));
             return;
         }
 
@@ -176,9 +177,9 @@ public class ContractPdfPreviewActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(buildPdfUri(pdfFile), "application/pdf");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(intent, "Mở PDF để in"));
+            startActivity(Intent.createChooser(intent, getString(R.string.pdf_open_for_print)));
         } catch (Exception e) {
-            Toast.makeText(this, "Không tìm thấy ứng dụng mở PDF", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.pdf_open_app_not_found), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -192,9 +193,9 @@ public class ContractPdfPreviewActivity extends AppCompatActivity {
                 shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
             }
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(shareIntent, "Chia sẻ hợp đồng PDF"));
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.pdf_share_contract)));
         } catch (Exception e) {
-            Toast.makeText(this, "Không thể chia sẻ file PDF", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.pdf_share_failed), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -209,7 +210,7 @@ public class ContractPdfPreviewActivity extends AppCompatActivity {
             return "HopDong_hd001.pdf";
         }
         String safe = raw.replaceAll("[\\\\/:*?\"<>|]", "_");
-        if (!safe.toLowerCase().endsWith(".pdf")) {
+        if (!safe.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
             safe = safe + ".pdf";
         }
         return safe;

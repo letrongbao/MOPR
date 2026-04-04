@@ -83,7 +83,7 @@
             android:src="@drawable/ic_edit"
             app:tint="?attr/colorOnSurfaceVariant"
             android:layout_marginEnd="2dp"
-            android:contentDescription="Sửa"/>
+            android:contentDescription="@string/edit"/>
 
         <ImageButton
             android:id="@+id/btnXoa"
@@ -92,6 +92,6 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_delete"
             app:tint="?attr/colorOnSurfaceVariant"
-            android:contentDescription="Xóa"/>
+            android:contentDescription="@string/delete"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

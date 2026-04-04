@@ -9,7 +9,7 @@
         android:id="@+id/etNote"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Ghi chú (tuỳ chọn)"
+        android:hint="@string/note_optional_hint"
         android:inputType="textCapSentences"/>
 
 </LinearLayout>

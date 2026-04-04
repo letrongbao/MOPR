@@ -21,15 +21,15 @@ public class MeterReadingAdapter extends RecyclerView.Adapter<MeterReadingAdapte
         void onDelete(MeterReading reading);
     }
 
-    private List<MeterReading> danhSach = new ArrayList<>();
+    private List<MeterReading> dataList = new ArrayList<>();
     private final OnActionListener listener;
 
     public MeterReadingAdapter(OnActionListener listener) {
         this.listener = listener;
     }
 
-    public void setDanhSach(List<MeterReading> list) {
-        this.danhSach = list;
+    public void setDataList(List<MeterReading> list) {
+        this.dataList = list;
         notifyDataSetChanged();
     }
 
@@ -42,30 +42,33 @@ public class MeterReadingAdapter extends RecyclerView.Adapter<MeterReadingAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        MeterReading r = danhSach.get(position);
+        MeterReading r = dataList.get(position);
 
-        holder.tvPeriod.setText("Kỳ: " + safe(r.getPeriod()));
-        holder.tvElec.setText("Điện: " + fmt(r.getElecStart()) + " → " + fmt(r.getElecEnd()) + " (" + fmt(r.getElecEnd() - r.getElecStart()) + ")");
-        holder.tvWater.setText("Nước: " + fmt(r.getWaterStart()) + " → " + fmt(r.getWaterEnd()) + " (" + fmt(r.getWaterEnd() - r.getWaterStart()) + ")");
+        holder.tvPeriod
+                .setText(holder.itemView.getContext().getString(R.string.meter_period_label, safe(r.getPeriod())));
+        holder.tvElec.setText(holder.itemView.getContext().getString(R.string.meter_electricity_label,
+                fmt(r.getElecStart()), fmt(r.getElecEnd()), fmt(r.getElecEnd() - r.getElecStart())));
+        holder.tvWater.setText(holder.itemView.getContext().getString(R.string.meter_water_label,
+                fmt(r.getWaterStart()), fmt(r.getWaterEnd()), fmt(r.getWaterEnd() - r.getWaterStart())));
 
-        holder.btnXoa.setOnClickListener(v -> listener.onDelete(r));
+        holder.btnDelete.setOnClickListener(v -> listener.onDelete(r));
     }
 
     @Override
     public int getItemCount() {
-        return danhSach.size();
+        return dataList.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvPeriod, tvElec, tvWater;
-        ImageButton btnXoa;
+        ImageButton btnDelete;
 
         ViewHolder(View v) {
             super(v);
             tvPeriod = v.findViewById(R.id.tvPeriod);
             tvElec = v.findViewById(R.id.tvElec);
             tvWater = v.findViewById(R.id.tvWater);
-            btnXoa = v.findViewById(R.id.btnXoa);
+            btnDelete = v.findViewById(R.id.btnDelete);
         }
     }
 

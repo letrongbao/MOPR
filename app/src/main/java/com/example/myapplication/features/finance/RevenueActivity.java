@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -13,13 +12,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import android.widget.Toast;
+import com.google.android.material.appbar.AppBarLayout;
 import com.example.myapplication.core.util.FinancePeriodUtil;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Expense;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.domain.Room;
@@ -107,28 +104,20 @@ public class RevenueActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Làm status bar trong suốt giống HomeActivity
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        // Make the status bar transparent like HomeActivity
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_revenue);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Thống kê doanh thu");
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
-        // Tự động thêm padding cho Toolbar để tránh bị Status Bar che mất
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.revenue_statistics_title));
 
         tvTongPhong = findViewById(R.id.tvTongPhong);
         tvPhongDaThua = findViewById(R.id.tvPhongDaThua);
@@ -153,9 +142,9 @@ public class RevenueActivity extends AppCompatActivity {
         selectedMonth = FinancePeriodUtil
                 .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
         if (tvSelectedMonth != null) {
-            tvSelectedMonth.setText("Tháng " + selectedMonth);
+            tvSelectedMonth.setText(getString(R.string.month_with_value, selectedMonth));
         }
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
 
         ViewModelProvider viewModelProvider = new ViewModelProvider(this);
 
@@ -174,14 +163,15 @@ public class RevenueActivity extends AppCompatActivity {
                     tvTongPhong.setText(String.valueOf(totalRooms));
                     long daThua = 0;
                     for (Room p : list) {
-                        if (RoomStatus.RENTED.equals(p.getTrangThai()))
+                        if (RoomStatus.RENTED.equals(p.getStatus()))
                             daThua++;
                     }
                     rentedRooms = (int) daThua;
                     tvPhongDaThua.setText(String.valueOf(rentedRooms));
                     if (tvTyLeLapDay != null) {
                         double rate = totalRooms > 0 ? (100.0 * rentedRooms / totalRooms) : 0;
-                        tvTyLeLapDay.setText("Tỷ lệ lấp đầy: " + String.format(Locale.getDefault(), "%.1f%%", rate));
+                        tvTyLeLapDay.setText(getString(R.string.occupancy_rate_label,
+                                String.format(Locale.getDefault(), "%.1f%%", rate)));
                     }
                 });
 
@@ -191,8 +181,9 @@ public class RevenueActivity extends AppCompatActivity {
                         tvSoTenant.setText(String.valueOf(list.size()));
                 });
 
-        // Lắng nghe payments để tính "đã thu" theo tổng payment, không phụ thuộc toggle
-        // trạng thái
+        // Observe payments to compute collected amount from total payments, independent
+        // of toggle state
+        // Status
         scopedCollection("payments")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
@@ -261,16 +252,16 @@ public class RevenueActivity extends AppCompatActivity {
             int y = c.get(java.util.Calendar.YEAR);
             String normalized = String.format(Locale.US, "%02d/%04d", m, y);
             monthValues.add(normalized);
-            monthLabels.add("Tháng " + normalized);
+            monthLabels.add(getString(R.string.month_with_value, normalized));
         }
 
         int checked = Math.max(0, monthValues.indexOf(selectedMonth));
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Chọn tháng")
+                .setTitle(getString(R.string.select_month))
                 .setSingleChoiceItems(monthLabels.toArray(new String[0]), checked, (dialog, which) -> {
                     selectedMonth = monthValues.get(which);
                     if (tvSelectedMonth != null) {
-                        tvSelectedMonth.setText("Tháng " + selectedMonth);
+                        tvSelectedMonth.setText(getString(R.string.month_with_value, selectedMonth));
                     }
                     updateReportStats(fmt,
                             findViewById(R.id.tvDoanhThuThang),
@@ -284,7 +275,7 @@ public class RevenueActivity extends AppCompatActivity {
                             findViewById(R.id.tvTongChiLuyKe));
                     dialog.dismiss();
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -318,17 +309,17 @@ public class RevenueActivity extends AppCompatActivity {
                 continue;
 
             String invoiceId = h.getId();
-            String month = FinancePeriodUtil.normalizeMonthYear(h.getThangNam());
+            String month = FinancePeriodUtil.normalizeMonthYear(h.getBillingPeriod());
             if (invoiceId != null && !invoiceId.trim().isEmpty()) {
                 invoiceMonthById.put(invoiceId, month);
-                invoiceTotalById.put(invoiceId, h.getTongTien());
+                invoiceTotalById.put(invoiceId, h.getTotalAmount());
             }
 
             if (selectedMonth.equals(month)) {
-                tongCanThuThang += h.getTongTien();
+                tongCanThuThang += h.getTotalAmount();
             }
 
-            String st = h.getTrangThai();
+            String st = h.getStatus();
             if (st == null || st.trim().isEmpty())
                 st = InvoiceStatus.UNREPORTED;
 
@@ -379,7 +370,7 @@ public class RevenueActivity extends AppCompatActivity {
                     tongChiThang += cp.getAmount();
                     String category = cp.getCategory() != null && !cp.getCategory().trim().isEmpty()
                             ? cp.getCategory().trim()
-                            : "Khác";
+                            : getString(R.string.other);
                     expenseByCategoryInMonth.put(category,
                             expenseByCategoryInMonth.getOrDefault(category, 0.0) + cp.getAmount());
                 }
@@ -397,8 +388,8 @@ public class RevenueActivity extends AppCompatActivity {
         tvTiLeThuTien.setText(String.format(Locale.getDefault(), "%.1f%%", tiLeThuTien));
         tvTongChiThang.setText(fmt.format(tongChiThang));
         tvLoiNhuanThang.setText(fmt.format(loiNhuanThang));
-        tvTongThuLuyKe.setText("Tổng đã thu: " + fmt.format(tongThuLuyKe));
-        tvTongChiLuyKe.setText("Tổng đã chi: " + fmt.format(tongChiLuyKe));
+        tvTongThuLuyKe.setText(getString(R.string.total_collected_label, fmt.format(tongThuLuyKe)));
+        tvTongChiLuyKe.setText(getString(R.string.total_expense_label, fmt.format(tongChiLuyKe)));
 
         renderTopCategories(expenseByCategoryInMonth, fmt);
         renderTrend6Months(fmt);
@@ -414,7 +405,7 @@ public class RevenueActivity extends AppCompatActivity {
 
         if (entries.isEmpty()) {
             TextView tv = new TextView(this);
-            tv.setText("Chưa có dữ liệu chi trong tháng này");
+            tv.setText(getString(R.string.no_expense_data_in_month));
             tv.setTextColor(Color.parseColor("#9E9E9E"));
             tv.setTextSize(12f);
             llTopCategoryContainer.addView(tv);
@@ -538,11 +529,11 @@ public class RevenueActivity extends AppCompatActivity {
         String html = buildMonthlyReportHtml(fmt);
         PrintManager printManager = (PrintManager) getSystemService(PRINT_SERVICE);
         if (printManager == null) {
-            Toast.makeText(this, "Thiết bị không hỗ trợ in/PDF", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.device_not_support_pdf), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String jobName = "BaoCao_" + selectedMonth.replace("/", "_");
+        String jobName = getString(R.string.report_job_name_prefix) + selectedMonth.replace("/", "_");
         WebView webView = new WebView(this);
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -556,16 +547,16 @@ public class RevenueActivity extends AppCompatActivity {
     }
 
     private String buildMonthlyReportHtml(NumberFormat fmt) {
-        String title = "Báo cáo tháng " + selectedMonth;
+        String title = getString(R.string.report_month_title, selectedMonth);
         String content = "<h2>" + title + "</h2>"
-                + "<p>Tổng phòng: " + tvTongPhong.getText() + "</p>"
-                + "<p>Phòng đang thuê: " + tvPhongDaThua.getText() + "</p>"
-                + "<p>Dòng tiền đã thu: " + tvDoanhThuThang.getText() + "</p>"
-                + "<p>Tổng cần thu tháng: " + tvTongCanThuThang.getText() + "</p>"
-                + "<p>Công nợ tháng: " + tvCongNoThang.getText() + "</p>"
-                + "<p>Tỷ lệ thu tiền: " + tvTiLeThuTien.getText() + "</p>"
-                + "<p>Tổng chi tháng: " + tvTongChiThang.getText() + "</p>"
-                + "<p>Lợi nhuận tháng: " + tvLoiNhuanThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_total_rooms_label) + " " + tvTongPhong.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_rented_rooms_label) + " " + tvPhongDaThua.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_collected_flow_label) + " " + tvDoanhThuThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_total_expected_label) + " " + tvTongCanThuThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_debt_label) + " " + tvCongNoThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_collection_rate_label) + " " + tvTiLeThuTien.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_monthly_expense_label) + " " + tvTongChiThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_monthly_profit_label) + " " + tvLoiNhuanThang.getText() + "</p>"
                 + "<p>" + tvTongThuLuyKe.getText() + "</p>"
                 + "<p>" + tvTongChiLuyKe.getText() + "</p>"
                 + "<p>" + tvTyLeLapDay.getText() + "</p>";
@@ -584,9 +575,9 @@ public class RevenueActivity extends AppCompatActivity {
                 + "<style>body{font-family:Arial,sans-serif;padding:28px;color:#222;}h2{margin:0 0 12px;}p{margin:5px 0;}</style>"
                 + "</head><body>"
                 + content
-                + "<h3 style='margin-top:16px;'>Top hạng mục chi</h3>"
+                + "<h3 style='margin-top:16px;'>" + getString(R.string.top_expense_categories_title) + "</h3>"
                 + top
-                + "<p style='margin-top:18px;color:#666;'>Xuất lúc: "
+                + "<p style='margin-top:18px;color:#666;'>" + getString(R.string.exported_at_label) + " "
                 + new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date())
                 + "</p>"
                 + "</body></html>";

@@ -26,7 +26,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Thu tiền cọc"
+            android:text="@string/deposit_collect_title"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#1A1A2E"
@@ -38,11 +38,11 @@
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_close"
-            android:contentDescription="Đóng"
+            android:contentDescription="@string/close"
             app:tint="#666666"/>
     </LinearLayout>
 
-    <!-- Thông tin phòng -->
+    <!-- UI section note -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -55,7 +55,7 @@
             android:id="@+id/tvPhongInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phòng 101"
+            android:text="@string/room_number_placeholder"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="#1A1A2E"
@@ -65,16 +65,16 @@
             android:id="@+id/tvTenantInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Khách: Nguyễn Văn A - 0987654321"
+            android:text="@string/deposit_tenant_info_placeholder"
             android:textSize="14sp"
             android:textColor="#555555"/>
     </LinearLayout>
 
-    <!-- Số tiền cọc -->
+    <!-- UI section note -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Số tiền cọc cần thu:"
+        android:text="@string/deposit_amount_to_collect"
         android:textSize="14sp"
         android:textColor="#888888"
         android:layout_marginBottom="8dp"/>
@@ -83,18 +83,18 @@
         android:id="@+id/tvSoTienCoc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="500.000đ"
+        android:text="@string/deposit_amount_placeholder"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="#FF6D00"
         android:layout_marginBottom="24dp"/>
 
-    <!-- Nút Gửi QR & Liên hệ -->
+    <!-- UI section note -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnGuiQR"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="📲 Gửi QR &amp; Liên hệ"
+        android:text="@string/deposit_send_qr_contact"
         android:textSize="15sp"
         android:textColor="@color/white"
         android:layout_marginBottom="12dp"
@@ -103,12 +103,12 @@
         app:icon="@null"
         style="@style/Widget.MaterialComponents.Button"/>
 
-    <!-- Nút Xác nhận đã thu -->
+    <!-- UI section note -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnXacNhanDaThu"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="✅ Xác nhận đã thu cọc"
+        android:text="@string/deposit_confirm_collected"
         android:textSize="15sp"
         android:textColor="@color/white"
         app:backgroundTint="#4CAF50"
@@ -117,3 +117,4 @@
         style="@style/Widget.MaterialComponents.Button"/>
 
 </LinearLayout>
+

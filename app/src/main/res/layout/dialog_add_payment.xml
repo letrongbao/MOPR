@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Số tiền thu (đ)"
+            android:text="@string/payment_amount_label"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -26,7 +26,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phương thức"
+            android:text="@string/payment_method"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <Spinner
@@ -38,7 +38,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ngày thu (dd/MM/yyyy)"
+            android:text="@string/payment_date_label"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -52,14 +52,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ghi chú"
+            android:text="@string/note_label"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
             android:id="@+id/etNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ví dụ: chuyển khoản MB..."
+            android:hint="@string/payment_note_example"
             android:inputType="textMultiLine"
             android:minLines="2"/>
 

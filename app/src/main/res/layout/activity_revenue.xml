@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Thống kê doanh thu"
+            app:title="@string/revenue_statistics_title"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
@@ -50,7 +50,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Tháng 01/2026"
+                    android:text="@string/expense_month_default"
                     android:textColor="#1E1E1E"
                     android:textSize="16sp"
                     android:textStyle="bold"/>
@@ -60,7 +60,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="8dp"
-                    android:text="Đổi tháng"
+                    android:text="@string/change_month"
                     android:textColor="@color/primary"
                     android:textStyle="bold"/>
             </LinearLayout>
@@ -76,7 +76,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="0 đ"
+                    android:text="@string/revenue_amount_zero"
                     android:textColor="#2E7D32"
                     android:textSize="14sp"
                     android:textStyle="bold"/>
@@ -86,7 +86,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="0 đ"
+                    android:text="@string/revenue_amount_zero"
                     android:gravity="end"
                     android:textColor="#C62828"
                     android:textSize="14sp"
@@ -113,7 +113,7 @@
                             android:text="0" android:textSize="32sp" android:textStyle="bold"
                             android:textColor="@color/primary"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Tổng phòng" android:textColor="#757575" android:textSize="12sp"
+                            android:text="@string/revenue_total_rooms" android:textColor="#757575" android:textSize="12sp"
                             android:textStyle="bold"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -133,7 +133,7 @@
                             android:text="0" android:textSize="32sp" android:textStyle="bold"
                             android:textColor="#4CAF50"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Đang thuê" android:textColor="#757575" android:textSize="12sp"
+                            android:text="@string/room_status_rented" android:textColor="#757575" android:textSize="12sp"
                             android:textStyle="bold"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -150,11 +150,11 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:padding="20dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Doanh thu tháng này (đã thu)" android:textColor="#CCFFFFFF" android:textSize="13sp"
+                        android:text="@string/revenue_monthly_collected_label" android:textColor="#CCFFFFFF" android:textSize="13sp"
                         android:textStyle="bold"/>
                     <TextView android:id="@+id/tvDoanhThuThang"
                         android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="0 đ" android:textSize="28sp" android:textStyle="bold"
+                        android:text="@string/revenue_amount_zero" android:textSize="28sp" android:textStyle="bold"
                         android:textColor="@color/white" android:layout_marginTop="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -180,7 +180,7 @@
                             android:text="0" android:textSize="32sp" android:textStyle="bold"
                             android:textColor="#F44336"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="HD chưa thu" android:textColor="#757575" android:textSize="12sp"
+                            android:text="@string/revenue_unpaid_invoices_short" android:textColor="#757575" android:textSize="12sp"
                             android:gravity="center" android:textStyle="bold"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -200,7 +200,7 @@
                             android:text="0" android:textSize="32sp" android:textStyle="bold"
                             android:textColor="#FF9800"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Người thuê" android:textColor="#757575" android:textSize="12sp"
+                            android:text="@string/revenue_tenants_label" android:textColor="#757575" android:textSize="12sp"
                             android:gravity="center" android:textStyle="bold"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -224,7 +224,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Tỷ lệ thu tiền tháng"
+                        android:text="@string/revenue_collection_rate_month"
                         android:textColor="#616161"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -233,7 +233,7 @@
                         android:id="@+id/tvTiLeThuTien"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0%"
+                        android:text="@string/revenue_percent_zero"
                         android:textColor="#2E7D32"
                         android:textSize="14sp"
                         android:textStyle="bold"/>
@@ -263,7 +263,7 @@
                         android:padding="16dp">
 
                         <TextView
-                            android:id="@+id/tvSoHDChuaTT"
+                            android:id="@+id/tvSoHDChuaTTSecondary"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
@@ -275,7 +275,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:text="HD chưa thu"
+                            android:text="@string/revenue_unpaid_invoices_short"
                             android:textColor="#757575"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
@@ -311,7 +311,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:text="Người thuê"
+                            android:text="@string/revenue_tenants_label"
                             android:textColor="#757575"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
@@ -345,7 +345,7 @@
                             android:id="@+id/tvTongChiThang"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0 đ"
+                            android:text="@string/revenue_amount_zero"
                             android:textColor="#E65100"
                             android:textSize="18sp"
                             android:textStyle="bold"/>
@@ -353,7 +353,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Chi tháng"
+                            android:text="@string/revenue_monthly_expense"
                             android:textColor="#757575"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
@@ -380,7 +380,7 @@
                             android:id="@+id/tvLoiNhuanThang"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0 đ"
+                            android:text="@string/revenue_amount_zero"
                             android:textColor="#1565C0"
                             android:textSize="18sp"
                             android:textStyle="bold"/>
@@ -388,7 +388,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Lợi nhuận tháng"
+                            android:text="@string/revenue_monthly_profit"
                             android:textColor="#757575"
                             android:textSize="12sp"
                             android:textStyle="bold"/>
@@ -413,7 +413,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lũy kế"
+                        android:text="@string/revenue_accumulated"
                         android:textColor="#616161"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -423,7 +423,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Tổng đã thu: 0 đ"
+                        android:text="@string/revenue_total_collected_default"
                         android:textColor="#2E7D32"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -433,7 +433,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Tổng đã chi: 0 đ"
+                        android:text="@string/revenue_total_expense_default"
                         android:textColor="#E65100"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -443,7 +443,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Tỷ lệ lấp đầy: 0%"
+                        android:text="@string/revenue_occupancy_default"
                         android:textColor="#1565C0"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -467,7 +467,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Biểu đồ 6 tháng gần nhất"
+                        android:text="@string/revenue_last_6_month_chart"
                         android:textColor="#616161"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -476,7 +476,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Màu: Thu (xanh lá), Chi (cam), Lợi nhuận (xanh dương)"
+                        android:text="@string/revenue_chart_legend"
                         android:textColor="#9E9E9E"
                         android:textSize="11sp"/>
 
@@ -506,7 +506,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Top 5 hạng mục chi trong tháng"
+                        android:text="@string/revenue_top5_expense_categories"
                         android:textColor="#616161"
                         android:textSize="13sp"
                         android:textStyle="bold"/>
@@ -526,7 +526,7 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="14dp"
                 android:layout_marginBottom="16dp"
-                android:text="Xuất PDF báo cáo tháng"
+                android:text="@string/revenue_export_pdf_month"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 app:backgroundTint="@color/primary"

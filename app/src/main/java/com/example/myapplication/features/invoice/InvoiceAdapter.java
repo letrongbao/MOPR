@@ -20,30 +20,30 @@ import java.util.Map;
 
 public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHolder> {
 
-    private List<Invoice> danhSach = new ArrayList<>();
+    private List<Invoice> dataList = new ArrayList<>();
     private final OnItemActionListener listener;
-    private boolean readOnly;
+    private boolean tenantMode;
     private Map<String, String> tenantDisplayByRoom = new HashMap<>();
     private int currentTab = 0;
 
     public interface OnItemActionListener {
-        void onXoa(Invoice hoaDon);
+        void onDelete(Invoice invoice);
 
-        void onBaoPhi(Invoice hoaDon);
+        void onBaoPhi(Invoice invoice);
 
-        void onDoiTrangThai(Invoice hoaDon);
+        void onDoiTrangThai(Invoice invoice);
 
-        void onSua(Invoice hoaDon);
+        void onSua(Invoice invoice);
 
-        void onXuat(Invoice hoaDon);
+        void onXuat(Invoice invoice);
     }
 
     public InvoiceAdapter(OnItemActionListener listener) {
         this.listener = listener;
     }
 
-    public void setDanhSach(List<Invoice> list) {
-        this.danhSach = list != null ? list : new ArrayList<>();
+    public void setDataList(List<Invoice> list) {
+        this.dataList = list != null ? list : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -52,8 +52,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         notifyDataSetChanged();
     }
 
-    public void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
+    public void setTenantMode(boolean tenantMode) {
+        this.tenantMode = tenantMode;
         notifyDataSetChanged();
     }
 
@@ -72,22 +72,22 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Invoice h = danhSach.get(position);
+        Invoice h = dataList.get(position);
 
-        holder.tvPhong.setText(h.getSoPhong() != null ? ("P." + h.getSoPhong()) : "P.???");
+        holder.tvPhong.setText(h.getRoomNumber() != null ? ("P." + h.getRoomNumber()) : "P.???");
 
-        String tenantDisplay = tenantDisplayByRoom.get(h.getIdPhong());
+        String tenantDisplay = tenantDisplayByRoom.get(h.getRoomId());
         if (tenantDisplay == null || tenantDisplay.trim().isEmpty()) {
-            tenantDisplay = "Người thuê: Đang cập nhật";
+            tenantDisplay = holder.itemView.getContext().getString(R.string.tenant_colon) + holder.itemView.getContext().getString(R.string.updating);
         }
         holder.tvTenantName.setText(tenantDisplay);
 
-        holder.tvPriceMonth.setText("Giá: " + MoneyFormatter.format(h.getGiaThue()) + "/tháng");
+        holder.tvPriceMonth.setText(holder.itemView.getContext().getString(R.string.price_colon) + MoneyFormatter.format(h.getRentAmount()) + holder.itemView.getContext().getString(R.string.per_month));
 
-        holder.tvReportDate.setText("Tháng: " + h.getThangNam());
+        holder.tvReportDate.setText(holder.itemView.getContext().getString(R.string.month_colon) + h.getBillingPeriod());
 
         // Status ribbon
-        String st = h.getTrangThai();
+        String st = h.getStatus();
         if (st == null || st.trim().isEmpty())
             st = InvoiceStatus.UNREPORTED;
 
@@ -116,25 +116,47 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         int buttonColor;
         View.OnClickListener buttonAction;
 
+        if (tenantMode) {
+            if (InvoiceStatus.UNREPORTED.equals(st)) {
+                buttonText = holder.itemView.getContext().getString(R.string.waiting_owner_report);
+                buttonColor = R.color.warning;
+                buttonAction = null;
+            } else {
+                buttonText = (InvoiceStatus.PAID.equals(st) || InvoiceStatus.PARTIAL.equals(st))
+                        ? holder.itemView.getContext().getString(R.string.view_payment_history)
+                        : holder.itemView.getContext().getString(R.string.pay_now);
+                buttonColor = InvoiceStatus.PAID.equals(st) ? R.color.success : R.color.btn_blue_action;
+                buttonAction = v -> listener.onDoiTrangThai(h);
+            }
+
+            holder.btnMainAction.setText(buttonText);
+            holder.btnMainAction.setBackgroundColor(
+                    ContextCompat.getColor(holder.itemView.getContext(), buttonColor));
+            holder.btnMainAction.setVisibility(View.VISIBLE);
+            holder.btnMainAction.setEnabled(buttonAction != null);
+            holder.btnMainAction.setOnClickListener(buttonAction);
+            return;
+        }
+
         if (currentTab == 0) {
-            // Tab "Chưa báo"
-            String month = h.getThangNam() != null ? h.getThangNam() : "X";
-            buttonText = "Báo phí tháng " + month + " cho khách";
+            // "Not Notified" tab
+            String month = h.getBillingPeriod() != null ? h.getBillingPeriod() : "X";
+            buttonText = holder.itemView.getContext().getString(R.string.report_fee_month, month);
             buttonColor = R.color.purple_500;
             buttonAction = v -> listener.onBaoPhi(h);
         } else if (currentTab == 1) {
-            // Tab "Đã báo"
-            buttonText = "Xác nhận đã thu phí";
+            // "Notified" tab
+            buttonText = holder.itemView.getContext().getString(R.string.confirm_collected_fee);
             buttonColor = R.color.btn_orange;
             buttonAction = v -> listener.onDoiTrangThai(h);
         } else if (currentTab == 2) {
-            // Tab "Đóng một phần"
-            buttonText = "Xem lịch sử thanh toán";
+            // "Partially Paid" tab
+            buttonText = holder.itemView.getContext().getString(R.string.view_payment_history);
             buttonColor = R.color.btn_blue_action;
             buttonAction = v -> listener.onDoiTrangThai(h);
         } else {
-            // Tab "Đã đóng"
-            buttonText = "Xem lịch sử thanh toán";
+            // "Paid" tab
+            buttonText = holder.itemView.getContext().getString(R.string.view_payment_history);
             buttonColor = R.color.success;
             buttonAction = v -> listener.onDoiTrangThai(h);
         }
@@ -143,14 +165,13 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         holder.btnMainAction.setBackgroundColor(
                 ContextCompat.getColor(holder.itemView.getContext(), buttonColor));
         holder.btnMainAction.setOnClickListener(buttonAction);
-
-        // Hide button for read-only users
-        holder.btnMainAction.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        holder.btnMainAction.setVisibility(View.VISIBLE);
+        holder.btnMainAction.setEnabled(true);
     }
 
     @Override
     public int getItemCount() {
-        return danhSach.size();
+        return dataList.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -169,3 +190,5 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         }
     }
 }
+
+

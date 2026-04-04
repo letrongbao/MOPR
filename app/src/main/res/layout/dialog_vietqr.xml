@@ -10,14 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textStyle="bold"
-        android:text="Chuyển khoản" />
+        android:text="@string/vietqr_transfer_title" />
 
     <TextView
         android:id="@+id/tvQrNote"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="6dp"
-        android:text="Nội dung:" />
+        android:text="@string/vietqr_content_label" />
 
     <ImageView
         android:id="@+id/imgQr"

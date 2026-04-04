@@ -6,22 +6,18 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Tenant;
 import com.example.myapplication.domain.Room;
 import com.google.android.material.appbar.AppBarLayout;
@@ -37,115 +33,103 @@ import java.util.Locale;
 
 public class RoomDetailsActivity extends AppCompatActivity {
 
-    private ImageView imgPhong;
-    private TextView tvSoPhong, tvLoaiPhong, tvDienTich, tvGiaThue, tvTrangThai, tvTrangThaiRow;
-    private TextView tvTenTenant, tvSdtTenant;
+    private ImageView imgRoom;
+    private TextView tvRoomNumber, tvRoomType, tvArea, tvRentAmount, tvStatus, tvStatusRow;
+    private TextView tvTenantName, tvTenantPhone;
     private View cardTenant;
-    private View btnGoiDien, btnNhanTin, llActionButtons;
-    private Room currentPhong;
+    private View btnCall, btnMessage, llActionButtons;
+    private Room currentRoom;
 
-    private String soDienThoaiTenant;
-    private String tenPhongHienTai;
+    private String tenantPhoneNumber;
+    private String currentRoomNumber;
 
     private ListenerRegistration roomListener;
     private ListenerRegistration tenantListener;
 
-    private String phongId;
+    private String roomId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Edge-to-edge layout
-        Window window = getWindow();
-        WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
 
         setContentView(R.layout.activity_room_details);
 
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(0, systemBars.top, 0, 0);
-                return insets;
-            });
+            ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Chi tiết phòng");
-        }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.room_details_title));
 
-        imgPhong = findViewById(R.id.imgPhongChiTiet);
-        tvSoPhong = findViewById(R.id.tvSoPhongChiTiet);
-        tvTrangThai = findViewById(R.id.tvTrangThaiChiTiet);
+        imgRoom = findViewById(R.id.imgPhongChiTiet);
+        tvRoomNumber = findViewById(R.id.tvSoPhongChiTiet);
+        tvStatus = findViewById(R.id.tvTrangThaiChiTiet);
 
         // Detail rows
         View rowLoai = findViewById(R.id.rowLoaiPhong);
-        ((TextView) rowLoai.findViewById(R.id.tvLabel)).setText("Loại phòng");
-        tvLoaiPhong = rowLoai.findViewById(R.id.tvValue);
+        ((TextView) rowLoai.findViewById(R.id.tvLabel)).setText(R.string.room_type_label);
+        tvRoomType = rowLoai.findViewById(R.id.tvValue);
 
         View rowDienTich = findViewById(R.id.rowDienTich);
-        ((TextView) rowDienTich.findViewById(R.id.tvLabel)).setText("Diện tích");
-        tvDienTich = rowDienTich.findViewById(R.id.tvValue);
+        ((TextView) rowDienTich.findViewById(R.id.tvLabel)).setText(R.string.room_area_label);
+        tvArea = rowDienTich.findViewById(R.id.tvValue);
 
         View rowGia = findViewById(R.id.rowGiaThue);
-        ((TextView) rowGia.findViewById(R.id.tvLabel)).setText("Giá thuê");
-        tvGiaThue = rowGia.findViewById(R.id.tvValue);
-        tvGiaThue.setTextColor(getResources().getColor(R.color.primary));
+        ((TextView) rowGia.findViewById(R.id.tvLabel)).setText(R.string.room_rent_label);
+        tvRentAmount = rowGia.findViewById(R.id.tvValue);
+        tvRentAmount.setTextColor(getResources().getColor(R.color.primary));
 
         View rowTrangThai = findViewById(R.id.rowTrangThai);
-        ((TextView) rowTrangThai.findViewById(R.id.tvLabel)).setText("Trạng thái");
-        tvTrangThaiRow = rowTrangThai.findViewById(R.id.tvValue);
+        ((TextView) rowTrangThai.findViewById(R.id.tvLabel)).setText(R.string.room_status_label);
+        tvStatusRow = rowTrangThai.findViewById(R.id.tvValue);
 
-        tvTenTenant = findViewById(R.id.tvTenTenant);
-        tvSdtTenant = findViewById(R.id.tvSdtTenant);
+        tvTenantName = findViewById(R.id.tvTenTenant);
+        tvTenantPhone = findViewById(R.id.tvSdtTenant);
         cardTenant = findViewById(R.id.cardTenant);
 
-        btnGoiDien = findViewById(R.id.btnGoiDien);
-        btnNhanTin = findViewById(R.id.btnNhanTin);
+        btnCall = findViewById(R.id.btnGoiDien);
+        btnMessage = findViewById(R.id.btnNhanTin);
         llActionButtons = findViewById(R.id.llActionButtons);
 
-        phongId = getIntent().getStringExtra("PHONG_ID");
-        if (phongId == null) {
-            Toast.makeText(this, "Không tìm thấy phòng", Toast.LENGTH_SHORT).show();
+        roomId = getIntent().getStringExtra("ROOM_ID");
+        if (roomId == null) {
+            Toast.makeText(this, R.string.room_not_found, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        btnGoiDien.setOnClickListener(v -> {
-            if (soDienThoaiTenant == null || soDienThoaiTenant.isEmpty()) {
-                Toast.makeText(this, "Phòng chưa có người thuê", Toast.LENGTH_SHORT).show();
+        btnCall.setOnClickListener(v -> {
+            if (tenantPhoneNumber == null || tenantPhoneNumber.isEmpty()) {
+                Toast.makeText(this, R.string.room_no_tenant, Toast.LENGTH_SHORT).show();
                 return;
             }
             Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(Uri.parse("tel:" + soDienThoaiTenant));
+            intent.setData(Uri.parse("tel:" + tenantPhoneNumber));
             startActivity(intent);
         });
 
-        btnNhanTin.setOnClickListener(v -> {
-            if (soDienThoaiTenant == null || soDienThoaiTenant.isEmpty()) {
-                Toast.makeText(this, "Phòng chưa có người thuê", Toast.LENGTH_SHORT).show();
+        btnMessage.setOnClickListener(v -> {
+            if (tenantPhoneNumber == null || tenantPhoneNumber.isEmpty()) {
+                Toast.makeText(this, R.string.room_no_tenant, Toast.LENGTH_SHORT).show();
                 return;
             }
             Intent intent = new Intent(Intent.ACTION_SENDTO);
-            intent.setData(Uri.parse("smsto:" + soDienThoaiTenant));
-            intent.putExtra("sms_body", "Xin chào, tôi liên hệ về phòng " + tenPhongHienTai);
+            intent.setData(Uri.parse("smsto:" + tenantPhoneNumber));
+            intent.putExtra("sms_body", getString(R.string.room_contact_sms, currentRoomNumber));
             startActivity(intent);
         });
 
-        loadRoomData(phongId);
-        loadTenantData(phongId);
+        loadRoomData(roomId);
+        loadTenantData(roomId);
     }
 
-    private void loadRoomData(String phongId) {
+    private void loadRoomData(String roomId) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Toast.makeText(this, "Chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.not_logged_in, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -157,23 +141,23 @@ public class RoomDetailsActivity extends AppCompatActivity {
                 : FirebaseFirestore.getInstance().collection("users").document(uid);
 
         roomListener = scopeDoc
-                .collection("phong_tro").document(phongId)
+                .collection("rooms").document(roomId)
                 .addSnapshotListener((doc, e) -> {
                     if (isFinishing() || isDestroyed())
                         return;
                     if (e != null || doc == null || !doc.exists()) {
-                        Toast.makeText(this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.room_load_error, Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    Room phong = doc.toObject(Room.class);
-                    if (phong == null)
+                    Room room = doc.toObject(Room.class);
+                    if (room == null)
                         return;
-                    phong.setId(doc.getId());
-                    displayRoom(phong);
+                    room.setId(doc.getId());
+                    displayRoom(room);
                 });
     }
 
-    private void loadTenantData(String phongId) {
+    private void loadTenantData(String roomId) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null)
             return;
@@ -185,68 +169,71 @@ public class RoomDetailsActivity extends AppCompatActivity {
                 : FirebaseFirestore.getInstance().collection("users").document(uid);
 
         tenantListener = scopeDoc
-                .collection("nguoi_thue")
-                .whereEqualTo("idPhong", phongId)
+                .collection("contracts")
+                .whereEqualTo("roomId", roomId)
                 .addSnapshotListener((value, error) -> {
                     if (isFinishing() || isDestroyed())
                         return;
                     if (error != null || value == null || value.isEmpty()) {
                         cardTenant.setVisibility(View.GONE);
                         llActionButtons.setVisibility(View.GONE);
-                        soDienThoaiTenant = null;
+                        tenantPhoneNumber = null;
                         return;
                     }
                     for (QueryDocumentSnapshot doc : value) {
-                        Tenant nguoiThue = doc.toObject(Tenant.class);
-                        if (nguoiThue != null) {
+                        Tenant tenant = doc.toObject(Tenant.class);
+                        if (tenant != null) {
                             cardTenant.setVisibility(View.VISIBLE);
                             llActionButtons.setVisibility(View.VISIBLE);
-                            tvTenTenant.setText(nguoiThue.getHoTen());
-                            tvSdtTenant.setText(nguoiThue.getSoDienThoai());
-                            soDienThoaiTenant = nguoiThue.getSoDienThoai();
+                            tvTenantName.setText(tenant.getFullName());
+                            tvTenantPhone.setText(tenant.getPhoneNumber());
+                            tenantPhoneNumber = tenant.getPhoneNumber();
                             break;
                         }
                     }
                 });
     }
 
-    private void displayRoom(Room phong) {
-        currentPhong = phong;
-        tenPhongHienTai = phong.getSoPhong();
+    private void displayRoom(Room room) {
+        currentRoom = room;
+        currentRoomNumber = room.getRoomNumber();
 
-        String khu = phong.getHouseTen();
-        tvSoPhong.setText(
-                "Phòng " + phong.getSoPhong() + (khu != null && !khu.trim().isEmpty() ? (" • " + khu.trim()) : ""));
-        tvLoaiPhong.setText(phong.getLoaiPhong());
-        tvDienTich.setText((int) phong.getDienTich() + " m²");
+        String houseName = room.getHouseName();
+        tvRoomNumber.setText(
+                getString(
+                        R.string.room_number_with_house,
+                        room.getRoomNumber(),
+                        (houseName != null && !houseName.trim().isEmpty()) ? (" • " + houseName.trim()) : ""));
+        tvRoomType.setText(room.getRoomType());
+        tvArea.setText(getString(R.string.room_area_value, (int) room.getArea()));
 
-        NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-        tvGiaThue.setText(fmt.format(phong.getGiaThue()) + " đ/tháng");
+        NumberFormat fmt = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"));
+        tvRentAmount.setText(getString(R.string.room_rent_value, fmt.format(room.getRentAmount())));
 
-        boolean trong = RoomStatus.VACANT.equals(phong.getTrangThai());
-        int color = Color.parseColor(trong ? "#4CAF50" : "#F44336");
+        boolean isVacant = RoomStatus.VACANT.equals(room.getStatus());
+        int color = Color.parseColor(isVacant ? "#4CAF50" : "#F44336");
 
         // Status badge overlay on image
-        tvTrangThai.setText(phong.getTrangThai());
+        tvStatus.setText(room.getStatus());
         GradientDrawable badge = new GradientDrawable();
         badge.setShape(GradientDrawable.RECTANGLE);
         badge.setCornerRadius(32f);
         badge.setColor(color);
-        tvTrangThai.setBackground(badge);
+        tvStatus.setBackground(badge);
 
-        tvTrangThaiRow.setText(phong.getTrangThai());
-        tvTrangThaiRow.setTextColor(color);
+        tvStatusRow.setText(room.getStatus());
+        tvStatusRow.setTextColor(color);
 
-        if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty() && !isDestroyed()) {
+        if (room.getImageUrl() != null && !room.getImageUrl().isEmpty() && !isDestroyed()) {
             Glide.with(this)
-                    .load(phong.getHinhAnh())
+                    .load(room.getImageUrl())
                     .centerCrop()
                     .placeholder(R.drawable.baseline_home_24)
-                    .into(imgPhong);
+                    .into(imgRoom);
         }
 
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Phòng " + phong.getSoPhong());
+            getSupportActionBar().setTitle(getString(R.string.room_number, room.getRoomNumber()));
         }
     }
 

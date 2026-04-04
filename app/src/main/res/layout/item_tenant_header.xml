@@ -9,31 +9,31 @@
     android:paddingTop="16dp"
     android:paddingBottom="6dp">
 
-    <!-- Icon phòng -->
+    <!-- UI section note -->
     <ImageView
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:src="@drawable/ic_house"
-        android:contentDescription="Phòng"
+        android:contentDescription="@string/room"
         android:layout_marginEnd="8dp"/>
 
-    <!-- Tên phòng -->
+    <!-- UI section note -->
     <TextView
         android:id="@+id/tvTenPhong"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Phòng 1"
+        android:text="@string/item_tenant_header_room_sample"
         android:textSize="17sp"
         android:textStyle="bold"
         android:textColor="#1A1A1A"/>
 
-    <!-- Nút Tự Nhập (xanh dương nhẹ) -->
+    <!-- UI section note -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnTuNhap"
         android:layout_width="wrap_content"
         android:layout_height="32dp"
-        android:text="Tự nhập"
+        android:text="@string/item_tenant_header_manual_input"
         android:textSize="11sp"
         android:textColor="#1565C0"
         android:paddingHorizontal="10dp"
@@ -44,12 +44,12 @@
         android:backgroundTint="@android:color/transparent"
         xmlns:app="http://schemas.android.com/apk/res-auto"/>
 
-    <!-- Nút Thêm (+) -->
+    <!-- UI section note -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnThem"
         android:layout_width="wrap_content"
         android:layout_height="32dp"
-        android:text="+ Thêm"
+        android:text="@string/item_tenant_header_add"
         android:textSize="12sp"
         android:textColor="@android:color/white"
         android:paddingHorizontal="10dp"
@@ -57,4 +57,5 @@
         android:backgroundTint="#2E7D32"/>
 
 </LinearLayout>
+
 

@@ -19,7 +19,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Row 1: Avatar + Thông tin chính + Chip trạng thái -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -40,7 +40,7 @@
                     app:tint="#2E7D32"/>
             </FrameLayout>
 
-            <!-- Tên + SĐT -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
                     android:id="@+id/tvHoTenHd"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nguyễn Văn A"
+                    android:text="@string/item_contract_smart_tenant_name_sample"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="#1A1A2E"
@@ -69,12 +69,12 @@
                     android:layout_marginTop="2dp"/>
             </LinearLayout>
 
-            <!-- Chip trạng thái -->
+            <!-- UI section note -->
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipTrangThai"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đang thuê"
+                    android:text="@string/item_contract_smart_status_renting"
                 android:textSize="11sp"
                 android:textColor="@color/white"
                 app:chipCornerRadius="8dp"
@@ -92,7 +92,7 @@
             android:background="#F0F0F0"
             android:layout_marginVertical="10dp"/>
 
-        <!-- Row 2: Số phòng + Ngày kết thúc -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -113,7 +113,7 @@
                     android:id="@+id/tvSoPhongHd"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Phòng 5"
+                    android:text="@string/item_contract_smart_room_sample"
                     android:textSize="13sp"
                     android:textColor="#555555"
                     android:layout_marginStart="4dp"/>
@@ -141,13 +141,13 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Row 3: Nút Nhắc tái ký (chỉ hiển thị khi SAP_HET_HAN) -->
+        <!-- UI section note -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNhacTaiKy"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_marginTop="10dp"
-            android:text="🔔  Nhắc tái ký qua Zalo"
+            android:text="@string/item_contract_smart_renewal_reminder"
             android:textSize="13sp"
             android:textColor="@color/white"
             android:visibility="gone"
@@ -159,3 +159,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

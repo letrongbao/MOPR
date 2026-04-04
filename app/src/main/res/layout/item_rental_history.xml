@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header với trạng thái -->
+        <!-- UI section note -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,13 +34,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="N"
+                    android:text="@string/item_rental_history_initial_sample"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@color/primary"/>
             </FrameLayout>
 
-            <!-- Tên và phòng -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -53,7 +53,7 @@
                     android:id="@+id/tvTenantName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nguyễn Văn A"
+                    android:text="@string/item_rental_history_tenant_name_sample"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="@color/white"/>
@@ -62,13 +62,13 @@
                     android:id="@+id/tvRoomInfo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Phòng 101 - Nhà A"
+                    android:text="@string/item_rental_history_room_info_sample"
                     android:textSize="13sp"
                     android:textColor="#DDFFFFFF"/>
 
             </LinearLayout>
 
-            <!-- Badge kết thúc -->
+            <!-- UI section note -->
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
@@ -79,20 +79,20 @@
                 android:backgroundTint="#40FFFFFF"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="Đã kết thúc"
+                android:text="@string/item_rental_history_status_ended"
                 android:textSize="11sp"
                 android:textColor="@color/white"/>
 
         </RelativeLayout>
 
-        <!-- Thông tin chi tiết -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Thời gian thuê -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -116,7 +116,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Thời gian thuê"
+                        android:text="@string/item_rental_history_duration_label"
                         android:textSize="12sp"
                         android:textColor="@color/text_sub"/>
 
@@ -124,7 +124,7 @@
                         android:id="@+id/tvRentalPeriod"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="01/01/2024 - 01/06/2024"
+                        android:text="@string/item_rental_history_period_sample"
                         android:textSize="14sp"
                         android:textColor="@color/text_main"
                         android:textStyle="bold"/>
@@ -139,7 +139,7 @@
                     android:backgroundTint="#E3F2FD"
                     android:paddingHorizontal="10dp"
                     android:paddingVertical="4dp"
-                    android:text="6 tháng"
+                    android:text="@string/item_rental_history_duration_sample"
                     android:textSize="12sp"
                     android:textColor="@color/primary"/>
 
@@ -152,20 +152,20 @@
                 android:background="#EEEEEE"
                 android:layout_marginBottom="12dp"/>
 
-            <!-- Thông tin 2 cột -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <!-- Cột trái -->
+                <!-- UI section note -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <!-- Số điện thoại -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -182,7 +182,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="0987654321"
+                            android:text="@string/item_rental_history_phone_sample"
                             android:textSize="13sp"
                             android:textColor="@color/text_main"/>
                     </LinearLayout>
@@ -203,14 +203,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
-                            android:text="012345678901"
+                            android:text="@string/item_rental_history_id_sample"
                             android:textSize="13sp"
                             android:textColor="@color/text_main"/>
                     </LinearLayout>
 
                 </LinearLayout>
 
-                <!-- Cột phải -->
+                <!-- UI section note -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -218,11 +218,11 @@
                     android:orientation="vertical"
                     android:gravity="end">
 
-                    <!-- Tiền phòng -->
+                    <!-- UI section note -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tiền phòng"
+                        android:text="@string/item_rental_history_rent_label"
                         android:textSize="11sp"
                         android:textColor="@color/text_sub"/>
 
@@ -230,17 +230,17 @@
                         android:id="@+id/tvRentAmount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="3,500,000đ"
+                        android:text="@string/item_rental_history_rent_sample"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@color/primary"/>
 
-                    <!-- Tiền cọc -->
+                    <!-- UI section note -->
                     <TextView
                         android:id="@+id/tvDeposit"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cọc: 7,000,000đ"
+                        android:text="@string/item_rental_history_deposit_sample"
                         android:textSize="12sp"
                         android:textColor="@color/text_sub"/>
 
@@ -248,7 +248,7 @@
 
             </LinearLayout>
 
-            <!-- Số thành viên và dịch vụ -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -256,7 +256,7 @@
                 android:layout_marginTop="12dp"
                 android:gravity="center_vertical">
 
-                <!-- Số thành viên -->
+                <!-- UI section note -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -278,13 +278,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
-                        android:text="2 người"
+                        android:text="@string/item_rental_history_members_sample"
                         android:textSize="11sp"
                         android:textColor="#FF9800"/>
 
                 </LinearLayout>
 
-                <!-- Dịch vụ -->
+                <!-- UI section note -->
                 <LinearLayout
                     android:id="@+id/servicesContainer"
                     android:layout_width="wrap_content"
@@ -296,7 +296,7 @@
 
             </LinearLayout>
 
-            <!-- Ghi chú nếu có -->
+            <!-- UI section note -->
             <LinearLayout
                 android:id="@+id/noteContainer"
                 android:layout_width="match_parent"
@@ -319,7 +319,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Ghi chú..."
+                    android:text="@string/item_rental_history_note_placeholder"
                     android:textSize="12sp"
                     android:textColor="@color/text_sub"
                     android:maxLines="2"
@@ -332,3 +332,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

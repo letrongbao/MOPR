@@ -13,7 +13,7 @@
             android:id="@+id/etCategory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Hạng mục (ví dụ: Sửa chữa, Rác, Wifi...)"
+            android:hint="@string/expense_category_hint"
             android:inputType="textCapSentences"/>
 
         <EditText
@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Số tiền"
+            android:hint="@string/expense_amount_hint"
             android:inputType="numberDecimal"/>
 
         <EditText
@@ -29,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Ngày (dd/MM/yyyy)"
+            android:hint="@string/expense_date_hint"
             android:inputType="text"/>
 
         <EditText
@@ -37,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Ghi chú (tuỳ chọn)"
+            android:hint="@string/note_optional_hint"
             android:inputType="textMultiLine"
             android:minLines="2"/>
 

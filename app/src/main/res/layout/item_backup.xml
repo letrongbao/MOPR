@@ -32,7 +32,7 @@
             android:id="@+id/tvBackupId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="backupId"
+            android:text="@string/item_backup_id_placeholder"
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginTop="4dp"/>
@@ -41,7 +41,7 @@
             android:id="@+id/tvBackupNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ghi chú"
+            android:text="@string/note_label"
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginTop="4dp"/>
@@ -49,7 +49,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Chạm để xem tuỳ chọn khôi phục (sắp có)"
+            android:text="@string/backup_restore_preview_hint"
             android:textSize="12sp"
             android:textColor="#999999"
             android:layout_marginTop="10dp"/>

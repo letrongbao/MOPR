@@ -41,7 +41,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="123 Nguyễn Đình Chiểu, P5, Q3"
+                android:text="@string/item_house_address_sample"
                 android:textColor="@color/white"
                 android:textStyle="bold"
                 android:textSize="14sp"
@@ -97,7 +97,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:text="Quang - 0987654321"
+                    android:text="@string/item_house_manager_sample"
                     android:textStyle="bold"
                     android:textColor="@color/black"
                     android:textSize="15sp"
@@ -110,7 +110,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="Thông tin chuyển khoản"
+                android:text="@string/item_house_bank_info_title"
                 android:textStyle="italic"
                 android:textSize="13sp"
                 android:textColor="@color/text_sub"/>
@@ -120,7 +120,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Chủ TK: Quang\nNgân hàng Tiền Phong Bank\nSTK: 0987654321"
+                android:text="@string/item_house_bank_info_sample"
                 android:textSize="13sp"
                 android:textStyle="italic"
                 android:textColor="@color/text_sub"/>
@@ -148,7 +148,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="Xem bảng giá phí"
+                    android:text="@string/item_house_view_fee_table"
                     android:textSize="14sp"
                     android:textColor="@color/primary"
                     android:textStyle="bold"/>
@@ -189,14 +189,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Loại phí"
+                        android:text="@string/item_house_fee_type"
                         android:textSize="13sp"
                         android:textColor="@color/text_sub"/>
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Đơn vị tính"
+                        android:text="@string/item_house_fee_unit"
                         android:textSize="13sp"
                         android:textColor="@color/text_sub"
                         android:gravity="center"/>
@@ -204,7 +204,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Giá tiền"
+                        android:text="@string/item_house_fee_price"
                         android:textSize="13sp"
                         android:textColor="@color/text_sub"
                         android:gravity="end"/>
@@ -215,57 +215,57 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Điện" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="KWH" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeDien" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_electricity" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_kwh" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeDien" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Nước" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:id="@+id/tvFeeNuocUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeNuoc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_water" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:id="@+id/tvFeeNuocUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeNuoc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Xe" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="chiếc" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeXe" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_parking" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_vehicle" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeXe" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Internet" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeInternet" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_internet" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeInternet" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Giặt sấy" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeGiatSay" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_laundry" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeGiatSay" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Thang máy" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeThangMay" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_elevator" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeThangMay" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tivi cáp" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeTiviCap" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_cable_tv" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeTiviCap" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Rác" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeRac" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_garbage" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeRac" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Dịch vụ" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="phòng" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeDichVu" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 đ" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_service" android:textSize="14sp" android:textColor="@color/black"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeDichVu" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
             </LinearLayout>
@@ -306,7 +306,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
-                        android:text="Sửa nhà"
+                        android:text="@string/item_house_edit_house"
                         android:textColor="@color/primary"
                         android:textSize="14sp"/>
                 </LinearLayout>
@@ -336,7 +336,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
-                        android:text="DS Phòng"
+                        android:text="@string/item_house_room_list"
                         android:textColor="#2E7D32"
                         android:textSize="14sp"/>
                 </LinearLayout>

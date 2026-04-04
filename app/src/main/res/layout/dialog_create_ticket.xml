@@ -9,14 +9,14 @@
         android:id="@+id/etTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Tiêu đề"
+        android:hint="@string/ticket_title_hint"
         android:inputType="text" />
 
     <EditText
         android:id="@+id/etDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Mô tả (tuỳ chọn)"
+        android:hint="@string/ticket_description_hint"
         android:inputType="textMultiLine"
         android:minLines="3"
         android:gravity="top"
@@ -32,7 +32,7 @@
         android:id="@+id/etRoomId"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="RoomId"
+        android:hint="@string/dialog_create_ticket_room_id_hint"
         android:layout_marginTop="10dp"
         android:visibility="gone" />
 
