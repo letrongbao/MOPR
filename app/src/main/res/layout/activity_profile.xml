@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
             android:background="?attr/colorSurface"
-            app:title="Thông tin cá nhân"
+            app:title="@string/profile_title"
             app:titleTextColor="?attr/colorOnSurface"
             app:navigationIconTint="?attr/colorOnSurface"/>
     </com.google.android.material.appbar.AppBarLayout>
@@ -30,7 +30,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Avatar + Tên -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -47,12 +47,12 @@
                     android:padding="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:contentDescription="Đổi ảnh đại diện"/>
+                    android:contentDescription="@string/profile_change_avatar_desc"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nhấn để đổi ảnh"
+                    android:text="@string/profile_tap_change_avatar"
                     android:textSize="11sp"
                     android:textColor="#8692f7"
                     android:layout_marginTop="4dp"/>
@@ -61,7 +61,7 @@
                     android:id="@+id/tvDisplayName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Tên người dùng"
+                    android:text="@string/profile_display_name_placeholder"
                     android:textSize="22sp"
                     android:textStyle="bold"
                     android:textColor="#333333"
@@ -71,13 +71,13 @@
                     android:id="@+id/tvEmail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="email@example.com"
+                    android:text="@string/profile_email_placeholder"
                     android:textSize="14sp"
                     android:textColor="#757575"
                     android:layout_marginTop="4dp"/>
             </LinearLayout>
 
-            <!-- Thông tin chi tiết -->
+            <!-- UI section note -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -93,7 +93,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Thông tin tài khoản"
+                        android:text="@string/profile_account_info"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#333333"
@@ -102,7 +102,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Họ và tên"
+                        android:text="@string/full_name"
                         android:textSize="12sp"
                         android:textColor="#999999"/>
                     <EditText
@@ -120,7 +120,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Email"
+                        android:text="@string/email"
                         android:textSize="12sp"
                         android:textColor="#999999"/>
                     <EditText
@@ -138,7 +138,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Số điện thoại"
+                        android:text="@string/phone_number"
                         android:textSize="12sp"
                         android:textColor="#999999"/>
                     <EditText
@@ -157,14 +157,14 @@
                         android:id="@+id/btnSaveProfile"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:text="Lưu thông tin"
+                        android:text="@string/house_save_info"
                         android:textSize="16sp"
                         android:backgroundTint="@color/purple"
                         app:cornerRadius="12dp"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Đổi mật khẩu -->
+            <!-- UI section note -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -181,7 +181,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Đổi mật khẩu"
+                        android:text="@string/change_password"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#333333"
@@ -190,7 +190,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Mật khẩu mới"
+                        android:text="@string/new_password"
                         android:textSize="12sp"
                         android:textColor="#999999"/>
                     <EditText
@@ -202,14 +202,14 @@
                         android:textSize="15sp"
                         android:textColor="#333333"
                         android:inputType="textPassword"
-                        android:hint="Nhập mật khẩu mới"
+                        android:hint="@string/profile_new_password_hint"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="16dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Xác nhận mật khẩu mới"
+                        android:text="@string/confirm_new_password"
                         android:textSize="12sp"
                         android:textColor="#999999"/>
                     <EditText
@@ -221,7 +221,7 @@
                         android:textSize="15sp"
                         android:textColor="#333333"
                         android:inputType="textPassword"
-                        android:hint="Nhập lại mật khẩu mới"
+                        android:hint="@string/confirm_new_password_hint"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="16dp"/>
 
@@ -229,7 +229,7 @@
                         android:id="@+id/btnChangePassword"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:text="Đổi mật khẩu"
+                        android:text="@string/change_password"
                         android:textSize="16sp"
                         android:backgroundTint="#FF9800"
                         app:cornerRadius="12dp"/>

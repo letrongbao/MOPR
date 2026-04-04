@@ -30,7 +30,7 @@
                     android:id="@+id/tvTitleLine1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hợp đồng"
+                    android:text="@string/contract_header_title"
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -62,7 +62,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Card Nội dung hợp đồng -->
+            <!-- UI section note -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -81,7 +81,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Số hợp đồng *"
+                        android:text="@string/contract_form_number_required"
                         android:textStyle="bold"
                         android:textColor="#212121"/>
                     <EditText
@@ -95,7 +95,7 @@
                         android:inputType="text"
                         android:textColor="#212121"/>
 
-                    <!-- Tên và Điện thoại -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -111,7 +111,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tên khách hàng *"
+                                android:text="@string/contract_form_customer_name_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -133,7 +133,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Điện thoại *"
+                                android:text="@string/contract_form_phone_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -150,7 +150,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Số CCCD *"
+                        android:text="@string/contract_form_personal_id_required"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginTop="12dp"/>
@@ -163,7 +163,7 @@
                         android:paddingHorizontal="14dp"
                         android:inputType="number"/>
 
-                    <!-- Ảnh CCCD -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -184,7 +184,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Mặt trước CCCD"
+                                    android:text="@string/contract_form_id_front"
                                     android:textColor="#666666"/>
                                 <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
                                 <ImageView
@@ -223,7 +223,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Mặt sau CCCD"
+                                    android:text="@string/contract_form_id_back"
                                     android:textColor="#666666"/>
                                 <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
                                 <ImageView
@@ -249,7 +249,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Phòng và Số người -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -264,7 +264,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Phòng *"
+                                android:text="@string/contract_form_room_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -287,7 +287,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Số người ở *"
+                                android:text="@string/contract_form_member_count_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -301,7 +301,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Tiền phòng và Tiền cọc -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -316,7 +316,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tiền phòng *"
+                                android:text="@string/contract_form_rent_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -338,7 +338,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tiền cọc"
+                                android:text="@string/contract_label_deposit"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -357,10 +357,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Hiển thị tiền cọc trên hóa đơn"
+                        android:text="@string/contract_show_deposit_on_invoice"
                         android:checked="true"/>
 
-                    <!-- Ngày ký và Số tháng -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -375,7 +375,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Ngày ký HĐ *"
+                                android:text="@string/contract_form_signing_date_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <FrameLayout
@@ -389,7 +389,7 @@
                                     android:background="@drawable/bg_input_rounded"
                                     android:paddingStart="14dp"
                                     android:paddingEnd="48dp"
-                                    android:hint="MM/yyyy"
+                                    android:hint="@string/contract_date_month_year_hint"
                                     android:inputType="none"
                                     android:focusable="false"
                                     android:clickable="true"/>
@@ -413,7 +413,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Số tháng HĐ *"
+                                android:text="@string/contract_form_months_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"/>
                             <EditText
@@ -432,13 +432,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Nhắc tôi trước 1 tháng khi HĐ hết hạn"
+                        android:text="@string/contract_remind_before_expiry"
                         android:checked="true"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Chỉ số điện ban đầu *"
+                        android:text="@string/contract_form_initial_electric_required"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginTop="12dp"/>
@@ -451,7 +451,7 @@
                         android:paddingHorizontal="14dp"
                         android:inputType="number"/>
 
-                    <!-- Dịch vụ -->
+                    <!-- UI section note -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -460,7 +460,7 @@
                             android:id="@+id/cbGuiXe"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="Gửi xe"
+                            android:text="@string/parking_service_label"
                             android:textStyle="bold"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/llSoXe"
@@ -475,7 +475,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="SL xe *"
+                                android:text="@string/contract_form_vehicle_count_required"
                                 android:textStyle="bold"
                                 android:textColor="#212121"
                                 android:layout_gravity="end"/>
@@ -493,7 +493,7 @@
                             android:id="@+id/tvGuiXePrice"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="Gửi xe 0 đ/chiếc"
+                            android:text="@string/contract_parking_price_default"
                             android:textColor="#212121"
                             app:layout_constraintStart_toStartOf="@id/cbGuiXe"
                             app:layout_constraintTop_toBottomOf="@id/cbGuiXe"
@@ -505,7 +505,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Internet 0 đ/phòng"
+                        android:text="@string/contract_internet_price_default"
                         android:textStyle="bold"/>
 
                     <CheckBox
@@ -513,13 +513,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Giặt sấy 0 đ/phòng"
+                        android:text="@string/contract_laundry_price_default"
                         android:textStyle="bold"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ghi chú"
+                        android:text="@string/note_label"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginTop="12dp"/>
@@ -538,13 +538,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Hiển thị ghi chú trên hóa đơn"
+                        android:text="@string/contract_show_note_on_invoice"
                         android:checked="true"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Nhắc báo phí vào"
+                        android:text="@string/contract_billing_reminder_label"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginTop="12dp"/>
@@ -560,30 +560,30 @@
                             android:id="@+id/rbRemindStartMonth"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Đầu tháng"/>
+                            android:text="@string/remind_start_month"/>
 
                         <RadioButton
                             android:id="@+id/rbRemindMidMonth"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Giữa tháng"/>
+                            android:text="@string/remind_mid_month"/>
 
                         <RadioButton
                             android:id="@+id/rbRemindEndMonth"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Cuối tháng"/>
+                            android:text="@string/remind_end_month"/>
                     </RadioGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Nút bấm -->
+            <!-- UI section note -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="16dp"
-                android:text="Tạo hợp đồng"
+                android:text="@string/create_contract"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 app:cornerRadius="10dp"
@@ -594,7 +594,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="12dp"
-                android:text="In hợp đồng"
+                android:text="@string/print_contract"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:visibility="gone"
@@ -606,7 +606,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="12dp"
-                android:text="Kết thúc hợp đồng"
+                android:text="@string/end_contract"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:visibility="gone"
@@ -618,7 +618,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="12dp"
-                android:text="Cập nhật hợp đồng"
+                android:text="@string/update_contract"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:visibility="gone"
@@ -627,3 +627,4 @@
         </LinearLayout>
     </ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.TicketStatus;
 import com.example.myapplication.domain.Ticket;
 
 import java.util.ArrayList;
@@ -44,9 +45,9 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
         Ticket t = list.get(position);
-        h.tvTitle.setText(t.getTitle() != null ? t.getTitle() : "(Không tiêu đề)");
+        h.tvTitle.setText(t.getTitle() != null ? t.getTitle() : h.itemView.getContext().getString(R.string.ticket_no_title));
         h.tvRoom.setText(t.getRoomId() != null ? ("Room: " + t.getRoomId()) : "");
-        h.tvStatus.setText(t.getStatus() != null ? t.getStatus() : "");
+        h.tvStatus.setText(toVietnameseStatus(t.getStatus(), h.itemView.getContext()));
 
         GradientDrawable badge = new GradientDrawable();
         badge.setShape(GradientDrawable.RECTANGLE);
@@ -61,6 +62,16 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.VH> {
     @Override
     public int getItemCount() {
         return list.size();
+    }
+
+    private String toVietnameseStatus(String status, android.content.Context context) {
+        if (TicketStatus.OPEN.equals(status))
+            return context.getString(R.string.ticket_status_new);
+        if (TicketStatus.IN_PROGRESS.equals(status))
+            return context.getString(R.string.ticket_status_processing);
+        if (TicketStatus.DONE.equals(status))
+            return context.getString(R.string.completed);
+        return status != null ? status : "";
     }
 
     static class VH extends RecyclerView.ViewHolder {

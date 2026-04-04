@@ -22,7 +22,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="NHẬP CÁC CHI SỐ"
+        android:text="@string/fee_notification_title"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="#333333"
@@ -40,7 +40,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phòng: "
+            android:text="@string/room_colon"
             android:textSize="14sp"
             android:textColor="#333333"/>
 
@@ -49,7 +49,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="101"
+            android:text="@string/room_number_sample"
             android:textSize="14sp"
             android:textColor="#333333"
             android:textStyle="bold"/>
@@ -57,7 +57,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Người thuê: "
+            android:text="@string/tenant_colon"
             android:textSize="14sp"
             android:textColor="#333333"
             android:layout_marginStart="16dp"/>
@@ -66,17 +66,17 @@
             android:id="@+id/tvTenant"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="A Minh"
+            android:text="@string/tenant_name_sample"
             android:textSize="14sp"
             android:textColor="#333333"
             android:textStyle="bold"/>
     </LinearLayout>
 
-    <!-- Chi số điện cũ -->
+    <!-- UI section note -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Chi số điện cũ *"
+        android:hint="@string/electric_old_reading_required"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_marginBottom="12dp">
 
@@ -90,11 +90,11 @@
             android:textColor="#888888"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Chi số điện mới -->
+    <!-- UI section note -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Chi số điện mới *"
+        android:hint="@string/electric_new_reading_required"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_marginBottom="20dp">
 
@@ -105,12 +105,12 @@
             android:inputType="number"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Xem hóa đơn button -->
+    <!-- UI section note -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnXemInvoice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Xem hoá đơn"
+        android:text="@string/view_invoice"
         android:textAllCaps="false"
         android:textSize="14sp"
         app:cornerRadius="6dp"
@@ -118,4 +118,5 @@
         android:paddingVertical="12dp"/>
 
 </LinearLayout>
+
 

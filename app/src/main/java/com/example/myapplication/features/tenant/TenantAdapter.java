@@ -20,31 +20,31 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Adapter Multi-ViewType hiển thị danh sách khách thuê phân nhóm theo phòng.
+ * Internal note.
  *
- * ViewType 0 = HEADER (tên phòng + nút Thêm)
- * ViewType 1 = ITEM (thẻ bài thông tin khách thuê)
+ * Internal note.
+ * Internal note.
  */
 public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    // ── Link Google Form pre-filled (số phòng + tenant ID) ─────────────────
-    // '999'     → sẽ được thay bằng soPhong thực tế của phòng.
-    // 'ABC_XYZ' → sẽ được thay bằng ID document Tenant trên Firestore.
-    private static final String GOOGLE_FORM_URL =
-            "https://docs.google.com/forms/d/e/1FAIpQLSfeQn8xbJTbHw4FHbqSqZpC87uxfy34w0l211T5vHj66VdVUw/viewform?usp=pp_url&entry.166517188=999&entry.1163193725=ABC_XYZ";
+    // Internal note.
+    // Internal note.
+    // Internal note.
+    private static final String GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfeQn8xbJTbHw4FHbqSqZpC87uxfy34w0l211T5vHj66VdVUw/viewform?usp=pp_url&entry.166517188=999&entry.1163193725=ABC_XYZ";
 
-    // ── ViewType constants ──────────────────────────────────────────────────
+    // Internal note.
     private static final int VIEW_TYPE_HEADER = 0;
     private static final int VIEW_TYPE_ITEM = 1;
 
-    // ── Wrapper để chứa lẫn lộn Header (String) và Item (Tenant) ────────
-    /** Mỗi phần tử trong displayList là một trong hai loại này. */
+    // Internal note.
+
     private static class Row {
-        final String header; // != null → đây là dòng header tên phòng
-        final Tenant tenant; // != null → đây là dòng thẻ bài khách
+        final String header;
+        final Tenant tenant;
 
         Row(String header) {
             this.header = header;
@@ -61,31 +61,28 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         }
     }
 
-    // ── State ───────────────────────────────────────────────────────────────
-    /** Danh sách nguồn đầy đủ – KHÔNG lọc. */
+    // Internal note.
+
     private List<Tenant> fullList = new ArrayList<>();
-    /** Danh sách hiển thị sau khi group + filter. */
+
     private List<Row> displayList = new ArrayList<>();
 
-    /** Từ khoá tìm kiếm hiện tại (rỗng = hiển thị tất cả). */
     private String filterQuery = "";
 
-    // ── Callbacks ───────────────────────────────────────────────────────────
+    // Internal note.
     public interface OnItemActionListener {
-        void onXoa(Tenant nguoiThue);
+        void onDelete(Tenant tenant);
 
-        void onSua(Tenant nguoiThue);
+        void onSua(Tenant tenant);
     }
 
-    /** Callback cho nút [+ Thêm] trên header mỗi phòng. */
     public interface OnAddToRoomListener {
         void onAdd(String roomId, String roomName);
     }
 
-    /** Callback cho nút [Tự nhập] — chia sẻ link Google Form đến khách. */
     public interface OnSelfEntryListener {
-        /** @param soPhong số phòng thực tế (ví dụ: "5") */
-        void onSelfEntry(String soPhong);
+
+        void onSelfEntry(String roomNumber);
     }
 
     private final OnItemActionListener actionListener;
@@ -104,24 +101,22 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         this.selfEntryListener = l;
     }
 
-    // ── Public API ──────────────────────────────────────────────────────────
+    // Internal note.
 
     /**
-     * Nhận danh sách khách thuê mới, thực hiện Group-by phòng,
-     * sắp xếp theo tên phòng rồi rebuild displayList.
+     * Internal note.
+     * Internal note.
      */
     public void setData(List<Tenant> list) {
         this.fullList = list != null ? list : new ArrayList<>();
         rebuildDisplay();
     }
 
-    /** Lọc trực tiếp theo từ khoá (tên hoặc SĐT). */
     public void filter(String query) {
-        this.filterQuery = query == null ? "" : query.trim().toLowerCase();
+        this.filterQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         rebuildDisplay();
     }
 
-    /** Trả số khách đang hiển thị (bỏ qua row header). */
     public int getTenantCount() {
         int count = 0;
         for (Row r : displayList)
@@ -130,38 +125,38 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         return count;
     }
 
-    // ── Rebuild logic ────────────────────────────────────────────────────────
+    // Internal note.
 
     private void rebuildDisplay() {
-        // 1. Lọc theo từ khoá
+        // Internal note.
         List<Tenant> filtered = new ArrayList<>();
         for (Tenant n : fullList) {
             if (matchesFilter(n))
                 filtered.add(n);
         }
 
-        // 2. Gom nhóm theo idPhong → giữ nguyên thứ tự phòng đầu tiên xuất hiện
-        // nhưng sort key = soPhong để đồng nhất UI
+        // Internal note.
+        // Internal note.
         Map<String, List<Tenant>> groups = new LinkedHashMap<>();
-        Map<String, String> roomNames = new LinkedHashMap<>(); // roomId → soPhong
+        Map<String, String> roomNames = new LinkedHashMap<>();
 
         for (Tenant n : filtered) {
-            String roomId = n.getIdPhong() != null ? n.getIdPhong() : "unknown";
-            String soPhong = n.getSoPhong() != null ? n.getSoPhong() : roomId;
+            String roomId = n.getRoomId() != null ? n.getRoomId() : "unknown";
+            String roomNumber = n.getRoomNumber() != null ? n.getRoomNumber() : roomId;
 
             if (!groups.containsKey(roomId)) {
                 groups.put(roomId, new ArrayList<>());
-                roomNames.put(roomId, soPhong);
+                roomNames.put(roomId, roomNumber);
             }
             groups.get(roomId).add(n);
         }
 
-        // 3. Sắp xếp các nhóm theo tên phòng (alphabetically / numerically)
+        // Internal note.
         List<String> sortedRoomIds = new ArrayList<>(groups.keySet());
         Collections.sort(sortedRoomIds, (a, b) -> {
             String nameA = roomNames.getOrDefault(a, a);
             String nameB = roomNames.getOrDefault(b, b);
-            // Thử so kiểu số trước
+            // Internal note.
             try {
                 return Integer.compare(Integer.parseInt(nameA), Integer.parseInt(nameB));
             } catch (NumberFormatException ignored) {
@@ -169,10 +164,10 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             return nameA.compareToIgnoreCase(nameB);
         });
 
-        // 4. Build displayList: Header → [Items…] → Header → [Items…]
+        // Internal note.
         List<Row> newList = new ArrayList<>();
         for (String roomId : sortedRoomIds) {
-            String label = "Phòng " + roomNames.getOrDefault(roomId, roomId);
+            String label = roomNames.getOrDefault(roomId, roomId);
             newList.add(new Row(label)); // Header
             for (Tenant n : groups.get(roomId)) {
                 newList.add(new Row(n)); // Item
@@ -186,12 +181,12 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private boolean matchesFilter(Tenant n) {
         if (filterQuery.isEmpty())
             return true;
-        String name = n.getHoTen() != null ? n.getHoTen().toLowerCase() : "";
-        String sdt = n.getSoDienThoai() != null ? n.getSoDienThoai().toLowerCase() : "";
-        return name.contains(filterQuery) || sdt.contains(filterQuery);
+        String name = n.getFullName() != null ? n.getFullName().toLowerCase(Locale.ROOT) : "";
+        String phoneNumber = n.getPhoneNumber() != null ? n.getPhoneNumber().toLowerCase(Locale.ROOT) : "";
+        return name.contains(filterQuery) || phoneNumber.contains(filterQuery);
     }
 
-    // ── RecyclerView boilerplate ─────────────────────────────────────────────
+    // Internal note.
 
     @Override
     public int getItemViewType(int position) {
@@ -226,152 +221,152 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         }
     }
 
-    // ── Bind Header ──────────────────────────────────────────────────────────
+    // Internal note.
 
     private void bindHeader(HeaderViewHolder h, String title, int position) {
-        h.tvTenPhong.setText(title);
+        h.tvRoomName.setText(h.itemView.getContext().getString(R.string.room_number, title));
 
-        // Trích xuất soPhong, roomId và tenantId từ tenant đầu tiên trong nhóm
-        String roomId   = null;
-        String tenantId = null;   // ID document Tenant trên Firestore
-        String soPhong  = title.replace("Phòng ", "").trim(); // fallback từ tiêu đề
+        // Internal note.
+        String roomId = null;
+        String tenantId = null;
+        String roomNumber = title;
 
         if (position + 1 < displayList.size()) {
             Row next = displayList.get(position + 1);
             if (!next.isHeader() && next.tenant != null) {
                 Tenant firstTenant = next.tenant;
-                roomId   = firstTenant.getIdPhong();
+                roomId = firstTenant.getRoomId();
                 tenantId = firstTenant.getId();
-                if (firstTenant.getSoPhong() != null)
-                    soPhong = firstTenant.getSoPhong();
+                if (firstTenant.getRoomNumber() != null)
+                    roomNumber = firstTenant.getRoomNumber();
             }
         }
 
-        final String finalRoomId   = roomId;
-        final String finalRoomName = title;
-        final String finalSoPhong  = soPhong;
+        final String finalRoomId = roomId;
+        final String finalRoomName = h.itemView.getContext().getString(R.string.room_number, title);
+        final String finalSoPhong = roomNumber;
         final String finalTenantId = tenantId;
 
-        // Nút [+ Thêm]
-        h.btnThem.setOnClickListener(v ->
-                { if (addListener != null) addListener.onAdd(finalRoomId, finalRoomName); });
+        // Internal note.
+        h.btnAdd.setOnClickListener(v -> {
+            if (addListener != null)
+                addListener.onAdd(finalRoomId, finalRoomName);
+        });
 
-        // Nút [Tự nhập] — xây dựng link pre-filled và mở hộp thoại chia sẻ
-        if (h.btnTuNhap != null) {
-            h.btnTuNhap.setOnClickListener(v -> {
+        // Internal note.
+        if (h.btnManualInput != null) {
+            h.btnManualInput.setOnClickListener(v -> {
 
-                // Kiểm tra an toàn: cần có cả số phòng và tenant ID
+                // Internal note.
                 if (finalSoPhong == null || finalSoPhong.isEmpty()) {
                     android.widget.Toast.makeText(v.getContext(),
-                            "Không xác định được số phòng",
+                            v.getContext().getString(R.string.cannot_identify_room_number),
                             android.widget.Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (finalTenantId == null || finalTenantId.isEmpty()) {
                     android.widget.Toast.makeText(v.getContext(),
-                            "Phòng chưa có khách thuê. Hãy thêm khách trước.",
+                            v.getContext().getString(R.string.room_no_tenant_add_first),
                             android.widget.Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // Delegate tới Activity nếu có listener riêng
+                // Internal note.
                 if (selfEntryListener != null) {
                     selfEntryListener.onSelfEntry(finalSoPhong);
                     return;
                 }
 
-                // Xây dựng URL pre-filled: thay cả số phòng và tenant ID
+                // Internal note.
                 String finalUrl = GOOGLE_FORM_URL
                         .replace("999", finalSoPhong)
                         .replace("ABC_XYZ", finalTenantId);
 
-                // Nội dung tin nhắn
-                String message = "Chào bạn, mời bạn nhập thông tin khách thuê cho Phòng "
-                        + finalSoPhong
-                        + " tại đây: "
-                        + finalUrl;
+                // Internal note.
+                String message = v.getContext().getString(R.string.tenant_self_entry_message,
+                        finalSoPhong, finalUrl);
 
-                // Mở hộp thoại chọn ứng dụng để gửi (Zalo, SMS, Messenger...)
+                // Internal note.
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
                 shareIntent.putExtra(Intent.EXTRA_TEXT, message);
                 v.getContext().startActivity(
-                        Intent.createChooser(shareIntent, "Gửi link tự nhập qua..."));
+                        Intent.createChooser(shareIntent, v.getContext().getString(R.string.send_link_via)));
             });
         }
     }
 
-    // ── Bind Item ────────────────────────────────────────────────────────────
+    // Internal note.
 
     private void bindItem(ItemViewHolder h, Tenant n) {
-        // Thông tin cơ bản
-        h.tvHoTen.setText(n.getHoTen() != null ? n.getHoTen() : "—");
-        h.tvSdt.setText(n.getSoDienThoai() != null ? n.getSoDienThoai() : "—");
+        // Internal note.
+        h.tvFullName.setText(n.getFullName() != null ? n.getFullName() : "—");
+        h.tvPhoneNumber.setText(n.getPhoneNumber() != null ? n.getPhoneNumber() : "—");
 
-        // ── Badge vai trò (Hàng 1) ──────────────────────────────────────────
-        // Người liên hệ
-        if (n.isNguoiLienHe()) {
-            h.badgeNguoiLienHe.setText("✓ Là người liên hệ");
-            h.badgeNguoiLienHe.setTextColor(Color.parseColor("#388E3C")); // xanh lá
+        // Internal note.
+        // Internal note.
+        if (n.isPrimaryContact()) {
+            h.badgePrimaryContact.setText(h.itemView.getContext().getString(R.string.is_primary_contact));
+            h.badgePrimaryContact.setTextColor(Color.parseColor("#388E3C"));
         } else {
-            h.badgeNguoiLienHe.setText("Là người liên hệ");
-            h.badgeNguoiLienHe.setTextColor(Color.parseColor("#888888")); // xám
+            h.badgePrimaryContact.setText(h.itemView.getContext().getString(R.string.primary_contact_label));
+            h.badgePrimaryContact.setTextColor(Color.parseColor("#888888"));
         }
 
-        // Đại diện hợp đồng
-        if (n.isDaiDienHopDong()) {
-            h.badgeDaiDienHD.setText("✓ Đại diện hợp đồng");
-            h.badgeDaiDienHD.setTextColor(Color.parseColor("#1565C0")); // xanh dương
+        // Internal note.
+        if (n.isContractRepresentative()) {
+            h.badgeContractRepresentative.setText(h.itemView.getContext().getString(R.string.is_contract_representative));
+            h.badgeContractRepresentative.setTextColor(Color.parseColor("#1565C0"));
         } else {
-            h.badgeDaiDienHD.setText("Đại diện hợp đồng");
-            h.badgeDaiDienHD.setTextColor(Color.parseColor("#888888"));
+            h.badgeContractRepresentative.setText(h.itemView.getContext().getString(R.string.contract_representative_label));
+            h.badgeContractRepresentative.setTextColor(Color.parseColor("#888888"));
         }
 
-        // ── Badge trạng thái (Hàng 2) ───────────────────────────────────────
-        // Tạm trú
-        if (n.isTamTru()) {
-            h.dotTamTru.setBackgroundResource(R.drawable.bg_icon_circle_green);
-            h.badgeTamTru.setText("Đã đăng ký tạm trú");
-            h.badgeTamTru.setTextColor(Color.parseColor("#2E7D32"));
+        // Internal note.
+        // Internal note.
+        if (n.isTemporaryResident()) {
+            h.dotTemporaryResidence.setBackgroundResource(R.drawable.bg_icon_circle_green);
+            h.badgeTemporaryResidence.setText(h.itemView.getContext().getString(R.string.temporary_residence_registered));
+            h.badgeTemporaryResidence.setTextColor(Color.parseColor("#2E7D32"));
         } else {
-            h.dotTamTru.setBackgroundResource(R.drawable.bg_icon_circle_orange);
-            h.badgeTamTru.setText("Chưa đăng ký tạm trú");
-            h.badgeTamTru.setTextColor(Color.parseColor("#FF6D00"));
+            h.dotTemporaryResidence.setBackgroundResource(R.drawable.bg_icon_circle_orange);
+            h.badgeTemporaryResidence.setText(h.itemView.getContext().getString(R.string.temporary_residence_not_registered));
+            h.badgeTemporaryResidence.setTextColor(Color.parseColor("#FF6D00"));
         }
 
-        // Giấy tờ
-        if (n.isDayDuGiayTo()) {
-            h.dotGiayTo.setBackgroundResource(R.drawable.bg_icon_circle_green);
-            h.badgeGiayTo.setText("Đầy đủ giấy tờ");
-            h.badgeGiayTo.setTextColor(Color.parseColor("#2E7D32"));
+        // Internal note.
+        if (n.isFullyDocumented()) {
+            h.dotDocuments.setBackgroundResource(R.drawable.bg_icon_circle_green);
+            h.badgeDocuments.setText(h.itemView.getContext().getString(R.string.documents_complete));
+            h.badgeDocuments.setTextColor(Color.parseColor("#2E7D32"));
         } else {
-            h.dotGiayTo.setBackgroundResource(R.drawable.bg_icon_circle_orange);
-            h.badgeGiayTo.setText("Chưa đầy đủ giấy tờ");
-            h.badgeGiayTo.setTextColor(Color.parseColor("#FF6D00"));
+            h.dotDocuments.setBackgroundResource(R.drawable.bg_icon_circle_orange);
+            h.badgeDocuments.setText(h.itemView.getContext().getString(R.string.documents_incomplete));
+            h.badgeDocuments.setTextColor(Color.parseColor("#FF6D00"));
         }
 
-        // ── Nút Gọi điện (Intent.ACTION_DIAL) ──────────────────────────────
-        h.btnGoi.setOnClickListener(v -> {
-            String sdt = n.getSoDienThoai();
-            if (sdt == null || sdt.trim().isEmpty())
+        // Internal note.
+        h.btnCall.setOnClickListener(v -> {
+            String phoneNumber = n.getPhoneNumber();
+            if (phoneNumber == null || phoneNumber.trim().isEmpty())
                 return;
-            // Chuẩn hoá số: bỏ dấu gạch ngang / khoảng trắng
-            String dialNumber = "tel:" + sdt.replaceAll("[^0-9+]", "");
+            // Internal note.
+            String dialNumber = "tel:" + phoneNumber.replaceAll("[^0-9+]", "");
             Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(dialNumber));
             v.getContext().startActivity(intent);
         });
 
-        // ── Menu 3 chấm → Sửa / Xóa ────────────────────────────────────────
+        // Internal note.
         h.btnMenu.setOnClickListener(v -> {
             PopupMenu popup = new PopupMenu(v.getContext(), v);
-            popup.getMenu().add(0, 1, 0, "Chỉnh sửa");
-            popup.getMenu().add(0, 2, 1, "Xóa");
+            popup.getMenu().add(0, 1, 0, v.getContext().getString(R.string.edit));
+            popup.getMenu().add(0, 2, 1, v.getContext().getString(R.string.delete));
             popup.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == 1) {
                     actionListener.onSua(n);
                     return true;
                 } else if (item.getItemId() == 2) {
-                    actionListener.onXoa(n);
+                    actionListener.onDelete(n);
                     return true;
                 }
                 return false;
@@ -380,41 +375,40 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         });
     }
 
-    // ── ViewHolder: Header ───────────────────────────────────────────────────
+    // Internal note.
     static class HeaderViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTenPhong;
-        View btnThem;
-        View btnTuNhap;
+        TextView tvRoomName;
+        View btnAdd;
+        View btnManualInput;
 
         HeaderViewHolder(View v) {
             super(v);
-            tvTenPhong = v.findViewById(R.id.tvTenPhong);
-            btnThem = v.findViewById(R.id.btnThem);
-            btnTuNhap = v.findViewById(R.id.btnTuNhap);
+            tvRoomName = v.findViewById(R.id.tvTenPhong);
+            btnAdd = v.findViewById(R.id.btnThem);
+            btnManualInput = v.findViewById(R.id.btnTuNhap);
         }
     }
 
-    // ── ViewHolder: Item ─────────────────────────────────────────────────────
+    // Internal note.
     static class ItemViewHolder extends RecyclerView.ViewHolder {
-        TextView tvHoTen, tvSdt;
-        TextView badgeNguoiLienHe, badgeDaiDienHD;
-        TextView badgeTamTru, badgeGiayTo;
-        View dotTamTru, dotGiayTo;
-        ImageButton btnGoi, btnMenu;
+        TextView tvFullName, tvPhoneNumber;
+        TextView badgePrimaryContact, badgeContractRepresentative;
+        TextView badgeTemporaryResidence, badgeDocuments;
+        View dotTemporaryResidence, dotDocuments;
+        ImageButton btnCall, btnMenu;
 
         ItemViewHolder(View v) {
             super(v);
-            tvHoTen = v.findViewById(R.id.tvHoTen);
-            tvSdt = v.findViewById(R.id.tvSdt);
-            badgeNguoiLienHe = v.findViewById(R.id.badgeNguoiLienHe);
-            badgeDaiDienHD = v.findViewById(R.id.badgeDaiDienHD);
-            badgeTamTru = v.findViewById(R.id.badgeTamTru);
-            badgeGiayTo = v.findViewById(R.id.badgeGiayTo);
-            dotTamTru = v.findViewById(R.id.dotTamTru);
-            dotGiayTo = v.findViewById(R.id.dotGiayTo);
-            btnGoi = v.findViewById(R.id.btnGoi);
+            tvFullName = v.findViewById(R.id.tvHoTen);
+            tvPhoneNumber = v.findViewById(R.id.tvSdt);
+            badgePrimaryContact = v.findViewById(R.id.badgePrimaryContact);
+            badgeContractRepresentative = v.findViewById(R.id.badgeDaiDienHD);
+            badgeTemporaryResidence = v.findViewById(R.id.badgeTamTru);
+            badgeDocuments = v.findViewById(R.id.badgeGiayTo);
+            dotTemporaryResidence = v.findViewById(R.id.dotTamTru);
+            dotDocuments = v.findViewById(R.id.dotGiayTo);
+            btnCall = v.findViewById(R.id.btnGoi);
             btnMenu = v.findViewById(R.id.btnMenu);
         }
     }
 }
-

@@ -64,7 +64,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Lịch sử thanh toán");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.payment_history));
 
         invoiceId = getIntent().getStringExtra("INVOICE_ID");
         roomId = getIntent().getStringExtra("ROOM_ID");
@@ -75,7 +75,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         }
 
         if (invoiceId == null || invoiceId.trim().isEmpty()) {
-            Toast.makeText(this, "Thiếu INVOICE_ID", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.missing_invoice_id), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -92,15 +92,15 @@ public class PaymentHistoryActivity extends AppCompatActivity {
                 if (!allowDeletePayments)
                     return;
                 new AlertDialog.Builder(PaymentHistoryActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Xóa thanh toán " + fmtMoney(payment.getAmount()) + "?")
-                        .setPositiveButton("Xóa", (d, w) -> repository.delete(payment.getId(),
+                        .setTitle(getString(R.string.confirm_delete))
+                        .setMessage(getString(R.string.delete_payment, fmtMoney(payment.getAmount())))
+                        .setPositiveButton(getString(R.string.delete), (d, w) -> repository.delete(payment.getId(),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(PaymentHistoryActivity.this, "Đã xóa", Toast.LENGTH_SHORT).show()),
+                                        .makeText(PaymentHistoryActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(PaymentHistoryActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT)
+                                        .makeText(PaymentHistoryActivity.this, getString(R.string.delete_failed), Toast.LENGTH_SHORT)
                                         .show())))
-                        .setNegativeButton("Hủy", null)
+                        .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             }
         });
@@ -113,7 +113,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
                 return;
             List<Payment> sorted = new ArrayList<>(list);
             Collections.sort(sorted, (a, b) -> Long.compare(parseDate(b.getPaidAt()), parseDate(a.getPaidAt())));
-            adapter.setDanhSach(sorted);
+            adapter.setDataList(sorted);
             tvEmpty.setVisibility(sorted.isEmpty() ? View.VISIBLE : View.GONE);
 
             double paid = 0;
@@ -121,8 +121,8 @@ public class PaymentHistoryActivity extends AppCompatActivity {
                 paid += p.getAmount();
             double remaining = Math.max(0, invoiceTotal - paid);
 
-            tvPaid.setText("Đã thu: " + fmtMoney(paid));
-            tvRemaining.setText("Còn lại: " + fmtMoney(remaining));
+            tvPaid.setText(getString(R.string.collected_colon) + fmtMoney(paid));
+            tvRemaining.setText(getString(R.string.remaining_colon) + fmtMoney(remaining));
 
             maybeUpdateInvoiceStatus(paid);
         });
@@ -181,18 +181,18 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         etPaidAt.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
 
         android.widget.ArrayAdapter<String> methodAdapter = new android.widget.ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, new String[] { "Tiền mặt", "Chuyển khoản" });
+                android.R.layout.simple_spinner_item, new String[] { getString(R.string.cash), getString(R.string.bank_transfer) });
         methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMethod.setAdapter(methodAdapter);
 
         new AlertDialog.Builder(this)
-                .setTitle("Thêm thanh toán")
+                .setTitle(getString(R.string.add_payment))
                 .setView(dialogView)
-                .setPositiveButton("Lưu", (d, w) -> {
+                .setPositiveButton(getString(R.string.save), (d, w) -> {
                     try {
                         double amount = parseDouble(etAmount);
                         if (amount <= 0) {
-                            Toast.makeText(this, "Số tiền phải > 0", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.amount_must_positive), Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -207,14 +207,14 @@ public class PaymentHistoryActivity extends AppCompatActivity {
 
                         repository.add(p,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Đã lưu thanh toán", Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.payment_saved), Toast.LENGTH_SHORT).show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show()));
+                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số tiền không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -273,13 +273,13 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         lastComputedStatus = st;
 
         try {
-            scopedCollection("invoices").document(invoiceId).update("trangThai", st);
+            scopedCollection("invoices").document(invoiceId).update("status", st);
         } catch (Exception ignored) {
         }
     }
 
     private String fmtMoney(double v) {
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
         return fmt.format(v);
     }
 }

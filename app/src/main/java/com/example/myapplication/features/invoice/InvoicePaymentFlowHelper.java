@@ -60,7 +60,7 @@ public final class InvoicePaymentFlowHelper {
                     String newStatus;
                     if (paid <= 0) {
                         newStatus = InvoiceStatus.REPORTED;
-                    } else if (paid + 0.01 < invoice.getTongTien()) {
+                    } else if (paid + 0.01 < invoice.getTotalAmount()) {
                         newStatus = InvoiceStatus.PARTIAL;
                     } else {
                         newStatus = InvoiceStatus.PAID;
@@ -86,7 +86,7 @@ public final class InvoicePaymentFlowHelper {
         EditText etPaidAt = dialogView.findViewById(R.id.etPaidAt);
         EditText etNote = dialogView.findViewById(R.id.etNote);
 
-        etAmount.setText(formatDouble(invoice.getTongTien()));
+        etAmount.setText(formatDouble(invoice.getTotalAmount()));
         etPaidAt.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
 
         if (invoice.getId() != null && !invoice.getId().trim().isEmpty()) {
@@ -103,7 +103,7 @@ public final class InvoicePaymentFlowHelper {
                                 }
                             }
                         }
-                        double remaining = Math.max(0, invoice.getTongTien() - paid);
+                        double remaining = Math.max(0, invoice.getTotalAmount() - paid);
                         if (remaining > 0) {
                             etAmount.setText(formatDouble(remaining));
                         }
@@ -111,18 +111,18 @@ public final class InvoicePaymentFlowHelper {
         }
 
         ArrayAdapter<String> methodAdapter = new ArrayAdapter<>(activity,
-                android.R.layout.simple_spinner_item, new String[] { "Tiền mặt", "Chuyển khoản" });
+                android.R.layout.simple_spinner_item, new String[] { activity.getString(R.string.cash), activity.getString(R.string.bank_transfer) });
         methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMethod.setAdapter(methodAdapter);
 
         new AlertDialog.Builder(activity)
-                .setTitle("Thu tiền — Phòng " + invoice.getSoPhong())
+                .setTitle(activity.getString(R.string.collect_payment_room, invoice.getRoomNumber()))
                 .setView(dialogView)
-                .setPositiveButton("Xác nhận", (d, w) -> {
+                .setPositiveButton(activity.getString(R.string.confirm), (d, w) -> {
                     try {
                         double amount = parseDouble(etAmount);
                         if (amount <= 0) {
-                            Toast.makeText(activity, "Số tiền phải > 0", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, activity.getString(R.string.amount_must_positive), Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -133,11 +133,11 @@ public final class InvoicePaymentFlowHelper {
                         submitPayment(activity, invoice, amount, method, paidAt, note,
                                 scopedCollection, paymentRepository, viewModel);
                     } catch (NumberFormatException e) {
-                        Toast.makeText(activity, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, activity.getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNeutralButton("QR chuyển khoản", (d, w) -> showVietQrDialog(activity, db, invoice))
-                .setNegativeButton("Hủy", null)
+                .setNeutralButton(activity.getString(R.string.qr_transfer), (d, w) -> showVietQrDialog(activity, db, invoice))
+                .setNegativeButton(activity.getString(R.string.cancel), null)
                 .show();
     }
 
@@ -146,7 +146,7 @@ public final class InvoicePaymentFlowHelper {
             @NonNull Invoice invoice) {
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId == null || tenantId.trim().isEmpty()) {
-            Toast.makeText(activity, "Chỉ hỗ trợ VietQR khi dùng tenant scope", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.qr_tenant_only), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -156,16 +156,16 @@ public final class InvoicePaymentFlowHelper {
             String bankName = tdoc.getString("bankAccountName");
 
             if (bankCode == null || bankCode.trim().isEmpty() || bankNo == null || bankNo.trim().isEmpty()) {
-                Toast.makeText(activity, "Chưa cấu hình thông tin chuyển khoản (Org Admin)", Toast.LENGTH_LONG).show();
+                Toast.makeText(activity, activity.getString(R.string.bank_not_configured), Toast.LENGTH_LONG).show();
                 return;
             }
 
-            String addInfo = "HD " + invoice.getSoPhong() + " " + invoice.getThangNam();
+            String addInfo = "HD " + invoice.getRoomNumber() + " " + invoice.getBillingPeriod();
             String url = buildVietQrUrl(
                     bankCode.trim(),
                     bankNo.trim(),
                     bankName != null ? bankName.trim() : "",
-                    (long) invoice.getTongTien(),
+                    (long) invoice.getTotalAmount(),
                     addInfo);
 
             View v = activity.getLayoutInflater().inflate(R.layout.dialog_vietqr, null);
@@ -173,16 +173,16 @@ public final class InvoicePaymentFlowHelper {
             android.widget.TextView tvBank = v.findViewById(R.id.tvQrBank);
             android.widget.TextView tvNote = v.findViewById(R.id.tvQrNote);
 
-            tvBank.setText("CK: " + bankCode + " - " + bankNo
+            tvBank.setText(activity.getString(R.string.transfer_info_colon) + bankCode + " - " + bankNo
                     + (bankName != null && !bankName.isEmpty() ? (" (" + bankName + ")") : ""));
-            tvNote.setText("Nội dung: " + addInfo + "\nSố tiền: " + formatDouble(invoice.getTongTien()));
+            tvNote.setText(activity.getString(R.string.content_colon) + addInfo + "\n" + activity.getString(R.string.amount_colon) + formatDouble(invoice.getTotalAmount()));
 
             com.bumptech.glide.Glide.with(activity).load(url).into(img);
 
             new androidx.appcompat.app.AlertDialog.Builder(activity)
-                    .setTitle("VietQR")
+                    .setTitle(activity.getString(R.string.vietqr_title))
                     .setView(v)
-                    .setPositiveButton("Đóng", null)
+                    .setPositiveButton(activity.getString(R.string.close), null)
                     .show();
         });
     }
@@ -214,7 +214,7 @@ public final class InvoicePaymentFlowHelper {
             @NonNull InvoiceViewModel viewModel) {
         String invoiceId = invoice.getId();
         if (invoiceId == null || invoiceId.trim().isEmpty()) {
-            Toast.makeText(activity, "Thiếu ID hoá đơn", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.missing_invoice_id), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -232,17 +232,17 @@ public final class InvoicePaymentFlowHelper {
                         }
                     }
 
-                    double remaining = Math.max(0, invoice.getTongTien() - paid);
+                    double remaining = Math.max(0, invoice.getTotalAmount() - paid);
                     if (amount > remaining + 0.01) {
                         Toast.makeText(activity,
-                                "Số tiền thu vượt phần còn lại: " + formatDouble(remaining),
+                                activity.getString(R.string.amount_exceeds_remaining, formatDouble(remaining)),
                                 Toast.LENGTH_LONG).show();
                         return;
                     }
 
                     Payment p = new Payment();
                     p.setInvoiceId(invoiceId);
-                    p.setRoomId(invoice.getIdPhong());
+                    p.setRoomId(invoice.getRoomId());
                     p.setAmount(amount);
                     p.setMethod(method);
                     p.setPaidAt(paidAt);
@@ -252,13 +252,13 @@ public final class InvoicePaymentFlowHelper {
                             () -> {
                                 recomputeAndUpdateInvoiceStatus(invoice, scopedCollection, viewModel);
                                 activity.runOnUiThread(() -> Toast
-                                        .makeText(activity, "Đã ghi nhận thanh toán", Toast.LENGTH_SHORT).show());
+                                        .makeText(activity, activity.getString(R.string.payment_recorded), Toast.LENGTH_SHORT).show());
                             },
                             () -> activity.runOnUiThread(() -> Toast
-                                    .makeText(activity, "Ghi nhận thanh toán thất bại", Toast.LENGTH_SHORT).show()));
+                                    .makeText(activity, activity.getString(R.string.payment_record_failed), Toast.LENGTH_SHORT).show()));
                 })
                 .addOnFailureListener(e -> Toast
-                        .makeText(activity, "Không thể kiểm tra công nợ hiện tại", Toast.LENGTH_SHORT).show());
+                        .makeText(activity, activity.getString(R.string.cannot_check_debt), Toast.LENGTH_SHORT).show());
     }
 
     private static double parseDouble(@NonNull EditText et) {
@@ -270,3 +270,4 @@ public final class InvoicePaymentFlowHelper {
         return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
     }
 }
+

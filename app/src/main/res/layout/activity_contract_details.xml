@@ -21,7 +21,7 @@
             android:layout_height="60dp"
             android:paddingHorizontal="8dp">
 
-            <!-- Nút back -->
+            <!-- UI section note -->
             <ImageView
                 android:id="@+id/btnBack"
                 android:layout_width="48dp"
@@ -31,14 +31,14 @@
                 android:src="@drawable/ic_arrow_back"
                 app:tint="@color/white"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Quay lại"/>
+                android:contentDescription="@string/navigate_back"/>
 
-            <!-- Tiêu đề -->
+            <!-- UI section note -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="Chi tiết hợp đồng"
+                android:text="@string/contract_details_title"
                 android:textColor="@color/white"
                 android:textSize="17sp"
                 android:textStyle="bold"/>
@@ -46,7 +46,7 @@
         </RelativeLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Nội dung chính -->
+    <!-- UI section note -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -58,7 +58,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Card thông tin hợp đồng -->
+            <!-- UI section note -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -77,13 +77,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📋 Thông tin cơ bản"
+                        android:text="@string/contract_basic_info_header"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A2E"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Tên phòng -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -93,7 +93,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="🏠 Tên phòng:"
+                            android:text="@string/contract_label_room"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -102,13 +102,13 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Phòng 101"
+                            android:text="@string/contract_placeholder_room"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#1A1A2E"/>
                     </LinearLayout>
 
-                    <!-- Số hợp đồng -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -118,7 +118,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="📄 Số HĐ:"
+                            android:text="@string/contract_label_number"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -127,12 +127,12 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="HD001"
+                            android:text="@string/contract_placeholder_number"
                             android:textSize="14sp"
                             android:textColor="#1A1A2E"/>
                     </LinearLayout>
 
-                    <!-- Người đại diện -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -142,7 +142,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="👤 Đại diện:"
+                            android:text="@string/contract_label_representative"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -151,13 +151,13 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Nguyễn Văn A"
+                            android:text="@string/contract_placeholder_representative"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#1A1A2E"/>
                     </LinearLayout>
 
-                    <!-- Số điện thoại -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -167,7 +167,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="📞 Điện thoại:"
+                            android:text="@string/contract_label_phone"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -176,7 +176,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="0987654321"
+                            android:text="@string/contract_placeholder_phone"
                             android:textSize="14sp"
                             android:textColor="#1A1A2E"/>
                     </LinearLayout>
@@ -188,7 +188,7 @@
                         android:background="#E0E0E0"
                         android:layout_marginVertical="12dp"/>
 
-                    <!-- Ngày lập -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -198,7 +198,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="📅 Ngày lập:"
+                            android:text="@string/contract_label_created_date"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -207,12 +207,12 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="01/01/2024"
+                            android:text="@string/contract_placeholder_created_date"
                             android:textSize="14sp"
                             android:textColor="#1A1A2E"/>
                     </LinearLayout>
 
-                    <!-- Ngày hết hạn -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -221,7 +221,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="⏰ Hết hạn:"
+                            android:text="@string/contract_label_expiry_date"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -230,7 +230,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="01/01/2025"
+                            android:text="@string/contract_placeholder_expiry_date"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#FF6D00"/>
@@ -239,7 +239,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card tài chính -->
+            <!-- UI section note -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -258,13 +258,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="💰 Thông tin tài chính"
+                        android:text="@string/contract_finance_info_header"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A2E"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Giá thuê -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -274,7 +274,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="Giá thuê:"
+                            android:text="@string/contract_label_rent"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -283,13 +283,13 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="2.000.000đ"
+                            android:text="@string/contract_placeholder_rent"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#4CAF50"/>
                     </LinearLayout>
 
-                    <!-- Tiền cọc -->
+                    <!-- UI section note -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -298,7 +298,7 @@
                         <TextView
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
-                            android:text="Tiền cọc:"
+                            android:text="@string/contract_label_deposit"
                             android:textSize="14sp"
                             android:textColor="#666666"/>
 
@@ -307,7 +307,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="500.000đ"
+                            android:text="@string/contract_placeholder_deposit"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#FF6D00"/>
@@ -316,7 +316,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Trạng thái -->
+            <!-- UI section note -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -334,18 +334,18 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📊 Trạng thái"
+                        android:text="@string/contract_status_header"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A2E"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Chip trạng thái -->
+                    <!-- UI section note -->
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipTrangThai"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Đang hiệu lực"
+                        android:text="@string/active_valid"
                         android:textSize="13sp"
                         android:textColor="@color/white"
                         app:chipCornerRadius="8dp"
@@ -362,3 +362,4 @@
     </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

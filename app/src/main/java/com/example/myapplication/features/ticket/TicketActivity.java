@@ -54,13 +54,9 @@ public class TicketActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_tickets);
 
-        com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
-        if (appBarLayout != null) {
-            ScreenUiHelper.applyTopInset(appBarLayout);
-        }
-
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Phản ánh / Sửa chữa");
+        ScreenUiHelper.applyTopInset(toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.complaints_repairs));
 
         tvEmpty = findViewById(R.id.tvEmpty);
         fabAdd = findViewById(R.id.fabAdd);
@@ -79,7 +75,7 @@ public class TicketActivity extends AppCompatActivity {
     private void setupData() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Toast.makeText(this, "Chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.not_logged_in), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -99,7 +95,7 @@ public class TicketActivity extends AppCompatActivity {
 
                     if (isTenant) {
                         if (currentRoomId == null || currentRoomId.trim().isEmpty()) {
-                            Toast.makeText(this, "Thiếu roomId cho tài khoản TENANT", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.missing_room_id_for_tenant), Toast.LENGTH_SHORT).show();
                             finish();
                             return;
                         }
@@ -140,7 +136,7 @@ public class TicketActivity extends AppCompatActivity {
             if (tenantId == null || tenantId.trim().isEmpty()) {
                 spinnerRoom.setVisibility(View.GONE);
                 etRoomId.setVisibility(View.VISIBLE);
-                etRoomId.setHint("RoomId");
+                etRoomId.setHint(R.string.dialog_create_ticket_room_id_hint);
                 etRoomId.setInputType(InputType.TYPE_CLASS_TEXT);
             } else {
                 etRoomId.setVisibility(View.GONE);
@@ -150,15 +146,15 @@ public class TicketActivity extends AppCompatActivity {
         }
 
         new AlertDialog.Builder(this)
-                .setTitle("Tạo phản ánh")
+                .setTitle(getString(R.string.ticket_create_title))
                 .setView(dialogView)
-                .setNegativeButton("Hủy", null)
-                .setPositiveButton("Gửi", (d, w) -> {
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.send), (d, w) -> {
                     String title = etTitle.getText().toString().trim();
                     String desc = etDesc.getText().toString().trim();
 
                     if (title.isEmpty()) {
-                        Toast.makeText(this, "Vui lòng nhập tiêu đề", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.please_enter_title), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -173,7 +169,7 @@ public class TicketActivity extends AppCompatActivity {
                     }
 
                     if (roomId == null || roomId.trim().isEmpty()) {
-                        Toast.makeText(this, "Thiếu roomId", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.ticket_missing_room_id), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -187,8 +183,8 @@ public class TicketActivity extends AppCompatActivity {
 
                     repository.add(t,
                             () -> runOnUiThread(
-                                    () -> Toast.makeText(this, "Đã gửi phản ánh", Toast.LENGTH_SHORT).show()),
-                            () -> runOnUiThread(() -> Toast.makeText(this, "Gửi thất bại", Toast.LENGTH_SHORT).show()));
+                                    () -> Toast.makeText(this, getString(R.string.ticket_sent), Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_send_failed), Toast.LENGTH_SHORT).show()));
                 })
                 .show();
     }
@@ -216,25 +212,25 @@ public class TicketActivity extends AppCompatActivity {
 
     private void showTicketDetailDialog(@NonNull Ticket t) {
         String msg = "RoomId: " + (t.getRoomId() != null ? t.getRoomId() : "") +
-                "\nTrạng thái: " + (t.getStatus() != null ? t.getStatus() : "") +
+                "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(t.getStatus()) +
                 "\n\n" + (t.getDescription() != null ? t.getDescription() : "");
 
         AlertDialog.Builder b = new AlertDialog.Builder(this)
-                .setTitle(t.getTitle() != null ? t.getTitle() : "Phản ánh")
+                .setTitle(t.getTitle() != null ? t.getTitle() : getString(R.string.ticket_title))
                 .setMessage(msg)
-                .setPositiveButton("Đóng", null);
+                .setPositiveButton(getString(R.string.close), null);
 
         if (!isTenant) {
-            b.setNeutralButton("Đổi trạng thái", (d, w) -> {
+            b.setNeutralButton(getString(R.string.ticket_change_status), (d, w) -> {
                 String next = nextStatus(t.getStatus());
                 repository.updateStatus(t.getId(), next,
-                        () -> runOnUiThread(() -> Toast.makeText(this, "Đã cập nhật", Toast.LENGTH_SHORT).show()),
+                        () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show()),
                         () -> runOnUiThread(
-                                () -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
+                                () -> Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT).show()));
             });
-            b.setNegativeButton("Xóa", (d, w) -> repository.delete(t.getId(),
-                    () -> runOnUiThread(() -> Toast.makeText(this, "Đã xóa", Toast.LENGTH_SHORT).show()),
-                    () -> runOnUiThread(() -> Toast.makeText(this, "Xóa thất bại", Toast.LENGTH_SHORT).show())));
+            b.setNegativeButton(getString(R.string.delete), (d, w) -> repository.delete(t.getId(),
+                    () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
+                    () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())));
         }
 
         b.show();
@@ -246,6 +242,16 @@ public class TicketActivity extends AppCompatActivity {
         if (TicketStatus.IN_PROGRESS.equals(current))
             return TicketStatus.DONE;
         return TicketStatus.OPEN;
+    }
+
+    private String toVietnameseStatus(String status) {
+        if (TicketStatus.OPEN.equals(status))
+            return getString(R.string.ticket_status_new);
+        if (TicketStatus.IN_PROGRESS.equals(status))
+            return getString(R.string.ticket_status_processing);
+        if (TicketStatus.DONE.equals(status))
+            return getString(R.string.completed);
+        return status != null ? status : "";
     }
 
     @Override

@@ -19,13 +19,13 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Row 1: Tên phòng + Trạng thái + Menu 3 chấm -->
+        <!-- UI section note -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp">
 
-            <!-- Icon phòng + Tên phòng -->
+            <!-- UI section note -->
             <LinearLayout
                 android:id="@+id/layoutRoomInfo"
                 android:layout_width="wrap_content"
@@ -52,7 +52,7 @@
                     android:id="@+id/tvTenPhong"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Phòng 101"
+                    android:text="@string/item_contract_room_sample"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#1A1A2E"
@@ -61,7 +61,7 @@
                     android:ellipsize="end"/>
             </LinearLayout>
 
-            <!-- ImageButton 3 chấm -->
+            <!-- UI section note -->
             <ImageButton
                 android:id="@+id/btnMenu"
                 android:layout_width="40dp"
@@ -70,16 +70,16 @@
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_vert"
-                android:contentDescription="Menu"
+                android:contentDescription="@string/menu"
                 app:tint="#666666"/>
         </RelativeLayout>
 
-        <!-- Chip Trạng thái Hợp đồng -->
+        <!-- UI section note -->
         <com.google.android.material.chip.Chip
             android:id="@+id/chipTrangThai"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đang hiệu lực"
+            android:text="@string/item_contract_status_active"
             android:textSize="12sp"
             android:textColor="@color/white"
             app:chipCornerRadius="8dp"
@@ -90,12 +90,12 @@
             android:focusable="false"
             android:layout_marginBottom="4dp"/>
 
-        <!-- Trạng thái Thu cọc -->
+        <!-- UI section note -->
         <TextView
             android:id="@+id/tvDepositStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⏳ Chờ thu cọc"
+            android:text="@string/item_contract_deposit_pending"
             android:textSize="11sp"
             android:textStyle="bold"
             android:textColor="#FF9800"
@@ -109,14 +109,14 @@
             android:background="#E0E0E0"
             android:layout_marginBottom="12dp"/>
 
-        <!-- Row 2: Giá thuê và Tiền cọc nằm ngang -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:weightSum="2">
 
-            <!-- Giá thuê -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -127,7 +127,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💰 Giá thuê"
+                    android:text="@string/item_contract_rent_label"
                     android:textSize="13sp"
                     android:textColor="#888888"
                     android:layout_marginBottom="4dp"/>
@@ -136,13 +136,13 @@
                     android:id="@+id/tvGiaThue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2.000.000đ"
+                    android:text="@string/item_contract_rent_sample"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="#4CAF50"/>
             </LinearLayout>
 
-            <!-- Tiền cọc -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -153,7 +153,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏦 Tiền cọc"
+                    android:text="@string/item_contract_deposit_label"
                     android:textSize="13sp"
                     android:textColor="#888888"
                     android:layout_marginBottom="4dp"/>
@@ -162,14 +162,14 @@
                     android:id="@+id/tvTienCoc"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="500.000đ"
+                    android:text="@string/item_contract_deposit_sample"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="#FF6D00"/>
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Thông tin khách thuê (optional) -->
+        <!-- UI section note -->
         <LinearLayout
             android:id="@+id/layoutTenantInfo"
             android:layout_width="match_parent"
@@ -190,7 +190,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Nguyễn Văn A"
+                android:text="@string/item_contract_tenant_name_sample"
                 android:textSize="13sp"
                 android:textColor="#555555"
                 android:layout_marginStart="6dp"
@@ -201,7 +201,7 @@
                 android:id="@+id/tvTenantPhone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0987 654 321"
+                android:text="@string/item_contract_tenant_phone_sample"
                 android:textSize="12sp"
                 android:textColor="#888888"
                 android:layout_marginStart="8dp"/>
@@ -210,3 +210,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

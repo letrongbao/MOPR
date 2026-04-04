@@ -70,4 +70,3 @@ public class HouseRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 }
-

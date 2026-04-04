@@ -24,7 +24,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
         void onDelete(Expense item);
     }
 
-    private List<Expense> danhSach = new ArrayList<>();
+    private List<Expense> dataList = new ArrayList<>();
     private final OnItemActionListener listener;
     private boolean readOnly;
 
@@ -32,8 +32,8 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
         this.listener = listener;
     }
 
-    public void setDanhSach(List<Expense> list) {
-        this.danhSach = list != null ? list : new ArrayList<>();
+    public void setDataList(List<Expense> list) {
+        this.dataList = list != null ? list : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -51,8 +51,10 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
-        Expense item = danhSach.get(position);
-        String cat = item.getCategory() != null ? item.getCategory() : "(Chưa phân loại)";
+        Expense item = dataList.get(position);
+        String cat = item.getCategory() != null
+            ? item.getCategory()
+            : h.itemView.getContext().getString(R.string.expense_uncategorized);
         h.tvCategory.setText(cat);
 
         h.tvAmount.setText(MoneyFormatter.format(item.getAmount()));
@@ -79,7 +81,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return danhSach.size();
+        return dataList.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

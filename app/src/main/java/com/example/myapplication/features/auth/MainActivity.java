@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Nếu đã đăng nhập rồi thì vào thẳng Home
+        // If already signed in, navigate directly to Home
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             startActivity(new Intent(this, HomeMenuActivity.class));
@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         signupText = findViewById(R.id.signupText);
         cbRememberMe = findViewById(R.id.cbRememberMe);
 
-        // Khôi phục email nếu đã lưu "Ghi nhớ" (không lưu mật khẩu plaintext)
+        // Restore remembered email only (no plaintext password storage)
         boolean remembered = prefs.getBoolean("rememberMe", false);
         if (remembered) {
             username.setText(prefs.getString("savedEmail", ""));
@@ -67,13 +67,13 @@ public class MainActivity extends AppCompatActivity {
             String pass = password.getText().toString().trim();
 
             if (email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập đầy đủ", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show();
                 return;
             }
 
             mAuth.signInWithEmailAndPassword(email, pass)
                     .addOnSuccessListener(result -> {
-                        // Lưu SharedPreferences nếu chọn "Ghi nhớ" (chỉ lưu email, không lưu mật khẩu)
+                        // Save SharedPreferences for "Remember me" (email only, no password)
                         SharedPreferences.Editor editor = prefs.edit();
                         if (cbRememberMe.isChecked()) {
                             editor.putBoolean("rememberMe", true);
@@ -89,7 +89,8 @@ public class MainActivity extends AppCompatActivity {
                         finish();
                     })
                     .addOnFailureListener(
-                            e -> Toast.makeText(this, "Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show());
+                            e -> Toast.makeText(this, getString(R.string.wrong_credentials), Toast.LENGTH_SHORT).show());
         });
     }
 }
+

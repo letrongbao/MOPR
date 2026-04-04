@@ -11,13 +11,13 @@ import java.util.List;
 public class ExpenseViewModel extends ViewModel {
 
     private final ExpenseRepository repository = new ExpenseRepository();
-    private LiveData<List<Expense>> danhSach;
+    private LiveData<List<Expense>> dataList;
 
     public LiveData<List<Expense>> getExpenseList() {
-        if (danhSach == null) {
-            danhSach = repository.listAll();
+        if (dataList == null) {
+            dataList = repository.listAll();
         }
-        return danhSach;
+        return dataList;
     }
 
     public void addExpense(Expense cp, Runnable onSuccess, Runnable onFail) {

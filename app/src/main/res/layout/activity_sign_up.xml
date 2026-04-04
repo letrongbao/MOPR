@@ -35,7 +35,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Đăng ký"
+                    android:text="@string/sign_up"
                     android:textSize="28sp"
                     android:textAlignment="center"
                     android:textStyle="bold"
@@ -44,7 +44,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tạo tài khoản mới"
+                    android:text="@string/create_new_account"
                     android:textSize="14sp"
                     android:textAlignment="center"
                     android:textColor="?attr/colorOnSurfaceVariant"
@@ -55,7 +55,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="22dp"
                     app:startIconDrawable="@drawable/baseline_person_24"
-                    android:hint="Họ và tên"
+                    android:hint="@string/full_name"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -70,7 +70,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     app:startIconDrawable="@drawable/ic_email"
-                    android:hint="Email"
+                    android:hint="@string/email"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -86,7 +86,7 @@
                     android:layout_marginTop="12dp"
                     app:startIconDrawable="@drawable/lock_24dp_1f1f1f_fill0_wght400_grad0_opsz24"
                     app:endIconMode="password_toggle"
-                    android:hint="Mật khẩu"
+                    android:hint="@string/password"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -102,7 +102,7 @@
                     android:layout_marginTop="12dp"
                     app:startIconDrawable="@drawable/lock_24dp_1f1f1f_fill0_wght400_grad0_opsz24"
                     app:endIconMode="password_toggle"
-                    android:hint="Xác nhận mật khẩu"
+                    android:hint="@string/confirm_password"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -117,7 +117,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     app:startIconDrawable="@drawable/ic_phone"
-                    android:hint="Số điện thoại"
+                    android:hint="@string/phone_number"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -131,7 +131,7 @@
                     android:id="@+id/btnSignUp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Đăng ký"
+                    android:text="@string/sign_up"
                     android:textSize="16sp"
                     android:layout_marginTop="16dp"
                     app:cornerRadius="14dp"/>
@@ -140,7 +140,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Tài khoản tạo từ ứng dụng sẽ mặc định là Khách thuê."
+                    android:text="@string/signup_default_role_note"
                     android:textAlignment="center"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp"/>
@@ -153,7 +153,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="Đã có tài khoản? Đăng nhập"
+            android:text="@string/already_have_account_login"
             android:textSize="14sp"
             android:textAlignment="center"
             android:textColor="@color/primary"

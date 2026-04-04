@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Lịch sử công tơ"
+            app:title="@string/meter_history_title"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
@@ -44,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Chưa có dữ liệu công tơ"
+            android:text="@string/meter_empty_data"
             android:visibility="gone" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -53,6 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
+            android:contentDescription="@string/meter_add_title"
             android:src="@android:drawable/ic_input_add"
             app:tint="@android:color/white" />
 

@@ -9,8 +9,8 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Helper tính toán trạng thái hợp đồng client-side.
- * Không ghi ngược về Firestore — chỉ dùng để hiển thị UI.
+ * Internal note.
+ * Internal note.
  */
 public class ContractStatusHelper {
 
@@ -18,55 +18,55 @@ public class ContractStatusHelper {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
     /**
-     * Phân loại trạng thái hợp đồng dựa trên ngayKetThucHopDong và trangThaiHopDong.
+     * Internal note.
      *
      * Logic:
-     *   - Nếu trangThaiHopDong == "ENDED" → DA_KET_THUC
-     *   - Nếu ngayKetThucHopDong đã qua    → DA_KET_THUC
-     *   - Nếu còn <= 30 ngày               → SAP_HET_HAN
-     *   - Nếu còn > 30 ngày                → DANG_THUE
+     * Internal note.
+     * Internal note.
+     * Internal note.
+     * Internal note.
      */
     public static ContractStatus resolve(Tenant contract) {
-        if (contract == null) return ContractStatus.DA_KET_THUC;
+        if (contract == null) return ContractStatus.ENDED;
 
-        // Nếu đã kết thúc rõ ràng
-        if ("ENDED".equalsIgnoreCase(contract.getTrangThaiHopDong())) {
-            return ContractStatus.DA_KET_THUC;
+        // Internal note.
+        if ("ENDED".equalsIgnoreCase(contract.getContractStatus())) {
+            return ContractStatus.ENDED;
         }
 
-        String ngayKetThuc = contract.getNgayKetThucHopDong();
-        if (ngayKetThuc == null || ngayKetThuc.trim().isEmpty()) {
-            return ContractStatus.DANG_THUE; // Không có ngày → coi như đang thuê
+        String contractEndTimestamp = contract.getContractEndDate();
+        if (contractEndTimestamp == null || contractEndTimestamp.trim().isEmpty()) {
+            return ContractStatus.ACTIVE_RENTAL;
         }
 
         try {
-            Date endDate = SDF.parse(ngayKetThuc);
-            if (endDate == null) return ContractStatus.DANG_THUE;
+            Date endDate = SDF.parse(contractEndTimestamp);
+            if (endDate == null) return ContractStatus.ACTIVE_RENTAL;
 
             long now = System.currentTimeMillis();
             long endMs = endDate.getTime();
             long diff = endMs - now;
 
             if (diff < 0) {
-                return ContractStatus.DA_KET_THUC;   // Đã qua ngày kết thúc
+                return ContractStatus.ENDED;
             } else if (diff <= THIRTY_DAYS_MS) {
-                return ContractStatus.SAP_HET_HAN;   // Còn <= 30 ngày
+                return ContractStatus.EXPIRING_SOON;
             } else {
-                return ContractStatus.DANG_THUE;      // Còn > 30 ngày
+                return ContractStatus.ACTIVE_RENTAL;
             }
         } catch (Exception e) {
-            return ContractStatus.DANG_THUE;
+            return ContractStatus.ACTIVE_RENTAL;
         }
     }
 
     /**
-     * Tính số ngày còn lại đến ngày kết thúc hợp đồng.
-     * @return số ngày (âm nếu đã qua), hoặc -999 nếu không parse được.
+     * Internal note.
+     * Internal note.
      */
     public static long daysRemaining(Tenant contract) {
-        if (contract == null || contract.getNgayKetThucHopDong() == null) return -999;
+        if (contract == null || contract.getContractEndDate() == null) return -999;
         try {
-            Date endDate = SDF.parse(contract.getNgayKetThucHopDong());
+            Date endDate = SDF.parse(contract.getContractEndDate());
             if (endDate == null) return -999;
             long diff = endDate.getTime() - System.currentTimeMillis();
             return TimeUnit.MILLISECONDS.toDays(diff);

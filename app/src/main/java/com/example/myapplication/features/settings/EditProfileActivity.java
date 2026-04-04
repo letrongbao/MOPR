@@ -53,7 +53,7 @@ public class EditProfileActivity extends AppCompatActivity {
             if (imageUrl != null) {
                 saveUserInfoToFirebase(imageUrl);
             } else {
-                Toast.makeText(EditProfileActivity.this, "Lỗi khi tải ảnh lên", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditProfileActivity.this, getString(R.string.error_upload_image), Toast.LENGTH_SHORT).show();
                 btnSaveProfile.setEnabled(true);
             }
         }
@@ -87,7 +87,7 @@ public class EditProfileActivity extends AppCompatActivity {
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Quản lý tài khoản");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.account_management));
 
         imgAvatar = findViewById(R.id.imgAvatar);
         edtProfileName = findViewById(R.id.edtProfileName);
@@ -138,15 +138,15 @@ public class EditProfileActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        String hoTen = doc.getString("hoTen");
-                        String soDienThoai = doc.getString("soDienThoai");
+                        String fullName = doc.getString("fullName");
+                        String phoneNumber = doc.getString("phoneNumber");
                         String avatarUrl = doc.getString("avatarUrl");
 
-                        if (hoTen != null && !hoTen.isEmpty()) {
-                            edtProfileName.setText(hoTen);
+                        if (fullName != null && !fullName.isEmpty()) {
+                            edtProfileName.setText(fullName);
                         }
-                        if (soDienThoai != null) {
-                            edtProfilePhone.setText(soDienThoai);
+                        if (phoneNumber != null) {
+                            edtProfilePhone.setText(phoneNumber);
                         }
                         if (avatarUrl != null && !avatarUrl.isEmpty()) {
                             Glide.with(this).load(avatarUrl).circleCrop().into(imgAvatar);
@@ -156,9 +156,9 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void startSaveProcess() {
-        String hoTen = edtProfileName.getText() != null ? edtProfileName.getText().toString().trim() : "";
-        if (hoTen.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập họ tên", Toast.LENGTH_SHORT).show();
+        String fullName = edtProfileName.getText() != null ? edtProfileName.getText().toString().trim() : "";
+        if (fullName.isEmpty()) {
+            Toast.makeText(this, getString(R.string.please_enter_full_name), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -168,7 +168,7 @@ public class EditProfileActivity extends AppCompatActivity {
             Intent serviceIntent = new Intent(this, ImageUploadService.class);
             serviceIntent.putExtra(ImageUploadService.EXTRA_IMAGE_URI, selectedAvatarUri.toString());
             startService(serviceIntent);
-            Toast.makeText(this, "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.uploading_image), Toast.LENGTH_SHORT).show();
         } else {
             saveUserInfoToFirebase(null);
         }
@@ -181,11 +181,11 @@ public class EditProfileActivity extends AppCompatActivity {
             return;
         }
 
-        String hoTen = edtProfileName.getText() != null ? edtProfileName.getText().toString().trim() : "";
-        String soDienThoai = edtProfilePhone.getText() != null ? edtProfilePhone.getText().toString().trim() : "";
+        String fullName = edtProfileName.getText() != null ? edtProfileName.getText().toString().trim() : "";
+        String phoneNumber = edtProfilePhone.getText() != null ? edtProfilePhone.getText().toString().trim() : "";
 
         UserProfileChangeRequest.Builder profileBuilder = new UserProfileChangeRequest.Builder()
-                .setDisplayName(hoTen);
+                .setDisplayName(fullName);
         if (avatarUrl != null) {
             profileBuilder.setPhotoUri(Uri.parse(avatarUrl));
         }
@@ -193,8 +193,8 @@ public class EditProfileActivity extends AppCompatActivity {
         user.updateProfile(profileBuilder.build())
                 .addOnSuccessListener(aVoid -> {
                     Map<String, Object> updates = new HashMap<>();
-                    updates.put("hoTen", hoTen);
-                    updates.put("soDienThoai", soDienThoai);
+                    updates.put("fullName", fullName);
+                    updates.put("phoneNumber", phoneNumber);
                     if (avatarUrl != null) {
                         updates.put("avatarUrl", avatarUrl);
                     }
@@ -203,7 +203,7 @@ public class EditProfileActivity extends AppCompatActivity {
                             .update(updates)
                             .addOnSuccessListener(aVoid2 -> {
                                 selectedAvatarUri = null;
-                                Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT).show();
                                 btnSaveProfile.setEnabled(true);
                                 setResult(RESULT_OK);
                                 finish();
@@ -219,19 +219,19 @@ public class EditProfileActivity extends AppCompatActivity {
                                         .set(updates)
                                         .addOnSuccessListener(aVoid3 -> {
                                             selectedAvatarUri = null;
-                                            Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT).show();
                                             btnSaveProfile.setEnabled(true);
                                             setResult(RESULT_OK);
                                             finish();
                                         })
                                         .addOnFailureListener(e2 -> {
-                                            Toast.makeText(this, "Lỗi: " + e2.getMessage(), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.error_colon) + e2.getMessage(), Toast.LENGTH_SHORT).show();
                                             btnSaveProfile.setEnabled(true);
                                         });
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_update) + e.getMessage(), Toast.LENGTH_SHORT).show();
                     btnSaveProfile.setEnabled(true);
                 });
     }
@@ -245,13 +245,13 @@ public class EditProfileActivity extends AppCompatActivity {
                 ? edtInviteCode.getText().toString().trim().toUpperCase(java.util.Locale.US)
                 : "";
         if (code.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập mã mời", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.please_enter_invite_code), Toast.LENGTH_SHORT).show();
             return;
         }
 
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId == null || tenantId.trim().isEmpty()) {
-            Toast.makeText(this, "Chưa có tenant đang hoạt động", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_active_tenant), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -260,7 +260,7 @@ public class EditProfileActivity extends AppCompatActivity {
             @Override
             public void onSuccess(@androidx.annotation.NonNull String joinedTenantId) {
                 runOnUiThread(() -> {
-                    Toast.makeText(EditProfileActivity.this, "Xác nhận mã mời thành công", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditProfileActivity.this, getString(R.string.invite_code_success), Toast.LENGTH_SHORT).show();
                     btnApplyInvite.setEnabled(true);
                     setResult(RESULT_OK);
                     finish();
@@ -271,7 +271,7 @@ public class EditProfileActivity extends AppCompatActivity {
             public void onError(@androidx.annotation.NonNull Exception e) {
                 runOnUiThread(() -> {
                     btnApplyInvite.setEnabled(true);
-                    Toast.makeText(EditProfileActivity.this, "Mã không hợp lệ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditProfileActivity.this, getString(R.string.invalid_code), Toast.LENGTH_SHORT).show();
                 });
             }
         });

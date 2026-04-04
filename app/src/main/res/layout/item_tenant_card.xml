@@ -18,14 +18,14 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- Hàng trên: Avatar + Tên/SĐT + Nút gọi + Menu 3 chấm -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Avatar tròn -->
+            <!-- UI section note -->
             <ImageView
                 android:id="@+id/imgAvatar"
                 android:layout_width="48dp"
@@ -34,9 +34,9 @@
                 android:background="@drawable/bg_icon_circle"
                 android:padding="6dp"
                 android:scaleType="centerCrop"
-                android:contentDescription="Avatar khách thuê"/>
+                android:contentDescription="@string/item_tenant_avatar_desc"/>
 
-            <!-- Tên và SĐT -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -48,7 +48,7 @@
                     android:id="@+id/tvHoTen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nguyễn Văn A"
+                    android:text="@string/item_tenant_name_sample"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="#1A1A1A"/>
@@ -64,7 +64,7 @@
 
             </LinearLayout>
 
-            <!-- Nút Gọi điện (xanh lá) -->
+            <!-- UI section note -->
             <ImageButton
                 android:id="@+id/btnGoi"
                 android:layout_width="40dp"
@@ -73,28 +73,28 @@
                 android:src="@drawable/ic_phone"
                 android:padding="9dp"
                 android:scaleType="fitCenter"
-                android:contentDescription="Gọi điện"
+                android:contentDescription="@string/item_tenant_call_desc"
                 android:layout_marginEnd="8dp"/>
 
-            <!-- Menu 3 chấm -->
+            <!-- UI section note -->
             <ImageButton
                 android:id="@+id/btnMenu"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_vert"
-                android:contentDescription="Tùy chọn"/>
+                android:contentDescription="@string/item_tenant_more_options_desc"/>
 
         </LinearLayout>
 
-        <!-- Divider mỏng -->
+        <!-- UI section note -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#F0F0F0"
             android:layout_marginVertical="8dp"/>
 
-        <!-- Hàng Badge 1: Vai trò (Người liên hệ / Đại diện HĐ) -->
+        <!-- UI section note -->
         <LinearLayout
             android:id="@+id/rowBadgeVaiTro"
             android:layout_width="match_parent"
@@ -107,30 +107,30 @@
                 android:layout_height="14dp"
                 android:src="@drawable/ic_user_avatar"
                 android:layout_marginEnd="4dp"
-                android:contentDescription="Vai trò"/>
+                android:contentDescription="@string/item_tenant_role_desc"/>
 
-            <!-- Badge: Người liên hệ -->
+            <!-- UI section note -->
             <TextView
-                android:id="@+id/badgeNguoiLienHe"
+                android:id="@+id/badgePrimaryContact"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Là người liên hệ"
+                android:text="@string/item_tenant_primary_contact"
                 android:textSize="11sp"
                 android:textColor="#444444"
                 android:layout_marginEnd="8dp"/>
 
-            <!-- Badge: Đại diện HĐ -->
+            <!-- UI section note -->
             <TextView
                 android:id="@+id/badgeDaiDienHD"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đại diện hợp đồng"
+                android:text="@string/item_tenant_contract_representative"
                 android:textSize="11sp"
                 android:textColor="#444444"/>
 
         </LinearLayout>
 
-        <!-- Hàng Badge 2: Trạng thái (Tạm trú / Giấy tờ) -->
+        <!-- UI section note -->
         <LinearLayout
             android:id="@+id/rowBadgeTrangThai"
             android:layout_width="match_parent"
@@ -139,7 +139,7 @@
             android:layout_marginTop="4dp"
             android:gravity="center_vertical">
 
-            <!-- Chấm icon trạng thái tạm trú -->
+            <!-- UI section note -->
             <View
                 android:id="@+id/dotTamTru"
                 android:layout_width="8dp"
@@ -147,17 +147,17 @@
                 android:background="@drawable/bg_icon_circle_orange"
                 android:layout_marginEnd="4dp"/>
 
-            <!-- Badge: Tạm trú -->
+            <!-- UI section note -->
             <TextView
                 android:id="@+id/badgeTamTru"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chưa đăng ký tạm trú"
+                android:text="@string/item_tenant_temporary_residence_missing"
                 android:textSize="11sp"
                 android:textColor="#FF6D00"
                 android:layout_marginEnd="12dp"/>
 
-            <!-- Chấm icon trạng thái giấy tờ -->
+            <!-- UI section note -->
             <View
                 android:id="@+id/dotGiayTo"
                 android:layout_width="8dp"
@@ -165,12 +165,12 @@
                 android:background="@drawable/bg_icon_circle_orange"
                 android:layout_marginEnd="4dp"/>
 
-            <!-- Badge: Giấy tờ -->
+            <!-- UI section note -->
             <TextView
                 android:id="@+id/badgeGiayTo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chưa đầy đủ giấy tờ"
+                android:text="@string/item_tenant_documents_incomplete"
                 android:textSize="11sp"
                 android:textColor="#FF6D00"/>
 
@@ -179,3 +179,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

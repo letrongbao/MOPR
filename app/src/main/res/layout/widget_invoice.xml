@@ -10,7 +10,7 @@
         android:id="@+id/tvWidgetTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nhà Trọ"
+        android:text="@string/widget_invoice_title"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="@color/purple"/>
@@ -27,7 +27,7 @@
         android:id="@+id/tvWidgetInvoice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hóa đơn chưa thanh toán: ..."
+        android:text="@string/widget_invoice_unpaid_placeholder"
         android:textSize="13sp"
         android:textColor="#333333"/>
 
@@ -35,7 +35,7 @@
         android:id="@+id/tvWidgetPhong"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tổng phòng: ..."
+        android:text="@string/widget_invoice_total_rooms_placeholder"
         android:textSize="13sp"
         android:textColor="#333333"
         android:layout_marginTop="4dp"/>
@@ -44,7 +44,7 @@
         android:id="@+id/tvWidgetUpdate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cập nhật: --:--"
+        android:text="@string/widget_invoice_updated_placeholder"
         android:textSize="11sp"
         android:textColor="#999999"
         android:layout_marginTop="8dp"/>

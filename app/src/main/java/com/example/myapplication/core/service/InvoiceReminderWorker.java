@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.example.myapplication.R;
 import com.example.myapplication.core.MyApplication;
 import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.core.session.TenantSession;
@@ -56,14 +57,14 @@ public class InvoiceReminderWorker extends Worker {
             com.google.firebase.firestore.QuerySnapshot contracts = Tasks.await(
                     db.collection("tenants").document(tenantId)
                             .collection("contracts")
-                            .whereEqualTo("trangThaiHopDong", "ACTIVE")
+                            .whereEqualTo("contractStatus", "ACTIVE")
                             .get());
 
             Set<String> eligibleContractIds = new HashSet<>();
             Set<String> eligibleRoomIds = new HashSet<>();
             if (contracts != null) {
                 for (QueryDocumentSnapshot doc : contracts) {
-                    String contractTiming = normalizeTiming(doc.getString("nhacBaoPhiVao"));
+                    String contractTiming = normalizeTiming(doc.getString("billingReminderAt"));
                     if (!todayTiming.equals(contractTiming))
                         continue;
 
@@ -71,7 +72,7 @@ public class InvoiceReminderWorker extends Worker {
                     if (contractId != null && !contractId.trim().isEmpty())
                         eligibleContractIds.add(contractId);
 
-                    String roomId = doc.getString("idPhong");
+                    String roomId = doc.getString("roomId");
                     if (roomId != null && !roomId.trim().isEmpty())
                         eligibleRoomIds.add(roomId);
                 }
@@ -83,19 +84,19 @@ public class InvoiceReminderWorker extends Worker {
             com.google.firebase.firestore.QuerySnapshot qs = Tasks.await(
                     db.collection("tenants").document(tenantId)
                             .collection("invoices")
-                            .whereIn("trangThai", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
+                            .whereIn("status", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
                             .get());
 
             int count = 0;
             if (qs != null) {
                 for (QueryDocumentSnapshot doc : qs) {
-                    String contractId = doc.getString("idNguoiThue");
+                    String contractId = doc.getString("contractId");
                     if (contractId != null && eligibleContractIds.contains(contractId)) {
                         count++;
                         continue;
                     }
 
-                    String roomId = doc.getString("idPhong");
+                    String roomId = doc.getString("roomId");
                     if (roomId != null && eligibleRoomIds.contains(roomId)) {
                         count++;
                     }
@@ -155,8 +156,8 @@ public class InvoiceReminderWorker extends Worker {
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, MyApplication.REMINDER_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("Nhắc thu tiền")
-                .setContentText("Bạn có " + unpaidCount + " hoá đơn chưa thu")
+            .setContentTitle(ctx.getString(R.string.reminder_collect_title))
+            .setContentText(ctx.getString(R.string.reminder_unpaid_count, unpaidCount))
                 .setAutoCancel(true)
                 .setContentIntent(pi);
 

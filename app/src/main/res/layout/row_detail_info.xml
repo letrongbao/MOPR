@@ -9,7 +9,7 @@
         android:id="@+id/tvLabel"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:text="Label"
+        android:text="@string/row_detail_info_label_placeholder"
         android:textSize="14sp"
         android:textColor="#757575"/>
 
@@ -18,7 +18,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Value"
+        android:text="@string/row_detail_info_value_placeholder"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="#333333"

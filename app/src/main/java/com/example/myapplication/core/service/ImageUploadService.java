@@ -32,7 +32,7 @@ public class ImageUploadService extends Service {
     private static final String CHANNEL_ID = "upload_channel";
     private static final int NOTIFICATION_ID = 101;
 
-    // Đảm bảo thông số này khớp với Cloudinary Console
+    // Ensure these settings match the Cloudinary Console
     private static final String CLOUD_NAME = "dsvkscwti";
     private static final String UPLOAD_PRESET = "MOPRupload";
 
@@ -56,14 +56,14 @@ public class ImageUploadService extends Service {
         Uri imageUri = Uri.parse(intent.getStringExtra(EXTRA_IMAGE_URI));
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Đang tải ảnh lên...")
-                .setContentText("Vui lòng đợi trong giây lát")
+                .setContentTitle(getString(R.string.uploading_image_notification))
+                .setContentText(getString(R.string.please_wait_moment))
                 .setSmallIcon(R.drawable.ic_add)
                 .setProgress(100, 0, true)
                 .setOngoing(true)
                 .build();
 
-        // FIX CHÍNH XÁC CHO ANDROID 14+ (API 34, 35, 36)
+        // Android 14+ foreground service compatibility fix (API 34, 35, 36)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         } else {
@@ -76,7 +76,7 @@ public class ImageUploadService extends Service {
                 byte[] imageBytes;
                 try (InputStream is = getContentResolver().openInputStream(imageUri)) {
                     if (is == null) {
-                        showCompleteNotification("Lỗi: Không thể mở file ảnh");
+                        showCompleteNotification(getString(R.string.error_cannot_open_image));
                         return;
                     }
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -88,7 +88,7 @@ public class ImageUploadService extends Service {
                     imageBytes = baos.toByteArray();
                 }
 
-                updateNotification("Đang gửi dữ liệu...", 50);
+                updateNotification(getString(R.string.sending_data), 50);
 
                 String mimeType = getContentResolver().getType(imageUri);
                 if (mimeType == null)
@@ -134,7 +134,7 @@ public class ImageUploadService extends Service {
                     resultIntent.putExtra(EXTRA_IMAGE_URL, imageUrl);
                     LocalBroadcastManager.getInstance(this).sendBroadcast(resultIntent);
 
-                    showCompleteNotification("Tải ảnh lên thành công!");
+                    showCompleteNotification(getString(R.string.image_upload_success));
                 } else {
                     InputStream es = conn.getErrorStream();
                     if (es != null) {
@@ -145,11 +145,11 @@ public class ImageUploadService extends Service {
                             sb.append(line);
                         Log.e(TAG, "Cloudinary Error: " + sb.toString());
                     }
-                    showCompleteNotification("Tải ảnh thất bại! (Mã: " + responseCode + ")");
+                    showCompleteNotification(getString(R.string.upload_failed_code, responseCode));
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Exception: " + e.getMessage());
-                showCompleteNotification("Lỗi: " + e.getMessage());
+                showCompleteNotification(getString(R.string.error_colon) + e.getMessage());
             } finally {
                 if (conn != null)
                     conn.disconnect();
@@ -162,7 +162,7 @@ public class ImageUploadService extends Service {
 
     private void updateNotification(String text, int progress) {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Đang tải ảnh lên...")
+                .setContentTitle(getString(R.string.uploading_image_notification))
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ic_add)
                 .setProgress(100, progress, false)
@@ -176,7 +176,7 @@ public class ImageUploadService extends Service {
 
     private void showCompleteNotification(String text) {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Upload ảnh")
+                .setContentTitle(getString(R.string.image_upload_title))
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ic_add)
                 .setAutoCancel(true)
@@ -193,8 +193,9 @@ public class ImageUploadService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "Upload ảnh",
+                    getString(R.string.upload_channel_name),
                     NotificationManager.IMPORTANCE_LOW);
+            channel.setDescription(getString(R.string.upload_channel_description));
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null)
                 nm.createNotificationChannel(channel);
@@ -207,3 +208,4 @@ public class ImageUploadService extends Service {
         return null;
     }
 }
+

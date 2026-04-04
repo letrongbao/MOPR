@@ -11,7 +11,7 @@ import java.util.Locale;
 /**
  * Utility for formatting money amounts with thousand separators and currency
  * symbol.
- * Format: 10.000 đ (Vietnamese style)
+ * Example format: 10.000 d (Vietnamese style)
  */
 public class MoneyFormatter {
 
@@ -19,7 +19,7 @@ public class MoneyFormatter {
     private static final DecimalFormat decimalFormat;
 
     static {
-        symbols = new DecimalFormatSymbols(new Locale("vi", "VN"));
+        symbols = new DecimalFormatSymbols(Locale.forLanguageTag("vi-VN"));
         symbols.setGroupingSeparator('.');
         symbols.setDecimalSeparator(',');
 
@@ -28,16 +28,16 @@ public class MoneyFormatter {
     }
 
     /**
-     * Format amount for display: 10000 → "10.000 đ"
+     * Format amount for display: 10000 -> "10.000 d"
      */
     public static String format(double amount) {
         if (amount == 0)
-            return "0 đ";
-        return decimalFormat.format(amount) + " đ";
+            return "0 ₫";
+        return decimalFormat.format(amount) + " ₫";
     }
 
     /**
-     * Format amount for display without currency: 10000 → "10.000"
+     * Format amount for display without currency: 10000 -> "10.000"
      */
     public static String formatWithoutCurrency(double amount) {
         if (amount == 0)
@@ -46,7 +46,7 @@ public class MoneyFormatter {
     }
 
     /**
-     * Parse formatted string back to double: "10.000 đ" → 10000.0
+     * Parse formatted string back to double: "10.000 d" -> 10000.0
      */
     public static double parse(String formatted) {
         if (formatted == null || formatted.trim().isEmpty())
@@ -54,6 +54,7 @@ public class MoneyFormatter {
 
         // Remove currency symbol and spaces
         String cleaned = formatted.replace("đ", "")
+            .replace("₫", "")
                 .replace(" ", "")
                 .replace(".", "")
                 .replace(",", ".")

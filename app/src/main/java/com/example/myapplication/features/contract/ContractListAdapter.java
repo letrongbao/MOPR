@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapter.ViewHolder> {
 
@@ -59,18 +61,17 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         this.deleteListener = l;
     }
 
-    // ── Public API ──────────────────────────────────────────────────────────
+    // Internal note.
 
-    /** Nhận toàn bộ danh sách, sắp xếp: SắpHết → ĐangThuê → ĐãKếtThúc */
     public void setData(List<Tenant> list) {
         this.fullList = list != null ? new ArrayList<>(list) : new ArrayList<>();
-        // Sắp xếp theo mức độ ưu tiên
+        // Internal note.
         this.fullList.sort((a, b) -> {
             int pa = priorityOf(ContractStatusHelper.resolve(a));
             int pb = priorityOf(ContractStatusHelper.resolve(b));
             if (pa != pb)
                 return Integer.compare(pa, pb);
-            // Cùng priority → sắp theo ngày còn lại tăng dần
+            // Internal note.
             long da = ContractStatusHelper.daysRemaining(a);
             long db = ContractStatusHelper.daysRemaining(b);
             return Long.compare(da, db);
@@ -78,13 +79,11 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         rebuildDisplay();
     }
 
-    /** Lọc theo từ khóa (tên hoặc số phòng) */
     public void filter(String query) {
-        this.filterQuery = query == null ? "" : query.trim().toLowerCase();
+        this.filterQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         rebuildDisplay();
     }
 
-    /** Đếm theo từng trạng thái (dùng cho summary) */
     public int countByStatus(ContractStatus status) {
         int count = 0;
         for (Tenant c : fullList) {
@@ -94,15 +93,15 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         return count;
     }
 
-    // ── Internals ───────────────────────────────────────────────────────────
+    // Internal note.
 
     private int priorityOf(ContractStatus s) {
         switch (s) {
-            case SAP_HET_HAN:
+            case EXPIRING_SOON:
                 return 0;
-            case DANG_THUE:
+            case ACTIVE_RENTAL:
                 return 1;
-            case DA_KET_THUC:
+            case ENDED:
                 return 2;
             default:
                 return 3;
@@ -122,12 +121,12 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     private boolean matches(Tenant c) {
         if (filterQuery.isEmpty())
             return true;
-        String name = c.getHoTen() != null ? c.getHoTen().toLowerCase() : "";
-        String room = c.getSoPhong() != null ? c.getSoPhong().toLowerCase() : "";
+        String name = c.getFullName() != null ? c.getFullName().toLowerCase(Locale.ROOT) : "";
+        String room = c.getRoomNumber() != null ? c.getRoomNumber().toLowerCase(Locale.ROOT) : "";
         return name.contains(filterQuery) || room.contains(filterQuery);
     }
 
-    // ── RecyclerView ────────────────────────────────────────────────────────
+    // Internal note.
 
     @Override
     public int getItemCount() {
@@ -145,47 +144,46 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         Tenant c = displayList.get(position);
+        Context context = h.itemView.getContext();
         ContractStatus status = ContractStatusHelper.resolve(c);
         long daysLeft = ContractStatusHelper.daysRemaining(c);
 
-        // Tên phòng
-        h.tvTenPhong.setText(c.getSoPhong() != null ? "Phòng " + c.getSoPhong() : "—");
+        // Internal note.
+        h.tvRoomName.setText(c.getRoomNumber() != null ? context.getString(R.string.room_number, c.getRoomNumber()) : "—");
 
-        // Giá thuê - Format với dấu phân cách
-        long giaThue = c.getGiaThue();
-        String giaThueFormatted = ContractListItemUiHelper.formatMoney(giaThue);
-        h.tvGiaThue.setText(giaThueFormatted);
+        // Internal note.
+        long rentAmount = c.getRentAmount();
+        String rentFormatted = ContractListItemUiHelper.formatMoney(rentAmount);
+        h.tvRentAmount.setText(rentFormatted);
 
-        // Tiền cọc - Format với dấu phân cách
-        long tienCoc = c.getTienCoc();
-        String tienCocFormatted = ContractListItemUiHelper.formatMoney(tienCoc);
-        h.tvTienCoc.setText(tienCocFormatted);
+        // Internal note.
+        long depositAmount = c.getDepositAmount();
+            String depositFormatted = String.format(Locale.US, "%,d ₫", depositAmount).replace(',', '.');
+        h.tvDepositAmount.setText(depositFormatted);
 
-        // Thông tin người đại diện (nếu có), fallback về hoTen
+        // Internal note.
         h.tvTenantName.setText(ContractListItemUiHelper.displayRepresentativeName(c));
-        h.tvTenantPhone.setText(c.getSoDienThoai() != null ? c.getSoDienThoai() : "—");
+        h.tvTenantPhone.setText(c.getPhoneNumber() != null ? c.getPhoneNumber() : "—");
 
-        // Chip trạng thái hợp đồng - Logic tự động theo ngày kết thúc
-        ContractListItemUiHelper.updateContractStatusChip(h.chipTrangThai, status, daysLeft, c);
+        // Internal note.
+        ContractListItemUiHelper.updateContractStatusChip(h.chipStatus, status, daysLeft, c);
 
-        // Hiển thị trạng thái thu cọc (nếu chưa thu và hợp đồng còn hiệu lực)
+        // Internal note.
         ContractListItemUiHelper.updateDepositStatusDisplay(h.tvDepositStatus, c, status);
 
-        // Menu 3 chấm
+        // Internal note.
         h.btnMenu.setOnClickListener(v -> showPopupMenu(v, c, position, status));
     }
 
-    /** Mở Zalo với tin nhắn soạn sẵn, fallback sang Share chooser */
     private void sendZaloReminder(Context ctx, Tenant c) {
-        String soPhong = c.getSoPhong() != null ? c.getSoPhong() : "?";
-        String ngayKetThuc = c.getNgayKetThucHopDong() != null ? c.getNgayKetThucHopDong() : "?";
-        String msg = "Hợp đồng phòng " + soPhong + " của bạn sắp hết hạn vào ngày "
-                + ngayKetThuc + ", vui lòng liên hệ chủ trọ để gia hạn.";
+        String roomNumber = c.getRoomNumber() != null ? c.getRoomNumber() : "?";
+        String contractEndTimestamp = c.getContractEndDate() != null ? c.getContractEndDate() : "?";
+        String msg = ctx.getString(R.string.contract_renewal_reminder, roomNumber, contractEndTimestamp);
 
-        String sdt = c.getSoDienThoai();
-        if (sdt != null && !sdt.trim().isEmpty()) {
-            // Chuẩn hóa: 0xxx → 84xxx
-            String normalized = sdt.replaceAll("[^0-9]", "");
+        String phoneNumber = c.getPhoneNumber();
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            // Internal note.
+            String normalized = phoneNumber.replaceAll("[^0-9]", "");
             if (normalized.startsWith("0")) {
                 normalized = "84" + normalized.substring(1);
             }
@@ -196,30 +194,30 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
                 ctx.startActivity(zaloIntent);
                 return;
             } catch (Exception ignored) {
-                /* Zalo chưa cài */ }
+            }
         }
 
         // Fallback: Share chooser
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, msg);
-        ctx.startActivity(Intent.createChooser(shareIntent, "Gửi nhắc nhở qua..."));
+        ctx.startActivity(Intent.createChooser(shareIntent, ctx.getString(R.string.contract_send_reminder_via)));
     }
 
     private void showPopupMenu(View anchor, Tenant contract, int position, ContractStatus status) {
         PopupMenu popup = new PopupMenu(anchor.getContext(), anchor);
         popup.getMenuInflater().inflate(R.menu.menu_contract, popup.getMenu());
 
-        // Hiển thị "Gửi nhắc tái ký" chỉ khi hợp đồng sắp hết hạn
-        android.view.MenuItem menuNhacTaiKy = popup.getMenu().findItem(R.id.menu_nhac_tai_ky);
-        if (menuNhacTaiKy != null) {
-            menuNhacTaiKy.setVisible(status == ContractStatus.SAP_HET_HAN);
+        // Internal note.
+        android.view.MenuItem menuRenewalReminder = popup.getMenu().findItem(R.id.menu_nhac_tai_ky);
+        if (menuRenewalReminder != null) {
+            menuRenewalReminder.setVisible(status == ContractStatus.EXPIRING_SOON);
         }
 
-        // Hiển thị "Xác nhận thu cọc" chỉ khi chưa thu cọc
-        android.view.MenuItem menuThuCoc = popup.getMenu().findItem(R.id.menu_thu_coc);
-        if (menuThuCoc != null) {
-            menuThuCoc.setVisible(!contract.isTrangThaiThuCoc() && status != ContractStatus.DA_KET_THUC);
+        // Internal note.
+        android.view.MenuItem menuCollectDeposit = popup.getMenu().findItem(R.id.menu_thu_coc);
+        if (menuCollectDeposit != null) {
+            menuCollectDeposit.setVisible(!contract.isDepositCollected() && status != ContractStatus.ENDED);
         }
 
         popup.setOnMenuItemClickListener(item -> {
@@ -250,35 +248,35 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     }
 
     /**
-     * Xác nhận đã thu cọc - cập nhật trực tiếp lên Firestore
+     * Internal note.
      */
     private void confirmDepositReceived(Context context, Tenant contract, int position) {
         if (depositListener != null) {
-            contract.setTrangThaiThuCoc(true);
+            contract.setDepositCollected(true);
             depositListener.onDepositUpdated(contract);
             notifyItemChanged(position);
-            Toast.makeText(context, "✓ Đã xác nhận thu cọc", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.deposit_collected_confirmed), Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * Gửi nhắc nhở tái ký hợp đồng qua Zalo
+     * Internal note.
      */
     private void sendRenewalReminder(Context context, Tenant contract) {
-        String soPhong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
-        String ngayKetThuc = contract.getNgayKetThucHopDong() != null ? contract.getNgayKetThucHopDong() : "?";
+        String roomNumber = contract.getRoomNumber() != null ? contract.getRoomNumber() : "?";
+        String contractEndTimestamp = contract.getContractEndDate() != null ? contract.getContractEndDate() : "?";
         long daysLeft = ContractStatusHelper.daysRemaining(contract);
 
-        String msg = "🏠 Thông báo tái ký hợp đồng\n\n" +
-                "Phòng: " + soPhong + "\n" +
-                "Ngày kết thúc: " + ngayKetThuc + "\n" +
-                "Còn lại: " + daysLeft + " ngày\n\n" +
-                "Quý khách vui lòng liên hệ chủ trọ để thực hiện thủ tục tái ký hợp đồng. Xin cảm ơn!";
+        String msg = context.getString(
+            R.string.contract_renewal_notice_message,
+            roomNumber,
+            contractEndTimestamp,
+            daysLeft);
 
-        String sdt = contract.getSoDienThoai();
-        if (sdt != null && !sdt.trim().isEmpty()) {
-            // Chuẩn hóa: 0xxx → 84xxx
-            String normalized = sdt.replaceAll("[^0-9]", "");
+        String phoneNumber = contract.getPhoneNumber();
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            // Internal note.
+            String normalized = phoneNumber.replaceAll("[^0-9]", "");
             if (normalized.startsWith("0")) {
                 normalized = "84" + normalized.substring(1);
             }
@@ -289,22 +287,22 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
                 context.startActivity(zaloIntent);
                 return;
             } catch (Exception ignored) {
-                /* Zalo chưa cài */ }
+            }
         }
 
         // Fallback: Share chooser
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, msg);
-        context.startActivity(Intent.createChooser(shareIntent, "Gửi nhắc tái ký qua..."));
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.contract_send_reminder_via)));
     }
 
     /**
-     * Mở màn hình chi tiết hợp đồng
+     * Internal note.
      */
     private void openContractDetail(Context context, Tenant contract) {
         if (contract == null || contract.getId() == null) {
-            Toast.makeText(context, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.error_contract_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -314,84 +312,91 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     }
 
     /**
-     * Mở màn hình chỉnh sửa hợp đồng
+     * Internal note.
      */
     private void openEditContract(Context context, Tenant contract) {
         if (contract == null || contract.getId() == null) {
-            Toast.makeText(context, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.error_contract_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
 
         Intent intent = new Intent(context, ContractActivity.class);
 
-        // Gửi flag để báo đây là mode EDIT
-        intent.putExtra("MODE", "EDIT");
+        // Internal note.
+        intent.putExtra(ContractIntentKeys.MODE, "EDIT");
 
-        // Gửi toàn bộ thông tin hợp đồng
-        intent.putExtra("CONTRACT_ID", contract.getId());
-        intent.putExtra("PHONG_ID", contract.getIdPhong());
-        intent.putExtra("SO_HOP_DONG", contract.getSoHopDong());
-        intent.putExtra("HO_TEN", contract.getHoTen());
-        intent.putExtra("SO_DIEN_THOAI", contract.getSoDienThoai());
-        intent.putExtra("CCCD", contract.getCccd());
-        intent.putExtra("SO_THANH_VIEN", contract.getSoThanhVien());
-        intent.putExtra("NGAY_BAT_DAU", contract.getNgayBatDauThue());
-        intent.putExtra("SO_THANG", contract.getSoThangHopDong());
-        intent.putExtra("GIA_THUE", contract.getGiaThue());
-        intent.putExtra("TIEN_COC", contract.getTienCoc());
-        intent.putExtra("CHI_SO_DIEN", contract.getChiSoDienDau());
-        intent.putExtra("DICH_VU_GUI_XE", contract.isDichVuGuiXe());
-        intent.putExtra("SO_LUONG_XE", contract.getSoLuongXe());
-        intent.putExtra("DICH_VU_INTERNET", contract.isDichVuInternet());
-        intent.putExtra("DICH_VU_GIAT_SAY", contract.isDichVuGiatSay());
-        intent.putExtra("GHI_CHU", contract.getGhiChu());
-        intent.putExtra("HIEN_THI_COC", contract.isHienThiTienCocTrenInvoice());
-        intent.putExtra("HIEN_THI_GHI_CHU", contract.isHienThiGhiChuTrenInvoice());
-        intent.putExtra("NHAC_TRUOC_1_THANG", contract.isNhacTruoc1Thang());
-        intent.putExtra("CCCD_FRONT_URL", contract.getCccdFrontUrl());
-        intent.putExtra("CCCD_BACK_URL", contract.getCccdBackUrl());
+        // Internal note.
+        intent.putExtra(ContractIntentKeys.CONTRACT_ID, contract.getId());
+        intent.putExtra(ContractIntentKeys.ROOM_ID, contract.getRoomId());
+        intent.putExtra(ContractIntentKeys.CONTRACT_NUMBER, contract.getContractNumber());
+        intent.putExtra(ContractIntentKeys.FULL_NAME, contract.getFullName());
+        intent.putExtra(ContractIntentKeys.PHONE_NUMBER, contract.getPhoneNumber());
+        intent.putExtra(ContractIntentKeys.PERSONAL_ID, contract.getPersonalId());
+        intent.putExtra(ContractIntentKeys.MEMBER_COUNT, contract.getMemberCount());
+        intent.putExtra(ContractIntentKeys.RENTAL_START_DATE, contract.getRentalStartDate());
+        intent.putExtra(ContractIntentKeys.CONTRACT_DURATION_MONTHS, contract.getContractDurationMonths());
+        intent.putExtra(ContractIntentKeys.RENT_AMOUNT, contract.getRentAmount());
+        intent.putExtra(ContractIntentKeys.DEPOSIT_AMOUNT, contract.getDepositAmount());
+        intent.putExtra(ContractIntentKeys.ELECTRIC_START_READING, contract.getElectricStartReading());
+        intent.putExtra(ContractIntentKeys.HAS_PARKING_SERVICE, contract.hasParkingService());
+        intent.putExtra(ContractIntentKeys.VEHICLE_COUNT, contract.getVehicleCount());
+        intent.putExtra(ContractIntentKeys.HAS_INTERNET_SERVICE, contract.hasInternetService());
+        intent.putExtra(ContractIntentKeys.HAS_LAUNDRY_SERVICE, contract.hasLaundryService());
+        intent.putExtra(ContractIntentKeys.NOTE, contract.getNote());
+        intent.putExtra(ContractIntentKeys.SHOW_DEPOSIT_ON_INVOICE, contract.isShowDepositOnInvoice());
+        intent.putExtra(ContractIntentKeys.SHOW_NOTE_ON_INVOICE, contract.isShowNoteOnInvoice());
+        intent.putExtra(ContractIntentKeys.REMIND_ONE_MONTH_BEFORE, contract.isRemindOneMonthBefore());
+        intent.putExtra(ContractIntentKeys.PERSONAL_ID_FRONT_URL, contract.getPersonalIdFrontUrl());
+        intent.putExtra(ContractIntentKeys.PERSONAL_ID_BACK_URL, contract.getPersonalIdBackUrl());
 
         context.startActivity(intent);
     }
 
     private void showBottomSheetThuCoc(Context context, Tenant contract, int position) {
         BottomSheetDialog bottomSheet = new BottomSheetDialog(context);
-        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_deposit, null);
+        View view = LayoutInflater.from(context).inflate(
+                R.layout.bottom_sheet_deposit,
+                new FrameLayout(context),
+                false);
         bottomSheet.setContentView(view);
 
         // Bind data
         TextView tvPhongInfo = view.findViewById(R.id.tvPhongInfo);
         TextView tvTenantInfo = view.findViewById(R.id.tvTenantInfo);
-        TextView tvSoTienCoc = view.findViewById(R.id.tvSoTienCoc);
+        TextView tvDepositAmount = view.findViewById(R.id.tvSoTienCoc);
         MaterialButton btnGuiQR = view.findViewById(R.id.btnGuiQR);
         MaterialButton btnXacNhanDaThu = view.findViewById(R.id.btnXacNhanDaThu);
         ImageButton btnClose = view.findViewById(R.id.btnClose);
 
-        String phongText = contract.getSoPhong() != null ? "Phòng " + contract.getSoPhong() : "—";
+        String phongText = contract.getRoomNumber() != null
+            ? context.getString(R.string.room_number, contract.getRoomNumber())
+            : "—";
         tvPhongInfo.setText(phongText);
 
-        String tenantText = "Khách: " + (contract.getHoTen() != null ? contract.getHoTen() : "—")
-                + " - " + (contract.getSoDienThoai() != null ? contract.getSoDienThoai() : "—");
+        String tenantText = context.getString(
+            R.string.contract_tenant_phone_line,
+            (contract.getFullName() != null ? contract.getFullName() : "—"),
+            (contract.getPhoneNumber() != null ? contract.getPhoneNumber() : "—"));
         tvTenantInfo.setText(tenantText);
 
-        // Format tiền cọc với dấu phân cách
-        long tienCoc = contract.getTienCoc();
-        String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
-        tvSoTienCoc.setText(tienCocFormatted);
+        // Internal note.
+        long depositAmount = contract.getDepositAmount();
+        String depositFormatted = String.format(Locale.US, "%,d ₫", depositAmount).replace(',', '.');
+        tvDepositAmount.setText(depositFormatted);
 
-        // Nút Gửi QR & Liên hệ
+        // Internal note.
         btnGuiQR.setOnClickListener(v -> {
             shareQRAndMessage(context, contract);
         });
 
-        // Nút Xác nhận đã thu
+        // Internal note.
         btnXacNhanDaThu.setOnClickListener(v -> {
             if (depositListener != null) {
-                contract.setTrangThaiThuCoc(true);
+                contract.setDepositCollected(true);
                 depositListener.onDepositUpdated(contract);
                 notifyItemChanged(position);
                 bottomSheet.dismiss();
-                Toast.makeText(context, "Đã xác nhận thu cọc", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.deposit_collected_confirmed_plain), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -401,69 +406,65 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     }
 
     private void shareQRAndMessage(Context context, Tenant contract) {
-        String phong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
-        long tienCoc = contract.getTienCoc();
-        String tienCocFormatted = String.format("%,dđ", tienCoc).replace(',', '.');
+        String room = contract.getRoomNumber() != null ? contract.getRoomNumber() : "?";
+        long depositAmount = contract.getDepositAmount();
+        String depositFormatted = String.format(Locale.US, "%,d ₫", depositAmount).replace(',', '.');
 
-        String message = "Yêu cầu thanh toán cọc phòng " + phong + "\n" +
-                "Số tiền: " + tienCocFormatted + "\n" +
-                "Vui lòng thanh toán qua mã QR bên dưới.";
+        String message = context.getString(R.string.deposit_payment_request_message, room, depositFormatted);
 
         // Share text (QR image would need FileProvider setup)
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, message);
-        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Yêu cầu thanh toán cọc phòng " + phong);
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.deposit_payment_request_subject, room));
 
-        context.startActivity(Intent.createChooser(shareIntent, "Gửi yêu cầu thanh toán"));
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.deposit_payment_request_send_via)));
     }
 
     /**
-     * Hiển thị dialog xác nhận xóa hợp đồng
+     * Internal note.
      */
     private void showDeleteConfirmDialog(Context context, Tenant contract, int position) {
         if (contract == null || contract.getId() == null) {
-            Toast.makeText(context, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.error_contract_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String roomName = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
-        String tenantName = contract.getHoTen() != null ? contract.getHoTen() : "?";
+        String roomName = contract.getRoomNumber() != null ? contract.getRoomNumber() : "?";
+        String tenantName = contract.getFullName() != null ? contract.getFullName() : "?";
 
         new android.app.AlertDialog.Builder(context)
-                .setTitle("⚠️ Xác nhận xóa hợp đồng")
-                .setMessage("Bạn có chắc chắn muốn xóa hợp đồng của phòng " + roomName +
-                        " (Khách: " + tenantName + ")?\n\n" +
-                        "⚠️ Thao tác này không thể hoàn tác.")
-                .setPositiveButton("Xóa", (dialog, which) -> {
+                .setTitle(R.string.contract_delete_confirm_title)
+                .setMessage(context.getString(R.string.contract_delete_confirm_message, roomName, tenantName))
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
                     deleteContract(context, contract, position);
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(R.string.cancel, null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
 
     /**
-     * Xóa hợp đồng khỏi Firestore và cập nhật UI
+     * Internal note.
      */
     private void deleteContract(Context context, Tenant contract, int position) {
         String contractId = contract.getId();
 
-        // Hiển thị loading state
-        Toast.makeText(context, "Đang xóa hợp đồng...", Toast.LENGTH_SHORT).show();
+        // Internal note.
+        Toast.makeText(context, context.getString(R.string.contract_deleting), Toast.LENGTH_SHORT).show();
 
-        // Gọi listener để Activity xử lý xóa trên Firestore
+        // Internal note.
         if (deleteListener != null) {
             deleteListener.onContractDeleted(contractId);
         } else {
-            // Fallback: xóa trực tiếp từ adapter (không khuyến khích)
-            Toast.makeText(context, "Lỗi: Không thể xóa hợp đồng", Toast.LENGTH_SHORT).show();
+            // Internal note.
+            Toast.makeText(context, context.getString(R.string.contract_delete_error), Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * Xóa item khỏi danh sách hiển thị (được gọi từ Activity sau khi Firestore xóa
-     * thành công)
+     * Internal note.
+     * Internal note.
      */
     public void removeItem(int position) {
         if (position >= 0 && position < displayList.size()) {
@@ -475,7 +476,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     }
 
     /**
-     * Xóa item theo ID (được gọi từ Activity sau khi Firestore xóa thành công)
+     * Internal note.
      */
     public void removeItemById(String contractId) {
         if (contractId == null)
@@ -489,22 +490,22 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         }
     }
 
-    // ── ViewHolder ──────────────────────────────────────────────────────────
+    // Internal note.
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTenPhong, tvGiaThue, tvTienCoc, tvTenantName, tvTenantPhone, tvDepositStatus;
-        Chip chipTrangThai;
+        TextView tvRoomName, tvRentAmount, tvDepositAmount, tvTenantName, tvTenantPhone, tvDepositStatus;
+        Chip chipStatus;
         ImageButton btnMenu;
 
         ViewHolder(View v) {
             super(v);
-            tvTenPhong = v.findViewById(R.id.tvTenPhong);
-            tvGiaThue = v.findViewById(R.id.tvGiaThue);
-            tvTienCoc = v.findViewById(R.id.tvTienCoc);
+            tvRoomName = v.findViewById(R.id.tvTenPhong);
+            tvRentAmount = v.findViewById(R.id.tvGiaThue);
+            tvDepositAmount = v.findViewById(R.id.tvTienCoc);
             tvTenantName = v.findViewById(R.id.tvTenantName);
             tvTenantPhone = v.findViewById(R.id.tvTenantPhone);
             tvDepositStatus = v.findViewById(R.id.tvDepositStatus);
-            chipTrangThai = v.findViewById(R.id.chipTrangThai);
+            chipStatus = v.findViewById(R.id.chipTrangThai);
             btnMenu = v.findViewById(R.id.btnMenu);
         }
     }

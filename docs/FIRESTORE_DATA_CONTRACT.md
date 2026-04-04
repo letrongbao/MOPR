@@ -1,23 +1,31 @@
 # Firestore Data Contract (MOPR)
 
-## Muc tieu
-Tai lieu nay la nguon su that (single source of truth) de cac agent/man hinh moi dung chung du lieu Firestore voi cac man hien co (dac biet la Quan ly phong, Hoa don, Thanh toan).
+## Objective
+This document is the single source of truth for Firestore data usage across screens and agents, especially for Room Management, Invoices, and Payments.
 
-## 1) Scope luu du lieu hien tai
+Canonical contract note:
 
-App dang ho tro 2 scope du lieu:
+- This document reflects the canonical English keys and persisted status values used by current repository/domain code.
 
-1. Legacy per-user:
+Source API naming note:
+
+- Domain/source code should use English accessor names (for example: `getStatus()`, `getBillingPeriod()`, `getTotalAmount()`).
+
+## 1) Current Data Scope
+
+The app currently supports two storage scopes:
+
+1. Legacy per-user scope:
    - users/{uid}/{collection}/{docId}
-2. Multi-tenant (uu tien hien tai):
+2. Multi-tenant scope (preferred/current):
    - tenants/{tenantId}/{collection}/{docId}
 
-Quy tac scope trong code:
+Code-level scope rules:
 
-- Neu co active tenant (`TenantSession.getActiveTenantId()`): doc/ghi vao `tenants/{tenantId}/...`
-- Neu chua co tenant: fallback `users/{uid}/...`
+- If active tenant exists (`TenantSession.getActiveTenantId()`), read/write to `tenants/{tenantId}/...`
+- If no active tenant exists, fallback to `users/{uid}/...`
 
-Pattern nay duoc dung nhat quan trong repository:
+This pattern is used consistently in repositories:
 
 - `RoomRepository`
 - `TenantRepository`
@@ -29,9 +37,9 @@ Pattern nay duoc dung nhat quan trong repository:
 - `TicketRepository`
 - `RentalHistoryRepository`
 
-## 2) Collections dang duoc app su dung
+## 2) Collections Used by the App
 
-Trong scope `tenants/{tenantId}` (va fallback `users/{uid}`), app dang dung cac collection sau:
+Under `tenants/{tenantId}` (and `users/{uid}` fallback), the app uses:
 
 1. `houses`
 2. `rooms`
@@ -43,116 +51,125 @@ Trong scope `tenants/{tenantId}` (va fallback `users/{uid}`), app dang dung cac 
 8. `tickets`
 9. `rentalHistory`
 
-Ngoai ra o root tenant:
+Additional tenant-root collections:
 
-1. `tenants/{tenantId}` (thong tin to chuc)
+1. `tenants/{tenantId}` (organization profile)
 2. `tenants/{tenantId}/members` (OWNER/STAFF/TENANT)
 3. `tenants/{tenantId}/invites`
 4. `tenants/{tenantId}/auditLogs`
-5. `tenants/{tenantId}/backups` (sao luu app)
+5. `tenants/{tenantId}/backups` (in-app backups)
 
-## 3) Schema cot loi cho Quan ly phong + Hoa don
+## 3) Core Schema for Room Management + Invoices
 
 ### 3.1 `rooms/{roomId}`
 
-Nguon chinh: `domain/Room.java`
+Primary source: `domain/Room.java`
 
-Field chinh:
+Canonical fields (current code path):
 
-- `soPhong`: String
-- `loaiPhong`: String (`"Đơn"`, `"Đôi"`, `"Ghép"`)
-- `dienTich`: Number
-- `giaThue`: Number
-- `trangThai`: String (`"Trống"`, `"Đã thuê"`)
-- `hinhAnh`: String (URL)
+- `roomNumber`: String
+- `roomType`: String
+- `area`: Number
+- `rentAmount`: Number
+- `status`: String (`"VACANT"`, `"RENTED"`)
+- `imageUrl`: String (URL)
 - `houseId`: String
 - `houseName`: String
-- `tang`: Number
-- `moTa`: String
-- `tienNghi`: Array<String>
-- `soNguoiToiDa`: Number
+- `floor`: Number
+- `description`: String
+- `amenities`: Array<String>
+- `maxOccupancy`: Number
 - `createdAt`: Timestamp
 - `updatedAt`: Timestamp
 
 ### 3.2 `contracts/{contractId}`
 
-Nguon chinh: `domain/Tenant.java`
+Primary source: `domain/Tenant.java`
 
-Field lien ket phong/hop dong:
+Room/contract link fields:
 
-- `idPhong`: String (FK -> `rooms/{roomId}`)
-- `idPhongCu`: String
-- `soPhong`: String (denormalized)
-- `trangThaiHopDong`: String (`ACTIVE`/`ENDED`)
+- `roomId`: String (FK -> `rooms/{roomId}`)
+- `previousRoomId`: String
+- `roomNumber`: String (denormalized)
+- `contractStatus`: String (`ACTIVE`/`ENDED`)
 - `createdAt`, `updatedAt`, `endedAt`: Int64 millis
 
-Field thong tin nguoi thue + hop dong:
+Tenant/contract information fields:
 
-- `hoTen`, `cccd`, `soDienThoai`, `diaChi`, `soHopDong`
-- `giaThue`, `tienCoc`, `ngayKetThuc`: Int64
-- Legacy compatibility: `tienPhong`, `tienCoc_old`: Number
-- Flags: `trangThaiThuCoc`, `hienThiTienCocTrenHoaDon`, `hienThiGhiChuTrenHoaDon`
-- Dich vu: `dichVuGuiXe`, `soLuongXe`, `dichVuInternet`, `dichVuGiatSay`
+- `fullName`, `personalId`, `phoneNumber`, `address`, `contractNumber`
+- `representativeName`, `representativeId`
+- `personalIdFrontUrl`, `personalIdBackUrl`
+- `rentAmount`, `depositAmount`: Int64
+- `contractEndDate`: String
+- `contractEndTimestamp`: Int64 millis
+- Flags: `depositCollectionStatus`, `showDepositOnInvoice`, `showNoteOnInvoice`
+- Services: `hasParkingService`, `vehicleCount`, `hasInternetService`, `hasLaundryService`
+- `contractDurationMonths`: Number
+- `billingReminderAt`: String (`start_month` / `end_month`)
 
 ### 3.3 `invoices/{invoiceId}`
 
-Nguon chinh: `domain/Invoice.java`
+Primary source: `domain/Invoice.java`
 
-Field chinh:
+Canonical fields (current code path):
 
-- `idPhong`: String (FK -> `rooms/{roomId}`)
-- `idTenant`: String (FK -> `contracts/{contractId}`)
-- `soPhong`: String (denormalized de hien thi)
-- `thangNam`: String (`MM/yyyy`, vi du `03/2026`)
-- Dien/nuoc: `chiSoDienDau`, `chiSoDienCuoi`, `donGiaDien`, `chiSoNuocDau`, `chiSoNuocCuoi`, `donGiaNuoc`
-- Phi: `phiRac`, `phiWifi`, `phiGuiXe`
-- `giaThue`, `tongTien`: Number
-- `trangThai`: String (`Chưa báo`, `Đã báo`, `Đóng một phần`, `Đã đóng`)
-- `ngayThanhToan`: Timestamp
-- `phuongThucThanhToan`: String
-- `soTienDaThanhToan`: Number
+- `roomId`: String (FK -> `rooms/{roomId}`)
+- `contractId`: String (FK -> `contracts/{contractId}`)
+- `roomNumber`: String (denormalized for display)
+- `billingPeriod`: String (`MM/yyyy`, example `03/2026`)
+- Electricity/water: `electricStartReading`, `electricEndReading`, `electricUnitPrice`, `waterStartReading`, `waterEndReading`, `waterUnitPrice`
+- Fees: `trashFee`, `wifiFee`, `parkingFee`
+- `rentAmount`, `totalAmount`: Number
+- `status`: String
+   - `UNREPORTED`
+   - `REPORTED`
+   - `PARTIAL`
+   - `PAID`
+- `paymentDate`: Timestamp
+- `paymentMethod`: String
+- `paidAmount`: Number
 - `createdAt`, `updatedAt`: Timestamp
 
-Rule tao ID chong trung hoa don theo phong-thang (dang duoc ho tro):
+Duplicate-safe invoice ID rule (currently supported):
 
-- `invoiceId = idPhong + "_" + yyyyMM`
-- Vi du: `roomA_202603`
+- `invoiceId = roomId + "_" + yyyyMM`
+- Example: `roomA_202603`
 
 ### 3.4 `payments/{paymentId}`
 
-Nguon chinh: `domain/Payment.java`
+Primary source: `domain/Payment.java`
 
-Field chinh:
+Main fields:
 
 - `invoiceId`: String (FK -> `invoices/{invoiceId}`)
-- `roomId`: String (ho tro phan quyen tenant-level)
+- `roomId`: String (supports tenant-level access control)
 - `amount`: Number
 - `method`: String (`CASH`/`BANK`)
 - `paidAt`: String (`dd/MM/yyyy`)
 - `note`: String
 
-Khi tong payment thay doi, man lich su thanh toan cap nhat `invoices.trangThai`:
+When total payments change, payment history flow updates `invoices.status`:
 
-- 0 dong -> `Đã báo`
-- 0 < paid < tongTien -> `Đóng một phần`
-- paid >= tongTien -> `Đã đóng`
+- 0 paid -> `REPORTED`
+- 0 < paid < total -> `PARTIAL`
+- paid >= total -> `PAID`
 
-## 4) Quan he du lieu lien trang (de man khac doc lai)
+## 4) Cross-Screen Data Relationships
 
 1. Room -> Contract:
-   - `contracts.idPhong == rooms.docId`
+   - `contracts.roomId == rooms.docId`
 2. Invoice -> Room:
-   - `invoices.idPhong == rooms.docId`
+   - `invoices.roomId == rooms.docId`
 3. Invoice -> Contract:
-   - `invoices.idTenant == contracts.docId`
+   - `invoices.contractId == contracts.docId`
 4. Payment -> Invoice:
    - `payments.invoiceId == invoices.docId`
 
-Khi lam man moi, uu tien query theo `idPhong`, `invoiceId`, `idTenant` de bao toan dong bo voi man Hoa don hien tai.
+For new screens, prefer queries by `roomId`, `invoiceId`, and `contractId` to stay aligned with current invoice flow.
 
-## 5) Cach doc du lieu giong man Hoa don
+## 5) How to Read Data Consistently with Invoice Screen
 
-### 5.1 Pattern scope chung (khuyen nghi dung lai)
+### 5.1 Shared scope pattern (recommended)
 
 ```java
 private CollectionReference scopedCollection(String collection) {
@@ -169,21 +186,21 @@ private CollectionReference scopedCollection(String collection) {
 }
 ```
 
-### 5.2 Vi du doc phong + nguoi thue active + hoa don
+### 5.2 Example: load rooms + active contracts + invoices
 
 ```java
 scopedCollection("rooms").get();
 
 scopedCollection("contracts")
-    .whereEqualTo("trangThaiHopDong", "ACTIVE")
+   .whereEqualTo("contractStatus", "ACTIVE")
     .get();
 
 scopedCollection("invoices")
-    .whereEqualTo("idPhong", roomId)
+   .whereEqualTo("roomId", roomId)
     .get();
 ```
 
-### 5.3 Vi du doc lich su thanh toan cua 1 hoa don
+### 5.3 Example: load payment history for one invoice
 
 ```java
 scopedCollection("payments")
@@ -191,109 +208,116 @@ scopedCollection("payments")
     .get();
 ```
 
-## 6) Firestore rules lien quan
+## 6) Related Firestore Rules
 
 File: `firestore.rules`
 
-Nhan su trong tenant:
+Tenant roles:
 
-- `OWNER`, `STAFF`: doc/ghi phan lon collection nghiep vu
-- `TENANT`: doc du lieu bi gioi han theo `roomId` cua membership
+- `OWNER`, `STAFF`: read/write for most business collections
+- `TENANT`: read access limited by membership `roomId`
 
-Co che an toan nay la ly do can luu `roomId` trong `payments`, `tickets`, `invoices`, ... de tenant user chi thay du lieu phong cua minh.
+This is why storing `roomId` in `payments`, `tickets`, `invoices`, and similar collections is required for tenant data isolation.
 
-## 7) "Du lieu hien dang co" nen hieu the nao
+Rules compatibility note:
 
-Repo code KHONG chua snapshot live data tu Firebase production.
+- `firestore.rules` is aligned with current English collection names.
+- Active collections in rules: `houses`, `rooms`, `contracts`, `invoices`, `payments`, `meterReadings`, `expenses`, `tickets`, `rentalHistory`, `backups`.
 
-Do do, tai lieu nay ghi:
+## 7) Meaning of "Current Existing Data"
 
-1. Cau truc du lieu dang duoc app su dung thuc te.
-2. Danh sach collection dang duoc backup trong app.
-3. Cac field + quan he ma man hinh dang doc/ghi.
+This repository does not include a live Firebase production snapshot.
 
-Neu can inventory du lieu live (so ban ghi thuc te), su dung:
+Therefore, this document records:
 
-1. Firestore Console de xem document thuc.
-2. Man `Sao lưu & phục hồi` trong app (collection `backups`) de dong bang state.
-3. Tao them script audit thong ke record count theo collection (neu can, co the bo sung o dot tiep theo).
-4. Doc them `docs/FIREBASE_DATA_MANAGEMENT_GUIDE.md` khi can seed/reset/test role.
+1. The data structure currently used by the app.
+2. Collections that are currently included in in-app backup.
+3. Fields and relationships actively read/written by current screens.
 
-## 8) Quy uoc cho agent khi lam man moi
+To inspect real live data counts, use:
 
-1. Luon dung scope helper (`TenantSession` + fallback `users/{uid}`).
-2. Khong tu y doi ten collection/field cu khi chua co ke hoach migration.
-3. Uu tien doc theo FK da ton tai (`idPhong`, `idTenant`, `invoiceId`).
-4. Neu can denormalize (vi du luu them `soPhong`), van giu FK goc.
-5. Khi sua trang thai hoa don tu payment, cap nhat dung 4 gia tri trong `InvoiceStatus`.
-6. Kiem tra quyen trong `firestore.rules` truoc khi them collection moi.
+1. Firestore Console for direct document inspection.
+2. In-app Backup/Restore screen (`backups` collection) to snapshot current state.
+3. An optional audit script for collection-level record counts.
+4. `docs/FIREBASE_DATA_MANAGEMENT_GUIDE.md` for seed/reset/role testing workflow.
 
-## 9) Data audit
+## 8) Agent Conventions for New Screens
+
+1. Always use scope helper (`TenantSession` + `users/{uid}` fallback).
+2. Never rename existing collections/fields without a migration plan.
+3. Prefer existing FK fields (`roomId`, `contractId`, `invoiceId`).
+4. If denormalization is required (for example storing `roomNumber`), keep the original FK.
+5. When invoice status is updated from payments, use valid values in `InvoiceStatus`.
+6. Review `firestore.rules` before adding any new collection.
+
+## 9) Data Audit
 
 Use the Node.js audit script to inspect live collection counts:
 
 ```bash
 cd scripts
 npm install firebase-admin
-# Download serviceAccountKey.json từ Firebase Console > Project Settings
+# Download serviceAccountKey.json from Firebase Console > Project Settings
 node audit-firestore.js
-# Hoặc audit tenant cụ thể:
+# Or audit a specific tenant:
 node audit-firestore.js <tenantId>
 ```
 
-Output shows:
+Output includes:
+
 - Record counts per collection
 - Tenant totals
-- Which collections are actually populated
+- Which collections are populated
 
-Ví dụ output:
-```
-👤 Tenant A (ID: tenant_abc123)
+Example output:
+
+```text
+Tenant A (ID: tenant_abc123)
 ========================================
-   ✓ houses              : 5 records
-   ✓ rooms               : 25 records
-   ✓ contracts           : 18 records
-   ✓ invoices            : 142 records
-  ✓ payments            : 87 bản ghi
-  ○ meterReadings       : (trống)
-   Total: 277 records
+houses            : 5 records
+rooms             : 25 records
+contracts         : 18 records
+invoices          : 142 records
+payments          : 87 records
+meterReadings     : (empty)
+Total: 277 records
 ```
 
-## 11) Role-based flow (roadmap, chua rollout tenant)
+## 10) Role-Based Flow (Roadmap, Tenant Rollout Pending)
 
-Trang hoa don va thanh toan da co khung role TENANT/OWNER-STAFF, nhung hien tai dang chay theo chien luoc rollout:
+Invoice and payment screens already include role-specific structure for TENANT and OWNER/STAFF. Current rollout strategy:
 
-1. Active hien tai: OWNER/STAFF flow (mac dinh)
-2. TENANT self-service: da co khung code, tam thoi tat bang feature flag cho den khi role tenant chinh thuc hoan tat tren DB + UI.
+1. Active now: OWNER/STAFF flow (default).
+2. TENANT self-service: code scaffold exists, temporarily disabled behind feature flag until tenant role rollout is fully completed in DB and UI.
 
-Khi bat TENANT self-service, flow du kien la:
+Expected flow when TENANT self-service is enabled:
 
-1. TENANT tren man hoa don:
-   - Khong duoc xoa/sua/bao phi hoa don.
-   - Nhan nut hanh dong theo self-service:
-     - `Chờ chủ báo phí` neu hoa don `Chưa báo`.
-     - `Thanh toán ngay` neu hoa don `Đã báo`/`Đóng một phần`.
-     - `Xem lịch sử thanh toán` neu hoa don `Đã đóng`.
-2. TENANT tren man lich su thanh toan:
-   - Duoc them giao dich thanh toan.
-   - Khong duoc xoa giao dich thanh toan.
+1. TENANT on invoice screen:
+   - Cannot delete/edit/issue invoice notifications.
+   - Gets self-service actions based on invoice status:
+   - `Wait for owner notice` when invoice is `UNREPORTED`.
+   - `Pay now` when invoice is `REPORTED` or `PARTIAL`.
+   - `View payment history` when invoice is `PAID`.
+2. TENANT on payment history screen:
+   - Can add payment transaction.
+   - Cannot delete payment transaction.
 3. OWNER/STAFF:
-   - Giu luong quan ly hien tai.
+   - Keep current management flow.
 
-Muc tieu cua batch nay la chuan bi huong self-service nhung khong anh huong flow owner hien tai.
+Goal of this phase: prepare self-service direction without affecting current owner flow.
 
-## 12) Role va membership schema de chot huong phat trien
+## 11) Role and Membership Schema Baseline
 
-### 12.1 Nguyen tac
+### 11.1 Principles
 
-1. `TENANT` la role mac dinh khi dang ky tu app.
-2. `OWNER` va `STAFF` duoc gan qua luong bootstrap/admin/invite, khong cho tu khai bao tu do trong signup cong khai.
-3. Role chi co nghia khi di kem `membership` trong tenant scope.
-4. Du lieu lien ket nghiep vu phai dung `houseId` va `roomId`; `houseCode` va `roomCode` chi de join/onboarding/tim kiem.
+1. `TENANT` is the default role at public signup.
+2. `OWNER` and `STAFF` are assigned through bootstrap/admin/invite flows only.
+3. Role meaning is valid only with tenant-scope membership.
+4. Business data linkage must use `houseId` and `roomId`; `houseCode` and `roomCode` are for join/onboarding/search only.
 
-### 12.2 Account profile
+### 11.2 Account Profile
 
-Doc user root (goi y):
+Suggested root user document:
 
 - `users/{uid}`
    - `displayName`: String
@@ -304,85 +328,86 @@ Doc user root (goi y):
    - `createdAt`: Timestamp
    - `updatedAt`: Timestamp
 
-`primaryRole` chi la role hien thi/uu tien. Quyen that su phai duoc xac nhan boi membership trong tenant scope.
+`primaryRole` is display/default metadata. Actual permission must be resolved from tenant membership.
 
-### 12.3 Membership trong tenant
+### 11.3 Tenant Membership
 
-Doc chuan:
+Standard document:
 
 - `tenants/{tenantId}/members/{uid}`
    - `uid`: String
    - `role`: String (`OWNER`/`STAFF`/`TENANT`)
-   - `houseId`: String (co the null neu OWNER quan ly toan tenant)
-   - `roomId`: String (chi can cho TENANT)
-   - `assignedHouseIds`: Array<String> (dung cho STAFF/OWNER neu co nhieu house)
-   - `assignedRoomIds`: Array<String> (tuong lai neu can moi room scope)
+   - `houseId`: String (can be null for full-tenant OWNER)
+   - `roomId`: String (typically required for TENANT)
+   - `assignedHouseIds`: Array<String> (for STAFF/OWNER with multiple houses)
+   - `assignedRoomIds`: Array<String> (future fine-grained room scope)
    - `inviteCode`: String
    - `status`: String (`ACTIVE`/`PENDING`/`DISABLED`)
    - `createdAt`: Timestamp
    - `updatedAt`: Timestamp
 
-### 12.4 Invite collection cho staff
+### 11.4 Invite Collection
 
 - `tenants/{tenantId}/invites/{inviteId}`
    - `email`: String
-   - `role`: String (`STAFF` hoac `TENANT`)
+   - `role`: String (`STAFF` or `TENANT`)
    - `houseId`: String
    - `houseCode`: String
-   - `code`: String (ma moi)
+   - `code`: String (invite code)
    - `status`: String (`PENDING`/`ACCEPTED`/`EXPIRED`)
    - `createdAt`: Timestamp
    - `expiresAt`: Timestamp
 
-### 12.5 Role matrix (de dev/UI bam theo)
+### 11.5 Role Matrix
 
 1. `OWNER`
-    - Toan quyen trong tenant.
-    - Co the lam viec cua `STAFF` ma khong can role `STAFF` rieng.
-    - Co the tao invite cho `STAFF`.
+    - Full permissions in tenant scope.
+    - Can do `STAFF` operations without separate `STAFF` role.
+    - Can create `STAFF` invites.
 2. `STAFF`
-    - Quan ly 1 nhieu `houseId`/`roomId` duoc gan.
-    - Khong duoc sua tenant config co ban neu khong duoc cap quyen.
+    - Manages assigned `houseId`/`roomId` scopes.
+    - Cannot update core tenant configuration unless explicitly permitted.
 3. `TENANT`
-    - Chi thao tac trong `roomId` cua minh.
-    - Chi xem/confirm/thanh toan hoa don cua phong minh.
+    - Operates only within assigned `roomId`.
+    - Can only view/confirm/pay invoices for own room.
 
-### 12.6 Goi y luong onboarding
+### 11.6 Onboarding Flow (Suggested)
 
-1. Signup app -> tao `users/{uid}` voi `primaryRole = TENANT`.
-2. TENANT nhap `roomCode` de join phong.
-3. OWNER bootstrap bang cach tao tenant/house va co the moi STAFF.
-4. STAFF nhap `houseCode` hoac invite code de duoc gan vao `houseId`.
+1. App signup -> create `users/{uid}` with `primaryRole = TENANT`.
+2. TENANT enters `roomCode` to join a room.
+3. OWNER bootstraps tenant/house and can invite STAFF.
+4. STAFF enters `houseCode` or invite code to join assigned house.
 
-Schema nay la nen tang de phat trien 3 role ma khong phai doi lai data model o giai doan sau.
+This schema supports all three roles without requiring future data-model rewrites.
 
-### 12.7 Trang thai implement hien tai
+### 11.7 Current Implementation Status
 
-Da ap dung mot phan schema membership trong code:
+Part of membership schema is already implemented:
 
-1. Signup app tao `users/{uid}` voi `primaryRole = TENANT`.
-2. Tao tenant (OWNER bootstrap) tao member co `status = ACTIVE`, `assignedHouseIds = []`, `assignedRoomIds = []`.
-3. Join invite tao member co:
+1. App signup creates `users/{uid}` with `primaryRole = TENANT`.
+2. Tenant creation (OWNER bootstrap) creates member with `status = ACTIVE`, `assignedHouseIds = []`, `assignedRoomIds = []`.
+3. Invite join creates member with:
    - `status = ACTIVE`
-   - `assignedHouseIds` neu invite co `houseId`
-   - `assignedRoomIds` neu invite la TENANT co `roomId`
+   - `assignedHouseIds` when invite includes `houseId`
+   - `assignedRoomIds` when TENANT invite includes `roomId`
 
-Phan con lai (join bang roomCode/houseCode tren UI va role switch man hinh) se tiep tuc o cac batch sau.
+Remaining work (roomCode/houseCode join UI and role-based screen switching) is planned for upcoming batches.
 
-### 12.8 Cap nhat thuc te (2026-04-04)
+### 11.8 Current Update (2026-04-04)
 
-Da bo sung man tenant payment history co ban, khong lam anh huong owner flow:
+A basic tenant payment history flow has been added without changing owner flow:
 
-1. Home theo role:
-   - Tenant card `Lich su thanh toan` mo man `TenantPaymentHistoryActivity`.
-2. Man `TenantPaymentHistoryActivity`:
-   - Doc role + `roomId` tu `tenants/{tenantId}/members/{uid}`.
-   - Chi cho phep role `TENANT` truy cap man nay.
-   - Hien thi danh sach payment theo `roomId` cua tenant.
-   - Read-only: an nut them payment, an nut xoa payment.
+1. Role-based home:
+   - Tenant card `Lịch sử thanh toán` opens `TenantPaymentHistoryActivity`.
+2. `TenantPaymentHistoryActivity`:
+   - Reads role and `roomId` from `tenants/{tenantId}/members/{uid}`.
+   - Allows only `TENANT` role to access this screen.
+   - Shows payment list by tenant `roomId`.
+   - Read-only mode: hide add-payment and delete-payment actions.
 3. Repository:
-   - `PaymentRepository` da co them ham `listByRoom(roomId)` de phuc vu truy van tenant-level.
+   - `PaymentRepository` includes `listByRoom(roomId)` for tenant-level queries.
 
-Luu y:
-- Feature flag tenant self-service trong `InvoiceActivity` van dang tat (`ENABLE_TENANT_SELF_SERVICE = false`).
-- Nghia la tenant hien tai co man xem lich su thanh toan co ban rieng, nhung luong thao tac invoice self-service day du chua bat.
+Notes:
+
+- Tenant self-service feature flag in `InvoiceActivity` is still disabled (`ENABLE_TENANT_SELF_SERVICE = false`).
+- Tenants currently have basic payment history view, but full invoice self-service actions are not enabled yet.

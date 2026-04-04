@@ -33,14 +33,14 @@ public final class InvoicePeriodSuggestionHelper {
             @NonNull String roomId,
             @NonNull SuggestedPeriodCallback callback) {
         scopedCollection.get("invoices")
-                .whereEqualTo("idPhong", roomId)
+                .whereEqualTo("roomId", roomId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     String bestKey = null;
                     String bestPeriod = "";
                     if (snapshot != null) {
                         for (QueryDocumentSnapshot doc : snapshot) {
-                            String period = doc.getString("thangNam");
+                            String period = doc.getString("billingPeriod");
                             String key = periodKeyResolver.resolve(period);
                             if (key == null || key.isEmpty()) {
                                 continue;

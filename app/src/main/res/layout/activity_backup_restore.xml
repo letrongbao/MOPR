@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Sao lưu &amp; Khôi phục"
+            app:title="@string/backup_restore"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
@@ -44,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Chưa có bản sao lưu nào"
+            android:text="@string/backup_empty"
             android:visibility="gone" />
 
     </FrameLayout>
@@ -58,6 +58,6 @@
         android:src="@drawable/ic_add"
         app:backgroundTint="@color/primary"
         app:tint="@color/white"
-        android:contentDescription="Thêm"/>
+        android:contentDescription="@string/create_backup"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

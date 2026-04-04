@@ -4,8 +4,8 @@ public final class InvoiceStatus {
     private InvoiceStatus() {
     }
 
-    public static final String UNREPORTED = "Chưa báo";
-    public static final String REPORTED = "Đã báo";
-    public static final String PARTIAL = "Đóng một phần";
-    public static final String PAID = "Đã đóng";
+    public static final String UNREPORTED = "UNREPORTED";
+    public static final String REPORTED = "REPORTED";
+    public static final String PARTIAL = "PARTIAL";
+    public static final String PAID = "PAID";
 }

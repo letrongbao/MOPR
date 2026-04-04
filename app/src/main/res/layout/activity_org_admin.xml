@@ -11,35 +11,35 @@
         android:layout_height="wrap_content"
         android:textStyle="bold"
         android:textSize="18sp"
-        android:text="Tổ chức" />
+        android:text="@string/org_admin_title" />
 
     <TextView
         android:id="@+id/tvPlan"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="8dp"
-        android:text="Plan:" />
+        android:text="@string/org_admin_plan_label" />
 
     <TextView
         android:id="@+id/tvQuotas"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="4dp"
-        android:text="Quota:" />
+        android:text="@string/org_admin_quota_label" />
 
     <TextView
         android:id="@+id/tvUsage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="4dp"
-        android:text="Usage:" />
+        android:text="@string/org_admin_usage_label" />
 
     <TextView
         android:id="@+id/tvBank"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="4dp"
-        android:text="Bank:" />
+        android:text="@string/org_admin_bank_label" />
 
     <Button
         android:id="@+id/btnEditBank"
@@ -47,14 +47,14 @@
         android:layout_height="wrap_content"
         android:paddingLeft="12dp"
         android:paddingRight="12dp"
-        android:text="Cập nhật chuyển khoản" />
+        android:text="@string/org_admin_update_bank_transfer" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="12dp"
         android:textStyle="bold"
-        android:text="Members" />
+        android:text="@string/org_admin_members_title" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMembers"
@@ -67,7 +67,7 @@
         android:layout_height="wrap_content"
         android:paddingTop="12dp"
         android:textStyle="bold"
-        android:text="Invites" />
+        android:text="@string/org_admin_invites_title" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvInvites"

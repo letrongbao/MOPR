@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Quản lý chi"
+            app:title="@string/expense_management"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
@@ -46,7 +46,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Tháng 01/2026"
+                android:text="@string/expense_month_default"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"/>
@@ -55,7 +55,7 @@
                 android:id="@+id/btnPickMonth"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đổi tháng"
+                android:text="@string/change_month"
                 android:textStyle="bold"
                 android:textColor="@color/primary"
                 android:padding="8dp"/>
@@ -80,7 +80,7 @@
                     android:id="@+id/tvSummary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tổng chi: 0 đ"
+                    android:text="@string/expense_total_default"
                     android:textStyle="bold"
                     android:textSize="18sp"
                     android:textColor="?attr/colorOnSurface"/>
@@ -96,7 +96,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Số khoản: 0"
+                        android:text="@string/expense_count_default"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp"/>
 
@@ -105,7 +105,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="TB/khoản: 0 đ"
+                        android:text="@string/expense_avg_default"
                         android:gravity="end"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp"/>
@@ -116,7 +116,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Chi nhiều nhất: -"
+                    android:text="@string/top_expense_category_none"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="13sp"/>
             </LinearLayout>
@@ -126,7 +126,7 @@
             android:id="@+id/tvEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Chưa có khoản chi\nNhấn + để thêm"
+            android:text="@string/expense_empty_message"
             android:textAlignment="center"
             android:textSize="16sp"
             android:textColor="#999999"
@@ -150,7 +150,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:contentDescription="Thêm"
+        android:contentDescription="@string/add_expense"
         app:srcCompat="@drawable/ic_add"
         app:backgroundTint="@color/purple"/>
 

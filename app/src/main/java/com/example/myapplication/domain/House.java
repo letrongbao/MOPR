@@ -2,37 +2,39 @@ package com.example.myapplication.domain;
 
 import com.google.firebase.firestore.PropertyName;
 
+import java.util.List;
+
 public class House {
     private String id;
 
     // Basic info
-    private String tenHouse; // tên quản lý
-    private String sdtQuanLy;
-    private String diaChi;
-    private String ghiChu;
+    private String houseName;
+    private String managerPhone;
+    private String address;
+    private String note;
 
     // Extra fees + payment code + billing reminder
-    private java.util.List<PhiKhac> phiKhac;
-    private String qrThanhToanUrl;
+    private List<ExtraFee> extraFees;
+    private String paymentQrUrl;
     // "start_month" | "end_month"
-    private String nhacBaoPhi;
+    private String billingReminderAt;
 
     // Bank transfer info
-    private String chuTaiKhoan;
-    private String nganHang;
-    private String soTaiKhoan;
+    private String bankAccountName;
+    private String bankName;
+    private String bankAccountNo;
 
     // Fee table (VND)
-    private double giaDien;
-    private double giaNuoc;
-    private String cachTinhNuoc; // "nguoi" | "dong_ho" | "phong"
-    private double giaXe;
-    private double giaInternet;
-    private double giaGiatSay;
-    private double giaThangMay;
-    private double giaTiviCap;
-    private double giaRac;
-    private double giaDichVu;
+    private double electricityPrice;
+    private double waterPrice;
+    private String waterCalculationMethod; // "per_person" | "meter" | "room"
+    private double parkingPrice;
+    private double internetPrice;
+    private double laundryPrice;
+    private double elevatorPrice;
+    private double cableTvPrice;
+    private double trashPrice;
+    private double servicePrice;
 
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;
@@ -41,10 +43,10 @@ public class House {
     public House() {
     }
 
-    public House(String tenHouse, String diaChi, String ghiChu) {
-        this.tenHouse = tenHouse;
-        this.diaChi = diaChi;
-        this.ghiChu = ghiChu;
+    public House(String houseName, String address, String note) {
+        this.houseName = houseName;
+        this.address = address;
+        this.note = note;
     }
 
     public String getId() {
@@ -55,166 +57,198 @@ public class House {
         this.id = id;
     }
 
-    @PropertyName("tenHouse")
-    public String getTenHouse() {
-        return tenHouse;
+    public String getHouseName() {
+        return houseName;
     }
 
-    @PropertyName("tenHouse")
-    public void setTenHouse(String tenHouse) {
-        this.tenHouse = tenHouse;
+    public void setHouseName(String houseName) {
+        this.houseName = houseName;
     }
 
-    public String getSdtQuanLy() {
-        return sdtQuanLy;
+    @PropertyName("managerPhone")
+    public String getManagerPhone() {
+        return managerPhone;
     }
 
-    public void setSdtQuanLy(String sdtQuanLy) {
-        this.sdtQuanLy = sdtQuanLy;
+    @PropertyName("managerPhone")
+    public void setManagerPhone(String managerPhone) {
+        this.managerPhone = managerPhone;
     }
 
-    public String getDiaChi() {
-        return diaChi;
+    public String getAddress() {
+        return address;
     }
 
-    public void setDiaChi(String diaChi) {
-        this.diaChi = diaChi;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
-    public String getGhiChu() {
-        return ghiChu;
+    public String getNote() {
+        return note;
     }
 
-    public void setGhiChu(String ghiChu) {
-        this.ghiChu = ghiChu;
+    public void setNote(String note) {
+        this.note = note;
     }
 
-    public String getChuTaiKhoan() {
-        return chuTaiKhoan;
+    @PropertyName("bankAccountName")
+    public String getBankAccountName() {
+        return bankAccountName;
     }
 
-    public void setChuTaiKhoan(String chuTaiKhoan) {
-        this.chuTaiKhoan = chuTaiKhoan;
+    @PropertyName("bankAccountName")
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
     }
 
-    public String getNganHang() {
-        return nganHang;
+    @PropertyName("bankName")
+    public String getBankName() {
+        return bankName;
     }
 
-    public void setNganHang(String nganHang) {
-        this.nganHang = nganHang;
+    @PropertyName("bankName")
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 
-    public String getSoTaiKhoan() {
-        return soTaiKhoan;
+    @PropertyName("bankAccountNo")
+    public String getBankAccountNo() {
+        return bankAccountNo;
     }
 
-    public void setSoTaiKhoan(String soTaiKhoan) {
-        this.soTaiKhoan = soTaiKhoan;
+    @PropertyName("bankAccountNo")
+    public void setBankAccountNo(String bankAccountNo) {
+        this.bankAccountNo = bankAccountNo;
     }
 
-    public double getGiaDien() {
-        return giaDien;
+    @PropertyName("electricityPrice")
+    public double getElectricityPrice() {
+        return electricityPrice;
     }
 
-    public void setGiaDien(double giaDien) {
-        this.giaDien = giaDien;
+    @PropertyName("electricityPrice")
+    public void setElectricityPrice(double electricityPrice) {
+        this.electricityPrice = electricityPrice;
     }
 
-    public double getGiaNuoc() {
-        return giaNuoc;
+    @PropertyName("waterPrice")
+    public double getWaterPrice() {
+        return waterPrice;
     }
 
-    public void setGiaNuoc(double giaNuoc) {
-        this.giaNuoc = giaNuoc;
+    @PropertyName("waterPrice")
+    public void setWaterPrice(double waterPrice) {
+        this.waterPrice = waterPrice;
     }
 
-    public String getCachTinhNuoc() {
-        return cachTinhNuoc;
+    @PropertyName("waterCalculationMethod")
+    public String getWaterCalculationMethod() {
+        return waterCalculationMethod;
     }
 
-    public void setCachTinhNuoc(String cachTinhNuoc) {
-        this.cachTinhNuoc = cachTinhNuoc;
+    @PropertyName("waterCalculationMethod")
+    public void setWaterCalculationMethod(String waterCalculationMethod) {
+        this.waterCalculationMethod = waterCalculationMethod;
     }
 
-    public double getGiaXe() {
-        return giaXe;
+    @PropertyName("parkingPrice")
+    public double getParkingPrice() {
+        return parkingPrice;
     }
 
-    public void setGiaXe(double giaXe) {
-        this.giaXe = giaXe;
+    @PropertyName("parkingPrice")
+    public void setParkingPrice(double parkingPrice) {
+        this.parkingPrice = parkingPrice;
     }
 
-    public double getGiaInternet() {
-        return giaInternet;
+    @PropertyName("internetPrice")
+    public double getInternetPrice() {
+        return internetPrice;
     }
 
-    public void setGiaInternet(double giaInternet) {
-        this.giaInternet = giaInternet;
+    @PropertyName("internetPrice")
+    public void setInternetPrice(double internetPrice) {
+        this.internetPrice = internetPrice;
     }
 
-    public double getGiaGiatSay() {
-        return giaGiatSay;
+    @PropertyName("laundryPrice")
+    public double getLaundryPrice() {
+        return laundryPrice;
     }
 
-    public void setGiaGiatSay(double giaGiatSay) {
-        this.giaGiatSay = giaGiatSay;
+    @PropertyName("laundryPrice")
+    public void setLaundryPrice(double laundryPrice) {
+        this.laundryPrice = laundryPrice;
     }
 
-    public double getGiaThangMay() {
-        return giaThangMay;
+    @PropertyName("elevatorPrice")
+    public double getElevatorPrice() {
+        return elevatorPrice;
     }
 
-    public void setGiaThangMay(double giaThangMay) {
-        this.giaThangMay = giaThangMay;
+    @PropertyName("elevatorPrice")
+    public void setElevatorPrice(double elevatorPrice) {
+        this.elevatorPrice = elevatorPrice;
     }
 
-    public double getGiaTiviCap() {
-        return giaTiviCap;
+    @PropertyName("cableTvPrice")
+    public double getCableTvPrice() {
+        return cableTvPrice;
     }
 
-    public void setGiaTiviCap(double giaTiviCap) {
-        this.giaTiviCap = giaTiviCap;
+    @PropertyName("cableTvPrice")
+    public void setCableTvPrice(double cableTvPrice) {
+        this.cableTvPrice = cableTvPrice;
     }
 
-    public double getGiaRac() {
-        return giaRac;
+    @PropertyName("trashPrice")
+    public double getTrashPrice() {
+        return trashPrice;
     }
 
-    public void setGiaRac(double giaRac) {
-        this.giaRac = giaRac;
+    @PropertyName("trashPrice")
+    public void setTrashPrice(double trashPrice) {
+        this.trashPrice = trashPrice;
     }
 
-    public double getGiaDichVu() {
-        return giaDichVu;
+    @PropertyName("servicePrice")
+    public double getServicePrice() {
+        return servicePrice;
     }
 
-    public void setGiaDichVu(double giaDichVu) {
-        this.giaDichVu = giaDichVu;
+    @PropertyName("servicePrice")
+    public void setServicePrice(double servicePrice) {
+        this.servicePrice = servicePrice;
     }
 
-    public java.util.List<PhiKhac> getPhiKhac() {
-        return phiKhac;
+    @PropertyName("extraFees")
+    public List<ExtraFee> getExtraFees() {
+        return extraFees;
     }
 
-    public void setPhiKhac(java.util.List<PhiKhac> phiKhac) {
-        this.phiKhac = phiKhac;
+    @PropertyName("extraFees")
+    public void setExtraFees(List<ExtraFee> extraFees) {
+        this.extraFees = extraFees;
     }
 
-    public String getQrThanhToanUrl() {
-        return qrThanhToanUrl;
+    @PropertyName("paymentQrUrl")
+    public String getPaymentQrUrl() {
+        return paymentQrUrl;
     }
 
-    public void setQrThanhToanUrl(String qrThanhToanUrl) {
-        this.qrThanhToanUrl = qrThanhToanUrl;
+    @PropertyName("paymentQrUrl")
+    public void setPaymentQrUrl(String paymentQrUrl) {
+        this.paymentQrUrl = paymentQrUrl;
     }
 
-    public String getNhacBaoPhi() {
-        return nhacBaoPhi;
+    @PropertyName("billingReminderAt")
+    public String getBillingReminderAt() {
+        return billingReminderAt;
     }
 
-    public void setNhacBaoPhi(String nhacBaoPhi) {
-        this.nhacBaoPhi = nhacBaoPhi;
+    @PropertyName("billingReminderAt")
+    public void setBillingReminderAt(String billingReminderAt) {
+        this.billingReminderAt = billingReminderAt;
     }
 
     public com.google.firebase.Timestamp getCreatedAt() {
@@ -233,43 +267,48 @@ public class House {
         this.updatedAt = updatedAt;
     }
 
-    public static class PhiKhac {
-        private String tenPhi;
-        private String donViTinh;
-        private double gia;
+    public static class ExtraFee {
+        private String feeName;
+        private String unit;
+        private double price;
 
-        public PhiKhac() {
+        public ExtraFee() {
         }
 
-        public PhiKhac(String tenPhi, String donViTinh, double gia) {
-            this.tenPhi = tenPhi;
-            this.donViTinh = donViTinh;
-            this.gia = gia;
+        public ExtraFee(String feeName, String unit, double price) {
+            this.feeName = feeName;
+            this.unit = unit;
+            this.price = price;
         }
 
-        public String getTenPhi() {
-            return tenPhi;
+        @PropertyName("feeName")
+        public String getFeeName() {
+            return feeName;
         }
 
-        public void setTenPhi(String tenPhi) {
-            this.tenPhi = tenPhi;
+        @PropertyName("feeName")
+        public void setFeeName(String feeName) {
+            this.feeName = feeName;
         }
 
-        public String getDonViTinh() {
-            return donViTinh;
+        @PropertyName("unit")
+        public String getUnit() {
+            return unit;
         }
 
-        public void setDonViTinh(String donViTinh) {
-            this.donViTinh = donViTinh;
+        @PropertyName("unit")
+        public void setUnit(String unit) {
+            this.unit = unit;
         }
 
-        public double getGia() {
-            return gia;
+        @PropertyName("price")
+        public double getPrice() {
+            return price;
         }
 
-        public void setGia(double gia) {
-            this.gia = gia;
+        @PropertyName("price")
+        public void setPrice(double price) {
+            this.price = price;
         }
     }
 }
-

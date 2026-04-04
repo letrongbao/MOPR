@@ -111,26 +111,14 @@ service cloud.firestore {
         return get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.roomId;
       }
 
-      match /khu_tro/{docId} {
+      match /houses/{docId} {
         allow read: if isTenantMember(tenantId);
         allow write: if isStaffOrOwner(tenantId);
       }
 
-      match /phong_tro/{docId} {
+      match /rooms/{docId} {
         allow read: if isStaffOrOwner(tenantId)
           || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && docId == memberRoomId(tenantId));
-        allow write: if isStaffOrOwner(tenantId);
-      }
-
-      match /nguoi_thue/{docId} {
-        allow read: if isStaffOrOwner(tenantId)
-          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.idPhong == memberRoomId(tenantId));
-        allow write: if isStaffOrOwner(tenantId);
-      }
-
-      match /hoa_don/{docId} {
-        allow read: if isStaffOrOwner(tenantId)
-          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.idPhong == memberRoomId(tenantId));
         allow write: if isStaffOrOwner(tenantId);
       }
 
@@ -138,6 +126,27 @@ service cloud.firestore {
         allow read: if isStaffOrOwner(tenantId)
           || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
         allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /invoices/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /expenses/{docId} {
+        allow read: if isStaffOrOwner(tenantId);
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /rentalHistory/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
+      match /backups/{docId} {
+        allow read, write: if isStaffOrOwner(tenantId);
       }
 
       match /meterReadings/{docId} {
@@ -180,15 +189,15 @@ service cloud.firestore {
           && memberRole(tenantId) == 'TENANT'
           && request.resource.data.roomId == memberRoomId(tenantId)
           && request.resource.data.createdBy == request.auth.uid
-          && request.resource.data.status == 'Mới'
+          && request.resource.data.status == 'OPEN'
         );
 
-        // tenant chỉ được sửa khi ticket còn "Mới" và không đổi status (đơn giản hoá)
+        // Tenant can update only when ticket is OPEN and status is not changed.
         allow update: if isStaffOrOwner(tenantId) || (
           isTenantMember(tenantId)
           && memberRole(tenantId) == 'TENANT'
           && resource.data.createdBy == request.auth.uid
-          && resource.data.status == 'Mới'
+          && resource.data.status == 'OPEN'
           && request.resource.data.status == resource.data.status
         );
 

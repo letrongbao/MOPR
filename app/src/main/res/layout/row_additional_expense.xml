@@ -15,7 +15,7 @@
         android:background="@drawable/custome_edittext"
         android:paddingHorizontal="12dp"
         android:textSize="14sp"
-        android:hint="Tên phí" />
+        android:hint="@string/row_additional_expense_name_hint" />
 
     <Spinner
         android:id="@+id/spDonViTinh"
@@ -34,7 +34,7 @@
         android:background="@drawable/custome_edittext"
         android:paddingHorizontal="12dp"
         android:textSize="14sp"
-        android:hint="Giá"
+        android:hint="@string/row_additional_expense_price_hint"
         android:inputType="number" />
 
     <ImageView

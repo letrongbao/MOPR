@@ -45,35 +45,36 @@ public final class InvoiceExportDialogHelper {
         TextView tvChiTiet = view.findViewById(R.id.tvBillDetails);
         TextView tvTong = view.findViewById(R.id.tvBillTotal);
 
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
 
-        tvTitle.setText("HÓA ĐƠN PHÒNG " + invoice.getSoPhong());
+        tvTitle.setText(activity.getString(R.string.invoice_room, invoice.getRoomNumber()));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Tháng: ").append(invoice.getThangNam()).append("\n\n");
-        sb.append("- Tiền phòng: ").append(fmt.format(invoice.getGiaThue())).append("\n");
+        sb.append(activity.getString(R.string.month_colon)).append(invoice.getBillingPeriod()).append("\n\n");
+        sb.append(activity.getString(R.string.room_fee_colon)).append(fmt.format(invoice.getRentAmount())).append("\n");
 
-        double tienDien = (invoice.getChiSoDienCuoi() - invoice.getChiSoDienDau()) * invoice.getDonGiaDien();
-        sb.append("- Tiền điện: ").append(fmt.format(tienDien))
-                .append(" (").append((int) invoice.getChiSoDienDau()).append(" -> ")
-                .append((int) invoice.getChiSoDienCuoi())
+        double tienDien = (invoice.getElectricEndReading() - invoice.getElectricStartReading())
+                * invoice.getElectricUnitPrice();
+        sb.append(activity.getString(R.string.electric_fee_colon)).append(fmt.format(tienDien))
+                .append(" (").append((int) invoice.getElectricStartReading()).append(" -> ")
+                .append((int) invoice.getElectricEndReading())
                 .append(")\n");
 
-        double tienNuoc = (invoice.getChiSoNuocCuoi() - invoice.getChiSoNuocDau()) * invoice.getDonGiaNuoc();
-        sb.append("- Tiền nước: ").append(fmt.format(tienNuoc))
-                .append(" (").append((int) invoice.getChiSoNuocDau()).append(" -> ")
-                .append((int) invoice.getChiSoNuocCuoi())
+        double tienNuoc = (invoice.getWaterEndReading() - invoice.getWaterStartReading()) * invoice.getWaterUnitPrice();
+        sb.append(activity.getString(R.string.water_fee_colon)).append(fmt.format(tienNuoc))
+                .append(" (").append((int) invoice.getWaterStartReading()).append(" -> ")
+                .append((int) invoice.getWaterEndReading())
                 .append(")\n");
 
-        if (invoice.getPhiRac() > 0)
-            sb.append("- Phí rác: ").append(fmt.format(invoice.getPhiRac())).append("\n");
-        if (invoice.getPhiWifi() > 0)
-            sb.append("- Phí Wifi: ").append(fmt.format(invoice.getPhiWifi())).append("\n");
-        if (invoice.getPhiGuiXe() > 0)
-            sb.append("- Phí gửi xe: ").append(fmt.format(invoice.getPhiGuiXe())).append("\n");
+        if (invoice.getTrashFee() > 0)
+            sb.append(activity.getString(R.string.trash_fee_colon)).append(fmt.format(invoice.getTrashFee())).append("\n");
+        if (invoice.getWifiFee() > 0)
+            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getWifiFee())).append("\n");
+        if (invoice.getParkingFee() > 0)
+            sb.append(activity.getString(R.string.parking_fee_colon)).append(fmt.format(invoice.getParkingFee())).append("\n");
 
-        tvChiTiet.setText(sb + "\n\n(Đang tải thanh toán...) ");
-        tvTong.setText("TỔNG CỘNG: " + fmt.format(invoice.getTongTien()));
+        tvChiTiet.setText(sb + "\n\n" + activity.getString(R.string.loading_payments));
+        tvTong.setText(activity.getString(R.string.total_amount_colon) + fmt.format(invoice.getTotalAmount()));
 
         paymentRepository.listByInvoice(invoice.getId()).observe(owner, payments -> {
             if (payments == null)
@@ -82,23 +83,23 @@ public final class InvoiceExportDialogHelper {
             for (Payment p : payments) {
                 paid += p.getAmount();
             }
-            double remaining = Math.max(0, invoice.getTongTien() - paid);
-            String extra = "\n\n── Thanh toán ──\n" +
-                    "Đã thu: " + fmt.format(paid) + "\n" +
-                    "Còn lại: " + fmt.format(remaining);
+            double remaining = Math.max(0, invoice.getTotalAmount() - paid);
+            String extra = "\n\n" + activity.getString(R.string.payment_separator) + "\n" +
+                    activity.getString(R.string.collected_colon) + fmt.format(paid) + "\n" +
+                    activity.getString(R.string.remaining_colon) + fmt.format(remaining);
             tvChiTiet.setText(sb + extra);
         });
 
         AlertDialog.Builder b = new AlertDialog.Builder(activity)
                 .setView(view)
-                .setPositiveButton("Đóng", null)
-                .setNegativeButton("Lịch sử thanh toán", (d, w) -> openPaymentHistory.run(invoice));
+                .setPositiveButton(activity.getString(R.string.close), null)
+                .setNegativeButton(activity.getString(R.string.payment_history), (d, w) -> openPaymentHistory.run(invoice));
 
         if (isTenantUser) {
-            b.setNeutralButton("Xác nhận công tơ", (d, w) -> openTenantConfirmMeter.run(invoice));
+            b.setNeutralButton(activity.getString(R.string.confirm_meter), (d, w) -> openTenantConfirmMeter.run(invoice));
         } else {
-            b.setNeutralButton("Chụp màn hình",
-                    (d, w) -> Toast.makeText(activity, "Hãy chụp màn hình để gửi hóa đơn", Toast.LENGTH_LONG).show());
+            b.setNeutralButton(activity.getString(R.string.screenshot),
+                    (d, w) -> Toast.makeText(activity, activity.getString(R.string.screenshot_to_send), Toast.LENGTH_LONG).show());
         }
 
         b.show();
@@ -107,13 +108,13 @@ public final class InvoiceExportDialogHelper {
     public static void showTenantConfirmMeterDialog(@NonNull AppCompatActivity activity,
             @NonNull Invoice invoice,
             @NonNull CollectionProvider scopedCollection) {
-        if (invoice.getIdPhong() == null) {
+        if (invoice.getRoomId() == null) {
             return;
         }
 
-        String periodKey = toPeriodKey(invoice.getThangNam());
+        String periodKey = toPeriodKey(invoice.getBillingPeriod());
         if (periodKey.isEmpty()) {
-            Toast.makeText(activity, "Kỳ không hợp lệ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.invalid_period), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -124,28 +125,28 @@ public final class InvoiceExportDialogHelper {
         android.widget.RadioGroup rg = new android.widget.RadioGroup(activity);
         android.widget.RadioButton rbOk = new android.widget.RadioButton(activity);
         rbOk.setId(View.generateViewId());
-        rbOk.setText("Đồng ý chỉ số");
+        rbOk.setText(activity.getString(R.string.agree_meter));
         android.widget.RadioButton rbNo = new android.widget.RadioButton(activity);
         rbNo.setId(View.generateViewId());
-        rbNo.setText("Không đồng ý");
+        rbNo.setText(activity.getString(R.string.disagree));
         rg.addView(rbOk);
         rg.addView(rbNo);
         rg.check(rbOk.getId());
         layout.addView(rg);
 
         EditText etNote = new EditText(activity);
-        etNote.setHint("Ghi chú (tuỳ chọn)");
+        etNote.setHint(activity.getString(R.string.note_optional));
         layout.addView(etNote);
 
         new AlertDialog.Builder(activity)
-                .setTitle("Xác nhận chốt số")
+                .setTitle(activity.getString(R.string.confirm_meter_reading))
                 .setView(layout)
-                .setNegativeButton("Hủy", null)
-                .setPositiveButton("Gửi", (d, w) -> {
+                .setNegativeButton(activity.getString(R.string.cancel), null)
+                .setPositiveButton(activity.getString(R.string.send), (d, w) -> {
                     String status = (rg.getCheckedRadioButtonId() == rbNo.getId()) ? "DISPUTED" : "APPROVED";
                     String note = etNote.getText().toString().trim();
 
-                    String docId = invoice.getIdPhong() + "_" + periodKey;
+                    String docId = invoice.getRoomId() + "_" + periodKey;
                     java.util.Map<String, Object> update = new java.util.HashMap<>();
                     update.put("tenantConfirmStatus", status);
                     update.put("tenantConfirmNote", note);
@@ -153,9 +154,9 @@ public final class InvoiceExportDialogHelper {
 
                     scopedCollection.get("meterReadings").document(docId)
                             .update(update)
-                            .addOnSuccessListener(v -> Toast.makeText(activity, "Đã gửi xác nhận", Toast.LENGTH_SHORT)
+                            .addOnSuccessListener(v -> Toast.makeText(activity, activity.getString(R.string.confirmation_sent), Toast.LENGTH_SHORT)
                                     .show())
-                            .addOnFailureListener(e -> Toast.makeText(activity, "Gửi thất bại", Toast.LENGTH_SHORT)
+                            .addOnFailureListener(e -> Toast.makeText(activity, activity.getString(R.string.send_failed), Toast.LENGTH_SHORT)
                                     .show());
                 })
                 .show();

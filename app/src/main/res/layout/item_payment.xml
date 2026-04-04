@@ -35,7 +35,7 @@
                     android:id="@+id/tvDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ngày: 18/03/2026"
+                    android:text="@string/item_payment_date_sample"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"/>
 
@@ -44,7 +44,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Hình thức: Tiền mặt"
+                    android:text="@string/item_payment_method_sample"
                     android:textColor="?attr/colorOnSurfaceVariant"/>
             </LinearLayout>
 
@@ -52,7 +52,7 @@
                 android:id="@+id/tvAmount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0 đ"
+                android:text="@string/item_payment_amount_sample"
                 android:textStyle="bold"
                 android:textColor="@color/primary"/>
 
@@ -64,7 +64,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_delete"
                 app:tint="?attr/colorOnSurfaceVariant"
-                android:contentDescription="Xóa"/>
+                android:contentDescription="@string/delete"/>
         </LinearLayout>
 
         <TextView
@@ -72,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Ghi chú"
+            android:text="@string/item_payment_note_label"
             android:textColor="?attr/colorOnSurface"
             android:visibility="gone"/>
 

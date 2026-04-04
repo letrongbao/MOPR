@@ -61,74 +61,77 @@ public final class InvoiceDialogSubmitHelper {
             Tenant activeContract,
             @NonNull FormRefs form,
             double minElecStart,
-            double minWaterStart) throws ValidationException {
+            double minWaterStart,
+            @NonNull String startReadingInvalidMessage,
+            @NonNull String endReadingInvalidMessage) throws ValidationException {
         double dienDau = InvoiceFormValueHelper.parseDouble(form.etDienDau);
         double dienCuoi = InvoiceFormValueHelper.parseDouble(form.etDienCuoi);
         double nuocDau = InvoiceFormValueHelper.parseDouble(form.etNuocDau);
         double nuocCuoi = InvoiceFormValueHelper.parseDouble(form.etNuocCuoi);
 
         if (dienDau < minElecStart || nuocDau < minWaterStart) {
-            throw new ValidationException("Chỉ số đầu kỳ phải >= chỉ số cuối kỳ trước");
+            throw new ValidationException(startReadingInvalidMessage);
         }
         if (dienCuoi < dienDau || nuocCuoi < nuocDau) {
-            throw new ValidationException("Chỉ số cuối không được nhỏ hơn chỉ số đầu");
+            throw new ValidationException(endReadingInvalidMessage);
         }
 
         Invoice invoice = new Invoice();
-        invoice.setIdPhong(room.getId());
-        invoice.setSoPhong(room.getSoPhong());
+        invoice.setRoomId(room.getId());
+        invoice.setRoomNumber(room.getRoomNumber());
         if (activeContract != null && activeContract.getId() != null && !activeContract.getId().trim().isEmpty()) {
-            invoice.setIdTenant(activeContract.getId());
-            long contractRent = activeContract.getGiaThue();
-            invoice.setGiaThue(contractRent > 0 ? contractRent : room.getGiaThue());
+            invoice.setContractId(activeContract.getId());
+            long contractRent = activeContract.getRentAmount();
+            invoice.setRentAmount(contractRent > 0 ? contractRent : room.getRentAmount());
         } else {
-            invoice.setGiaThue(room.getGiaThue());
+            invoice.setRentAmount(room.getRentAmount());
         }
 
-        invoice.setThangNam(form.etThangNam.getText().toString().trim());
-        invoice.setChiSoDienDau(dienDau);
-        invoice.setChiSoDienCuoi(dienCuoi);
-        invoice.setDonGiaDien(MoneyFormatter.getValue(form.etDonGiaDien));
-        invoice.setChiSoNuocDau(nuocDau);
-        invoice.setChiSoNuocCuoi(nuocCuoi);
-        invoice.setDonGiaNuoc(MoneyFormatter.getValue(form.etDonGiaNuoc));
-        invoice.setPhiRac(MoneyFormatter.getValue(form.etPhiRac));
-        invoice.setPhiWifi(MoneyFormatter.getValue(form.etPhiWifi));
-        invoice.setPhiGuiXe(MoneyFormatter.getValue(form.etPhiGuiXe));
-        invoice.setTrangThai(InvoiceStatus.UNREPORTED);
+        invoice.setBillingPeriod(form.etThangNam.getText().toString().trim());
+        invoice.setElectricStartReading(dienDau);
+        invoice.setElectricEndReading(dienCuoi);
+        invoice.setElectricUnitPrice(MoneyFormatter.getValue(form.etDonGiaDien));
+        invoice.setWaterStartReading(nuocDau);
+        invoice.setWaterEndReading(nuocCuoi);
+        invoice.setWaterUnitPrice(MoneyFormatter.getValue(form.etDonGiaNuoc));
+        invoice.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
+        invoice.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
+        invoice.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
+        invoice.setStatus(InvoiceStatus.UNREPORTED);
         return invoice;
     }
 
     @NonNull
     public static Invoice buildUpdatedInvoice(@NonNull Invoice original,
             @NonNull Room room,
-            @NonNull FormRefs form) throws ValidationException {
+            @NonNull FormRefs form,
+            @NonNull String endReadingInvalidMessage) throws ValidationException {
         double dienDau = InvoiceFormValueHelper.parseDouble(form.etDienDau);
         double dienCuoi = InvoiceFormValueHelper.parseDouble(form.etDienCuoi);
         double nuocDau = InvoiceFormValueHelper.parseDouble(form.etNuocDau);
         double nuocCuoi = InvoiceFormValueHelper.parseDouble(form.etNuocCuoi);
 
         if (dienCuoi < dienDau || nuocCuoi < nuocDau) {
-            throw new ValidationException("Chỉ số cuối không được nhỏ hơn chỉ số đầu");
+            throw new ValidationException(endReadingInvalidMessage);
         }
 
         Invoice updated = new Invoice();
         updated.setId(original.getId());
-        updated.setIdTenant(original.getIdTenant());
-        updated.setIdPhong(room.getId());
-        updated.setSoPhong(room.getSoPhong());
-        updated.setGiaThue(room.getGiaThue());
-        updated.setThangNam(form.etThangNam.getText().toString().trim());
-        updated.setChiSoDienDau(dienDau);
-        updated.setChiSoDienCuoi(dienCuoi);
-        updated.setDonGiaDien(MoneyFormatter.getValue(form.etDonGiaDien));
-        updated.setChiSoNuocDau(nuocDau);
-        updated.setChiSoNuocCuoi(nuocCuoi);
-        updated.setDonGiaNuoc(MoneyFormatter.getValue(form.etDonGiaNuoc));
-        updated.setPhiRac(MoneyFormatter.getValue(form.etPhiRac));
-        updated.setPhiWifi(MoneyFormatter.getValue(form.etPhiWifi));
-        updated.setPhiGuiXe(MoneyFormatter.getValue(form.etPhiGuiXe));
-        updated.setTrangThai(original.getTrangThai());
+        updated.setContractId(original.getContractId());
+        updated.setRoomId(room.getId());
+        updated.setRoomNumber(room.getRoomNumber());
+        updated.setRentAmount(room.getRentAmount());
+        updated.setBillingPeriod(form.etThangNam.getText().toString().trim());
+        updated.setElectricStartReading(dienDau);
+        updated.setElectricEndReading(dienCuoi);
+        updated.setElectricUnitPrice(MoneyFormatter.getValue(form.etDonGiaDien));
+        updated.setWaterStartReading(nuocDau);
+        updated.setWaterEndReading(nuocCuoi);
+        updated.setWaterUnitPrice(MoneyFormatter.getValue(form.etDonGiaNuoc));
+        updated.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
+        updated.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
+        updated.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
+        updated.setStatus(original.getStatus());
         return updated;
     }
 

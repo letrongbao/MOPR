@@ -71,7 +71,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // Launcher để reload drawer khi edit profile xong
+        // Launcher used to reload drawer after profile editing
         editProfileLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -177,12 +177,12 @@ public class HomeMenuActivity extends AppCompatActivity {
             }
         }
 
-        // ── Card Quản Lý Khách Thuê ───────────────────────────────────────
+        // Tenant Management card
         if (cardKhachThue != null) {
             cardKhachThue.setOnClickListener(v -> startActivity(new Intent(this, TenantActivity.class)));
         }
 
-        // ── Card Hợp Đồng Thông Minh ──────────────────────────────────────
+        // Smart Contract card
         MaterialCardView cardHopDong = findViewById(R.id.cardHopDong);
         if (cardHopDong != null) {
             cardHopDong.setOnClickListener(v -> startActivity(new Intent(this, ContractListActivity.class)));
@@ -222,16 +222,16 @@ public class HomeMenuActivity extends AppCompatActivity {
         if (menuLogout != null) {
             menuLogout.setOnClickListener(v -> {
                 new AlertDialog.Builder(this)
-                        .setTitle("Đăng xuất")
-                        .setMessage("Bạn có chắc chắn muốn đăng xuất?")
-                        .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                        .setTitle(getString(R.string.logout))
+                        .setMessage(getString(R.string.logout_confirm_message))
+                        .setPositiveButton(getString(R.string.logout), (dialog, which) -> {
                             mAuth.signOut();
                             Intent intent = new Intent(this, MainActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             finish();
                         })
-                        .setNegativeButton("Hủy", null)
+                        .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             });
         }
@@ -240,7 +240,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         LinearLayout menuFeedback = findViewById(R.id.menuFeedback);
         if (menuFeedback != null) {
             menuFeedback.setOnClickListener(v -> {
-                Toast.makeText(this, "Liên hệ hỗ trợ: 0987.654.321", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.support_contact), Toast.LENGTH_SHORT).show();
             });
         }
 
@@ -280,11 +280,11 @@ public class HomeMenuActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        String hoTen = doc.getString("hoTen");
+                        String fullName = doc.getString("fullName");
                         String avatarUrl = doc.getString("avatarUrl");
 
-                        if (hoTen != null && !hoTen.isEmpty() && drawerUserName != null) {
-                            drawerUserName.setText(hoTen);
+                        if (fullName != null && !fullName.isEmpty() && drawerUserName != null) {
+                            drawerUserName.setText(fullName);
                         }
                         if (avatarUrl != null && !avatarUrl.isEmpty() && drawerAvatar != null) {
                             Glide.with(this)
@@ -324,7 +324,7 @@ public class HomeMenuActivity extends AppCompatActivity {
                 long vacant = 0;
                 long rented = 0;
                 for (Room p : list) {
-                    if (RoomStatus.VACANT.equals(p.getTrangThai()))
+                    if (RoomStatus.VACANT.equals(p.getStatus()))
                         vacant++;
                     else
                         rented++;
@@ -340,9 +340,9 @@ public class HomeMenuActivity extends AppCompatActivity {
     private void shareApp() {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Quản Lý Trọ");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, "Ứng dụng quản lý nhà trọ tuyệt vời dành cho bạn!");
-        startActivity(Intent.createChooser(shareIntent, "Chia sẻ ứng dụng"));
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_app_text));
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.share_app_chooser_title)));
     }
 
     private void resolveRoleAndApplyUi() {
@@ -390,16 +390,18 @@ public class HomeMenuActivity extends AppCompatActivity {
         }
 
         if (tvCardHouseLabel != null) {
-            tvCardHouseLabel.setText(isTenant ? "Phòng\ncủa bạn" : "Quản lí\nnhà phòng");
+            tvCardHouseLabel.setText(isTenant ? getString(R.string.home_tenant_room_label) : getString(R.string.home_owner_house_label));
         }
         if (tvCardInvoiceLabel != null) {
-            tvCardInvoiceLabel.setText(isTenant ? "Hóa đơn\ncủa bạn" : "Báo phí\nhóa đơn");
+            tvCardInvoiceLabel.setText(isTenant ? getString(R.string.home_tenant_invoice_label) : getString(R.string.home_owner_invoice_label));
         }
         if (tvCardExpenseLabel != null) {
-            tvCardExpenseLabel.setText(isTenant ? "Lịch sử\nthanh toán" : "Quản lí\nchi phí");
+            tvCardExpenseLabel.setText(isTenant ? getString(R.string.home_tenant_payment_history_label) : getString(R.string.home_owner_expense_label));
         }
         if (tvCardReportLabel != null) {
-            tvCardReportLabel.setText(isTenant ? "Yêu cầu\nhỗ trợ" : "Thống kê\nbáo cáo");
+            tvCardReportLabel.setText(isTenant ? getString(R.string.home_tenant_support_label) : getString(R.string.home_owner_report_label));
         }
     }
 }
+
+

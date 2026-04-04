@@ -30,15 +30,11 @@ public class ChangePasswordActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_change_password);
 
-        com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
-        if (appBarLayout != null) {
-            ScreenUiHelper.applyTopInset(appBarLayout);
-        }
-
         mAuth = FirebaseAuth.getInstance();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Đổi mật khẩu");
+        ScreenUiHelper.applyTopInset(toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.change_password));
 
         edtNewPassword = findViewById(R.id.edtNewPassword);
         edtConfirmNewPassword = findViewById(R.id.edtConfirmNewPassword);
@@ -53,23 +49,23 @@ public class ChangePasswordActivity extends AppCompatActivity {
                 : "";
 
         if (newPass.isEmpty() || confirmPass.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.please_fill_all_information), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!newPass.equals(confirmPass)) {
-            Toast.makeText(this, "Mật khẩu xác nhận không khớp", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.password_confirmation_mismatch), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (newPass.length() < 6) {
-            Toast.makeText(this, "Mật khẩu phải có ít nhất 6 ký tự", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.password_min_6_chars), Toast.LENGTH_SHORT).show();
             return;
         }
 
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
-            Toast.makeText(this, "Vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.please_login_again), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -77,16 +73,16 @@ public class ChangePasswordActivity extends AppCompatActivity {
 
         user.updatePassword(newPass)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.password_changed_success), Toast.LENGTH_SHORT).show();
                     btnChangePassword.setEnabled(true);
                     finish();
                 })
                 .addOnFailureListener(e -> {
                     String errorMessage = e.getMessage();
                     if (errorMessage != null && errorMessage.contains("recent")) {
-                        Toast.makeText(this, "Vui lòng đăng nhập lại để đổi mật khẩu", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.please_login_again_to_change_password), Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, "Lỗi: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.error_colon) + errorMessage, Toast.LENGTH_SHORT).show();
                     }
                     btnChangePassword.setEnabled(true);
                 });
