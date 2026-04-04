@@ -108,10 +108,14 @@ public class ExpenseActivity extends AppCompatActivity {
                         .setMessage(getString(R.string.delete_expense_question))
                         .setPositiveButton(getString(R.string.delete), (d, w) -> viewModel.deleteExpense(item.getId(),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(ExpenseActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT)
+                                        () -> Toast
+                                                .makeText(ExpenseActivity.this, getString(R.string.deleted),
+                                                        Toast.LENGTH_SHORT)
                                                 .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(ExpenseActivity.this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())))
+                                        .makeText(ExpenseActivity.this, getString(R.string.delete_failed),
+                                                Toast.LENGTH_SHORT)
+                                        .show())))
                         .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             }
@@ -258,7 +262,8 @@ public class ExpenseActivity extends AppCompatActivity {
             if (count == 0) {
                 tvTopCategory.setText(getString(R.string.top_expense_category_none));
             } else {
-                tvTopCategory.setText(getString(R.string.top_expense_category) + topCategory + " (" + fmt.format(topAmount) + ")");
+                tvTopCategory.setText(
+                        getString(R.string.top_expense_category) + topCategory + " (" + fmt.format(topAmount) + ")");
             }
         }
     }
@@ -290,7 +295,8 @@ public class ExpenseActivity extends AppCompatActivity {
                             return;
                         }
                         if (amount <= 0) {
-                            Toast.makeText(this, getString(R.string.amount_must_be_positive), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.amount_must_be_positive), Toast.LENGTH_SHORT)
+                                    .show();
                             return;
                         }
                         if (paidAt.isEmpty()) {
@@ -306,9 +312,11 @@ public class ExpenseActivity extends AppCompatActivity {
                         cp.setCreatedAt(Timestamp.now());
 
                         viewModel.addExpense(cp,
-                                () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(() -> Toast
+                                        .makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
+                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }
@@ -347,7 +355,8 @@ public class ExpenseActivity extends AppCompatActivity {
                             return;
                         }
                         if (amount <= 0) {
-                            Toast.makeText(this, getString(R.string.amount_must_be_positive), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.amount_must_be_positive), Toast.LENGTH_SHORT)
+                                    .show();
                             return;
                         }
                         if (paidAt.isEmpty()) {
@@ -365,9 +374,12 @@ public class ExpenseActivity extends AppCompatActivity {
 
                         viewModel.updateExpense(updated,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT).show()));
+                                        () -> Toast
+                                                .makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }

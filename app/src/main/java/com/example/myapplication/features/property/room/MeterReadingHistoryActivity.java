@@ -72,10 +72,12 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
                         .setMessage(getString(R.string.meter_delete_confirm, safe(reading.getPeriod())))
                         .setPositiveButton(getString(R.string.delete), (d, w) -> repository.delete(reading.getId(),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(MeterReadingHistoryActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT)
+                                        .makeText(MeterReadingHistoryActivity.this, getString(R.string.deleted),
+                                                Toast.LENGTH_SHORT)
                                         .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(MeterReadingHistoryActivity.this, getString(R.string.delete_failed), Toast.LENGTH_SHORT)
+                                        .makeText(MeterReadingHistoryActivity.this, getString(R.string.delete_failed),
+                                                Toast.LENGTH_SHORT)
                                         .show())))
                         .setNegativeButton(getString(R.string.cancel), null)
                         .show();
@@ -159,11 +161,14 @@ public class MeterReadingHistoryActivity extends AppCompatActivity {
                         String docId = roomId + "_" + periodKey;
                         repository.createIfAbsent(docId, r,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.meter_saved), Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.meter_saved), Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.meter_period_exists), Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.meter_period_exists),
+                                                Toast.LENGTH_SHORT).show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
+                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }

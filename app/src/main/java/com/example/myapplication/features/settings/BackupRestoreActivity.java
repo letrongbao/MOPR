@@ -131,7 +131,8 @@ public class BackupRestoreActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.create_backup))
                 .setMessage(getString(R.string.backup_description))
                 .setView(dialogView)
-                .setPositiveButton(getString(R.string.create), (d, w) -> startBackup(etNote.getText().toString().trim()))
+                .setPositiveButton(getString(R.string.create),
+                        (d, w) -> startBackup(etNote.getText().toString().trim()))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
