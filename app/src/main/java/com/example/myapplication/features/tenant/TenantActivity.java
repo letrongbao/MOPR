@@ -80,16 +80,19 @@ public class TenantActivity extends AppCompatActivity {
             public void onDelete(Tenant tenant) {
                 final String roomId = tenant != null ? tenant.getRoomId() : null;
                 new AlertDialog.Builder(TenantActivity.this)
-                    .setTitle(getString(R.string.confirm_delete))
-                    .setMessage(getString(R.string.delete_tenant_confirm, tenant.getFullName()))
-                    .setPositiveButton(getString(R.string.delete), (d, w) -> viewModel.deleteTenant(tenant.getId(),
+                        .setTitle(getString(R.string.confirm_delete))
+                        .setMessage(getString(R.string.delete_tenant_confirm, tenant.getFullName()))
+                        .setPositiveButton(getString(R.string.delete), (d, w) -> viewModel.deleteTenant(tenant.getId(),
                                 () -> runOnUiThread(() -> {
                                     maybeMarkRoomVacant(roomId);
-                            Toast.makeText(TenantActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(TenantActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT)
+                                            .show();
                                 }),
                                 () -> runOnUiThread(() -> Toast
-                            .makeText(TenantActivity.this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())))
-                    .setNegativeButton(getString(R.string.cancel), null).show();
+                                        .makeText(TenantActivity.this, getString(R.string.delete_failed),
+                                                Toast.LENGTH_SHORT)
+                                        .show())))
+                        .setNegativeButton(getString(R.string.cancel), null).show();
             }
 
             @Override
@@ -184,7 +187,7 @@ public class TenantActivity extends AppCompatActivity {
         MoneyFormatter.applyTo(etDepositAmount);
 
         String[] phongNames = danhSachPhong.stream()
-            .map(p -> getString(R.string.room_number, p.getRoomNumber())).toArray(String[]::new);
+                .map(p -> getString(R.string.room_number, p.getRoomNumber())).toArray(String[]::new);
         ArrayAdapter<String> phongAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, phongNames);
         phongAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -200,9 +203,9 @@ public class TenantActivity extends AppCompatActivity {
         }
 
         new AlertDialog.Builder(this)
-            .setTitle(getString(R.string.add_tenant))
+                .setTitle(getString(R.string.add_tenant))
                 .setView(dialogView)
-            .setPositiveButton(getString(R.string.create), (d, w) -> {
+                .setPositiveButton(getString(R.string.create), (d, w) -> {
                     String fullName = etHoTen.getText().toString().trim();
                     String personalId = etPersonalId.getText().toString().trim();
                     String phoneNumber = etSdt.getText().toString().trim();
@@ -212,7 +215,8 @@ public class TenantActivity extends AppCompatActivity {
                     if (fullName.isEmpty() || personalId.isEmpty() || phoneNumber.isEmpty() || rentalStartDate.isEmpty()
                             || contractEndDateText.isEmpty()
                             || depositAmount == 0) {
-                        Toast.makeText(this, getString(R.string.please_fill_all_information), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.please_fill_all_information), Toast.LENGTH_SHORT)
+                                .show();
                         return;
                     }
                     try {
@@ -247,7 +251,8 @@ public class TenantActivity extends AppCompatActivity {
                                     Toast.makeText(this, statusMsg.toString(), Toast.LENGTH_LONG).show();
                                 }),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(this, getString(R.string.failed_check_firebase), Toast.LENGTH_LONG).show()));
+                                        .makeText(this, getString(R.string.failed_check_firebase), Toast.LENGTH_LONG)
+                                        .show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }
@@ -278,7 +283,7 @@ public class TenantActivity extends AppCompatActivity {
         MoneyFormatter.applyTo(etDepositAmount);
 
         String[] phongNames = danhSachPhong.stream()
-            .map(p -> getString(R.string.room_number, p.getRoomNumber())).toArray(String[]::new);
+                .map(p -> getString(R.string.room_number, p.getRoomNumber())).toArray(String[]::new);
         ArrayAdapter<String> phongAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, phongNames);
         phongAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -306,9 +311,9 @@ public class TenantActivity extends AppCompatActivity {
         }
 
         new AlertDialog.Builder(this)
-            .setTitle(getString(R.string.edit_tenant_info))
+                .setTitle(getString(R.string.edit_tenant_info))
                 .setView(dialogView)
-            .setPositiveButton(getString(R.string.update), (d, w) -> {
+                .setPositiveButton(getString(R.string.update), (d, w) -> {
                     String fullName = etHoTen.getText().toString().trim();
                     String personalId = etPersonalId.getText().toString().trim();
                     String phoneNumber = etSdt.getText().toString().trim();
@@ -318,7 +323,8 @@ public class TenantActivity extends AppCompatActivity {
                     if (fullName.isEmpty() || personalId.isEmpty() || phoneNumber.isEmpty() || rentalStartDate.isEmpty()
                             || contractEndDateText.isEmpty()
                             || depositAmount == 0) {
-                        Toast.makeText(this, getString(R.string.please_fill_all_information), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.please_fill_all_information), Toast.LENGTH_SHORT)
+                                .show();
                         return;
                     }
                     try {
@@ -358,7 +364,9 @@ public class TenantActivity extends AppCompatActivity {
                                     Toast.makeText(this, statusMsg.toString(), Toast.LENGTH_LONG).show();
                                 }),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT).show()));
+                                        () -> Toast
+                                                .makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }

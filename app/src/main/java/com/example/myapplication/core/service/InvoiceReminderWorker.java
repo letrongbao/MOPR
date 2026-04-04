@@ -156,8 +156,8 @@ public class InvoiceReminderWorker extends Worker {
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, MyApplication.REMINDER_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(ctx.getString(R.string.reminder_collect_title))
-            .setContentText(ctx.getString(R.string.reminder_unpaid_count, unpaidCount))
+                .setContentTitle(ctx.getString(R.string.reminder_collect_title))
+                .setContentText(ctx.getString(R.string.reminder_unpaid_count, unpaidCount))
                 .setAutoCancel(true)
                 .setContentIntent(pi);
 

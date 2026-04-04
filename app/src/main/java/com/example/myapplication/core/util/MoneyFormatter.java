@@ -54,7 +54,7 @@ public class MoneyFormatter {
 
         // Remove currency symbol and spaces
         String cleaned = formatted.replace("đ", "")
-            .replace("₫", "")
+                .replace("₫", "")
                 .replace(" ", "")
                 .replace(".", "")
                 .replace(",", ".")

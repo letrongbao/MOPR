@@ -53,8 +53,8 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         Expense item = dataList.get(position);
         String cat = item.getCategory() != null
-            ? item.getCategory()
-            : h.itemView.getContext().getString(R.string.expense_uncategorized);
+                ? item.getCategory()
+                : h.itemView.getContext().getString(R.string.expense_uncategorized);
         h.tvCategory.setText(cat);
 
         h.tvAmount.setText(MoneyFormatter.format(item.getAmount()));
@@ -99,4 +99,3 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ViewHold
         }
     }
 }
-

@@ -88,19 +88,19 @@ public class RoomActivity extends AppCompatActivity {
                     if (pendingUploadRoom.getId() != null) {
                         viewModel.updateRoom(pendingUploadRoom,
                                 () -> runOnUiThread(() -> Toast
-                                .makeText(RoomActivity.this, R.string.update_success, Toast.LENGTH_SHORT)
+                                        .makeText(RoomActivity.this, R.string.update_success, Toast.LENGTH_SHORT)
                                         .show()),
                                 () -> runOnUiThread(() -> Toast
-                                .makeText(RoomActivity.this, R.string.update_failed, Toast.LENGTH_SHORT)
+                                        .makeText(RoomActivity.this, R.string.update_failed, Toast.LENGTH_SHORT)
                                         .show()));
                     } else {
                         viewModel.addRoom(pendingUploadRoom,
                                 () -> runOnUiThread(() -> Toast
-                                .makeText(RoomActivity.this, R.string.add_success, Toast.LENGTH_SHORT)
+                                        .makeText(RoomActivity.this, R.string.add_success, Toast.LENGTH_SHORT)
                                         .show()),
                                 () -> runOnUiThread(() -> Toast
-                                .makeText(RoomActivity.this, R.string.operation_failed, Toast.LENGTH_LONG)
-                                .show()));
+                                        .makeText(RoomActivity.this, R.string.operation_failed, Toast.LENGTH_LONG)
+                                        .show()));
                     }
                     pendingUploadRoom = null;
                 }
@@ -261,8 +261,8 @@ public class RoomActivity extends AppCompatActivity {
                             String phone = first.getString("phoneNumber");
                             String base = (name != null ? name : "")
                                     + (phone != null && !phone.trim().isEmpty()
-                                        ? getString(R.string.room_tenant_phone_prefix, phone)
-                                        : "");
+                                            ? getString(R.string.room_tenant_phone_prefix, phone)
+                                            : "");
                             int extra = arr.size() - 1;
                             if (extra > 0) {
                                 base = base + " ( +" + extra + ")";
@@ -450,7 +450,7 @@ public class RoomActivity extends AppCompatActivity {
 
         ArrayAdapter<String> loaiAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
-            getResources().getStringArray(R.array.room_type_options));
+                getResources().getStringArray(R.array.room_type_options));
         loaiAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLoai.setAdapter(loaiAdapter);
 
@@ -543,7 +543,7 @@ public class RoomActivity extends AppCompatActivity {
                                 int current = qs != null ? qs.size() : 0;
                                 if (current >= maxRooms) {
                                     Toast.makeText(this, getString(R.string.room_limit_exceeded, maxRooms),
-                                        Toast.LENGTH_LONG)
+                                            Toast.LENGTH_LONG)
                                             .show();
                                     return;
                                 }
@@ -688,7 +688,7 @@ public class RoomActivity extends AppCompatActivity {
                                 exists -> {
                                     if (exists) {
                                         Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG)
-                                            .show();
+                                                .show();
                                         return;
                                     }
 

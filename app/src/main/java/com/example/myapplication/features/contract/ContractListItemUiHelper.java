@@ -49,7 +49,8 @@ public final class ContractListItemUiHelper {
                 return;
             } else if (timeRemaining < THIRTY_DAYS_MS) {
                 long daysLeftNew = timeRemaining / (24 * 60 * 60 * 1000);
-                chip.setText(context.getString(com.example.myapplication.R.string.contract_status_days_left, daysLeftNew));
+                chip.setText(
+                        context.getString(com.example.myapplication.R.string.contract_status_days_left, daysLeftNew));
                 chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336")));
                 chip.setTextColor(Color.WHITE);
                 return;
@@ -95,10 +96,12 @@ public final class ContractListItemUiHelper {
 
         tvDepositStatus.setVisibility(android.view.View.VISIBLE);
         if (contract.isDepositCollected()) {
-            tvDepositStatus.setText(tvDepositStatus.getContext().getString(com.example.myapplication.R.string.deposit_collected));
+            tvDepositStatus.setText(
+                    tvDepositStatus.getContext().getString(com.example.myapplication.R.string.deposit_collected));
             tvDepositStatus.setTextColor(Color.parseColor("#4CAF50"));
         } else {
-            tvDepositStatus.setText(tvDepositStatus.getContext().getString(com.example.myapplication.R.string.deposit_pending));
+            tvDepositStatus.setText(
+                    tvDepositStatus.getContext().getString(com.example.myapplication.R.string.deposit_pending));
             tvDepositStatus.setTextColor(Color.parseColor("#FF9800"));
         }
     }

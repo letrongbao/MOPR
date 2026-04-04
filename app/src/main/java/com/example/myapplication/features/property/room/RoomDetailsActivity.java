@@ -200,10 +200,10 @@ public class RoomDetailsActivity extends AppCompatActivity {
 
         String houseName = room.getHouseName();
         tvRoomNumber.setText(
-            getString(
-                R.string.room_number_with_house,
-                room.getRoomNumber(),
-                (houseName != null && !houseName.trim().isEmpty()) ? (" • " + houseName.trim()) : ""));
+                getString(
+                        R.string.room_number_with_house,
+                        room.getRoomNumber(),
+                        (houseName != null && !houseName.trim().isEmpty()) ? (" • " + houseName.trim()) : ""));
         tvRoomType.setText(room.getRoomType());
         tvArea.setText(getString(R.string.room_area_value, (int) room.getArea()));
 

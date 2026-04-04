@@ -55,12 +55,12 @@ public final class MonthYearPickerDialog {
         container.addView(yearPicker, itemParams);
 
         new AlertDialog.Builder(context)
-            .setTitle(context.getString(R.string.month_year_picker_title))
+                .setTitle(context.getString(R.string.month_year_picker_title))
                 .setView(container)
-            .setPositiveButton(android.R.string.ok, (dialog, which) -> listener.onMonthYearSet(
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> listener.onMonthYearSet(
                         yearPicker.getValue(),
                         monthPicker.getValue() - 1))
-            .setNegativeButton(context.getString(R.string.cancel), null)
+                .setNegativeButton(context.getString(R.string.cancel), null)
                 .show();
     }
 

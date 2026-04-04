@@ -390,18 +390,20 @@ public class HomeMenuActivity extends AppCompatActivity {
         }
 
         if (tvCardHouseLabel != null) {
-            tvCardHouseLabel.setText(isTenant ? getString(R.string.home_tenant_room_label) : getString(R.string.home_owner_house_label));
+            tvCardHouseLabel.setText(
+                    isTenant ? getString(R.string.home_tenant_room_label) : getString(R.string.home_owner_house_label));
         }
         if (tvCardInvoiceLabel != null) {
-            tvCardInvoiceLabel.setText(isTenant ? getString(R.string.home_tenant_invoice_label) : getString(R.string.home_owner_invoice_label));
+            tvCardInvoiceLabel.setText(isTenant ? getString(R.string.home_tenant_invoice_label)
+                    : getString(R.string.home_owner_invoice_label));
         }
         if (tvCardExpenseLabel != null) {
-            tvCardExpenseLabel.setText(isTenant ? getString(R.string.home_tenant_payment_history_label) : getString(R.string.home_owner_expense_label));
+            tvCardExpenseLabel.setText(isTenant ? getString(R.string.home_tenant_payment_history_label)
+                    : getString(R.string.home_owner_expense_label));
         }
         if (tvCardReportLabel != null) {
-            tvCardReportLabel.setText(isTenant ? getString(R.string.home_tenant_support_label) : getString(R.string.home_owner_report_label));
+            tvCardReportLabel.setText(isTenant ? getString(R.string.home_tenant_support_label)
+                    : getString(R.string.home_owner_report_label));
         }
     }
 }
-
-

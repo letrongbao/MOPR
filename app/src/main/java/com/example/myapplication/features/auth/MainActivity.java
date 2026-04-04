@@ -89,8 +89,8 @@ public class MainActivity extends AppCompatActivity {
                         finish();
                     })
                     .addOnFailureListener(
-                            e -> Toast.makeText(this, getString(R.string.wrong_credentials), Toast.LENGTH_SHORT).show());
+                            e -> Toast.makeText(this, getString(R.string.wrong_credentials), Toast.LENGTH_SHORT)
+                                    .show());
         });
     }
 }
-

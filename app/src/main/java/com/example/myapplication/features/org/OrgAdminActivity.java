@@ -113,7 +113,7 @@ public class OrgAdminActivity extends AppCompatActivity {
                     Long maxRooms = tdoc.getLong("maxRooms");
                     Long maxStaff = tdoc.getLong("maxStaff");
                     Long maxInv = tdoc.getLong("maxInvoicesPerMonth");
-                        tvQuotas.setText(getString(
+                    tvQuotas.setText(getString(
                             R.string.org_quota_label,
                             (maxRooms != null ? maxRooms : 50),
                             (maxStaff != null ? maxStaff : 3),
@@ -125,7 +125,7 @@ public class OrgAdminActivity extends AppCompatActivity {
                     String bankLine = (bankCode != null ? bankCode : "")
                             + (bankNo != null && !bankNo.isEmpty() ? (" - " + bankNo) : "")
                             + (bankName != null && !bankName.isEmpty() ? (" (" + bankName + ")") : "");
-                        tvBank.setText(getString(
+                    tvBank.setText(getString(
                             R.string.org_bank_label,
                             (bankLine.trim().isEmpty() ? getString(R.string.org_not_configured) : bankLine)));
                 });
@@ -164,7 +164,8 @@ public class OrgAdminActivity extends AppCompatActivity {
                                     loadTenantInfo(tenantId);
                                 })
                                 .addOnFailureListener(
-                                        e -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show());
+                                        e -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT)
+                                                .show());
                     })
                     .show();
         });
@@ -192,12 +193,12 @@ public class OrgAdminActivity extends AppCompatActivity {
                                         .get()
                                         .addOnSuccessListener(inv -> {
                                             int invCount = inv != null ? inv.size() : 0;
-                                        tvUsage.setText(getString(
-                                            R.string.org_usage_label,
-                                            roomCount,
-                                            staffCount,
-                                            period,
-                                            invCount));
+                                            tvUsage.setText(getString(
+                                                    R.string.org_usage_label,
+                                                    roomCount,
+                                                    staffCount,
+                                                    period,
+                                                    invCount));
                                         });
                             });
                 });
@@ -248,6 +249,7 @@ public class OrgAdminActivity extends AppCompatActivity {
                     Toast.makeText(this, getString(R.string.org_invite_revoked), Toast.LENGTH_SHORT).show();
                     loadInvites(tid);
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, getString(R.string.org_invite_revoke_failed), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast
+                        .makeText(this, getString(R.string.org_invite_revoke_failed), Toast.LENGTH_SHORT).show());
     }
 }

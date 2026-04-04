@@ -1,1 +1,200 @@
-<!DOCTYPE html><html><head><meta charset='utf-8'/><style>body{font-family:'Times New Roman',serif;font-size:13px;padding:30px 40px;line-height:1.6;color:#000;}.header{text-align:center;margin-bottom:20px;}.header h3{margin:0;font-size:14px;font-weight:bold;text-transform:uppercase;}.header p{margin:2px 0;font-size:12px;font-style:italic;}.title{text-align:center;margin:25px 0;}.title h2{margin:0;font-size:18px;font-weight:bold;text-transform:uppercase;}.info{margin-bottom:8px;}.section{margin-top:15px;}.section-title{font-weight:bold;margin-bottom:5px;}.indent{padding-left:20px;}.gia-han-table{width:100%;border-collapse:collapse;margin:10px 0;}.gia-han-table th,.gia-han-table td{border:1px solid #000;padding:6px 8px;text-align:center;font-size:12px;}.gia-han-table th{background:#f5f5f5;font-weight:bold;}.signature{display:flex;justify-content:space-around;margin-top:40px;text-align:center;}.signature div{width:40%;}.signature .label{font-weight:bold;text-transform:uppercase;}.signature .note{font-style:italic;font-size:11px;}.signature .name{margin-top:60px;font-weight:bold;}</style></head><body><div class='header'><h3>SOCIALIST REPUBLIC OF VIETNAM</h3><p>Independence - Freedom - Happiness</p></div><div class='title'><h2>ROOM RENTAL CONTRACT</h2></div><p class='info'>Today, {{DATE_FULL}}, at house number {{PROPERTY_ADDRESS}}</p><p class='info'>The undersigned parties include:</p><div class='section'><p class='section-title'>LESSOR (Party A):</p><p class='indent'>Mr/Ms: {{LANDLORD_NAME}}</p><p class='indent'>ID/NATIONAL_ID: .................. issued on: ............... at: ...............</p><p class='indent'>Phone: {{LANDLORD_PHONE}}</p><p class='indent'>Address: {{PROPERTY_ADDRESS}}</p></div><div class='section'><p class='section-title'>LESSEE (Party B):</p><p class='indent'>Mr/Ms: {{TENANT_FULL_NAME}}</p><p class='indent'>ID/NATIONAL_ID: {{TENANT_PERSONAL_ID}} issued on: ............... at: ...............</p><p class='indent'>Phone: {{TENANT_PHONE}}</p></div><p style='margin-top:15px;'>After discussion, both parties agree as follows:</p><div class='section'><p class='section-title'>1. Rental details</p><p class='indent'>Party A rents room {{ROOM_NUMBER}} to Party B at house {{PROPERTY_ADDRESS}}.</p><p class='indent'>Term: {{CONTRACT_MONTHS}} months (From {{RENTAL_START_DATE}} to {{CONTRACT_END_DATE}}).</p><p class='indent'>Rent: {{RENT_AMOUNT}}/month.</p><p class='indent'>Excluding:</p><p class='indent'>{{EXPENSE_LINES}}</p></div><div class='section'><p class='section-title'>2. Party A responsibilities</p><p class='indent'>- Ensure the rental house has no legal disputes.</p><p class='indent'>- Register rental procedures with local authorities.</p></div><div class='section'><p class='section-title'>3. Party B responsibilities</p><p class='indent'>- Deposit amount: {{DEPOSIT_AMOUNT}}, and pay monthly rent + utilities.</p><p class='indent'>- Maintain room facilities and compensate damages as applicable.</p><p class='indent'>- Use room for residence only; maximum occupants: {{MEMBER_COUNT}}.</p></div><div class='section'><p class='section-title'>4. Execution terms</p><p class='indent'>Both parties shall strictly follow these terms during the rental period.</p><p class='indent'>After {{CONTRACT_MONTHS}} months, both parties may negotiate extension terms.</p></div><div class='section'><p class='section-title'>Contract extension table:</p><table class='gia-han-table'><tr><th>No.</th><th>Duration<br/>(months)</th><th>From</th><th>To</th><th>Rent/month</th><th>Signature</th></tr><tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr></table></div><div class='signature'><div><p class='label'>PARTY B</p><p class='note'>(Sign and full name)</p><p class='name'>{{TENANT_FULL_NAME}}</p></div><div><p class='label'>PARTY A</p><p class='note'>(Sign and full name)</p><p class='name'>{{LANDLORD_NAME}}</p></div></div></body></html>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 13px;
+            padding: 30px 40px;
+            line-height: 1.6;
+            color: #000;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 2px 0;
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        .title {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .title h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .info {
+            margin-bottom: 8px;
+        }
+
+        .section {
+            margin-top: 15px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .indent {
+            padding-left: 20px;
+        }
+
+        .gia-han-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .gia-han-table th,
+        .gia-han-table td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .gia-han-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .signature {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .signature div {
+            width: 40%;
+        }
+
+        .signature .label {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .signature .note {
+            font-style: italic;
+            font-size: 11px;
+        }
+
+        .signature .name {
+            margin-top: 60px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='header'>
+        <h3>SOCIALIST REPUBLIC OF VIETNAM</h3>
+        <p>Independence - Freedom - Happiness</p>
+    </div>
+    <div class='title'>
+        <h2>ROOM RENTAL CONTRACT</h2>
+    </div>
+    <p class='info'>Today, {{DATE_FULL}}, at house number {{PROPERTY_ADDRESS}}</p>
+    <p class='info'>The undersigned parties include:</p>
+    <div class='section'>
+        <p class='section-title'>LESSOR (Party A):</p>
+        <p class='indent'>Mr/Ms: {{LANDLORD_NAME}}</p>
+        <p class='indent'>ID/NATIONAL_ID: .................. issued on: ............... at: ...............</p>
+        <p class='indent'>Phone: {{LANDLORD_PHONE}}</p>
+        <p class='indent'>Address: {{PROPERTY_ADDRESS}}</p>
+    </div>
+    <div class='section'>
+        <p class='section-title'>LESSEE (Party B):</p>
+        <p class='indent'>Mr/Ms: {{TENANT_FULL_NAME}}</p>
+        <p class='indent'>ID/NATIONAL_ID: {{TENANT_PERSONAL_ID}} issued on: ............... at: ...............</p>
+        <p class='indent'>Phone: {{TENANT_PHONE}}</p>
+    </div>
+    <p style='margin-top:15px;'>After discussion, both parties agree as follows:</p>
+    <div class='section'>
+        <p class='section-title'>1. Rental details</p>
+        <p class='indent'>Party A rents room {{ROOM_NUMBER}} to Party B at house {{PROPERTY_ADDRESS}}.</p>
+        <p class='indent'>Term: {{CONTRACT_MONTHS}} months (From {{RENTAL_START_DATE}} to {{CONTRACT_END_DATE}}).</p>
+        <p class='indent'>Rent: {{RENT_AMOUNT}}/month.</p>
+        <p class='indent'>Excluding:</p>
+        <p class='indent'>{{EXPENSE_LINES}}</p>
+    </div>
+    <div class='section'>
+        <p class='section-title'>2. Party A responsibilities</p>
+        <p class='indent'>- Ensure the rental house has no legal disputes.</p>
+        <p class='indent'>- Register rental procedures with local authorities.</p>
+    </div>
+    <div class='section'>
+        <p class='section-title'>3. Party B responsibilities</p>
+        <p class='indent'>- Deposit amount: {{DEPOSIT_AMOUNT}}, and pay monthly rent + utilities.</p>
+        <p class='indent'>- Maintain room facilities and compensate damages as applicable.</p>
+        <p class='indent'>- Use room for residence only; maximum occupants: {{MEMBER_COUNT}}.</p>
+    </div>
+    <div class='section'>
+        <p class='section-title'>4. Execution terms</p>
+        <p class='indent'>Both parties shall strictly follow these terms during the rental period.</p>
+        <p class='indent'>After {{CONTRACT_MONTHS}} months, both parties may negotiate extension terms.</p>
+    </div>
+    <div class='section'>
+        <p class='section-title'>Contract extension table:</p>
+        <table class='gia-han-table'>
+            <tr>
+                <th>No.</th>
+                <th>Duration<br />(months)</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Rent/month</th>
+                <th>Signature</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+    <div class='signature'>
+        <div>
+            <p class='label'>PARTY B</p>
+            <p class='note'>(Sign and full name)</p>
+            <p class='name'>{{TENANT_FULL_NAME}}</p>
+        </div>
+        <div>
+            <p class='label'>PARTY A</p>
+            <p class='note'>(Sign and full name)</p>
+            <p class='name'>{{LANDLORD_NAME}}</p>
+        </div>
+    </div>
+</body>
+
+</html>

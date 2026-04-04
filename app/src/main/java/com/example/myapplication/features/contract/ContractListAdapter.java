@@ -149,7 +149,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         long daysLeft = ContractStatusHelper.daysRemaining(c);
 
         // Internal note.
-        h.tvRoomName.setText(c.getRoomNumber() != null ? context.getString(R.string.room_number, c.getRoomNumber()) : "—");
+        h.tvRoomName
+                .setText(c.getRoomNumber() != null ? context.getString(R.string.room_number, c.getRoomNumber()) : "—");
 
         // Internal note.
         long rentAmount = c.getRentAmount();
@@ -158,7 +159,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
         // Internal note.
         long depositAmount = c.getDepositAmount();
-            String depositFormatted = String.format(Locale.US, "%,d ₫", depositAmount).replace(',', '.');
+        String depositFormatted = String.format(Locale.US, "%,d ₫", depositAmount).replace(',', '.');
         h.tvDepositAmount.setText(depositFormatted);
 
         // Internal note.
@@ -268,10 +269,10 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         long daysLeft = ContractStatusHelper.daysRemaining(contract);
 
         String msg = context.getString(
-            R.string.contract_renewal_notice_message,
-            roomNumber,
-            contractEndTimestamp,
-            daysLeft);
+                R.string.contract_renewal_notice_message,
+                roomNumber,
+                contractEndTimestamp,
+                daysLeft);
 
         String phoneNumber = contract.getPhoneNumber();
         if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
@@ -294,7 +295,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, msg);
-        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.contract_send_reminder_via)));
+        context.startActivity(
+                Intent.createChooser(shareIntent, context.getString(R.string.contract_send_reminder_via)));
     }
 
     /**
@@ -369,14 +371,14 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         ImageButton btnClose = view.findViewById(R.id.btnClose);
 
         String phongText = contract.getRoomNumber() != null
-            ? context.getString(R.string.room_number, contract.getRoomNumber())
-            : "—";
+                ? context.getString(R.string.room_number, contract.getRoomNumber())
+                : "—";
         tvPhongInfo.setText(phongText);
 
         String tenantText = context.getString(
-            R.string.contract_tenant_phone_line,
-            (contract.getFullName() != null ? contract.getFullName() : "—"),
-            (contract.getPhoneNumber() != null ? contract.getPhoneNumber() : "—"));
+                R.string.contract_tenant_phone_line,
+                (contract.getFullName() != null ? contract.getFullName() : "—"),
+                (contract.getPhoneNumber() != null ? contract.getPhoneNumber() : "—"));
         tvTenantInfo.setText(tenantText);
 
         // Internal note.
@@ -396,7 +398,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
                 depositListener.onDepositUpdated(contract);
                 notifyItemChanged(position);
                 bottomSheet.dismiss();
-                Toast.makeText(context, context.getString(R.string.deposit_collected_confirmed_plain), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.deposit_collected_confirmed_plain),
+                        Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -418,7 +421,8 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         shareIntent.putExtra(Intent.EXTRA_TEXT, message);
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.deposit_payment_request_subject, room));
 
-        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.deposit_payment_request_send_via)));
+        context.startActivity(
+                Intent.createChooser(shareIntent, context.getString(R.string.deposit_payment_request_send_via)));
     }
 
     /**

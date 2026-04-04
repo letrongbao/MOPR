@@ -95,7 +95,8 @@ public class TicketActivity extends AppCompatActivity {
 
                     if (isTenant) {
                         if (currentRoomId == null || currentRoomId.trim().isEmpty()) {
-                            Toast.makeText(this, getString(R.string.missing_room_id_for_tenant), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.missing_room_id_for_tenant), Toast.LENGTH_SHORT)
+                                    .show();
                             finish();
                             return;
                         }
@@ -183,8 +184,11 @@ public class TicketActivity extends AppCompatActivity {
 
                     repository.add(t,
                             () -> runOnUiThread(
-                                    () -> Toast.makeText(this, getString(R.string.ticket_sent), Toast.LENGTH_SHORT).show()),
-                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_send_failed), Toast.LENGTH_SHORT).show()));
+                                    () -> Toast.makeText(this, getString(R.string.ticket_sent), Toast.LENGTH_SHORT)
+                                            .show()),
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.ticket_send_failed), Toast.LENGTH_SHORT)
+                                    .show()));
                 })
                 .show();
     }
@@ -224,13 +228,17 @@ public class TicketActivity extends AppCompatActivity {
             b.setNeutralButton(getString(R.string.ticket_change_status), (d, w) -> {
                 String next = nextStatus(t.getStatus());
                 repository.updateStatus(t.getId(), next,
-                        () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show()),
                         () -> runOnUiThread(
-                                () -> Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT).show()));
+                                () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show()),
+                        () -> runOnUiThread(
+                                () -> Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT)
+                                        .show()));
             });
             b.setNegativeButton(getString(R.string.delete), (d, w) -> repository.delete(t.getId(),
-                    () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
-                    () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())));
+                    () -> runOnUiThread(
+                            () -> Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
+                    () -> runOnUiThread(
+                            () -> Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())));
         }
 
         b.show();

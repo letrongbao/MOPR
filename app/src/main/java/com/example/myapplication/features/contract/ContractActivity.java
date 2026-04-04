@@ -159,7 +159,8 @@ public class ContractActivity extends AppCompatActivity {
 
                 pendingUploadTarget = null;
                 setUploadEnabled(true);
-                Toast.makeText(ContractActivity.this, getString(R.string.image_upload_success), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ContractActivity.this, getString(R.string.image_upload_success), Toast.LENGTH_SHORT)
+                        .show();
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(uploadReceiver,
@@ -409,7 +410,8 @@ public class ContractActivity extends AppCompatActivity {
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, getString(R.string.contract_load_error) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.contract_load_error) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                     finish();
                 });
     }
@@ -673,7 +675,8 @@ public class ContractActivity extends AppCompatActivity {
                         navigateToRoomList(RoomStatus.RENTED);
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, getString(R.string.save_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.save_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG)
+                                .show();
                     });
         } else {
             // Internal note.
@@ -690,7 +693,8 @@ public class ContractActivity extends AppCompatActivity {
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, getString(R.string.update_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.update_failed) + ": " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
                     });
         }
     }
@@ -762,7 +766,8 @@ public class ContractActivity extends AppCompatActivity {
                     Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
                     navigateToRoomList(RoomStatus.VACANT);
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(
+                        e -> Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
     }
 
     private void navigateToRoomList(@NonNull String status) {
@@ -831,10 +836,11 @@ public class ContractActivity extends AppCompatActivity {
             rentalHistoryRepo.addHistory(history)
                     .addOnSuccessListener(ref -> {
                         history.setId(ref.getId());
-                                android.util.Log.d("ContractActivity", "Rental history saved: " + ref.getId());
+                        android.util.Log.d("ContractActivity", "Rental history saved: " + ref.getId());
                     })
                     .addOnFailureListener(
-                                    e -> android.util.Log.e("ContractActivity", "Failed to save rental history: " + e.getMessage()));
+                            e -> android.util.Log.e("ContractActivity",
+                                    "Failed to save rental history: " + e.getMessage()));
         });
     }
 
@@ -842,8 +848,8 @@ public class ContractActivity extends AppCompatActivity {
         void onDone(double totalPaid, int paidCount, int unpaidCount);
     }
 
-    private void calculateInvoiceStats(String tenantId, @NonNull InvoiceStatsCallback callback) {
-        scopedCollection("invoices").whereEqualTo("contractId", tenantId).get()
+    private void calculateInvoiceStats(String contractId, @NonNull InvoiceStatsCallback callback) {
+        scopedCollection("invoices").whereEqualTo("contractId", contractId).get()
                 .addOnSuccessListener(querySnapshot -> {
                     double totalPaid = 0;
                     int paidCount = 0, unpaidCount = 0;

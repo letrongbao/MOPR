@@ -82,7 +82,7 @@ public class InvoiceWidgetProvider extends AppWidgetProvider {
                     }
                 }
                 views.setTextViewText(R.id.tvWidgetInvoice,
-                    context.getString(R.string.widget_unpaid_invoices, unpaidCount));
+                        context.getString(R.string.widget_unpaid_invoices, unpaidCount));
 
                 // Internal note.
                 Task<QuerySnapshot> roomTask = (tenantId != null && !tenantId.isEmpty())

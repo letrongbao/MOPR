@@ -187,8 +187,10 @@ public class HouseActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.house_delete_title))
                 .setMessage(getString(R.string.house_delete_confirm, k.getHouseName()))
                 .setPositiveButton(getString(R.string.delete), (d, w) -> repo.delete(k.getId(),
-                        () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
-                        () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())))
+                        () -> runOnUiThread(
+                                () -> Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
+                        () -> runOnUiThread(() -> Toast
+                                .makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
@@ -362,13 +364,17 @@ public class HouseActivity extends AppCompatActivity {
 
                 if (isEdit) {
                     repo.update(target,
-                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()),
-                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
+                            () -> runOnUiThread(
+                                    () -> Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
                 } else {
                     repo.add(target,
-                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.house_added), Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.house_added), Toast.LENGTH_SHORT).show()),
                             () -> runOnUiThread(
-                                    () -> Toast.makeText(this, getString(R.string.house_add_failed), Toast.LENGTH_LONG).show()));
+                                    () -> Toast.makeText(this, getString(R.string.house_add_failed), Toast.LENGTH_LONG)
+                                            .show()));
                 }
 
                 dlg.dismiss();

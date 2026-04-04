@@ -315,10 +315,12 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
         // Internal note.
         if (n.isContractRepresentative()) {
-            h.badgeContractRepresentative.setText(h.itemView.getContext().getString(R.string.is_contract_representative));
+            h.badgeContractRepresentative
+                    .setText(h.itemView.getContext().getString(R.string.is_contract_representative));
             h.badgeContractRepresentative.setTextColor(Color.parseColor("#1565C0"));
         } else {
-            h.badgeContractRepresentative.setText(h.itemView.getContext().getString(R.string.contract_representative_label));
+            h.badgeContractRepresentative
+                    .setText(h.itemView.getContext().getString(R.string.contract_representative_label));
             h.badgeContractRepresentative.setTextColor(Color.parseColor("#888888"));
         }
 
@@ -326,11 +328,13 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         // Internal note.
         if (n.isTemporaryResident()) {
             h.dotTemporaryResidence.setBackgroundResource(R.drawable.bg_icon_circle_green);
-            h.badgeTemporaryResidence.setText(h.itemView.getContext().getString(R.string.temporary_residence_registered));
+            h.badgeTemporaryResidence
+                    .setText(h.itemView.getContext().getString(R.string.temporary_residence_registered));
             h.badgeTemporaryResidence.setTextColor(Color.parseColor("#2E7D32"));
         } else {
             h.dotTemporaryResidence.setBackgroundResource(R.drawable.bg_icon_circle_orange);
-            h.badgeTemporaryResidence.setText(h.itemView.getContext().getString(R.string.temporary_residence_not_registered));
+            h.badgeTemporaryResidence
+                    .setText(h.itemView.getContext().getString(R.string.temporary_residence_not_registered));
             h.badgeTemporaryResidence.setTextColor(Color.parseColor("#FF6D00"));
         }
 

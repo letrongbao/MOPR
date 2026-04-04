@@ -48,14 +48,17 @@ public class RentalHistoryAdapter extends RecyclerView.Adapter<RentalHistoryAdap
         holder.tvTenantName.setText(history.getFullName() != null ? history.getFullName() : "N/A");
 
         String roomInfo = String.format(holder.itemView.getContext().getString(R.string.rental_room_info),
-            history.getRoomNumber() != null ? history.getRoomNumber() : holder.itemView.getContext().getString(R.string.common_not_available),
+                history.getRoomNumber() != null ? history.getRoomNumber()
+                        : holder.itemView.getContext().getString(R.string.common_not_available),
                 history.getHouseName() != null && !history.getHouseName().isEmpty() ? " - " + history.getHouseName()
                         : "");
         holder.tvRoomInfo.setText(roomInfo);
 
         String rentalPeriod = String.format(holder.itemView.getContext().getString(R.string.rental_period_range),
-            history.getRentalStartDate() != null ? history.getRentalStartDate() : holder.itemView.getContext().getString(R.string.common_not_available),
-            history.getActualEndDate() != null ? history.getActualEndDate() : holder.itemView.getContext().getString(R.string.common_not_available));
+                history.getRentalStartDate() != null ? history.getRentalStartDate()
+                        : holder.itemView.getContext().getString(R.string.common_not_available),
+                history.getActualEndDate() != null ? history.getActualEndDate()
+                        : holder.itemView.getContext().getString(R.string.common_not_available));
         holder.tvRentalPeriod.setText(rentalPeriod);
 
         if (history.getActualRentalDays() > 0) {
@@ -69,11 +72,16 @@ public class RentalHistoryAdapter extends RecyclerView.Adapter<RentalHistoryAdap
             holder.tvDuration.setText(R.string.common_not_available);
         }
 
-        holder.tvPhone.setText(history.getPhoneNumber() != null ? history.getPhoneNumber() : holder.itemView.getContext().getString(R.string.common_not_available));
-        holder.tvPersonalId.setText(history.getPersonalId() != null ? history.getPersonalId() : holder.itemView.getContext().getString(R.string.common_not_available));
-        holder.tvRentAmount.setText(holder.itemView.getContext().getString(R.string.currency_no_decimals, history.getRoomPrice()));
-        holder.tvDeposit.setText(holder.itemView.getContext().getString(R.string.deposit_amount_label, history.getDepositAmount()));
-        holder.tvMembers.setText(holder.itemView.getContext().getString(R.string.member_count_label, history.getMemberCount()));
+        holder.tvPhone.setText(history.getPhoneNumber() != null ? history.getPhoneNumber()
+                : holder.itemView.getContext().getString(R.string.common_not_available));
+        holder.tvPersonalId.setText(history.getPersonalId() != null ? history.getPersonalId()
+                : holder.itemView.getContext().getString(R.string.common_not_available));
+        holder.tvRentAmount
+                .setText(holder.itemView.getContext().getString(R.string.currency_no_decimals, history.getRoomPrice()));
+        holder.tvDeposit.setText(
+                holder.itemView.getContext().getString(R.string.deposit_amount_label, history.getDepositAmount()));
+        holder.tvMembers
+                .setText(holder.itemView.getContext().getString(R.string.member_count_label, history.getMemberCount()));
 
         if (history.getNote() != null && !history.getNote().trim().isEmpty()) {
             holder.noteContainer.setVisibility(View.VISIBLE);
@@ -85,10 +93,12 @@ public class RentalHistoryAdapter extends RecyclerView.Adapter<RentalHistoryAdap
         holder.servicesContainer.removeAllViews();
         if (history.hasParkingService() || history.hasInternetService() || history.hasLaundryService()) {
             if (history.hasParkingService()) {
-                holder.servicesContainer.addView(createServiceBadge(holder.itemView, holder.itemView.getContext().getString(R.string.parking_service_label)));
+                holder.servicesContainer.addView(createServiceBadge(holder.itemView,
+                        holder.itemView.getContext().getString(R.string.parking_service_label)));
             }
             if (history.hasInternetService()) {
-                holder.servicesContainer.addView(createServiceBadge(holder.itemView, holder.itemView.getContext().getString(R.string.internet_service_label)));
+                holder.servicesContainer.addView(createServiceBadge(holder.itemView,
+                        holder.itemView.getContext().getString(R.string.internet_service_label)));
             }
             if (history.hasLaundryService()) {
                 holder.servicesContainer.addView(createServiceBadge(holder.itemView,

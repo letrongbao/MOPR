@@ -120,7 +120,8 @@ public class ContractDetailsActivity extends AppCompatActivity {
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG)
+                                .show();
                         finish();
                     });
         } else {
@@ -142,7 +143,8 @@ public class ContractDetailsActivity extends AppCompatActivity {
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG)
+                                .show();
                         finish();
                     });
         }

@@ -549,14 +549,14 @@ public class RevenueActivity extends AppCompatActivity {
     private String buildMonthlyReportHtml(NumberFormat fmt) {
         String title = getString(R.string.report_month_title, selectedMonth);
         String content = "<h2>" + title + "</h2>"
-            + "<p>" + getString(R.string.pdf_total_rooms_label) + " " + tvTongPhong.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_rented_rooms_label) + " " + tvPhongDaThua.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_collected_flow_label) + " " + tvDoanhThuThang.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_total_expected_label) + " " + tvTongCanThuThang.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_debt_label) + " " + tvCongNoThang.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_collection_rate_label) + " " + tvTiLeThuTien.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_monthly_expense_label) + " " + tvTongChiThang.getText() + "</p>"
-            + "<p>" + getString(R.string.pdf_monthly_profit_label) + " " + tvLoiNhuanThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_total_rooms_label) + " " + tvTongPhong.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_rented_rooms_label) + " " + tvPhongDaThua.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_collected_flow_label) + " " + tvDoanhThuThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_total_expected_label) + " " + tvTongCanThuThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_debt_label) + " " + tvCongNoThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_collection_rate_label) + " " + tvTiLeThuTien.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_monthly_expense_label) + " " + tvTongChiThang.getText() + "</p>"
+                + "<p>" + getString(R.string.pdf_monthly_profit_label) + " " + tvLoiNhuanThang.getText() + "</p>"
                 + "<p>" + tvTongThuLuyKe.getText() + "</p>"
                 + "<p>" + tvTongChiLuyKe.getText() + "</p>"
                 + "<p>" + tvTyLeLapDay.getText() + "</p>";
@@ -575,9 +575,9 @@ public class RevenueActivity extends AppCompatActivity {
                 + "<style>body{font-family:Arial,sans-serif;padding:28px;color:#222;}h2{margin:0 0 12px;}p{margin:5px 0;}</style>"
                 + "</head><body>"
                 + content
-            + "<h3 style='margin-top:16px;'>" + getString(R.string.top_expense_categories_title) + "</h3>"
+                + "<h3 style='margin-top:16px;'>" + getString(R.string.top_expense_categories_title) + "</h3>"
                 + top
-            + "<p style='margin-top:18px;color:#666;'>" + getString(R.string.exported_at_label) + " "
+                + "<p style='margin-top:18px;color:#666;'>" + getString(R.string.exported_at_label) + " "
                 + new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date())
                 + "</p>"
                 + "</body></html>";

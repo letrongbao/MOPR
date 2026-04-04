@@ -34,50 +34,53 @@ public final class ContractHtmlBuilder {
 
         StringBuilder expense = new StringBuilder();
         if (house != null) {
-        expense.append(context.getString(
-            R.string.contract_expense_electricity_line,
-            formatVnd(house.getElectricityPrice()),
-            contract.getElectricStartReading()));
+            expense.append(context.getString(
+                    R.string.contract_expense_electricity_line,
+                    formatVnd(house.getElectricityPrice()),
+                    contract.getElectricStartReading()));
 
             String waterCalculationMethod = house.getWaterCalculationMethod();
-        String waterUnit = WaterCalculationMode.isPerPerson(waterCalculationMethod)
-            ? context.getString(R.string.contract_water_unit_per_person)
-            : WaterCalculationMode.isMeter(waterCalculationMethod)
-                ? context.getString(R.string.contract_water_unit_meter)
-                : context.getString(R.string.contract_water_unit_room);
-        expense.append(context.getString(R.string.contract_expense_water_line, formatVnd(house.getWaterPrice()), waterUnit));
+            String waterUnit = WaterCalculationMode.isPerPerson(waterCalculationMethod)
+                    ? context.getString(R.string.contract_water_unit_per_person)
+                    : WaterCalculationMode.isMeter(waterCalculationMethod)
+                            ? context.getString(R.string.contract_water_unit_meter)
+                            : context.getString(R.string.contract_water_unit_room);
+            expense.append(context.getString(R.string.contract_expense_water_line, formatVnd(house.getWaterPrice()),
+                    waterUnit));
 
             if (contract.hasParkingService()) {
-        expense.append(context.getString(
-            R.string.contract_expense_parking_line,
-            formatVnd(house.getParkingPrice()),
-            contract.getVehicleCount()));
+                expense.append(context.getString(
+                        R.string.contract_expense_parking_line,
+                        formatVnd(house.getParkingPrice()),
+                        contract.getVehicleCount()));
             }
             if (contract.hasInternetService()) {
-        expense.append(context.getString(R.string.contract_expense_internet_line, formatVnd(house.getInternetPrice())));
+                expense.append(context.getString(R.string.contract_expense_internet_line,
+                        formatVnd(house.getInternetPrice())));
             }
             if (contract.hasLaundryService()) {
-        expense.append(context.getString(R.string.contract_expense_laundry_line, formatVnd(house.getLaundryPrice())));
+                expense.append(
+                        context.getString(R.string.contract_expense_laundry_line, formatVnd(house.getLaundryPrice())));
             }
         }
 
-    String template = readRawText(context, R.raw.contract_template_vi);
-    return template
-        .replace("{{DATE_FULL}}", escape(formatDateFull(rentalStartDate)))
-        .replace("{{PROPERTY_ADDRESS}}", escape(propertyAddress))
-        .replace("{{LANDLORD_NAME}}", escape(landlordName))
-        .replace("{{LANDLORD_PHONE}}", escape(landlordPhone))
-        .replace("{{TENANT_FULL_NAME}}", escape(contract.getFullName()))
-        .replace("{{TENANT_PERSONAL_ID}}", escape(contract.getPersonalId()))
-        .replace("{{TENANT_PHONE}}", escape(contract.getPhoneNumber()))
-        .replace("{{ROOM_NUMBER}}", escape(roomNumber))
-        .replace("{{CONTRACT_MONTHS}}", String.valueOf(contractMonths))
-        .replace("{{RENTAL_START_DATE}}", escape(rentalStartDate))
-        .replace("{{CONTRACT_END_DATE}}", escape(contractEndTimestamp))
-        .replace("{{RENT_AMOUNT}}", formatVnd(contract.getRentAmount()))
-        .replace("{{EXPENSE_LINES}}", expense.toString())
-        .replace("{{DEPOSIT_AMOUNT}}", formatVnd(contract.getDepositAmount()))
-        .replace("{{MEMBER_COUNT}}", String.valueOf(contract.getMemberCount()));
+        String template = readRawText(context, R.raw.contract_template_vi);
+        return template
+                .replace("{{DATE_FULL}}", escape(formatDateFull(rentalStartDate)))
+                .replace("{{PROPERTY_ADDRESS}}", escape(propertyAddress))
+                .replace("{{LANDLORD_NAME}}", escape(landlordName))
+                .replace("{{LANDLORD_PHONE}}", escape(landlordPhone))
+                .replace("{{TENANT_FULL_NAME}}", escape(contract.getFullName()))
+                .replace("{{TENANT_PERSONAL_ID}}", escape(contract.getPersonalId()))
+                .replace("{{TENANT_PHONE}}", escape(contract.getPhoneNumber()))
+                .replace("{{ROOM_NUMBER}}", escape(roomNumber))
+                .replace("{{CONTRACT_MONTHS}}", String.valueOf(contractMonths))
+                .replace("{{RENTAL_START_DATE}}", escape(rentalStartDate))
+                .replace("{{CONTRACT_END_DATE}}", escape(contractEndTimestamp))
+                .replace("{{RENT_AMOUNT}}", formatVnd(contract.getRentAmount()))
+                .replace("{{EXPENSE_LINES}}", expense.toString())
+                .replace("{{DEPOSIT_AMOUNT}}", formatVnd(contract.getDepositAmount()))
+                .replace("{{MEMBER_COUNT}}", String.valueOf(contract.getMemberCount()));
     }
 
     @NonNull

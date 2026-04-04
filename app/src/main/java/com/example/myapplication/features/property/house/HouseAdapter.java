@@ -65,8 +65,8 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
         android.content.Context context = h.itemView.getContext();
 
         String addr = k.getAddress() != null && !k.getAddress().trim().isEmpty()
-            ? k.getAddress()
-            : context.getString(R.string.house_no_address);
+                ? k.getAddress()
+                : context.getString(R.string.house_no_address);
         h.tvHouseAddr.setText(addr);
 
         String manager = k.getHouseName() != null ? k.getHouseName().trim() : "";
@@ -85,9 +85,11 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
         if (!chuTk.isEmpty())
             bank.append(context.getString(R.string.bank_account_owner_prefix)).append(chuTk);
         if (!bankName.isEmpty())
-            bank.append(bank.length() > 0 ? "\n" : "").append(context.getString(R.string.bank_name_prefix)).append(bankName);
+            bank.append(bank.length() > 0 ? "\n" : "").append(context.getString(R.string.bank_name_prefix))
+                    .append(bankName);
         if (!soTk.isEmpty())
-            bank.append(bank.length() > 0 ? "\n" : "").append(context.getString(R.string.bank_account_number_prefix)).append(soTk);
+            bank.append(bank.length() > 0 ? "\n" : "").append(context.getString(R.string.bank_account_number_prefix))
+                    .append(soTk);
         if (bank.length() == 0) {
             bank.append(context.getString(R.string.bank_account_owner_prefix))
                     .append(manager.isEmpty() ? context.getString(R.string.landlord_fallback) : manager)

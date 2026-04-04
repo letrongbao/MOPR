@@ -145,8 +145,8 @@ public class TenantRepository {
             @NonNull TenantReadyCallback cb) {
         String displayName = user.getDisplayName();
         String defaultName = (displayName != null && !displayName.trim().isEmpty())
-            ? context.getString(R.string.default_tenant_name_with_owner, displayName.trim())
-            : context.getString(R.string.default_tenant_name);
+                ? context.getString(R.string.default_tenant_name_with_owner, displayName.trim())
+                : context.getString(R.string.default_tenant_name);
 
         createTenant(context, defaultName, new TenantReadyCallback() {
             @Override

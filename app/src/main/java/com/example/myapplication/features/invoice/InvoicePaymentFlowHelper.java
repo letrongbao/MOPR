@@ -111,7 +111,8 @@ public final class InvoicePaymentFlowHelper {
         }
 
         ArrayAdapter<String> methodAdapter = new ArrayAdapter<>(activity,
-                android.R.layout.simple_spinner_item, new String[] { activity.getString(R.string.cash), activity.getString(R.string.bank_transfer) });
+                android.R.layout.simple_spinner_item,
+                new String[] { activity.getString(R.string.cash), activity.getString(R.string.bank_transfer) });
         methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMethod.setAdapter(methodAdapter);
 
@@ -122,7 +123,8 @@ public final class InvoicePaymentFlowHelper {
                     try {
                         double amount = parseDouble(etAmount);
                         if (amount <= 0) {
-                            Toast.makeText(activity, activity.getString(R.string.amount_must_positive), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, activity.getString(R.string.amount_must_positive),
+                                    Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -133,10 +135,12 @@ public final class InvoicePaymentFlowHelper {
                         submitPayment(activity, invoice, amount, method, paidAt, note,
                                 scopedCollection, paymentRepository, viewModel);
                     } catch (NumberFormatException e) {
-                        Toast.makeText(activity, activity.getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, activity.getString(R.string.invalid_amount), Toast.LENGTH_SHORT)
+                                .show();
                     }
                 })
-                .setNeutralButton(activity.getString(R.string.qr_transfer), (d, w) -> showVietQrDialog(activity, db, invoice))
+                .setNeutralButton(activity.getString(R.string.qr_transfer),
+                        (d, w) -> showVietQrDialog(activity, db, invoice))
                 .setNegativeButton(activity.getString(R.string.cancel), null)
                 .show();
     }
@@ -175,7 +179,8 @@ public final class InvoicePaymentFlowHelper {
 
             tvBank.setText(activity.getString(R.string.transfer_info_colon) + bankCode + " - " + bankNo
                     + (bankName != null && !bankName.isEmpty() ? (" (" + bankName + ")") : ""));
-            tvNote.setText(activity.getString(R.string.content_colon) + addInfo + "\n" + activity.getString(R.string.amount_colon) + formatDouble(invoice.getTotalAmount()));
+            tvNote.setText(activity.getString(R.string.content_colon) + addInfo + "\n"
+                    + activity.getString(R.string.amount_colon) + formatDouble(invoice.getTotalAmount()));
 
             com.bumptech.glide.Glide.with(activity).load(url).into(img);
 
@@ -252,10 +257,14 @@ public final class InvoicePaymentFlowHelper {
                             () -> {
                                 recomputeAndUpdateInvoiceStatus(invoice, scopedCollection, viewModel);
                                 activity.runOnUiThread(() -> Toast
-                                        .makeText(activity, activity.getString(R.string.payment_recorded), Toast.LENGTH_SHORT).show());
+                                        .makeText(activity, activity.getString(R.string.payment_recorded),
+                                                Toast.LENGTH_SHORT)
+                                        .show());
                             },
                             () -> activity.runOnUiThread(() -> Toast
-                                    .makeText(activity, activity.getString(R.string.payment_record_failed), Toast.LENGTH_SHORT).show()));
+                                    .makeText(activity, activity.getString(R.string.payment_record_failed),
+                                            Toast.LENGTH_SHORT)
+                                    .show()));
                 })
                 .addOnFailureListener(e -> Toast
                         .makeText(activity, activity.getString(R.string.cannot_check_debt), Toast.LENGTH_SHORT).show());
@@ -270,4 +279,3 @@ public final class InvoicePaymentFlowHelper {
         return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
     }
 }
-

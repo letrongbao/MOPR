@@ -106,7 +106,8 @@ public class RentalHistoryActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
                     tvEmpty.setVisibility(View.VISIBLE);
-                    Toast.makeText(this, getString(R.string.error_load_data) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_load_data) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                 });
     }
 

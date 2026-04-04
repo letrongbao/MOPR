@@ -181,7 +181,8 @@ public class InvoiceActivity extends AppCompatActivity {
                         .setPositiveButton(getString(R.string.delete), (d2, w2) -> {
                             String invoiceId = invoice.getId();
                             if (invoiceId == null || invoiceId.trim().isEmpty()) {
-                                Toast.makeText(InvoiceActivity.this, getString(R.string.missing_invoice_id), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(InvoiceActivity.this, getString(R.string.missing_invoice_id),
+                                        Toast.LENGTH_SHORT).show();
                                 return;
                             }
 
@@ -198,7 +199,8 @@ public class InvoiceActivity extends AppCompatActivity {
                                         }
                                         viewModel.deleteInvoice(invoiceId,
                                                 () -> runOnUiThread(() -> Toast
-                                                        .makeText(InvoiceActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT)
+                                                        .makeText(InvoiceActivity.this, getString(R.string.deleted),
+                                                                Toast.LENGTH_SHORT)
                                                         .show()),
                                                 () -> runOnUiThread(() -> Toast.makeText(InvoiceActivity.this,
                                                         getString(R.string.delete_failed), Toast.LENGTH_SHORT).show()));
@@ -333,7 +335,8 @@ public class InvoiceActivity extends AppCompatActivity {
 
                     @Override
                     public void onTenantMissingRoom() {
-                        Toast.makeText(InvoiceActivity.this, getString(R.string.missing_room_for_tenant), Toast.LENGTH_SHORT)
+                        Toast.makeText(InvoiceActivity.this, getString(R.string.missing_room_for_tenant),
+                                Toast.LENGTH_SHORT)
                                 .show();
                         finish();
                     }
@@ -435,7 +438,8 @@ public class InvoiceActivity extends AppCompatActivity {
                             continue;
                         String name = n.getFullName() != null ? n.getFullName().trim() : "";
                         String phone = n.getPhoneNumber() != null ? n.getPhoneNumber().trim() : "";
-                        String display = getString(R.string.tenant_colon) + (name.isEmpty() ? getString(R.string.updating) : name)
+                        String display = getString(R.string.tenant_colon)
+                                + (name.isEmpty() ? getString(R.string.updating) : name)
                                 + (phone.isEmpty() ? "" : getString(R.string.phone_separator) + phone);
                         map.put(n.getRoomId(), display);
                     }
@@ -463,7 +467,8 @@ public class InvoiceActivity extends AppCompatActivity {
                             .addOnSuccessListener(qs -> {
                                 int current = qs != null ? qs.size() : 0;
                                 if (current + toCreate > max) {
-                                    Toast.makeText(this, getString(R.string.exceeded_invoice_quota, max), Toast.LENGTH_LONG)
+                                    Toast.makeText(this, getString(R.string.exceeded_invoice_quota, max),
+                                            Toast.LENGTH_LONG)
                                             .show();
                                     return;
                                 }
@@ -580,7 +585,8 @@ public class InvoiceActivity extends AppCompatActivity {
                                 }
 
                                 if (effectiveTargets.isEmpty()) {
-                                    Toast.makeText(this, getString(R.string.no_new_invoices_for_period), Toast.LENGTH_SHORT)
+                                    Toast.makeText(this, getString(R.string.no_new_invoices_for_period),
+                                            Toast.LENGTH_SHORT)
                                             .show();
                                     return;
                                 }
@@ -978,9 +984,9 @@ public class InvoiceActivity extends AppCompatActivity {
                                 activeContract,
                                 form,
                                 lastElecEnd[0],
-                            lastWaterEnd[0],
-                            getString(R.string.meter_start_must_gte_previous_end),
-                            getString(R.string.meter_end_less_than_start));
+                                lastWaterEnd[0],
+                                getString(R.string.meter_start_must_gte_previous_end),
+                                getString(R.string.meter_end_less_than_start));
 
                         viewModel.addInvoiceUnique(hd,
                                 () -> {
@@ -990,12 +996,16 @@ public class InvoiceActivity extends AppCompatActivity {
                                             hd.getElectricEndReading(),
                                             hd.getWaterStartReading(), hd.getWaterEndReading());
                                     runOnUiThread(() -> Toast
-                                            .makeText(this, getString(R.string.invoice_created_success), Toast.LENGTH_SHORT).show());
+                                            .makeText(this, getString(R.string.invoice_created_success),
+                                                    Toast.LENGTH_SHORT)
+                                            .show());
                                 },
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(this, getString(R.string.invoice_period_exists), Toast.LENGTH_SHORT).show()),
+                                        .makeText(this, getString(R.string.invoice_period_exists), Toast.LENGTH_SHORT)
+                                        .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(this, getString(R.string.failed_check_firebase), Toast.LENGTH_LONG).show()));
+                                        .makeText(this, getString(R.string.failed_check_firebase), Toast.LENGTH_LONG)
+                                        .show()));
                     } catch (InvoiceDialogSubmitHelper.ValidationException e) {
                         Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     } catch (NumberFormatException e) {
@@ -1057,15 +1067,18 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                         Room selectedRoom = danhSachPhong.get(idx);
                         Invoice updated = InvoiceDialogSubmitHelper.buildUpdatedInvoice(
-                            invoice,
-                            selectedRoom,
-                            form,
-                            getString(R.string.meter_end_less_than_start));
+                                invoice,
+                                selectedRoom,
+                                form,
+                                getString(R.string.meter_end_less_than_start));
                         viewModel.updateInvoice(updated,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT).show()));
+                                        () -> Toast
+                                                .makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (InvoiceDialogSubmitHelper.ValidationException e) {
                         Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     } catch (NumberFormatException e) {
@@ -1224,7 +1237,8 @@ public class InvoiceActivity extends AppCompatActivity {
         intent.putExtra("INVOICE_ID", invoice.getId());
         intent.putExtra("INVOICE_TOTAL", invoice.getTotalAmount());
         intent.putExtra("ROOM_ID", invoice.getRoomId());
-        intent.putExtra("TITLE", getString(R.string.payment_title_format, invoice.getRoomNumber(), invoice.getBillingPeriod()));
+        intent.putExtra("TITLE",
+                getString(R.string.payment_title_format, invoice.getRoomNumber(), invoice.getBillingPeriod()));
         startActivity(intent);
     }
 
