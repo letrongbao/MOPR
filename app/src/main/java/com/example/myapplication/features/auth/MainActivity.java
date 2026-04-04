@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.myapplication.R;
 import com.example.myapplication.core.util.LanguageManager;
+import com.example.myapplication.core.util.LanguageSwitcherHelper;
 import com.example.myapplication.features.home.HomeMenuActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -37,8 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private CheckBox cbRememberMe;
     private FirebaseAuth mAuth;
     private SharedPreferences prefs;
-    private View btnLangEn;
-    private View btnLangVi;
+    private LanguageSwitcherHelper languageSwitcherHelper;
     private Button btnGoogleSignIn;
     private GoogleSignInClient googleSignInClient;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
@@ -84,10 +84,10 @@ public class MainActivity extends AppCompatActivity {
         btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn);
         signupText = findViewById(R.id.signupText);
         cbRememberMe = findViewById(R.id.cbRememberMe);
-        btnLangEn = findViewById(R.id.btnLangEnLogin);
-        btnLangVi = findViewById(R.id.btnLangViLogin);
 
-        setupLanguageSwitcher();
+        // Setup language switcher using helper
+        languageSwitcherHelper = new LanguageSwitcherHelper(this);
+        languageSwitcherHelper.setupLanguageSwitcher();
         setupGoogleSignIn();
 
         // Restore remembered email only (no plaintext password storage)
@@ -161,35 +161,6 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> Toast
                         .makeText(this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show());
-    }
-
-    private void setupLanguageSwitcher() {
-        refreshLanguageButtons();
-
-        if (btnLangEn != null) {
-            btnLangEn.setOnClickListener(v -> switchLanguage("en"));
-        }
-        if (btnLangVi != null) {
-            btnLangVi.setOnClickListener(v -> switchLanguage("vi"));
-        }
-    }
-
-    private void switchLanguage(String languageTag) {
-        if (LanguageManager.isCurrentLanguage(this, languageTag)) {
-            return;
-        }
-        LanguageManager.setLanguage(this, languageTag);
-        recreate();
-    }
-
-    private void refreshLanguageButtons() {
-        boolean isEnglish = LanguageManager.isCurrentLanguage(this, "en");
-        if (btnLangEn != null) {
-            btnLangEn.setAlpha(isEnglish ? 1f : 0.5f);
-        }
-        if (btnLangVi != null) {
-            btnLangVi.setAlpha(isEnglish ? 0.5f : 1f);
-        }
     }
 
     private void saveRememberPreference(String email) {

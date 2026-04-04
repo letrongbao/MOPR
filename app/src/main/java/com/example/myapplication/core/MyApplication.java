@@ -27,7 +27,10 @@ public class MyApplication extends Application {
         @Override
         public void onCreate() {
                 super.onCreate();
+
+                // Ensure Vietnamese is set as default language on first launch
                 LanguageManager.applySavedLanguage(this);
+
                 // Firebase must be initialized before using any Firebase service
                 FirebaseApp.initializeApp(this);
                 TenantSession.init(this);

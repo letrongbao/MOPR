@@ -466,5 +466,9 @@
     <string name="no_data_yet">No data yet</string>
     <string name="no_data_yet_exclamation">No data yet!</string>
     <string name="meter_empty_data">No meter data</string>
+
+    <!-- Language Switcher -->
+    <string name="english_language">English</string>
+    <string name="vietnamese_language">Vietnamese</string>
 </resources>
 

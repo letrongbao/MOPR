@@ -8,41 +8,14 @@
     android:background="@drawable/loginbkg"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:id="@+id/languageSwitchLogin"
+    <!-- Language Switcher Component (moved down to avoid notification bar) -->
+    <include
+        layout="@layout/include_language_switcher"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_marginTop="18dp"
-        android:layout_marginEnd="18dp"
-        android:orientation="horizontal">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLangEnLogin"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="0dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:text="🇬🇧"
-            android:textSize="18sp"
-            app:backgroundTint="@android:color/transparent"
-            app:strokeWidth="0dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLangViLogin"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="0dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:text="🇻🇳"
-            android:textSize="18sp"
-            app:backgroundTint="@android:color/transparent"
-            app:strokeWidth="0dp" />
-    </LinearLayout>
+        android:layout_marginTop="70dp"
+        android:layout_marginEnd="16dp" />
 
     <LinearLayout
         android:layout_width="match_parent"

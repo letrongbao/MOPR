@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.util.LanguageSwitcherHelper;
 import com.example.myapplication.features.home.HomeMenuActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.Timestamp;
@@ -26,6 +27,7 @@ public class SignUpActivity extends AppCompatActivity {
     private TextView tvGoToLogin;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private LanguageSwitcherHelper languageSwitcherHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +44,10 @@ public class SignUpActivity extends AppCompatActivity {
         edtPhoneNumber = findViewById(R.id.edtSoDienThoai);
         btnSignUp = findViewById(R.id.btnSignUp);
         tvGoToLogin = findViewById(R.id.tvGoToLogin);
+
+        // Setup language switcher using helper
+        languageSwitcherHelper = new LanguageSwitcherHelper(this);
+        languageSwitcherHelper.setupLanguageSwitcher();
 
         btnSignUp.setOnClickListener(v -> register());
 
@@ -99,7 +105,8 @@ public class SignUpActivity extends AppCompatActivity {
                                 db.collection("users").document(uid)
                                         .set(user)
                                         .addOnSuccessListener(aVoid -> {
-                                            Toast.makeText(this, getString(R.string.registration_success), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.registration_success),
+                                                    Toast.LENGTH_SHORT).show();
                                             startActivity(new Intent(this, HomeMenuActivity.class));
                                             finish();
                                         })
@@ -111,7 +118,8 @@ public class SignUpActivity extends AppCompatActivity {
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, getString(R.string.registration_failed) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.registration_failed) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                     btnSignUp.setEnabled(true);
                 });
     }

@@ -148,6 +148,10 @@
     <string name="view_payment_history">Xem lịch sử thanh toán</string>
     <string name="pay_now">Thanh toán ngay</string>
     <string name="report_fee_month">Báo phí tháng %1$s cho khách</string>
+
+    <!-- Language Switcher -->
+    <string name="english_language">Tiếng Anh</string>
+    <string name="vietnamese_language">Tiếng Việt</string>
     <string name="confirm_collected_fee">Xác nhận đã thu phí</string>
     <string name="invoice_room">HÓA ĐƠN PHÒNG %1$s</string>
     <string name="room_fee_colon">- Tiền phòng: </string>
