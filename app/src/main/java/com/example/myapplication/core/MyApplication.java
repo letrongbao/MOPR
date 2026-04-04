@@ -14,6 +14,7 @@ import androidx.work.WorkManager;
 import com.example.myapplication.R;
 import com.example.myapplication.core.service.InvoiceReminderWorker;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.LanguageManager;
 import com.google.firebase.FirebaseApp;
 
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,7 @@ public class MyApplication extends Application {
         @Override
         public void onCreate() {
                 super.onCreate();
+                LanguageManager.applySavedLanguage(this);
                 // Firebase must be initialized before using any Firebase service
                 FirebaseApp.initializeApp(this);
                 TenantSession.init(this);

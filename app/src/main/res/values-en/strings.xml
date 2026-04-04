@@ -43,6 +43,9 @@
     <string name="registration_success">Registration successful!</string>
     <string name="registration_failed">Registration failed: </string>
     <string name="wrong_credentials">Wrong username or password</string>
+    <string name="login_with_google">Quick sign-in with Google</string>
+    <string name="google_sign_in_failed">Google sign-in failed</string>
+    <string name="google_sign_in_not_configured">Google Sign-In is not fully configured in Firebase</string>
     <string name="not_logged_in">Not logged in</string>
 
     <string name="full_name">Full name</string>

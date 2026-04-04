@@ -26,6 +26,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
@@ -57,6 +58,8 @@ public class HomeMenuActivity extends AppCompatActivity {
     private ShapeableImageView drawerAvatar;
     private ActivityResultLauncher<Intent> editProfileLauncher;
     private String resolvedRole = TenantRoles.OWNER;
+    private View btnLangEn;
+    private View btnLangVi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,6 +130,10 @@ public class HomeMenuActivity extends AppCompatActivity {
                 drawerLayout.openDrawer(GravityCompat.END);
             });
         }
+
+        btnLangEn = findViewById(R.id.btnLangEnHome);
+        btnLangVi = findViewById(R.id.btnLangViHome);
+        setupLanguageSwitcher();
 
         // Setup drawer menu items
         setupDrawerMenu();
@@ -301,6 +308,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         super.onResume();
         loadUserInfoToDrawer();
         resolveRoleAndApplyUi();
+        refreshLanguageButtons();
     }
 
     @Override
@@ -404,6 +412,34 @@ public class HomeMenuActivity extends AppCompatActivity {
         if (tvCardReportLabel != null) {
             tvCardReportLabel.setText(isTenant ? getString(R.string.home_tenant_support_label)
                     : getString(R.string.home_owner_report_label));
+        }
+    }
+
+    private void setupLanguageSwitcher() {
+        refreshLanguageButtons();
+        if (btnLangEn != null) {
+            btnLangEn.setOnClickListener(v -> switchLanguage("en"));
+        }
+        if (btnLangVi != null) {
+            btnLangVi.setOnClickListener(v -> switchLanguage("vi"));
+        }
+    }
+
+    private void switchLanguage(String languageTag) {
+        if (LanguageManager.isCurrentLanguage(this, languageTag)) {
+            return;
+        }
+        LanguageManager.setLanguage(this, languageTag);
+        recreate();
+    }
+
+    private void refreshLanguageButtons() {
+        boolean isEnglish = LanguageManager.isCurrentLanguage(this, "en");
+        if (btnLangEn != null) {
+            btnLangEn.setAlpha(isEnglish ? 1f : 0.55f);
+        }
+        if (btnLangVi != null) {
+            btnLangVi.setAlpha(isEnglish ? 0.55f : 1f);
         }
     }
 }

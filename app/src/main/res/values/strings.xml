@@ -36,6 +36,9 @@
     <string name="registration_failed">Đăng ký thất bại: </string>
     <string name="error_save_info">Lỗi lưu thông tin: </string>
     <string name="wrong_credentials">Sai tài khoản hoặc mật khẩu</string>
+    <string name="login_with_google">Đăng nhập nhanh với Google</string>
+    <string name="google_sign_in_failed">Đăng nhập Google thất bại</string>
+    <string name="google_sign_in_not_configured">Google Sign-In chưa được cấu hình đầy đủ trong Firebase</string>
     <string name="password_changed_success">Đổi mật khẩu thành công!</string>
     <string name="not_logged_in">Chưa đăng nhập</string>
     <string name="open_app_to_login">Mở app để đăng nhập</string>

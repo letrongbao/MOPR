@@ -77,6 +77,42 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     app:shapeAppearanceOverlay="@style/CircleImage" />
 
+                <LinearLayout
+                    android:id="@+id/languageSwitchHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginEnd="56dp"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLangEnHome"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="2dp"
+                        android:text="🇬🇧"
+                        android:textSize="16sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:strokeWidth="0dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLangViHome"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="2dp"
+                        android:text="🇻🇳"
+                        android:textSize="16sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:strokeWidth="0dp" />
+                </LinearLayout>
+
             </RelativeLayout>
         </com.google.android.material.appbar.AppBarLayout>
 
