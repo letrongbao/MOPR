@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.features.auth.MainActivity;
@@ -240,6 +241,8 @@ public class HomeMenuActivity extends AppCompatActivity {
                         .setTitle(getString(R.string.logout))
                         .setMessage(getString(R.string.logout_confirm_message))
                         .setPositiveButton(getString(R.string.logout), (dialog, which) -> {
+                            // BUG FIX: Xóa TenantSession trước khi sign out
+                            TenantSession.clear(this);
                             mAuth.signOut();
                             Intent intent = new Intent(this, MainActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

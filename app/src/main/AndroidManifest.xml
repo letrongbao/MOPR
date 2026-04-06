@@ -36,6 +36,8 @@
         <!-- Home -->
         <activity android:name=".features.home.HomeMenuActivity" />
         <activity android:name=".features.home.TenantMenuActivity" />
+        <activity android:name=".features.home.TenantRoomDetailActivity" />
+        <activity android:name=".features.home.ConfirmMeterActivity" />
 
         <!-- Property -->
         <activity android:name=".features.property.house.HouseActivity" />

@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.core.util.LanguageSwitcherHelper;
 import com.example.myapplication.features.home.HomeMenuActivity;
@@ -238,7 +239,12 @@ public class MainActivity extends AppCompatActivity {
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("uid", user.getUid());
                     payload.put("email", user.getEmail());
-                    payload.put("fullName", user.getDisplayName());
+                    // BUG FIX: Chỉ cập nhật fullName nếu có giá trị thực
+                    // (tránh ghi đè null khi login bằng email/password)
+                    String displayName = user.getDisplayName();
+                    if (displayName != null && !displayName.trim().isEmpty()) {
+                        payload.put("fullName", displayName);
+                    }
                     payload.put("updatedAt", Timestamp.now());
 
                     // Only set default role fields when the profile document does not exist yet.
@@ -273,6 +279,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigateToHome() {
+        // BUG FIX: Xóa TenantSession khi chủ nhà đăng nhập
+        // Tránh việc RoomActivity.scopedCollection() dùng nhầm path tenants/ thay vì users/
+        TenantSession.clear(this);
         startActivity(new Intent(this, HomeMenuActivity.class));
         finish();
     }
