@@ -47,4 +47,10 @@
     <color name="lock_icon">#FFD54F</color>
 
     <color name="outline">#E0E0E0</color>
+
+    <!-- Tenant Dashboard Colors -->
+    <color name="tenant_purple">#7E57C2</color>
+    <color name="tenant_pink">#EC407A</color>
+    <color name="tenant_blue">#0288D1</color>
+    <color name="tenant_green">#66BB6A</color>
 </resources>

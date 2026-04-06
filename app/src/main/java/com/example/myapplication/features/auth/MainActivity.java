@@ -13,8 +13,10 @@ import android.widget.Toast;
 
 import com.example.myapplication.R;
 import com.example.myapplication.features.home.HomeMenuActivity;
+import com.example.myapplication.features.tenant.TenantDashboardActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,16 +26,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView signupText;
     private CheckBox cbRememberMe;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private SharedPreferences prefs;
 
     @Override
     protected void onStart() {
         super.onStart();
-        // Nếu đã đăng nhập rồi thì vào thẳng Home
+        // Nếu đã đăng nhập rồi thì kiểm tra role và chuyển màn hình phù hợp
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            startActivity(new Intent(this, HomeMenuActivity.class));
-            finish();
+            checkUserRoleAndNavigate(currentUser.getUid());
         }
     }
 
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         prefs = getSharedPreferences("NhaTroPrefs", MODE_PRIVATE);
 
         username = findViewById(R.id.username);
@@ -85,11 +88,43 @@ public class MainActivity extends AppCompatActivity {
                         editor.remove("savedPassword");
                         editor.apply();
 
-                        startActivity(new Intent(this, HomeMenuActivity.class));
-                        finish();
+                        // Kiểm tra role và chuyển màn hình phù hợp
+                        String uid = result.getUser().getUid();
+                        checkUserRoleAndNavigate(uid);
                     })
                     .addOnFailureListener(
                             e -> Toast.makeText(this, "Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show());
         });
+    }
+
+    /**
+     * Kiểm tra role của user và chuyển đến màn hình phù hợp
+     */
+    private void checkUserRoleAndNavigate(String uid) {
+        db.collection("users").document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String primaryRole = doc.getString("primaryRole");
+                        
+                        // Nếu là TENANT thì chuyển đến TenantDashboardActivity
+                        if ("TENANT".equals(primaryRole)) {
+                            startActivity(new Intent(this, TenantDashboardActivity.class));
+                        } else {
+                            // Mặc định chuyển đến HomeMenuActivity (cho OWNER, STAFF)
+                            startActivity(new Intent(this, HomeMenuActivity.class));
+                        }
+                    } else {
+                        // Nếu không tìm thấy document, mặc định vào HomeMenuActivity
+                        startActivity(new Intent(this, HomeMenuActivity.class));
+                    }
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    // Nếu lỗi, mặc định vào HomeMenuActivity
+                    Toast.makeText(this, "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(this, HomeMenuActivity.class));
+                    finish();
+                });
     }
 }

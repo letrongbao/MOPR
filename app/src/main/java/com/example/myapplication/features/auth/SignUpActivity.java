@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.R;
 import com.example.myapplication.features.home.HomeMenuActivity;
+import com.example.myapplication.features.tenant.TenantDashboardActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.UserProfileChangeRequest;
@@ -100,7 +101,8 @@ public class SignUpActivity extends AppCompatActivity {
                                         .set(user)
                                         .addOnSuccessListener(aVoid -> {
                                             Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
-                                            startActivity(new Intent(this, HomeMenuActivity.class));
+                                            // Chuyển đến TenantDashboardActivity vì đăng ký mặc định là TENANT
+                                            startActivity(new Intent(this, TenantDashboardActivity.class));
                                             finish();
                                         })
                                         .addOnFailureListener(e -> {

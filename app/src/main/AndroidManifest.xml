@@ -48,6 +48,7 @@
 
         <!-- Tenant / Contract -->
         <activity android:name=".features.tenant.TenantActivity" />
+        <activity android:name=".features.tenant.TenantDashboardActivity" />
         <activity android:name=".features.contract.ContractActivity" />
         <activity android:name=".features.contract.ContractListActivity" />
         <activity android:name=".features.contract.ContractDetailsActivity" />
