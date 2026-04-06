@@ -346,7 +346,8 @@ Suggested root user document:
    - `createdAt`: Timestamp
    - `updatedAt`: Timestamp
 
-`primaryRole` is display/default metadata. Actual permission must be resolved from tenant membership.
+`primaryRole` is account-level metadata and is currently used by Home shell UI gating (`OWNER` vs non-`OWNER`).
+Actual tenant-domain permission must still be resolved from tenant membership.
 
 ### 11.3 Tenant Membership
 

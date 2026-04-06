@@ -43,8 +43,10 @@ Signup creates `users/{uid}` with:
 ### 0.5 Change password (`ChangePasswordActivity`)
 
 1. Uses Firebase Auth `updatePassword(...)`.
-2. Does not update Firestore.
-3. If Firebase requires recent login, user must re-authenticate.
+2. Available only when account has `password` provider.
+3. Google-only account is blocked from change-password flow (menu hidden in Home drawer and screen auto-exits if opened directly).
+4. Does not update Firestore.
+5. If Firebase requires recent login, user must re-authenticate.
 
 ### 0.6 Tenant session (`TenantSession`)
 
@@ -295,8 +297,9 @@ If only testing UI and role, no need to delete everything.
 
 1. Owner bootstrap goes through `TenantRepository.createTenant(...)`.
 2. Public signup is always `TENANT`.
-3. Actual role must come from tenant membership.
-4. Each seeding/reset, prefer modifying test documents only, do not delete global data unless necessary.
+3. Home shell UI role gate currently follows `users/{uid}.primaryRole` (OWNER vs non-OWNER).
+4. Tenant-domain authorization must come from `tenants/{tenantId}/members/{uid}.role`.
+5. Each seeding/reset, prefer modifying test documents only, do not delete global data unless necessary.
 
 ## 11) Legacy Data Migration During Tenant Bootstrap
 

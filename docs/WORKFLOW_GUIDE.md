@@ -46,8 +46,8 @@ This document defines the standard execution flow so any agent in the team can w
 
 1. Public signup defaults to `TENANT`.
 2. `OWNER` and `STAFF` must be provisioned via bootstrap/invite, not self-selected in public signup.
-3. Access control must follow tenant-scope `membership`.
-4. UI can vary by role, but source of truth remains membership plus house/room scope.
+3. Access control for tenant business data must follow tenant-scope `membership`.
+4. Current Home shell rendering is a separate UI gate based on `users/{uid}.primaryRole` (OWNER vs non-OWNER), while domain authorization remains membership + house/room scope.
 
 ## UI Reuse Rules (Mandatory Priority)
 
