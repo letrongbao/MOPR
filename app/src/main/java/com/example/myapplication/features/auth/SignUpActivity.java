@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.util.LanguageSwitcherHelper;
 import com.example.myapplication.features.home.HomeMenuActivity;
 import com.example.myapplication.features.tenant.TenantDashboardActivity;
 import com.google.firebase.auth.FirebaseAuth;
@@ -22,11 +23,12 @@ import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    private EditText edtHoTen, edtEmail, edtPassword, edtConfirmPassword, edtSoDienThoai;
+    private EditText edtFullName, edtEmail, edtPassword, edtConfirmPassword, edtPhoneNumber;
     private Button btnSignUp;
     private TextView tvGoToLogin;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private LanguageSwitcherHelper languageSwitcherHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,41 +38,45 @@ public class SignUpActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        edtHoTen = findViewById(R.id.edtHoTen);
+        edtFullName = findViewById(R.id.edtHoTen);
         edtEmail = findViewById(R.id.edtEmail);
         edtPassword = findViewById(R.id.edtPassword);
         edtConfirmPassword = findViewById(R.id.edtConfirmPassword);
-        edtSoDienThoai = findViewById(R.id.edtSoDienThoai);
+        edtPhoneNumber = findViewById(R.id.edtSoDienThoai);
         btnSignUp = findViewById(R.id.btnSignUp);
         tvGoToLogin = findViewById(R.id.tvGoToLogin);
 
-        btnSignUp.setOnClickListener(v -> dangKy());
+        // Setup language switcher using helper
+        languageSwitcherHelper = new LanguageSwitcherHelper(this);
+        languageSwitcherHelper.setupLanguageSwitcher();
+
+        btnSignUp.setOnClickListener(v -> register());
 
         tvGoToLogin.setOnClickListener(v -> {
             finish();
         });
     }
 
-    private void dangKy() {
-        String hoTen = edtHoTen.getText().toString().trim();
+    private void register() {
+        String fullName = edtFullName.getText().toString().trim();
         String email = edtEmail.getText().toString().trim();
         String password = edtPassword.getText().toString().trim();
         String confirmPassword = edtConfirmPassword.getText().toString().trim();
-        String soDienThoai = edtSoDienThoai.getText().toString().trim();
+        String phoneNumber = edtPhoneNumber.getText().toString().trim();
 
-        if (hoTen.isEmpty() || email.isEmpty() || password.isEmpty()
-                || confirmPassword.isEmpty() || soDienThoai.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+        if (fullName.isEmpty() || email.isEmpty() || password.isEmpty()
+                || confirmPassword.isEmpty() || phoneNumber.isEmpty()) {
+            Toast.makeText(this, getString(R.string.please_fill_all_information), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            Toast.makeText(this, "Mật khẩu xác nhận không khớp", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.password_confirmation_mismatch), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (password.length() < 6) {
-            Toast.makeText(this, "Mật khẩu phải có ít nhất 6 ký tự", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.password_min_6_chars), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -80,17 +86,17 @@ public class SignUpActivity extends AppCompatActivity {
                 .addOnSuccessListener(authResult -> {
                     String uid = authResult.getUser().getUid();
 
-                    // Cập nhật displayName (chờ kết quả trước khi tiếp tục)
+                    // Update displayName and wait for completion before proceeding
                     UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                            .setDisplayName(hoTen)
+                            .setDisplayName(fullName)
                             .build();
                     authResult.getUser().updateProfile(profileUpdates)
                             .addOnCompleteListener(profileTask -> {
-                                // Lưu thông tin thêm vào Firestore
+                                // Save additional profile data to Firestore
                                 Map<String, Object> user = new HashMap<>();
-                                user.put("hoTen", hoTen);
+                                user.put("fullName", fullName);
                                 user.put("email", email);
-                                user.put("soDienThoai", soDienThoai);
+                                user.put("phoneNumber", phoneNumber);
                                 user.put("uid", uid);
                                 user.put("primaryRole", "TENANT");
                                 user.put("activeTenantId", null);
@@ -103,17 +109,21 @@ public class SignUpActivity extends AppCompatActivity {
                                             Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
                                             // Chuyển đến TenantDashboardActivity vì đăng ký mặc định là TENANT
                                             startActivity(new Intent(this, TenantDashboardActivity.class));
+                                            Toast.makeText(this, getString(R.string.registration_success),
+                                                    Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(this, HomeMenuActivity.class));
                                             finish();
                                         })
                                         .addOnFailureListener(e -> {
-                                            Toast.makeText(this, "Lỗi lưu thông tin: " + e.getMessage(),
+                                            Toast.makeText(this, getString(R.string.error_save_info) + e.getMessage(),
                                                     Toast.LENGTH_SHORT).show();
                                             btnSignUp.setEnabled(true);
                                         });
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Đăng ký thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.registration_failed) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                     btnSignUp.setEnabled(true);
                 });
     }

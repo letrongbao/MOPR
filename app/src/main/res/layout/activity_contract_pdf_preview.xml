@@ -13,7 +13,7 @@
         android:background="#1976D2"
         app:navigationIcon="@drawable/ic_arrow_back"
         app:navigationIconTint="@android:color/white"
-        app:title="HopDong_hd001.pdf"
+        app:title="@string/contract_pdf_filename_placeholder"
         app:titleCentered="false"
         app:titleTextColor="@android:color/white" />
 

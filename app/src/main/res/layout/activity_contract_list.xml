@@ -20,13 +20,13 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Hợp đồng thông minh"
+            app:title="@string/contract_smart_title"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationIconTint="@color/white"/>
 
-        <!-- Summary chips hàng ngang -->
+        <!-- UI section note -->
         <LinearLayout
             android:id="@+id/layoutSummary"
             android:layout_width="match_parent"
@@ -54,7 +54,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Đang hiệu lực"
+                    android:text="@string/active_valid"
                     android:textSize="11sp"
                     android:textColor="#888888"
                     android:textStyle="bold"/>
@@ -79,7 +79,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sắp hết hạn"
+                    android:text="@string/contract_status_expiring_soon"
                     android:textSize="11sp"
                     android:textColor="#888888"
                     android:textStyle="bold"/>
@@ -104,7 +104,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hết hạn"
+                    android:text="@string/expired"
                     android:textSize="11sp"
                     android:textColor="#888888"
                     android:textStyle="bold"/>
@@ -132,7 +132,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:background="@drawable/bg_input_rounded"
-                android:hint="Tìm theo tên hoặc số phòng..."
+                android:hint="@string/contract_search_hint"
                 android:textSize="14sp"
                 android:textColor="#333333"
                 android:textColorHint="#999999"
@@ -172,7 +172,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Chưa có hợp đồng nào"
+                    android:text="@string/contract_empty_list"
                     android:textSize="15sp"
                     android:textColor="#AAAAAA"
                     android:layout_marginTop="12dp"/>

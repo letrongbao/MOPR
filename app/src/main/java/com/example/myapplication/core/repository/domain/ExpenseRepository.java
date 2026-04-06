@@ -17,7 +17,7 @@ import java.util.List;
 public class ExpenseRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "chi_phi";
+    private static final String COLLECTION = "expenses";
 
     private CollectionReference getScopedCollection() {
         String tenantId = TenantSession.getActiveTenantId();
@@ -26,7 +26,8 @@ public class ExpenseRepository {
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) throw new IllegalStateException("User not logged in");
+        if (user == null)
+            throw new IllegalStateException("User not logged in");
         return db.collection("users").document(user.getUid()).collection(COLLECTION);
     }
 
@@ -35,7 +36,8 @@ public class ExpenseRepository {
         getScopedCollection()
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshot, e) -> {
-                    if (e != null || snapshot == null) return;
+                    if (e != null || snapshot == null)
+                        return;
                     List<Expense> list = new ArrayList<>();
                     snapshot.forEach(doc -> {
                         Expense cp = doc.toObject(Expense.class);
@@ -47,19 +49,20 @@ public class ExpenseRepository {
         return data;
     }
 
-    public void add(Expense chiPhi, Runnable onSuccess, Runnable onFail) {
-        if (chiPhi.getCreatedAt() == null) chiPhi.setCreatedAt(Timestamp.now());
-        getScopedCollection().add(chiPhi)
+    public void add(Expense expense, Runnable onSuccess, Runnable onFail) {
+        if (expense.getCreatedAt() == null)
+            expense.setCreatedAt(Timestamp.now());
+        getScopedCollection().add(expense)
                 .addOnSuccessListener(ref -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
 
-    public void update(Expense chiPhi, Runnable onSuccess, Runnable onFail) {
-        if (chiPhi.getId() == null || chiPhi.getId().trim().isEmpty()) {
+    public void update(Expense expense, Runnable onSuccess, Runnable onFail) {
+        if (expense.getId() == null || expense.getId().trim().isEmpty()) {
             onFail.run();
             return;
         }
-        getScopedCollection().document(chiPhi.getId()).set(chiPhi)
+        getScopedCollection().document(expense.getId()).set(expense)
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -74,4 +77,3 @@ public class ExpenseRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 }
-

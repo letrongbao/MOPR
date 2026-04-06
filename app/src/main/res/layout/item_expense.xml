@@ -29,7 +29,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Hạng mục"
+                android:text="@string/expense_category_placeholder"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="?attr/colorOnSurface"/>
@@ -38,7 +38,7 @@
                 android:id="@+id/tvAmount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0 đ"
+                android:text="@string/revenue_amount_zero"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="?attr/colorOnSurface"/>
@@ -58,7 +58,7 @@
             android:id="@+id/tvNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ghi chú"
+            android:text="@string/note_label"
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginTop="4dp"/>
@@ -75,7 +75,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="Sửa"
+                android:contentDescription="@string/edit"
                 android:src="@drawable/ic_edit"/>
 
             <ImageButton
@@ -83,7 +83,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="Xóa"
+                android:contentDescription="@string/delete"
                 android:src="@drawable/ic_delete"/>
 
         </LinearLayout>

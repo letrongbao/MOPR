@@ -4,38 +4,85 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "phong_yeu_thich")
+@Entity(tableName = "favorite_rooms")
 public class FavoriteRoom {
 
     @PrimaryKey
     @NonNull
     private String id = "";
-    private String soPhong;
-    private String loaiPhong;
-    private double dienTich;
-    private double giaThue;
-    private String trangThai;
-    private String hinhAnh;
-    private long ngayLuu;
+    private String roomNumber;
+    private String roomType;
+    private double area;
+    private double rentAmount;
+    private String status;
+    private String imageUrl;
+    private long savedAt;
 
-    public FavoriteRoom() {}
+    public FavoriteRoom() {
+    }
 
     @NonNull
-    public String getId() { return id; }
-    public void setId(@NonNull String id) { this.id = id; }
-    public String getSoPhong() { return soPhong; }
-    public void setSoPhong(String soPhong) { this.soPhong = soPhong; }
-    public String getLoaiPhong() { return loaiPhong; }
-    public void setLoaiPhong(String loaiPhong) { this.loaiPhong = loaiPhong; }
-    public double getDienTich() { return dienTich; }
-    public void setDienTich(double dienTich) { this.dienTich = dienTich; }
-    public double getGiaThue() { return giaThue; }
-    public void setGiaThue(double giaThue) { this.giaThue = giaThue; }
-    public String getTrangThai() { return trangThai; }
-    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
-    public String getHinhAnh() { return hinhAnh; }
-    public void setHinhAnh(String hinhAnh) { this.hinhAnh = hinhAnh; }
-    public long getNgayLuu() { return ngayLuu; }
-    public void setNgayLuu(long ngayLuu) { this.ngayLuu = ngayLuu; }
-}
+    public String getId() {
+        return id;
+    }
 
+    public void setId(@NonNull String id) {
+        this.id = id;
+    }
+
+    public String getRoomNumber() {
+        return roomNumber;
+    }
+
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(String roomType) {
+        this.roomType = roomType;
+    }
+
+    public double getArea() {
+        return area;
+    }
+
+    public void setArea(double area) {
+        this.area = area;
+    }
+
+    public double getRentAmount() {
+        return rentAmount;
+    }
+
+    public void setRentAmount(double rentAmount) {
+        this.rentAmount = rentAmount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public long getSavedAt() {
+        return savedAt;
+    }
+
+    public void setSavedAt(long savedAt) {
+        this.savedAt = savedAt;
+    }
+}

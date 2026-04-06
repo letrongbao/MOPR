@@ -1,53 +1,126 @@
 # Firebase Data Management Guide
 
-## Muc dich
-Tai lieu nay huong dan cach quan ly du lieu Firebase cho MOPR: tao user/role, seed data test, reset an toan, va test roi khong lam hong du lieu that.
+## Purpose
+This document guides data management for MOPR Firebase: creating users/roles, seeding test data, safe reset procedures, and testing without corrupting production data.
 
-## 1) Cach app dang hieu du lieu
+Naming clarification:
 
-Source of truth cho role hien tai khong nam o 1 noi duy nhat, ma nam o 2 cap:
+- Current top-level Firestore collection is `tenants` (not `org`/`organizations`).
+- "Org" in screen/module names is organizational UI terminology mapped to `tenants/{tenantId}` data.
+
+## 0) Auth Flows In Current App
+
+### 0.1 Email/password login (`MainActivity`)
+
+1. Sign-in uses Firebase Auth only.
+2. No Firestore write occurs during login itself.
+3. Remember-me stores only email in SharedPreferences (`savedEmail`), not password.
+
+### 0.2 Google Sign-In (`MainActivity`)
+
+1. Google credential signs in with Firebase Auth.
+2. App auto-creates/merges `users/{uid}` profile right after Google sign-in.
+3. If `users/{uid}` already exists, app updates basic profile fields (`uid`, `email`, `fullName`, `updatedAt`) and does NOT override existing `primaryRole`/`activeTenantId`.
+4. If `users/{uid}` does not exist, default bootstrap fields include `primaryRole=TENANT`, `activeTenantId=null`, `createdAt`, `updatedAt`.
+5. After sign-in succeeds, app navigates directly to Home (no second manual login step).
+6. If user already has an active Firebase session, app auto-enters Home on app open.
+
+### 0.3 Public signup (`SignUpActivity`)
+
+Signup creates `users/{uid}` with:
+
+- `uid`, `fullName`, `email`, `phoneNumber`
+- `primaryRole = TENANT`
+- `activeTenantId = null`
+- `createdAt`, `updatedAt`
+
+### 0.4 Profile update (`ProfileActivity`, `EditProfileActivity`)
+
+1. App updates Firebase Auth displayName/photo.
+2. App updates `users/{uid}` fields (`fullName`, `phoneNumber`, optional `avatarUrl`).
+3. If update fails due to missing doc, app falls back to `set(...)` to create user document.
+
+### 0.5 Change password (`ChangePasswordActivity`)
+
+1. Uses Firebase Auth `updatePassword(...)`.
+2. Available only when account has `password` provider.
+3. Google-only account is blocked from change-password flow (menu hidden in Home drawer and screen auto-exits if opened directly).
+4. Does not update Firestore.
+5. If Firebase requires recent login, user must re-authenticate.
+
+### 0.6 Tenant session (`TenantSession`)
+
+1. Active tenant is cached in SharedPreferences key `activeTenantId`.
+2. Most repositories resolve data scope from `TenantSession.getActiveTenantId()` first, then fallback to `users/{uid}`.
+
+### 0.7 Home role UI switching (`HomeMenuActivity`)
+
+1. Home defaults to guest UI (all Home action rows hidden).
+2. `users/{uid}.primaryRole` is the role source used by Home UI:
+   - `OWNER` => show current OWNER Home UI.
+   - any other value/missing => keep guest UI (no Home action buttons shown).
+3. If `primaryRole` changes from non-OWNER to `OWNER` while user is in an active session, app forces logout and asks user to sign in again.
+4. After signing in again with `primaryRole=OWNER`, user sees OWNER UI.
+5. Drawer behavior by role:
+   - `OWNER`: shows Rental History menu.
+   - non-OWNER: hides Rental History menu.
+6. Current role mapping in Home UI is binary:
+   - `OWNER` => OWNER UI.
+   - `STAFF` and `TENANT` => guest UI.
+7. Role-promotion auto-logout is enforced by the role listener in `HomeMenuActivity` while Home is active.
+
+## 1) How the App Understands Data
+
+Role-related data is distributed across 2 scopes, with different usages:
 
 1. User scope:
    - `users/{uid}`
-   - luu `primaryRole`, `activeTenantId`, thong tin profile co ban
+   - stores `primaryRole`, `activeTenantId`, basic profile information
 2. Tenant scope:
    - `tenants/{tenantId}`
    - `tenants/{tenantId}/members/{uid}`
-   - day la noi app kiem tra quyen thuc te trong tenant
+   - this is where the app checks actual permissions within the tenant
 
-Quy uoc quan trong:
+Important conventions:
 
-- `OWNER`, `STAFF`, `TENANT` phai duoc doc tu membership trong tenant.
-- `users/{uid}.primaryRole` chi la meta/status rong hon, khong nen coi la source of truth duy nhat.
-- `activeTenantId` phai khop voi tenant dang test.
+- Home UI role rendering currently reads `users/{uid}.primaryRole`.
+- Domain permission inside tenant (staff/tenant/owner operations) still depends on `tenants/{tenantId}/members/{uid}.role`.
+- `STAFF` is not rendered as a dedicated Home UI role yet (currently falls back to guest UI).
+- `activeTenantId` must match the tenant being tested.
 
-## 2) Cach tao OWNER
+## 2) How to Create OWNER
 
-Khong tao OWNER tu signup public.
+Do not create OWNER through public signup.
 
-Flow dung trong app:
+Correct flow in app:
 
-1. Dang nhap user.
-2. Tao tenant moi qua flow `TenantRepository.createTenant(...)`.
-3. App se tu dong tao:
+1. User logs in.
+2. Create new tenant via `TenantRepository.createTenant(...)` flow.
+3. App automatically creates:
    - `tenants/{tenantId}`
-   - `tenants/{tenantId}/members/{uid}` voi `role = OWNER`
-   - `users/{uid}` voi `primaryRole = OWNER`
+   - `tenants/{tenantId}/members/{uid}` with `role = OWNER`
+   - `users/{uid}` with `primaryRole = OWNER`
    - `users/{uid}.activeTenantId = tenantId`
 
-Neu can seed tay tren Firebase Console, tao dung 3 document nay:
+Additional tenant fields created by app in `tenants/{tenantId}`:
+
+- `name`, `ownerUid`, `timezone`, `currency`, `billingCycleDay`
+- `plan`, `maxRooms`, `maxStaff`, `maxInvoicesPerMonth`
+- `createdAt`
+
+To seed manually on Firebase Console, create these 3 documents:
 
 ```text
 users/{ownerUid}
-  hoTen: "Owner Test"
+  fullName: "Owner Test"
   email: "owner@test.com"
-  soDienThoai: "0900000000"
+  phoneNumber: "0900000000"
   uid: "ownerUid"
   primaryRole: "OWNER"
   activeTenantId: "tenantA"
 
 tenants/{tenantA}
-  name: "Nha tro test"
+  name: "Test Property"
   ownerUid: "ownerUid"
   timezone: "Asia/Ho_Chi_Minh"
   currency: "VND"
@@ -65,18 +138,23 @@ tenants/{tenantA}/members/{ownerUid}
   assignedRoomIds: []
 ```
 
-## 3) Cach tao STAFF
+## 3) How to Create STAFF
 
-STAFF nen duoc tao bang invite:
+STAFF should be created via invite:
 
-1. Owner dang nhap vao tenant.
-2. Tao invite STAFF qua flow app.
-3. Firestore se co:
-   - `tenants/{tenantId}/invites/{code}` voi `role = STAFF`
-   - khi join xong, `tenants/{tenantId}/members/{uid}` voi `role = STAFF`
+1. Owner logs in to tenant.
+2. Create STAFF invite via app flow.
+3. Firestore will have:
+   - `tenants/{tenantId}/invites/{code}` with `role = STAFF`
+   - after join: `tenants/{tenantId}/members/{uid}` with `role = STAFF`
    - `users/{uid}.primaryRole = STAFF`
 
-Neu seed tay:
+Current invite fields for STAFF:
+
+- required: `code`, `email`, `role`, `status`, `createdAt`, `createdBy`
+- optional: `houseId`, `houseCode`
+
+To seed manually:
 
 ```text
 tenants/{tenantA}/members/{staffUid}
@@ -91,11 +169,11 @@ users/{staffUid}
   activeTenantId: "tenantA"
 ```
 
-## 4) Cach tao TENANT
+## 4) How to Create TENANT
 
-TENANT la role mac dinh khi signup public.
+TENANT is the default role when signing up publicly.
 
-Signup se ghi:
+Signup writes:
 
 ```text
 users/{tenantUid}
@@ -103,9 +181,13 @@ users/{tenantUid}
   activeTenantId: null
 ```
 
-Sau do tenant user se nhan invite va join vao 1 room/tenant.
+After that, tenant user will receive an invite and join a room/tenant.
 
-Neu seed tay:
+Current invite requirement for TENANT:
+
+- `roomId` is required in invite document.
+
+To seed manually:
 
 ```text
 tenants/{tenantA}/members/{tenantUid}
@@ -120,87 +202,112 @@ users/{tenantUid}
   activeTenantId: "tenantA"
 ```
 
-## 5) Cach reset an toan khi test
+## 5) How to Safely Reset During Testing
 
-Khong nen xoa toan bo database neu chi test role.
+Do not delete the entire database if only testing role.
 
-Uu tien reset theo cap sau:
+Prioritize reset by scope:
 
-1. Reset 1 user test:
-   - xoa `users/{uid}` neu can tao lai tu dau
-   - xoa `tenants/{tenantId}/members/{uid}` neu role bi loang
-   - xoa `activeTenantId` neu user bi ket tenant cu
-2. Reset 1 tenant test:
-   - xoa `tenants/{tenantId}` va tat ca subcollections lien quan
-   - chi dung khi tenant do la tenant test va khong con lien ket du lieu that
-3. Reset 1 invite:
-   - xoa `tenants/{tenantId}/invites/{code}` hoac set `status = REVOKED`
+1. Reset one test user:
+   - delete `users/{uid}` if starting fresh
+   - delete `tenants/{tenantId}/members/{uid}` if role is corrupted
+   - delete `activeTenantId` if user is stuck in old tenant
+2. Reset one test tenant:
+   - delete `tenants/{tenantId}` and all related subcollections
+   - only use if this tenant is for testing and has no production data links
+3. Reset one invite:
+   - delete `tenants/{tenantId}/invites/{code}` or set `status = REVOKED`
 
-Khuyen nghi an toan:
+Safe recommendations:
 
-- Chi dung 1 tenant test rieng.
-- Chi dung 3 account test rieng: `owner`, `staff`, `tenant`.
-- Dat ten doc test ro rang, vi du `tenant_test_01`.
+- Use one separate test tenant.
+- Use 3 separate test accounts: `owner`, `staff`, `tenant`.
+- Name test documents clearly, e.g. `tenant_test_01`.
 
-## 6) Checklist truoc khi test role
+Invite cleanup recommendation:
 
-Truoc khi bam app, kiem tra 3 diem nay:
+- If invite testing is stuck, set invite `status` to a non-pending state (for example `REVOKED`) or delete the invite document.
+
+## 6) Checklist Before Testing Role
+
+Before running the app, verify these 3 points:
 
 1. `users/{uid}.primaryRole`
 2. `users/{uid}.activeTenantId`
 3. `tenants/{tenantId}/members/{uid}.role`
 
-Neu 3 gia tri nay khong dong bo, UI role co the hien sai.
+Expected Home UI behavior in current build:
 
-## 7) Cach quan ly du lieu tren Firebase Console
+- `primaryRole = OWNER` => OWNER Home UI (cards + rental history visible).
+- `primaryRole != OWNER` or missing => guest Home UI (cards hidden, rental history hidden).
 
-Thu tu thao tac khuyen nghi:
+If these values are not synchronized, Home UI and tenant-domain permissions may look inconsistent.
 
-1. Tao user trong Firebase Auth.
-2. Tao `users/{uid}`.
-3. Tao `tenants/{tenantId}` neu la owner tenant moi.
-4. Tao `tenants/{tenantId}/members/{uid}`.
-5. Tao invites neu can test luong join.
-6. Chi them `phong_tro`, `nguoi_thue`, `hoa_don`, `payments` sau khi role da dung.
+## 7) How to Manage Data on Firebase Console
 
-Quy tac:
+Recommended action sequence:
 
-- Khong sua collection ten/field neu chua co migration plan.
-- Khong dung 1 user test cho nhieu role neu dang can test UI scope rong.
-- Khong dua du lieu test vao tenant that.
+1. Create user in Firebase Auth.
+2. Create `users/{uid}`.
+3. Create `tenants/{tenantId}` if owner's new tenant.
+4. Create `tenants/{tenantId}/members/{uid}`.
+5. Create invites if testing join flow.
+6. Add `houses`, `rooms`, `contracts`, `invoices`, `payments` only after role is correct.
 
-## 8) Bo test data goi y
+Rules:
 
-Neu can test nhanh, tao 3 account:
+- Do not rename collections/fields without migration plan.
+- Do not use one test user for multiple roles if testing broad UI scope.
+- Do not add test data to production tenant.
+
+Important app-specific note:
+
+- `EditProfileActivity.applyInviteCode()` requires an active tenant id in session. If `activeTenantId` is null, invite join from that screen will not proceed.
+
+## 8) Recommended Test Data Suite
+
+To test quickly, create 3 accounts:
 
 1. Owner:
-   - tao tenant moi
+   - creates new tenant
    - `role = OWNER`
 2. Staff:
-   - join bang invite STAFF
+   - joins via STAFF invite
 3. Tenant:
-   - join bang invite TENANT co `roomId`
+   - joins via TENANT invite with `roomId`
 
-Bo test nay se cho ban kiem tra:
+This test suite lets you verify:
 
-- menu home theo role
-- quyen vao man quan ly
-- luong invite/join
-- doc du lieu theo tenant
+- home menu by role
+- permissions to management screens
+- invite/join flow
+- data reading per tenant
 
-## 9) Khi nao can xoa data va tao lai
+## 9) When to Delete and Recreate Data
 
-Chi can reset tu dau khi:
+Only reset from scratch if:
 
-1. `users/{uid}` bi sai role lien tiep.
-2. `tenants/{tenantId}` test bi loang qua nhieu invite/member/room.
-3. Ban muon test migration hoac luong bootstrap owner tu dau.
+1. `users/{uid}` repeatedly has wrong role.
+2. `tenants/{tenantId}` test is corrupted with too many invites/members/rooms.
+3. You want to test migration or owner bootstrap from scratch.
 
-Neu chi test giao dien va role, thi khong can xoa toan bo.
+If only testing UI and role, no need to delete everything.
 
-## 10) Quy uoc cho agent
+## 10) Conventions for Agents
 
-1. Owner bootstrap di qua `TenantRepository.createTenant(...)`.
-2. Signup public luon la `TENANT`.
-3. Role thuc te phai dung membership trong tenant.
-4. Moi lan seeding/reset, uu tien thay doi dung document test, khong xoa global data neu khong can.
+1. Owner bootstrap goes through `TenantRepository.createTenant(...)`.
+2. Public signup is always `TENANT`.
+3. Home shell UI role gate currently follows `users/{uid}.primaryRole` (OWNER vs non-OWNER).
+4. Tenant-domain authorization must come from `tenants/{tenantId}/members/{uid}.role`.
+5. Each seeding/reset, prefer modifying test documents only, do not delete global data unless necessary.
+
+## 11) Legacy Data Migration During Tenant Bootstrap
+
+When `ensureActiveTenant(...)` creates a default tenant for a legacy user, app migration currently copies only:
+
+1. `rooms`
+2. `contracts`
+3. `invoices`
+
+Current implementation uses batch write guard around 450 operations per collection pass.
+Large legacy datasets may need manual follow-up migration for remaining documents.

@@ -32,15 +32,15 @@ public final class InvoicePeriodSuggestionHelper {
             @NonNull PeriodKeyResolver periodKeyResolver,
             @NonNull String roomId,
             @NonNull SuggestedPeriodCallback callback) {
-        scopedCollection.get("hoa_don")
-                .whereEqualTo("idPhong", roomId)
+        scopedCollection.get("invoices")
+                .whereEqualTo("roomId", roomId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     String bestKey = null;
                     String bestPeriod = "";
                     if (snapshot != null) {
                         for (QueryDocumentSnapshot doc : snapshot) {
-                            String period = doc.getString("thangNam");
+                            String period = doc.getString("billingPeriod");
                             String key = periodKeyResolver.resolve(period);
                             if (key == null || key.isEmpty()) {
                                 continue;

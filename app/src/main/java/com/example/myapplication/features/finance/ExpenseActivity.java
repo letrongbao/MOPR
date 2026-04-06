@@ -30,12 +30,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -76,7 +75,7 @@ public class ExpenseActivity extends AppCompatActivity {
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Quản lý chi");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.expense_management));
 
         tvEmpty = findViewById(R.id.tvEmpty);
         tvSummary = findViewById(R.id.tvSummary);
@@ -105,15 +104,19 @@ public class ExpenseActivity extends AppCompatActivity {
                 if (item == null || item.getId() == null)
                     return;
                 new AlertDialog.Builder(ExpenseActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Xóa khoản chi này?")
-                        .setPositiveButton("Xóa", (d, w) -> viewModel.deleteExpense(item.getId(),
+                        .setTitle(getString(R.string.confirm_delete))
+                        .setMessage(getString(R.string.delete_expense_question))
+                        .setPositiveButton(getString(R.string.delete), (d, w) -> viewModel.deleteExpense(item.getId(),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(ExpenseActivity.this, "Đã xóa", Toast.LENGTH_SHORT)
+                                        () -> Toast
+                                                .makeText(ExpenseActivity.this, getString(R.string.deleted),
+                                                        Toast.LENGTH_SHORT)
                                                 .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(ExpenseActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT).show())))
-                        .setNegativeButton("Hủy", null)
+                                        .makeText(ExpenseActivity.this, getString(R.string.delete_failed),
+                                                Toast.LENGTH_SHORT)
+                                        .show())))
+                        .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             }
         });
@@ -147,7 +150,7 @@ public class ExpenseActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     String role = doc.getString("role");
                     if (TenantRoles.TENANT.equals(role)) {
-                        Toast.makeText(this, "Tài khoản người thuê không có quyền xem quản lý chi", Toast.LENGTH_SHORT)
+                        Toast.makeText(this, getString(R.string.tenant_no_permission_view_expenses), Toast.LENGTH_SHORT)
                                 .show();
                         finish();
                         return;
@@ -159,7 +162,7 @@ public class ExpenseActivity extends AppCompatActivity {
                     bindListObserver();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Không tải được quyền truy cập", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.failed_load_permissions), Toast.LENGTH_SHORT).show();
                     finish();
                 });
     }
@@ -173,7 +176,7 @@ public class ExpenseActivity extends AppCompatActivity {
 
     private void updateSelectedMonthLabel() {
         if (tvSelectedMonth != null) {
-            tvSelectedMonth.setText("Tháng " + selectedMonth);
+            tvSelectedMonth.setText(getString(R.string.month) + selectedMonth);
         }
     }
 
@@ -187,19 +190,19 @@ public class ExpenseActivity extends AppCompatActivity {
             int year = c.get(java.util.Calendar.YEAR);
             String normalized = String.format(Locale.US, "%02d/%04d", month, year);
             monthValues.add(normalized);
-            monthLabels.add("Tháng " + normalized);
+            monthLabels.add(getString(R.string.month) + normalized);
         }
 
         int checked = Math.max(0, monthValues.indexOf(selectedMonth));
         new AlertDialog.Builder(this)
-                .setTitle("Chọn tháng")
+                .setTitle(getString(R.string.select_month))
                 .setSingleChoiceItems(monthLabels.toArray(new String[0]), checked, (dialog, which) -> {
                     selectedMonth = monthValues.get(which);
                     updateSelectedMonthLabel();
                     applyMonthFilterAndSummary();
                     dialog.dismiss();
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -214,7 +217,7 @@ public class ExpenseActivity extends AppCompatActivity {
             }
         }
 
-        adapter.setDanhSach(filtered);
+        adapter.setDataList(filtered);
         tvEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         updateSummary(filtered);
     }
@@ -234,7 +237,7 @@ public class ExpenseActivity extends AppCompatActivity {
 
                 String category = cp.getCategory() != null && !cp.getCategory().trim().isEmpty()
                         ? cp.getCategory().trim()
-                        : "Khác";
+                        : getString(R.string.other);
                 byCategory.put(category, byCategory.getOrDefault(category, 0.0) + cp.getAmount());
             }
         }
@@ -249,17 +252,18 @@ public class ExpenseActivity extends AppCompatActivity {
             }
         }
 
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-        tvSummary.setText("Tổng chi: " + fmt.format(total));
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
+        tvSummary.setText(getString(R.string.total_expense) + fmt.format(total));
         if (tvSummaryCount != null)
-            tvSummaryCount.setText("Số khoản: " + count);
+            tvSummaryCount.setText(getString(R.string.number_of_items) + count);
         if (tvSummaryAvg != null)
-            tvSummaryAvg.setText("TB/khoản: " + fmt.format(avg));
+            tvSummaryAvg.setText(getString(R.string.avg_per_item) + fmt.format(avg));
         if (tvTopCategory != null) {
             if (count == 0) {
-                tvTopCategory.setText("Chi nhiều nhất: -");
+                tvTopCategory.setText(getString(R.string.top_expense_category_none));
             } else {
-                tvTopCategory.setText("Chi nhiều nhất: " + topCategory + " (" + fmt.format(topAmount) + ")");
+                tvTopCategory.setText(
+                        getString(R.string.top_expense_category) + topCategory + " (" + fmt.format(topAmount) + ")");
             }
         }
     }
@@ -277,9 +281,9 @@ public class ExpenseActivity extends AppCompatActivity {
         etPaidAt.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
 
         new AlertDialog.Builder(this)
-                .setTitle("Thêm khoản chi")
+                .setTitle(getString(R.string.add_expense))
                 .setView(dialogView)
-                .setPositiveButton("Lưu", (d, w) -> {
+                .setPositiveButton(getString(R.string.save), (d, w) -> {
                     try {
                         String cat = etCategory.getText().toString().trim();
                         double amount = MoneyFormatter.getValue(etAmount);
@@ -287,15 +291,16 @@ public class ExpenseActivity extends AppCompatActivity {
                         String note = etNote.getText().toString().trim();
 
                         if (cat.isEmpty()) {
-                            Toast.makeText(this, "Vui lòng nhập hạng mục", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.please_enter_category), Toast.LENGTH_SHORT).show();
                             return;
                         }
                         if (amount <= 0) {
-                            Toast.makeText(this, "Số tiền phải > 0", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.amount_must_be_positive), Toast.LENGTH_SHORT)
+                                    .show();
                             return;
                         }
                         if (paidAt.isEmpty()) {
-                            Toast.makeText(this, "Vui lòng nhập ngày", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.please_enter_date), Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -307,14 +312,16 @@ public class ExpenseActivity extends AppCompatActivity {
                         cp.setCreatedAt(Timestamp.now());
 
                         viewModel.addExpense(cp,
-                                () -> runOnUiThread(() -> Toast.makeText(this, "Đã lưu", Toast.LENGTH_SHORT).show()),
+                                () -> runOnUiThread(() -> Toast
+                                        .makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show()));
+                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -334,9 +341,9 @@ public class ExpenseActivity extends AppCompatActivity {
         etNote.setText(item.getNote());
 
         new AlertDialog.Builder(this)
-                .setTitle("Cập nhật khoản chi")
+                .setTitle(getString(R.string.update_expense))
                 .setView(dialogView)
-                .setPositiveButton("Cập nhật", (d, w) -> {
+                .setPositiveButton(getString(R.string.update), (d, w) -> {
                     try {
                         String cat = etCategory.getText().toString().trim();
                         double amount = MoneyFormatter.getValue(etAmount);
@@ -344,15 +351,16 @@ public class ExpenseActivity extends AppCompatActivity {
                         String note = etNote.getText().toString().trim();
 
                         if (cat.isEmpty()) {
-                            Toast.makeText(this, "Vui lòng nhập hạng mục", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.please_enter_category), Toast.LENGTH_SHORT).show();
                             return;
                         }
                         if (amount <= 0) {
-                            Toast.makeText(this, "Số tiền phải > 0", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.amount_must_be_positive), Toast.LENGTH_SHORT)
+                                    .show();
                             return;
                         }
                         if (paidAt.isEmpty()) {
-                            Toast.makeText(this, "Vui lòng nhập ngày", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.please_enter_date), Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -366,14 +374,17 @@ public class ExpenseActivity extends AppCompatActivity {
 
                         viewModel.updateExpense(updated,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Đã cập nhật", Toast.LENGTH_SHORT).show()),
+                                        () -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT).show()));
+                                        () -> Toast
+                                                .makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.invalid_data), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 

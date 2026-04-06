@@ -9,6 +9,8 @@ import com.example.myapplication.domain.ContractStatus;
 import com.example.myapplication.domain.Tenant;
 import com.google.android.material.chip.Chip;
 
+import java.util.Locale;
+
 public final class ContractListItemUiHelper {
 
     private static final long THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000;
@@ -18,64 +20,66 @@ public final class ContractListItemUiHelper {
 
     @NonNull
     public static String formatMoney(long value) {
-        return String.format("%,dđ", value).replace(',', '.');
+        return String.format(Locale.US, "%,d ₫", value).replace(',', '.');
     }
 
     @NonNull
     public static String displayRepresentativeName(@NonNull Tenant contract) {
-        String tenNguoiDaiDien = contract.getTenNguoiDaiDien();
-        if (tenNguoiDaiDien == null || tenNguoiDaiDien.trim().isEmpty()) {
-            tenNguoiDaiDien = contract.getHoTen();
+        String representativeName = contract.getRepresentativeName();
+        if (representativeName == null || representativeName.trim().isEmpty()) {
+            representativeName = contract.getFullName();
         }
-        return tenNguoiDaiDien != null ? tenNguoiDaiDien : "—";
+        return representativeName != null ? representativeName : "—";
     }
 
     public static void updateContractStatusChip(@NonNull Chip chip,
             @NonNull ContractStatus status,
             long daysLeft,
             @NonNull Tenant contract) {
-        long ngayKetThuc = contract.getNgayKetThuc();
-        if (ngayKetThuc > 0) {
+        android.content.Context context = chip.getContext();
+        long contractEndTimestamp = contract.getContractEndTimestamp();
+        if (contractEndTimestamp > 0) {
             long currentTime = System.currentTimeMillis();
-            long timeRemaining = ngayKetThuc - currentTime;
+            long timeRemaining = contractEndTimestamp - currentTime;
 
             if (timeRemaining < 0) {
-                chip.setText("Hết hạn");
+                chip.setText(context.getString(com.example.myapplication.R.string.expired));
                 chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
                 chip.setTextColor(Color.WHITE);
                 return;
             } else if (timeRemaining < THIRTY_DAYS_MS) {
                 long daysLeftNew = timeRemaining / (24 * 60 * 60 * 1000);
-                chip.setText("⚠ Còn " + daysLeftNew + " ngày");
+                chip.setText(
+                        context.getString(com.example.myapplication.R.string.contract_status_days_left, daysLeftNew));
                 chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336")));
                 chip.setTextColor(Color.WHITE);
                 return;
             }
 
-            chip.setText("✓ Đang hiệu lực");
+            chip.setText(context.getString(com.example.myapplication.R.string.active_valid));
             chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50")));
             chip.setTextColor(Color.WHITE);
             return;
         }
 
         switch (status) {
-            case DA_KET_THUC:
-                chip.setText("Hết hạn");
+            case ENDED:
+                chip.setText(context.getString(com.example.myapplication.R.string.expired));
                 chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
                 chip.setTextColor(Color.WHITE);
                 break;
-            case SAP_HET_HAN:
-                String text = "⚠ Sắp hết hạn";
+            case EXPIRING_SOON:
+                String text = context.getString(com.example.myapplication.R.string.contract_status_expiring_soon);
                 if (daysLeft >= 0) {
-                    text = "⚠ Còn " + daysLeft + " ngày";
+                    text = context.getString(com.example.myapplication.R.string.contract_status_days_left, daysLeft);
                 }
                 chip.setText(text);
                 chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336")));
                 chip.setTextColor(Color.WHITE);
                 break;
-            case DANG_THUE:
+            case ACTIVE_RENTAL:
             default:
-                chip.setText("✓ Đang hiệu lực");
+                chip.setText(context.getString(com.example.myapplication.R.string.active_valid));
                 chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50")));
                 chip.setTextColor(Color.WHITE);
                 break;
@@ -85,17 +89,19 @@ public final class ContractListItemUiHelper {
     public static void updateDepositStatusDisplay(@NonNull TextView tvDepositStatus,
             @NonNull Tenant contract,
             @NonNull ContractStatus status) {
-        if (status == ContractStatus.DA_KET_THUC) {
+        if (status == ContractStatus.ENDED) {
             tvDepositStatus.setVisibility(android.view.View.GONE);
             return;
         }
 
         tvDepositStatus.setVisibility(android.view.View.VISIBLE);
-        if (contract.isTrangThaiThuCoc()) {
-            tvDepositStatus.setText("✓ Đã thu cọc");
+        if (contract.isDepositCollected()) {
+            tvDepositStatus.setText(
+                    tvDepositStatus.getContext().getString(com.example.myapplication.R.string.deposit_collected));
             tvDepositStatus.setTextColor(Color.parseColor("#4CAF50"));
         } else {
-            tvDepositStatus.setText("⏳ Chờ thu cọc");
+            tvDepositStatus.setText(
+                    tvDepositStatus.getContext().getString(com.example.myapplication.R.string.deposit_pending));
             tvDepositStatus.setTextColor(Color.parseColor("#FF9800"));
         }
     }

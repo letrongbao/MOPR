@@ -55,7 +55,7 @@ public class RentalHistoryActivity extends AppCompatActivity {
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Lịch sử cho thuê");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.rental_history_title));
 
         repository = new RentalHistoryRepository();
 
@@ -99,36 +99,37 @@ public class RentalHistoryActivity extends AppCompatActivity {
                         tvEmpty.setVisibility(View.GONE);
                         tvContractCount.setVisibility(View.VISIBLE);
                         btnSort.setVisibility(View.VISIBLE);
-                        tvContractCount.setText("Số hợp đồng: " + historyList.size());
+                        tvContractCount.setText(getString(R.string.contract_count_label, historyList.size()));
                         applySorting(currentSort);
                     }
                 })
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
                     tvEmpty.setVisibility(View.VISIBLE);
-                    Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_load_data) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                 });
     }
 
     private void showSortDialog() {
         String[] options = {
-                "Ngày kết thúc (mới nhất)",
-                "Ngày kết thúc (cũ nhất)",
-                "Tên người thuê (A-Z)",
-                "Phòng (tăng dần)"
+                getString(R.string.sort_end_date_newest),
+                getString(R.string.sort_end_date_oldest),
+                getString(R.string.sort_tenant_name_az),
+                getString(R.string.sort_room_asc)
         };
 
         int checkedItem = currentSort.ordinal();
 
         new AlertDialog.Builder(this)
-                .setTitle("Sắp xếp theo")
+                .setTitle(getString(R.string.sort_by))
                 .setSingleChoiceItems(options, checkedItem, (dialog, which) -> {
                     SortOption selected = SortOption.values()[which];
                     applySorting(selected);
                     currentSort = selected;
                     dialog.dismiss();
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -142,15 +143,15 @@ public class RentalHistoryActivity extends AppCompatActivity {
                 break;
             case NAME_AZ:
                 Collections.sort(historyList, (a, b) -> {
-                    String nameA = a.getHoTen() != null ? a.getHoTen() : "";
-                    String nameB = b.getHoTen() != null ? b.getHoTen() : "";
+                    String nameA = a.getFullName() != null ? a.getFullName() : "";
+                    String nameB = b.getFullName() != null ? b.getFullName() : "";
                     return nameA.compareToIgnoreCase(nameB);
                 });
                 break;
             case ROOM_ASC:
                 Collections.sort(historyList, (a, b) -> {
-                    String roomA = a.getSoPhong() != null ? a.getSoPhong() : "";
-                    String roomB = b.getSoPhong() != null ? b.getSoPhong() : "";
+                    String roomA = a.getRoomNumber() != null ? a.getRoomNumber() : "";
+                    String roomB = b.getRoomNumber() != null ? b.getRoomNumber() : "";
                     return roomA.compareToIgnoreCase(roomB);
                 });
                 break;

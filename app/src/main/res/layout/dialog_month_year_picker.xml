@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chọn tháng báo phí"
+            android:text="@string/month_picker_report_title"
             android:textColor="#0D47A1"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Tháng 1/2026"
+            android:text="@string/month_picker_preview_placeholder"
             android:textColor="#2F5B95"
             android:textSize="14sp" />
     </LinearLayout>
@@ -54,7 +54,7 @@
             android:layout_height="40dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:text="Tháng này"
+            android:text="@string/current_month"
             android:textAllCaps="false"
             android:textSize="13sp"
             app:strokeColor="#90CAF9"
@@ -67,7 +67,7 @@
             android:layout_height="40dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="Tháng trước"
+            android:text="@string/previous_month"
             android:textAllCaps="false"
             android:textSize="13sp"
             app:strokeColor="#90CAF9"
@@ -109,7 +109,7 @@
             android:layout_height="44dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:text="Hủy"
+            android:text="@string/cancel"
             android:textAllCaps="false"
             app:strokeColor="#B0BEC5"
             app:strokeWidth="1dp" />
@@ -121,7 +121,7 @@
             android:layout_height="44dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="Áp dụng"
+            android:text="@string/apply"
             android:textAllCaps="false"
             app:backgroundTint="@color/primary"
             app:iconGravity="textStart" />

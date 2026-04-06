@@ -79,17 +79,17 @@ public final class InvoiceFormValueHelper {
         double dienCuoi = parseDoubleSafe(etDienCuoi);
         double nuocDau = parseDoubleSafe(etNuocDau);
         double nuocCuoi = parseDoubleSafe(etNuocCuoi);
-        double donGiaDien = MoneyFormatter.getValue(etDonGiaDien);
-        double donGiaNuoc = MoneyFormatter.getValue(etDonGiaNuoc);
-        double phiRac = MoneyFormatter.getValue(etPhiRac);
-        double phiWifi = MoneyFormatter.getValue(etPhiWifi);
-        double phiGuiXe = MoneyFormatter.getValue(etPhiGuiXe);
+        double electricUnitPrice = MoneyFormatter.getValue(etDonGiaDien);
+        double waterUnitPrice = MoneyFormatter.getValue(etDonGiaNuoc);
+        double trashFee = MoneyFormatter.getValue(etPhiRac);
+        double wifiFee = MoneyFormatter.getValue(etPhiWifi);
+        double parkingFee = MoneyFormatter.getValue(etPhiGuiXe);
         Double rent = rentSupplier.get();
-        double giaThue = rent != null ? rent : 0;
+        double rentAmount = rent != null ? rent : 0;
 
         double soDien = Math.max(0, dienCuoi - dienDau);
         double soNuoc = Math.max(0, nuocCuoi - nuocDau);
-        double total = giaThue + soDien * donGiaDien + soNuoc * donGiaNuoc + phiRac + phiWifi + phiGuiXe;
+        double total = rentAmount + soDien * electricUnitPrice + soNuoc * waterUnitPrice + trashFee + wifiFee + parkingFee;
         tvEstimatedTotal.setText(MoneyFormatter.format(total));
     }
 

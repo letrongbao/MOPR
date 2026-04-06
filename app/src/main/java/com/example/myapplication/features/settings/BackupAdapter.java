@@ -23,15 +23,15 @@ public class BackupAdapter extends RecyclerView.Adapter<BackupAdapter.ViewHolder
         void onClick(BackupRestoreActivity.BackupItem item);
     }
 
-    private List<BackupRestoreActivity.BackupItem> danhSach = new ArrayList<>();
+    private List<BackupRestoreActivity.BackupItem> dataList = new ArrayList<>();
     private final OnItemClickListener listener;
 
     public BackupAdapter(OnItemClickListener listener) {
         this.listener = listener;
     }
 
-    public void setDanhSach(List<BackupRestoreActivity.BackupItem> list) {
-        this.danhSach = list != null ? list : new ArrayList<>();
+    public void setDataList(List<BackupRestoreActivity.BackupItem> list) {
+        this.dataList = list != null ? list : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -44,7 +44,7 @@ public class BackupAdapter extends RecyclerView.Adapter<BackupAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
-        BackupRestoreActivity.BackupItem it = danhSach.get(position);
+        BackupRestoreActivity.BackupItem it = dataList.get(position);
         h.tvId.setText(it.id);
 
         String note = it.note != null ? it.note.trim() : "";
@@ -64,7 +64,7 @@ public class BackupAdapter extends RecyclerView.Adapter<BackupAdapter.ViewHolder
 
     @Override
     public int getItemCount() {
-        return danhSach.size();
+        return dataList.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

@@ -4,37 +4,37 @@ import com.google.firebase.firestore.PropertyName;
 
 public class Room {
     private String id;
-    private String soPhong;
-    private String loaiPhong; // "Đơn", "Đôi", "Ghép"
-    private double dienTich;
-    private double giaThue;
-    private String trangThai; // "Trống", "Đã thuê"
-    private String hinhAnh; // URL ảnh từ Firebase Storage
+    private String roomNumber;
+    private String roomType; // "Single", "Double", "Shared"
+    private double area;
+    private double rentAmount;
+    private String status; // "Vacant", "Occupied"
+    private String imageUrl; // Image URL from Firebase Storage
 
     // Group rooms by house
-    private String canNhaId;
-    private String canNhaTen;
+    private String houseId;
+    private String houseName;
 
     // Enhanced fields
-    private int tang; // Floor number
-    private String moTa; // Description
-    private java.util.List<String> tienNghi; // Amenities: ["AC", "balcony", "kitchen"]
-    private int soNguoiToiDa; // Max occupancy
+    private int floor; // Floor number
+    private String description; // Description
+    private java.util.List<String> amenities; // Amenities: ["AC", "balcony", "kitchen"]
+    private int maxOccupancy; // Max occupancy
 
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;
     private com.google.firebase.Timestamp updatedAt;
 
     public Room() {
-    } // Firestore cần constructor rỗng
+    } // Firestore requires an empty constructor
 
-    public Room(String soPhong, String loaiPhong, double dienTich,
-            double giaThue, String trangThai) {
-        this.soPhong = soPhong;
-        this.loaiPhong = loaiPhong;
-        this.dienTich = dienTich;
-        this.giaThue = giaThue;
-        this.trangThai = trangThai;
+    public Room(String roomNumber, String roomType, double area,
+            double rentAmount, String status) {
+        this.roomNumber = roomNumber;
+        this.roomType = roomType;
+        this.area = area;
+        this.rentAmount = rentAmount;
+        this.status = status;
     }
 
     public String getId() {
@@ -45,104 +45,104 @@ public class Room {
         this.id = id;
     }
 
-    public String getSoPhong() {
-        return soPhong;
+    public String getRoomNumber() {
+        return roomNumber;
     }
 
-    public void setSoPhong(String soPhong) {
-        this.soPhong = soPhong;
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
     }
 
-    public String getLoaiPhong() {
-        return loaiPhong;
+    public String getRoomType() {
+        return roomType;
     }
 
-    public void setLoaiPhong(String loaiPhong) {
-        this.loaiPhong = loaiPhong;
+    public void setRoomType(String roomType) {
+        this.roomType = roomType;
     }
 
-    public double getDienTich() {
-        return dienTich;
+    public double getArea() {
+        return area;
     }
 
-    public void setDienTich(double dienTich) {
-        this.dienTich = dienTich;
+    public void setArea(double area) {
+        this.area = area;
     }
 
-    public double getGiaThue() {
-        return giaThue;
+    public double getRentAmount() {
+        return rentAmount;
     }
 
-    public void setGiaThue(double giaThue) {
-        this.giaThue = giaThue;
+    public void setRentAmount(double rentAmount) {
+        this.rentAmount = rentAmount;
     }
 
-    public String getTrangThai() {
-        return trangThai;
+    public String getStatus() {
+        return status;
     }
 
-    public void setTrangThai(String trangThai) {
-        this.trangThai = trangThai;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
-    public String getHinhAnh() {
-        return hinhAnh;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setHinhAnh(String hinhAnh) {
-        this.hinhAnh = hinhAnh;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
-    @PropertyName("canNhaId")
+    @PropertyName("houseId")
     public String getHouseId() {
-        return canNhaId;
+        return houseId;
     }
 
-    @PropertyName("canNhaId")
-    public void setHouseId(String canNhaId) {
-        this.canNhaId = canNhaId;
+    @PropertyName("houseId")
+    public void setHouseId(String houseId) {
+        this.houseId = houseId;
     }
 
-    @PropertyName("canNhaTen")
-    public String getHouseTen() {
-        return canNhaTen;
+    @PropertyName("houseName")
+    public String getHouseName() {
+        return houseName;
     }
 
-    @PropertyName("canNhaTen")
-    public void setHouseTen(String canNhaTen) {
-        this.canNhaTen = canNhaTen;
+    @PropertyName("houseName")
+    public void setHouseName(String houseName) {
+        this.houseName = houseName;
     }
 
-    public int getTang() {
-        return tang;
+    public int getFloor() {
+        return floor;
     }
 
-    public void setTang(int tang) {
-        this.tang = tang;
+    public void setFloor(int floor) {
+        this.floor = floor;
     }
 
-    public String getMoTa() {
-        return moTa;
+    public String getDescription() {
+        return description;
     }
 
-    public void setMoTa(String moTa) {
-        this.moTa = moTa;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public java.util.List<String> getTienNghi() {
-        return tienNghi;
+    public java.util.List<String> getAmenities() {
+        return amenities;
     }
 
-    public void setTienNghi(java.util.List<String> tienNghi) {
-        this.tienNghi = tienNghi;
+    public void setAmenities(java.util.List<String> amenities) {
+        this.amenities = amenities;
     }
 
-    public int getSoNguoiToiDa() {
-        return soNguoiToiDa;
+    public int getMaxOccupancy() {
+        return maxOccupancy;
     }
 
-    public void setSoNguoiToiDa(int soNguoiToiDa) {
-        this.soNguoiToiDa = soNguoiToiDa;
+    public void setMaxOccupancy(int maxOccupancy) {
+        this.maxOccupancy = maxOccupancy;
     }
 
     public com.google.firebase.Timestamp getCreatedAt() {
@@ -161,4 +161,3 @@ public class Room {
         this.updatedAt = updatedAt;
     }
 }
-

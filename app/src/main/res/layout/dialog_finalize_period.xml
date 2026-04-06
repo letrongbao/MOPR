@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Căn nhà"
+            android:text="@string/house"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <Spinner
@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tháng / Năm"
+            android:text="@string/month_year"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -38,7 +38,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đơn giá điện (đ/kWh)"
+            android:text="@string/electric_unit_price"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -52,7 +52,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đơn giá nước (đ/m³)"
+            android:text="@string/water_unit_price"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -66,7 +66,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phí rác (đ)"
+            android:text="@string/fee_garbage"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -80,7 +80,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phí wifi (đ)"
+            android:text="@string/fee_wifi"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText
@@ -94,7 +94,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phí gửi xe (đ)"
+            android:text="@string/fee_parking"
             android:textStyle="bold"
             android:textColor="#212121"/>
         <EditText

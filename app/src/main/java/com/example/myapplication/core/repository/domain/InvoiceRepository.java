@@ -23,7 +23,7 @@ public class InvoiceRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final AuditLogRepository audit = new AuditLogRepository();
-    private static final String COLLECTION = "hoa_don";
+    private static final String COLLECTION = "invoices";
 
     private CollectionReference getUserCollection() {
         String tenantId = TenantSession.getActiveTenantId();
@@ -53,9 +53,9 @@ public class InvoiceRepository {
         return data;
     }
 
-    public MutableLiveData<List<Invoice>> getInvoicesByRoom(String idPhong) {
+    public MutableLiveData<List<Invoice>> getInvoicesByRoom(String roomId) {
         MutableLiveData<List<Invoice>> data = new MutableLiveData<>();
-        getUserCollection().whereEqualTo("idPhong", idPhong)
+        getUserCollection().whereEqualTo("roomId", roomId)
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
@@ -70,13 +70,13 @@ public class InvoiceRepository {
         return data;
     }
 
-    public void addInvoice(Invoice hoaDon, Runnable onSuccess, Runnable onFail) {
-        hoaDon.tinhTongTien();
+    public void addInvoice(Invoice invoice, Runnable onSuccess, Runnable onFail) {
+        invoice.calculateTotalAmount();
         // Set creation timestamp
-        hoaDon.setCreatedAt(com.google.firebase.Timestamp.now());
-        hoaDon.setUpdatedAt(com.google.firebase.Timestamp.now());
+        invoice.setCreatedAt(com.google.firebase.Timestamp.now());
+        invoice.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        getUserCollection().add(hoaDon)
+        getUserCollection().add(invoice)
                 .addOnSuccessListener(ref -> {
                     audit.log("invoice.create", "invoice", ref.getId(), null);
                     onSuccess.run();
@@ -84,24 +84,24 @@ public class InvoiceRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 
-    public void addInvoiceUnique(Invoice hoaDon, Runnable onSuccess, Runnable onDuplicate, Runnable onFail) {
-        hoaDon.tinhTongTien();
+    public void addInvoiceUnique(Invoice invoice, Runnable onSuccess, Runnable onDuplicate, Runnable onFail) {
+        invoice.calculateTotalAmount();
         // Set creation timestamp
-        hoaDon.setCreatedAt(com.google.firebase.Timestamp.now());
-        hoaDon.setUpdatedAt(com.google.firebase.Timestamp.now());
+        invoice.setCreatedAt(com.google.firebase.Timestamp.now());
+        invoice.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        if (hoaDon.getIdPhong() == null || hoaDon.getIdPhong().trim().isEmpty()) {
+        if (invoice.getRoomId() == null || invoice.getRoomId().trim().isEmpty()) {
             onFail.run();
             return;
         }
-        String periodKey = toPeriodKey(hoaDon.getThangNam());
+        String periodKey = toPeriodKey(invoice.getBillingPeriod());
         if (periodKey.isEmpty()) {
             onFail.run();
             return;
         }
 
-        String docId = hoaDon.getIdPhong() + "_" + periodKey;
-        hoaDon.setId(docId);
+        String docId = invoice.getRoomId() + "_" + periodKey;
+        invoice.setId(docId);
 
         DocumentReference docRef = getUserCollection().document(docId);
         db.runTransaction(transaction -> {
@@ -109,7 +109,7 @@ public class InvoiceRepository {
             if (snap.exists()) {
                 throw new RuntimeException("DUPLICATE_INVOICE");
             }
-            transaction.set(docRef, hoaDon);
+            transaction.set(docRef, invoice);
             return null;
         })
                 .addOnSuccessListener(v -> {
@@ -143,34 +143,34 @@ public class InvoiceRepository {
         }
     }
 
-    public void updateInvoice(Invoice hoaDon, Runnable onSuccess, Runnable onFail) {
-        hoaDon.tinhTongTien();
+    public void updateInvoice(Invoice invoice, Runnable onSuccess, Runnable onFail) {
+        invoice.calculateTotalAmount();
         // Set update timestamp
-        hoaDon.setUpdatedAt(com.google.firebase.Timestamp.now());
+        invoice.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        getUserCollection().document(hoaDon.getId()).set(hoaDon)
+        getUserCollection().document(invoice.getId()).set(invoice)
                 .addOnSuccessListener(v -> {
-                    audit.log("invoice.update", "invoice", hoaDon.getId(), null);
+                    audit.log("invoice.update", "invoice", invoice.getId(), null);
                     onSuccess.run();
                 })
                 .addOnFailureListener(e -> onFail.run());
     }
 
-    public void updateStatus(String id, String trangThai, Runnable onSuccess, Runnable onFail) {
+    public void updateStatus(String id, String status, Runnable onSuccess, Runnable onFail) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put("trangThai", trangThai);
+        updates.put("status", status);
         updates.put("updatedAt", com.google.firebase.Timestamp.now());
 
         // If marking as paid, set payment date
-        if (InvoiceStatus.PAID.equals(trangThai)) {
-            updates.put("ngayThanhToan", com.google.firebase.Timestamp.now());
+        if (InvoiceStatus.PAID.equals(status)) {
+            updates.put("paymentDate", com.google.firebase.Timestamp.now());
         }
 
         getUserCollection().document(id)
                 .update(updates)
                 .addOnSuccessListener(v -> {
                     java.util.Map<String, Object> extra = new java.util.HashMap<>();
-                    extra.put("status", trangThai);
+                    extra.put("status", status);
                     audit.log("invoice.status_update", "invoice", id, extra);
                     onSuccess.run();
                 })
@@ -186,5 +186,3 @@ public class InvoiceRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 }
-
-

@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import com.example.myapplication.R;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.domain.Room;
 
@@ -22,7 +23,7 @@ public final class InvoiceDialogUiHelper {
             @NonNull Spinner spinner,
             @NonNull List<Room> rooms) {
         String[] roomNames = rooms.stream()
-                .map(p -> "Phòng " + p.getSoPhong())
+                .map(p -> context.getString(R.string.room_number, p.getRoomNumber()))
                 .toArray(String[]::new);
         ArrayAdapter<String> roomAdapter = new ArrayAdapter<>(
                 context,
@@ -89,16 +90,16 @@ public final class InvoiceDialogUiHelper {
 
     public static void fillFormFromInvoice(@NonNull InvoiceDialogSubmitHelper.FormRefs form,
             @NonNull Invoice invoice) {
-        form.etThangNam.setText(invoice.getThangNam());
-        form.etDienDau.setText(InvoiceFormValueHelper.formatDouble(invoice.getChiSoDienDau()));
-        form.etDienCuoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getChiSoDienCuoi()));
-        form.etDonGiaDien.setText(InvoiceFormValueHelper.formatDouble(invoice.getDonGiaDien()));
-        form.etNuocDau.setText(InvoiceFormValueHelper.formatDouble(invoice.getChiSoNuocDau()));
-        form.etNuocCuoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getChiSoNuocCuoi()));
-        form.etDonGiaNuoc.setText(InvoiceFormValueHelper.formatDouble(invoice.getDonGiaNuoc()));
-        form.etPhiRac.setText(InvoiceFormValueHelper.formatDouble(invoice.getPhiRac()));
-        form.etPhiWifi.setText(InvoiceFormValueHelper.formatDouble(invoice.getPhiWifi()));
-        form.etPhiGuiXe.setText(InvoiceFormValueHelper.formatDouble(invoice.getPhiGuiXe()));
+        form.etThangNam.setText(invoice.getBillingPeriod());
+        form.etDienDau.setText(InvoiceFormValueHelper.formatDouble(invoice.getElectricStartReading()));
+        form.etDienCuoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getElectricEndReading()));
+        form.etDonGiaDien.setText(InvoiceFormValueHelper.formatDouble(invoice.getElectricUnitPrice()));
+        form.etNuocDau.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterStartReading()));
+        form.etNuocCuoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterEndReading()));
+        form.etDonGiaNuoc.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterUnitPrice()));
+        form.etPhiRac.setText(InvoiceFormValueHelper.formatDouble(invoice.getTrashFee()));
+        form.etPhiWifi.setText(InvoiceFormValueHelper.formatDouble(invoice.getWifiFee()));
+        form.etPhiGuiXe.setText(InvoiceFormValueHelper.formatDouble(invoice.getParkingFee()));
     }
 
     public static void lockIdentityAndMeterStartFields(@NonNull Spinner spinnerPhong,

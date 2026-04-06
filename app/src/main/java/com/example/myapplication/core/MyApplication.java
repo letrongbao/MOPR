@@ -11,8 +11,10 @@ import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.example.myapplication.R;
 import com.example.myapplication.core.service.InvoiceReminderWorker;
 import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.LanguageManager;
 import com.google.firebase.FirebaseApp;
 
 import java.util.concurrent.TimeUnit;
@@ -25,7 +27,11 @@ public class MyApplication extends Application {
         @Override
         public void onCreate() {
                 super.onCreate();
-                // Phải init Firebase trước khi dùng bất kỳ service Firebase nào
+
+                // Ensure Vietnamese is set as default language on first launch
+                LanguageManager.applySavedLanguage(this);
+
+                // Firebase must be initialized before using any Firebase service
                 FirebaseApp.initializeApp(this);
                 TenantSession.init(this);
                 ensureReminderChannel();
@@ -38,9 +44,9 @@ public class MyApplication extends Application {
 
                 NotificationChannel channel = new NotificationChannel(
                                 REMINDER_CHANNEL_ID,
-                                "Nhắc nhở",
+                                getString(R.string.reminder_channel_name),
                                 NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setDescription("Nhắc thu tiền/hoá đơn");
+                channel.setDescription(getString(R.string.reminder_channel_description));
 
                 NotificationManager nm = getSystemService(NotificationManager.class);
                 if (nm != null)

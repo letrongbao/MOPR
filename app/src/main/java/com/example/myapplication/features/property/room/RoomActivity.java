@@ -51,8 +51,8 @@ public class RoomActivity extends AppCompatActivity {
     private ImageView dialogImgPreview;
     private ActivityResultLauncher<String> imagePickerLauncher;
 
-    // Phòng đang chờ kết quả upload từ Foreground Service
-    private Room pendingUploadPhong;
+    // Internal note.
+    private Room pendingUploadRoom;
     private BroadcastReceiver uploadReceiver;
 
     private com.google.firebase.firestore.ListenerRegistration tenantsListener;
@@ -66,7 +66,7 @@ public class RoomActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Register image picker trước setContentView
+        // Internal note.
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -78,30 +78,31 @@ public class RoomActivity extends AppCompatActivity {
                     }
                 });
 
-        // === BROADCAST RECEIVER: Nhận kết quả upload từ Foreground Service ===
+        // Internal note.
         uploadReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String imageUrl = intent.getStringExtra(ImageUploadService.EXTRA_IMAGE_URL);
-                if (imageUrl != null && pendingUploadPhong != null) {
-                    pendingUploadPhong.setHinhAnh(imageUrl);
-                    if (pendingUploadPhong.getId() != null) {
-                        viewModel.updateRoom(pendingUploadPhong,
+                if (imageUrl != null && pendingUploadRoom != null) {
+                    pendingUploadRoom.setImageUrl(imageUrl);
+                    if (pendingUploadRoom.getId() != null) {
+                        viewModel.updateRoom(pendingUploadRoom,
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(RoomActivity.this, "Cập nhật thành công!", Toast.LENGTH_SHORT)
+                                        .makeText(RoomActivity.this, R.string.update_success, Toast.LENGTH_SHORT)
                                         .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(RoomActivity.this, "Cập nhật thất bại", Toast.LENGTH_SHORT)
+                                        .makeText(RoomActivity.this, R.string.update_failed, Toast.LENGTH_SHORT)
                                         .show()));
                     } else {
-                        viewModel.addRoom(pendingUploadPhong,
+                        viewModel.addRoom(pendingUploadRoom,
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(RoomActivity.this, "Thêm thành công!", Toast.LENGTH_SHORT)
+                                        .makeText(RoomActivity.this, R.string.add_success, Toast.LENGTH_SHORT)
                                         .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(RoomActivity.this, "Thất bại", Toast.LENGTH_LONG).show()));
+                                        .makeText(RoomActivity.this, R.string.operation_failed, Toast.LENGTH_LONG)
+                                        .show()));
                     }
-                    pendingUploadPhong = null;
+                    pendingUploadRoom = null;
                 }
             }
         };
@@ -123,9 +124,9 @@ public class RoomActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvEmpty);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
-        presetHouseId = getIntent().getStringExtra("CAN_NHA_ID");
-        presetHouseName = getIntent().getStringExtra("CAN_NHA_NAME");
-        presetHouseAddr = getIntent().getStringExtra("CAN_NHA_ADDR");
+        presetHouseId = getIntent().getStringExtra("HOUSE_ID");
+        presetHouseName = getIntent().getStringExtra("HOUSE_NAME");
+        presetHouseAddr = getIntent().getStringExtra("HOUSE_ADDRESS");
         initialStatusFilter = getIntent().getStringExtra("FILTER_STATUS");
         final String finalFilterHouseId = presetHouseId;
 
@@ -135,7 +136,7 @@ public class RoomActivity extends AppCompatActivity {
         TextView tvTitle1 = findViewById(R.id.tvTitleLine1);
         TextView tvTitle2 = findViewById(R.id.tvTitleLine2);
         if (tvTitle1 != null) {
-            tvTitle1.setText("Danh sách phòng của nhà");
+            tvTitle1.setText(R.string.room_list_of_house);
         }
         if (tvTitle2 != null) {
             String sub = (presetHouseAddr != null && !presetHouseAddr.trim().isEmpty()) ? presetHouseAddr
@@ -156,55 +157,57 @@ public class RoomActivity extends AppCompatActivity {
 
         adapter = new RoomAdapter(new RoomAdapter.OnItemActionListener() {
             @Override
-            public void onXoa(Room phong) {
+            public void onDelete(Room room) {
                 new AlertDialog.Builder(RoomActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Xóa phòng " + phong.getSoPhong() + "?")
-                        .setPositiveButton("Xóa", (d, w) -> {
-                            String roomId = phong.getId();
+                        .setTitle(R.string.confirm_delete)
+                        .setMessage(getString(R.string.room_delete_confirm, room.getRoomNumber()))
+                        .setPositiveButton(R.string.delete, (d, w) -> {
+                            String roomId = room.getId();
                             if (roomId == null || roomId.trim().isEmpty()) {
-                                Toast.makeText(RoomActivity.this, "Thiếu ID phòng", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RoomActivity.this, R.string.missing_room_id, Toast.LENGTH_SHORT).show();
                                 return;
                             }
                             hasTenantsInRoom(roomId, true, has -> {
                                 if (has) {
-                                    Toast.makeText(RoomActivity.this, "Không thể xóa: phòng đang có người thuê",
+                                    Toast.makeText(RoomActivity.this, R.string.room_delete_has_tenant,
                                             Toast.LENGTH_LONG).show();
                                     return;
                                 }
                                 viewModel.deleteRoom(roomId,
                                         () -> runOnUiThread(() -> Toast
-                                                .makeText(RoomActivity.this, "Đã xóa", Toast.LENGTH_SHORT).show()),
+                                                .makeText(RoomActivity.this, R.string.deleted, Toast.LENGTH_SHORT)
+                                                .show()),
                                         () -> runOnUiThread(() -> Toast
-                                                .makeText(RoomActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT)
+                                                .makeText(RoomActivity.this, R.string.delete_failed,
+                                                        Toast.LENGTH_SHORT)
                                                 .show()));
                             });
                         })
-                        .setNegativeButton("Hủy", null).show();
+                        .setNegativeButton(R.string.cancel, null).show();
             }
 
             @Override
-            public void onChon(Room phong) {
-                showEditRoomDialog(phong);
+            public void onSelect(Room room) {
+                showEditRoomDialog(room);
             }
 
             @Override
-            public void onXemChiTiet(Room phong) {
+            public void onViewDetails(Room room) {
                 Intent intent = new Intent(RoomActivity.this, RoomDetailsActivity.class);
-                intent.putExtra("PHONG_ID", phong.getId());
+                intent.putExtra("ROOM_ID", room.getId());
                 startActivity(intent);
             }
 
             @Override
-            public void onTaoHopDong(Room phong) {
+            public void onCreateContract(Room room) {
                 Intent it = new Intent(RoomActivity.this, ContractActivity.class);
-                it.putExtra(ContractActivity.EXTRA_PHONG_ID, phong.getId());
+                it.putExtra(ContractActivity.EXTRA_ROOM_ID, room.getId());
                 startActivity(it);
             }
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(false);
         recyclerView.setAdapter(adapter);
 
         final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(
@@ -228,15 +231,15 @@ public class RoomActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(RoomViewModel.class);
         // Listen tenants to enrich room list UI
         try {
-            tenantsListener = scopedCollection("nguoi_thue")
-                    .whereEqualTo("trangThaiHopDong", "ACTIVE")
+            tenantsListener = scopedCollection("contracts")
+                    .whereEqualTo("contractStatus", "ACTIVE")
                     .addSnapshotListener((snap, err) -> {
                         if (snap == null)
                             return;
 
                         java.util.Map<String, java.util.List<com.google.firebase.firestore.DocumentSnapshot>> byRoom = new java.util.HashMap<>();
                         for (com.google.firebase.firestore.DocumentSnapshot d : snap.getDocuments()) {
-                            String roomId = d.getString("idPhong");
+                            String roomId = d.getString("roomId");
                             if (roomId == null || roomId.trim().isEmpty())
                                 continue;
                             java.util.List<com.google.firebase.firestore.DocumentSnapshot> arr = byRoom.get(roomId);
@@ -254,10 +257,12 @@ public class RoomActivity extends AppCompatActivity {
                             if (arr == null || arr.isEmpty())
                                 continue;
                             com.google.firebase.firestore.DocumentSnapshot first = arr.get(0);
-                            String name = first.getString("hoTen");
-                            String phone = first.getString("soDienThoai");
+                            String name = first.getString("fullName");
+                            String phone = first.getString("phoneNumber");
                             String base = (name != null ? name : "")
-                                    + (phone != null && !phone.trim().isEmpty() ? (" - ĐT: " + phone) : "");
+                                    + (phone != null && !phone.trim().isEmpty()
+                                            ? getString(R.string.room_tenant_phone_prefix, phone)
+                                            : "");
                             int extra = arr.size() - 1;
                             if (extra > 0) {
                                 base = base + " ( +" + extra + ")";
@@ -288,7 +293,7 @@ public class RoomActivity extends AppCompatActivity {
                 if (p.getHouseId() == null || !filterHouseId.equals(p.getHouseId()))
                     continue;
             }
-            boolean vacant = RoomStatus.VACANT.equals(p.getTrangThai());
+            boolean vacant = RoomStatus.VACANT.equals(p.getStatus());
             if (tabIndex == 0 && !vacant)
                 continue;
             if (tabIndex == 1 && vacant)
@@ -296,7 +301,7 @@ public class RoomActivity extends AppCompatActivity {
             out.add(p);
         }
 
-        adapter.setDanhSach(out);
+        adapter.setDataList(out);
         tvEmpty.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
@@ -304,18 +309,18 @@ public class RoomActivity extends AppCompatActivity {
         void onResult(boolean value);
     }
 
-    private String normalizeHouseId(String canNhaId) {
-        return canNhaId == null ? "" : canNhaId.trim();
+    private String normalizeHouseId(String houseId) {
+        return houseId == null ? "" : houseId.trim();
     }
 
-    private boolean hasDuplicateRoomNumberInSameHouse(@NonNull String soPhong, String canNhaId,
+    private boolean hasDuplicateRoomNumberInSameHouse(@NonNull String roomNumber, String houseId,
             String excludeRoomId) {
         if (viewModel == null || viewModel.getRoomList().getValue() == null) {
             return false;
         }
 
-        String targetSoPhong = soPhong.trim();
-        String targetHouseId = normalizeHouseId(canNhaId);
+        String targetRoomNumber = roomNumber.trim();
+        String targetHouseId = normalizeHouseId(houseId);
 
         for (Room item : viewModel.getRoomList().getValue()) {
             if (item == null) {
@@ -325,9 +330,9 @@ public class RoomActivity extends AppCompatActivity {
                 continue;
             }
 
-            String itemSoPhong = item.getSoPhong() == null ? "" : item.getSoPhong().trim();
+            String itemRoomNumber = item.getRoomNumber() == null ? "" : item.getRoomNumber().trim();
             String itemHouseId = normalizeHouseId(item.getHouseId());
-            if (itemHouseId.equals(targetHouseId) && itemSoPhong.equalsIgnoreCase(targetSoPhong)) {
+            if (itemHouseId.equals(targetHouseId) && itemRoomNumber.equalsIgnoreCase(targetRoomNumber)) {
                 return true;
             }
         }
@@ -335,22 +340,22 @@ public class RoomActivity extends AppCompatActivity {
     }
 
     private void hasDuplicateRoomNumberInSameHouseRemote(
-            @NonNull String soPhong,
-            String canNhaId,
+            @NonNull String roomNumber,
+            String houseId,
             String excludeRoomId,
             @NonNull BoolCallback cb) {
-        com.google.firebase.firestore.Query q = scopedCollection("phong_tro")
-                .whereEqualTo("soPhong", soPhong.trim());
+        com.google.firebase.firestore.Query q = scopedCollection("rooms")
+                .whereEqualTo("roomNumber", roomNumber.trim());
 
         q.get()
                 .addOnSuccessListener(qs -> {
-                    String targetHouseId = normalizeHouseId(canNhaId);
+                    String targetHouseId = normalizeHouseId(houseId);
                     boolean exists = false;
                     for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
                         if (excludeRoomId != null && excludeRoomId.equals(doc.getId())) {
                             continue;
                         }
-                        String docHouseId = normalizeHouseId(doc.getString("canNhaId"));
+                        String docHouseId = normalizeHouseId(doc.getString("houseId"));
                         if (docHouseId.equals(targetHouseId)) {
                             exists = true;
                             break;
@@ -379,33 +384,33 @@ public class RoomActivity extends AppCompatActivity {
     private void hasTenantsInRoom(@NonNull String roomId, boolean failClosed, @NonNull BoolCallback cb) {
         com.google.firebase.firestore.CollectionReference col;
         try {
-            col = scopedCollection("nguoi_thue");
+            col = scopedCollection("contracts");
         } catch (Exception e) {
             cb.onResult(failClosed);
             return;
         }
 
-        col.whereEqualTo("idPhong", roomId)
+        col.whereEqualTo("roomId", roomId)
                 .limit(1)
                 .get()
                 .addOnSuccessListener(qs -> cb.onResult(qs != null && !qs.isEmpty()))
                 .addOnFailureListener(e -> cb.onResult(failClosed));
     }
 
-    private void enforceRentedIfHasTenants(@NonNull Room phong, @NonNull Runnable onReady) {
-        if (phong.getId() == null || phong.getId().trim().isEmpty()) {
+    private void enforceRentedIfHasTenants(@NonNull Room room, @NonNull Runnable onReady) {
+        if (room.getId() == null || room.getId().trim().isEmpty()) {
             onReady.run();
             return;
         }
-        if (!RoomStatus.VACANT.equals(phong.getTrangThai())) {
+        if (!RoomStatus.VACANT.equals(room.getStatus())) {
             onReady.run();
             return;
         }
 
-        hasTenantsInRoom(phong.getId(), false, has -> {
+        hasTenantsInRoom(room.getId(), false, has -> {
             if (has) {
-                phong.setTrangThai(RoomStatus.RENTED);
-                Toast.makeText(this, "Phòng đang có người thuê, tự chuyển trạng thái sang 'Đã thuê'", Toast.LENGTH_LONG)
+                room.setStatus(RoomStatus.RENTED);
+                Toast.makeText(this, R.string.room_status_auto_rented, Toast.LENGTH_LONG)
                         .show();
             }
             onReady.run();
@@ -414,25 +419,25 @@ public class RoomActivity extends AppCompatActivity {
 
     private void showAddRoomDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_room, null);
-        EditText etSoPhong = dialogView.findViewById(R.id.etSoPhong);
+        EditText etRoomNumber = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
-        EditText etGiaThue = dialogView.findViewById(R.id.etGiaThue);
+        EditText etRentAmount = dialogView.findViewById(R.id.etGiaThue);
         Spinner spinnerHouse = dialogView.findViewById(R.id.spinnerHouse);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
         View layoutHouseField = dialogView.findViewById(R.id.layoutHouseField);
 
-        MoneyFormatter.applyTo(etGiaThue);
+        MoneyFormatter.applyTo(etRentAmount);
 
         final boolean lockHouse = presetHouseId != null && !presetHouseId.trim().isEmpty();
 
-        java.util.List<String> canNhaIds = new java.util.ArrayList<>();
-        java.util.List<String> canNhaLabels = new java.util.ArrayList<>();
-        ArrayAdapter<String> canNhaAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, canNhaLabels);
-        canNhaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        java.util.List<String> houseIds = new java.util.ArrayList<>();
+        java.util.List<String> houseLabels = new java.util.ArrayList<>();
+        ArrayAdapter<String> houseAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, houseLabels);
+        houseAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         if (spinnerHouse != null && !lockHouse) {
-            spinnerHouse.setAdapter(canNhaAdapter);
-            loadHouseOptions(spinnerHouse, canNhaIds, canNhaLabels, null, canNhaAdapter);
+            spinnerHouse.setAdapter(houseAdapter);
+            loadHouseOptions(spinnerHouse, houseIds, houseLabels, null, houseAdapter);
         }
         if (layoutHouseField != null && lockHouse) {
             layoutHouseField.setVisibility(View.GONE);
@@ -445,19 +450,19 @@ public class RoomActivity extends AppCompatActivity {
 
         ArrayAdapter<String> loaiAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
-                new String[] { "Studio", "Duplex", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ" });
+                getResources().getStringArray(R.array.room_type_options));
         loaiAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLoai.setAdapter(loaiAdapter);
 
         new AlertDialog.Builder(this)
-                .setTitle("Thêm phòng mới")
+                .setTitle(R.string.room_add_new_title)
                 .setView(dialogView)
-                .setPositiveButton("Thêm", (d, w) -> {
-                    String soPhong = etSoPhong.getText().toString().trim();
+                .setPositiveButton(R.string.add, (d, w) -> {
+                    String roomNumber = etRoomNumber.getText().toString().trim();
                     String dienTichStr = etDienTich.getText().toString().trim();
-                    double giaThue = MoneyFormatter.getValue(etGiaThue);
-                    if (soPhong.isEmpty() || dienTichStr.isEmpty() || giaThue == 0) {
-                        Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                    double rentAmount = MoneyFormatter.getValue(etRentAmount);
+                    if (roomNumber.isEmpty() || dienTichStr.isEmpty() || rentAmount == 0) {
+                        Toast.makeText(this, R.string.please_fill_all_information, Toast.LENGTH_SHORT).show();
                         return;
                     }
                     try {
@@ -467,60 +472,56 @@ public class RoomActivity extends AppCompatActivity {
                                         : (presetHouseAddr != null ? presetHouseAddr : ""))
                                 : "";
                         if (!lockHouse && spinnerHouse != null) {
-                            int canNhaIdx = spinnerHouse.getSelectedItemPosition();
-                            if (canNhaIdx >= 0 && canNhaIdx < canNhaIds.size()) {
-                                selectedHouseId = canNhaIds.get(canNhaIdx);
-                                selectedHouseLabel = canNhaLabels.get(canNhaIdx);
+                            int houseIndex = spinnerHouse.getSelectedItemPosition();
+                            if (houseIndex >= 0 && houseIndex < houseIds.size()) {
+                                selectedHouseId = houseIds.get(houseIndex);
+                                selectedHouseLabel = houseLabels.get(houseIndex);
                             }
                         }
                         final String finalSelectedHouseId = selectedHouseId;
                         final String finalSelectedHouseLabel = selectedHouseLabel;
 
-                        if (hasDuplicateRoomNumberInSameHouse(soPhong, finalSelectedHouseId, null)) {
-                            Toast.makeText(this,
-                                    "Số phòng đã tồn tại trong căn nhà đã chọn",
-                                    Toast.LENGTH_LONG).show();
+                        if (hasDuplicateRoomNumberInSameHouse(roomNumber, finalSelectedHouseId, null)) {
+                            Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG).show();
                             return;
                         }
 
-                        hasDuplicateRoomNumberInSameHouseRemote(soPhong, finalSelectedHouseId, null, exists -> {
+                        hasDuplicateRoomNumberInSameHouseRemote(roomNumber, finalSelectedHouseId, null, exists -> {
                             if (exists) {
-                                Toast.makeText(this,
-                                        "Số phòng đã tồn tại trong căn nhà đã chọn",
-                                        Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG).show();
                                 return;
                             }
 
-                            Room phong = new Room(
-                                    soPhong,
+                            Room room = new Room(
+                                    roomNumber,
                                     spinnerLoai.getSelectedItem().toString(),
                                     Double.parseDouble(dienTichStr),
-                                    giaThue,
+                                    rentAmount,
                                     RoomStatus.VACANT);
 
                             if (!finalSelectedHouseId.isEmpty()) {
-                                phong.setHouseId(finalSelectedHouseId);
-                                phong.setHouseTen(finalSelectedHouseLabel);
+                                room.setHouseId(finalSelectedHouseId);
+                                room.setHouseName(finalSelectedHouseLabel);
                             }
 
                             ensureRoomQuotaThen(() -> {
                                 if (selectedImageUri != null) {
-                                    uploadImageAndSave(phong);
+                                    uploadImageAndSave(room);
                                 } else {
-                                    viewModel.addRoom(phong,
+                                    viewModel.addRoom(room,
                                             () -> runOnUiThread(() -> Toast
-                                                    .makeText(this, "Thêm thành công!", Toast.LENGTH_SHORT).show()),
+                                                    .makeText(this, R.string.add_success, Toast.LENGTH_SHORT).show()),
                                             () -> runOnUiThread(() -> Toast.makeText(this,
-                                                    "Thất bại — kiểm tra kết nối Firebase", Toast.LENGTH_LONG)
+                                                    R.string.room_add_failed_check_firebase, Toast.LENGTH_LONG)
                                                     .show()));
                                 }
                             });
                         });
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.invalid_data, Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null).show();
+                .setNegativeButton(R.string.cancel, null).show();
     }
 
     private void ensureRoomQuotaThen(@NonNull Runnable onAllowed) {
@@ -537,11 +538,12 @@ public class RoomActivity extends AppCompatActivity {
                     Long maxRoomsL = tdoc.getLong("maxRooms");
                     int maxRooms = maxRoomsL != null ? maxRoomsL.intValue() : 50;
 
-                    db.collection("tenants").document(tenantId).collection("phong_tro").get()
+                    db.collection("tenants").document(tenantId).collection("rooms").get()
                             .addOnSuccessListener(qs -> {
                                 int current = qs != null ? qs.size() : 0;
                                 if (current >= maxRooms) {
-                                    Toast.makeText(this, "Đã vượt giới hạn phòng (" + maxRooms + ")", Toast.LENGTH_LONG)
+                                    Toast.makeText(this, getString(R.string.room_limit_exceeded, maxRooms),
+                                            Toast.LENGTH_LONG)
                                             .show();
                                     return;
                                 }
@@ -558,26 +560,26 @@ public class RoomActivity extends AppCompatActivity {
         ids.clear();
         labels.clear();
         ids.add("");
-        labels.add("(Không chọn)");
+        labels.add(getString(R.string.none_option));
         adapter.notifyDataSetChanged();
 
         String tenantId = TenantSession.getActiveTenantId();
         com.google.firebase.firestore.CollectionReference col;
         if (tenantId != null && !tenantId.trim().isEmpty()) {
             col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("tenants").document(tenantId).collection("can_nha");
+                    .collection("tenants").document(tenantId).collection("houses");
         } else {
             com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
                     .getCurrentUser();
             if (user == null)
                 return;
             col = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("users").document(user.getUid()).collection("can_nha");
+                    .collection("users").document(user.getUid()).collection("houses");
         }
 
         col.get().addOnSuccessListener(qs -> {
             for (com.google.firebase.firestore.QueryDocumentSnapshot doc : qs) {
-                String name = doc.getString("tenHouse");
+                String name = doc.getString("houseName");
                 if (name == null || name.trim().isEmpty())
                     name = doc.getId();
                 ids.add(doc.getId());
@@ -596,11 +598,11 @@ public class RoomActivity extends AppCompatActivity {
         });
     }
 
-    private void showEditRoomDialog(Room phong) {
+    private void showEditRoomDialog(Room room) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_room, null);
-        EditText etSoPhong = dialogView.findViewById(R.id.etSoPhong);
+        EditText etRoomNumber = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
-        EditText etGiaThue = dialogView.findViewById(R.id.etGiaThue);
+        EditText etRentAmount = dialogView.findViewById(R.id.etGiaThue);
         Spinner spinnerHouse = dialogView.findViewById(R.id.spinnerHouse);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
         View layoutHouseField = dialogView.findViewById(R.id.layoutHouseField);
@@ -608,16 +610,16 @@ public class RoomActivity extends AppCompatActivity {
         final boolean lockHouse = presetHouseId != null && !presetHouseId.trim().isEmpty();
 
         // Apply money formatter to price field
-        MoneyFormatter.applyTo(etGiaThue);
+        MoneyFormatter.applyTo(etRentAmount);
 
-        java.util.List<String> canNhaIds = new java.util.ArrayList<>();
-        java.util.List<String> canNhaLabels = new java.util.ArrayList<>();
-        ArrayAdapter<String> canNhaAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, canNhaLabels);
-        canNhaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        java.util.List<String> houseIds = new java.util.ArrayList<>();
+        java.util.List<String> houseLabels = new java.util.ArrayList<>();
+        ArrayAdapter<String> houseAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, houseLabels);
+        houseAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         if (spinnerHouse != null && !lockHouse) {
-            spinnerHouse.setAdapter(canNhaAdapter);
-            loadHouseOptions(spinnerHouse, canNhaIds, canNhaLabels, phong.getHouseId(), canNhaAdapter);
+            spinnerHouse.setAdapter(houseAdapter);
+            loadHouseOptions(spinnerHouse, houseIds, houseLabels, room.getHouseId(), houseAdapter);
         }
         if (layoutHouseField != null && lockHouse) {
             layoutHouseField.setVisibility(View.GONE);
@@ -628,37 +630,37 @@ public class RoomActivity extends AppCompatActivity {
         selectedImageUri = null;
         dialogView.findViewById(R.id.btnChonAnh).setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
-        // Load ảnh cũ nếu có
-        if (phong.getHinhAnh() != null && !phong.getHinhAnh().isEmpty()) {
-            Glide.with(this).load(phong.getHinhAnh()).centerCrop().into(dialogImgPreview);
+        // Internal note.
+        if (room.getImageUrl() != null && !room.getImageUrl().isEmpty()) {
+            Glide.with(this).load(room.getImageUrl()).centerCrop().into(dialogImgPreview);
         }
 
-        String[] loaiOptions = { "Studio", "Duplex", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ" };
+        String[] loaiOptions = getResources().getStringArray(R.array.room_type_options);
         ArrayAdapter<String> loaiAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, loaiOptions);
         loaiAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLoai.setAdapter(loaiAdapter);
 
-        etSoPhong.setText(phong.getSoPhong());
-        etDienTich.setText(phong.getDienTich() % 1 == 0 ? String.valueOf((long) phong.getDienTich())
-                : String.valueOf(phong.getDienTich()));
-        MoneyFormatter.setValue(etGiaThue, phong.getGiaThue());
+        etRoomNumber.setText(room.getRoomNumber());
+        etDienTich.setText(room.getArea() % 1 == 0 ? String.valueOf((long) room.getArea())
+                : String.valueOf(room.getArea()));
+        MoneyFormatter.setValue(etRentAmount, room.getRentAmount());
         for (int i = 0; i < loaiOptions.length; i++) {
-            if (loaiOptions[i].equals(phong.getLoaiPhong())) {
+            if (loaiOptions[i].equals(room.getRoomType())) {
                 spinnerLoai.setSelection(i);
                 break;
             }
         }
 
         new AlertDialog.Builder(this)
-                .setTitle("Chỉnh sửa phòng " + phong.getSoPhong())
+                .setTitle(getString(R.string.room_edit_title, room.getRoomNumber()))
                 .setView(dialogView)
-                .setPositiveButton("Cập nhật", (d, w) -> {
-                    String soPhong = etSoPhong.getText().toString().trim();
+                .setPositiveButton(R.string.update, (d, w) -> {
+                    String roomNumber = etRoomNumber.getText().toString().trim();
                     String dienTichStr = etDienTich.getText().toString().trim();
-                    double giaThue = MoneyFormatter.getValue(etGiaThue);
-                    if (soPhong.isEmpty() || dienTichStr.isEmpty() || giaThue == 0) {
-                        Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                    double rentAmount = MoneyFormatter.getValue(etRentAmount);
+                    if (roomNumber.isEmpty() || dienTichStr.isEmpty() || rentAmount == 0) {
+                        Toast.makeText(this, R.string.please_fill_all_information, Toast.LENGTH_SHORT).show();
                         return;
                     }
                     try {
@@ -668,73 +670,70 @@ public class RoomActivity extends AppCompatActivity {
                                         : (presetHouseAddr != null ? presetHouseAddr : ""))
                                 : "";
                         if (!lockHouse && spinnerHouse != null) {
-                            int canNhaIdx = spinnerHouse.getSelectedItemPosition();
-                            if (canNhaIdx >= 0 && canNhaIdx < canNhaIds.size()) {
-                                selectedHouseId = canNhaIds.get(canNhaIdx);
-                                selectedHouseLabel = canNhaLabels.get(canNhaIdx);
+                            int houseIndex = spinnerHouse.getSelectedItemPosition();
+                            if (houseIndex >= 0 && houseIndex < houseIds.size()) {
+                                selectedHouseId = houseIds.get(houseIndex);
+                                selectedHouseLabel = houseLabels.get(houseIndex);
                             }
                         }
                         final String finalSelectedHouseId = selectedHouseId;
                         final String finalSelectedHouseLabel = selectedHouseLabel;
 
-                        if (hasDuplicateRoomNumberInSameHouse(soPhong, finalSelectedHouseId, phong.getId())) {
-                            Toast.makeText(this,
-                                    "Số phòng đã tồn tại trong căn nhà đã chọn",
-                                    Toast.LENGTH_LONG).show();
+                        if (hasDuplicateRoomNumberInSameHouse(roomNumber, finalSelectedHouseId, room.getId())) {
+                            Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG).show();
                             return;
                         }
 
-                        hasDuplicateRoomNumberInSameHouseRemote(soPhong, finalSelectedHouseId, phong.getId(),
+                        hasDuplicateRoomNumberInSameHouseRemote(roomNumber, finalSelectedHouseId, room.getId(),
                                 exists -> {
                                     if (exists) {
-                                        Toast.makeText(this,
-                                                "Số phòng đã tồn tại trong căn nhà đã chọn",
-                                                Toast.LENGTH_LONG).show();
+                                        Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG)
+                                                .show();
                                         return;
                                     }
 
-                                    Room updated = new Room(soPhong,
+                                    Room updated = new Room(roomNumber,
                                             spinnerLoai.getSelectedItem().toString(),
                                             Double.parseDouble(dienTichStr),
-                                            giaThue,
-                                            phong.getTrangThai());
-                                    updated.setId(phong.getId());
+                                            rentAmount,
+                                            room.getStatus());
+                                    updated.setId(room.getId());
 
                                     if (!finalSelectedHouseId.isEmpty()) {
                                         updated.setHouseId(finalSelectedHouseId);
-                                        updated.setHouseTen(finalSelectedHouseLabel);
+                                        updated.setHouseName(finalSelectedHouseLabel);
                                     }
 
                                     enforceRentedIfHasTenants(updated, () -> {
                                         if (selectedImageUri != null) {
                                             uploadImageAndSave(updated);
                                         } else {
-                                            // Giữ ảnh cũ nếu không chọn ảnh mới
-                                            updated.setHinhAnh(phong.getHinhAnh());
+                                            // Internal note.
+                                            updated.setImageUrl(room.getImageUrl());
                                             viewModel.updateRoom(updated,
                                                     () -> runOnUiThread(() -> Toast
-                                                            .makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT)
+                                                            .makeText(this, R.string.update_success, Toast.LENGTH_SHORT)
                                                             .show()),
                                                     () -> runOnUiThread(() -> Toast
-                                                            .makeText(this, "Cập nhật thất bại", Toast.LENGTH_SHORT)
+                                                            .makeText(this, R.string.update_failed, Toast.LENGTH_SHORT)
                                                             .show()));
                                         }
                                     });
                                 });
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số liệu không hợp lệ", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.invalid_data, Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Hủy", null).show();
+                .setNegativeButton(R.string.cancel, null).show();
     }
 
-    // === FOREGROUND SERVICE: Upload ảnh qua Service thay vì thread trực tiếp ===
-    private void uploadImageAndSave(Room phong) {
-        pendingUploadPhong = phong;
+    // Internal note.
+    private void uploadImageAndSave(Room room) {
+        pendingUploadRoom = room;
         Intent serviceIntent = new Intent(this, ImageUploadService.class);
         serviceIntent.putExtra(ImageUploadService.EXTRA_IMAGE_URI, selectedImageUri.toString());
         ContextCompat.startForegroundService(this, serviceIntent);
-        Toast.makeText(this, "Đang upload ảnh qua Service...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.uploading_image_to_system, Toast.LENGTH_SHORT).show();
     }
 
     @Override

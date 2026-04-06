@@ -1,64 +1,64 @@
 # Workflow Guide For Agents
 
-## Muc tieu
-Tai lieu nay la huong dan luong lam viec chuan de agent khac trong team co the lam dung cach, commit gon, va khong pha vo du lieu.
+## Objective
+This document defines the standard execution flow so any agent in the team can work consistently, keep commits clean, and avoid data regression.
 
-## Tai lieu bat buoc phai doc truoc khi sua code
+## Required Reading Before Editing Code
 
-1. `docs/WORKFLOW_GUIDE.md` (tai lieu nay)
-2. `docs/FIRESTORE_DATA_CONTRACT.md` (schema va quy tac du lieu Firestore)
-3. `docs/AGENT_HANDOFF.md` (pham vi va nguyen tac thuc thi)
+1. `docs/WORKFLOW_GUIDE.md` (this document)
+2. `docs/FIRESTORE_DATA_CONTRACT.md` (Firestore schema and data rules)
+3. `docs/AGENT_HANDOFF.md` (scope and execution principles)
 
-## Luong lam viec chuan
+## Standard Workflow
 
-1. Kiem tra nhanh trang thai repo
+1. Quickly inspect repository state
    - `git status --short`
-2. Xac dinh scope task
-   - Neu lien quan du lieu Firestore, bat buoc doi chieu `FIRESTORE_DATA_CONTRACT.md`
-3. Sua code theo batch nho
-   - Moi batch xong thi build lai
-4. Build kiem tra
+2. Confirm task scope
+   - If the task touches Firestore data, cross-check `FIRESTORE_DATA_CONTRACT.md`
+3. Implement in small batches
+   - Rebuild after each batch
+4. Validate build
    - `./gradlew.bat assembleDebug`
-5. Smoke test cac man lien quan
+5. Run smoke tests for related screens
    - Room/Tenant/Invoice/Contract/Revenue
-6. Kiem tra lai git truoc commit
-   - Khong de file IDE/build/local secrets trong commit
+6. Re-check git state before commit
+   - Do not include IDE files, build outputs, or local secrets
 
-## Nguyen tac commit sach
+## Clean Commit Rules
 
-1. Khong commit file IDE/local:
+1. Do not commit IDE/local files:
    - `.idea/`, `.vscode/`, `local.properties`
-2. Khong commit build output:
+2. Do not commit build output:
    - `build/`, `**/build/`, `.gradle/`
-3. Khong commit local secrets:
+3. Do not commit local secrets:
    - `scripts/serviceAccountKey.json`
-4. Chi commit file nghiep vu va docs huong dan can thiet
+4. Commit only business-related files and necessary guidance docs
 
-## Quy tac khi sua Firestore
+## Firestore Editing Rules
 
-1. Luon dung dung scope helper (`TenantSession` + fallback `users/{uid}`)
-2. Khong doi ten collection/field khi chua co migration plan
-3. Uu tien dung cac FK da co:
-   - `idPhong`, `idTenant`, `invoiceId`
-4. Neu them man moi, phai map voi schema hien co, khong tao schema rieng
+1. Always use the scope helper (`TenantSession` with `users/{uid}` fallback)
+2. Do not rename collections/fields without a migration plan
+3. Prefer existing foreign keys:
+   - `roomId`, `contractId`, `invoiceId`
+4. New screens must map to existing schema; do not introduce isolated schema variants
 
-## Quy tac khi lam role/onboarding
+## Role/Onboarding Rules
 
-1. Signup cong khai mac dinh la `TENANT`.
-2. `OWNER` va `STAFF` phai di qua bootstrap/invite, khong cho tu chon role tu do trong app public.
-3. Neu co lien quan den quyen truy cap, phai bam theo `membership` trong tenant scope.
-4. UI co the thay doi theo role, nhung source of truth van la membership + houseId/roomId.
+1. Public signup defaults to `TENANT`.
+2. `OWNER` and `STAFF` must be provisioned via bootstrap/invite, not self-selected in public signup.
+3. Access control for tenant business data must follow tenant-scope `membership`.
+4. Current Home shell rendering is a separate UI gate based on `users/{uid}.primaryRole` (OWNER vs non-OWNER), while domain authorization remains membership + house/room scope.
 
-## Quy tac tai su dung UI (bat buoc uu tien)
+## UI Reuse Rules (Mandatory Priority)
 
-1. Truoc khi sua UI, tim helper/component dung chung co san (`core/util`, `core/widget`).
-2. Neu phat hien code scaffold lap lai (edge-to-edge, inset, toolbar/back), bat buoc dung helper chung.
-3. Khong copy/paste boilerplate UI giua cac man hinh neu da co helper.
-4. Neu man hinh dac thu khong dung helper duoc, phai ghi ro ly do trong mo ta batch.
+1. Before editing UI, look for existing reusable helpers/components (`core/util`, `core/widget`).
+2. If repeated scaffolding appears (edge-to-edge, insets, toolbar/back), use shared helpers.
+3. Do not copy/paste UI boilerplate between screens when helper abstractions already exist.
+4. If a special screen cannot use shared helpers, document the reason in the batch description.
 
 ## Definition Of Done (DoD)
 
-1. Build pass: `./gradlew.bat assembleDebug`
-2. Khong co conflict (`UU`) trong `git status --short`
-3. Khong co thay doi rac (IDE/build/local files)
-4. Chuc nang vua sua chay dung voi du lieu Firestore hien co
+1. Build passes: `./gradlew.bat assembleDebug`
+2. No merge conflict markers (`UU`) in `git status --short`
+3. No noisy local changes (IDE/build/local files)
+4. Updated functionality works with current Firestore data conventions

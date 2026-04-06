@@ -59,11 +59,12 @@ public class OrgAdminActivity extends AppCompatActivity {
 
         TenantSession.init(this);
         tenantId = getIntent().getStringExtra("TENANT_ID");
-        if (tenantId == null || tenantId.trim().isEmpty()) tenantId = TenantSession.getActiveTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty())
+            tenantId = TenantSession.getActiveTenantId();
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null || tenantId == null || tenantId.trim().isEmpty()) {
-            Toast.makeText(this, "Thiếu tenant/user", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.org_missing_tenant_or_user), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -78,7 +79,7 @@ public class OrgAdminActivity extends AppCompatActivity {
                 .addOnSuccessListener(mdoc -> {
                     String role = mdoc.getString("role");
                     if (!TenantRoles.OWNER.equals(role)) {
-                        Toast.makeText(this, "Chỉ OWNER mới xem được", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.org_owner_only_view), Toast.LENGTH_SHORT).show();
                         finish();
                         return;
                     }
@@ -91,7 +92,7 @@ public class OrgAdminActivity extends AppCompatActivity {
                     loadInvites(finalTenantId);
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Không thể kiểm tra quyền", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.org_permission_check_failed), Toast.LENGTH_SHORT).show();
                     finish();
                 });
     }
@@ -100,19 +101,23 @@ public class OrgAdminActivity extends AppCompatActivity {
         db.collection("tenants").document(tenantId).get()
                 .addOnSuccessListener(tdoc -> {
                     String name = tdoc.getString("name");
-                    if (name == null || name.trim().isEmpty()) name = tenantId;
+                    if (name == null || name.trim().isEmpty())
+                        name = tenantId;
                     tvTenantName.setText(name);
 
                     String plan = tdoc.getString("plan");
-                    if (plan == null) plan = "FREE";
-                    tvPlan.setText("Plan: " + plan);
+                    if (plan == null)
+                        plan = "FREE";
+                    tvPlan.setText(getString(R.string.org_plan_label, plan));
 
                     Long maxRooms = tdoc.getLong("maxRooms");
                     Long maxStaff = tdoc.getLong("maxStaff");
                     Long maxInv = tdoc.getLong("maxInvoicesPerMonth");
-                    tvQuotas.setText("Quota: rooms=" + (maxRooms != null ? maxRooms : 50)
-                            + ", staff=" + (maxStaff != null ? maxStaff : 3)
-                            + ", invoices/month=" + (maxInv != null ? maxInv : 200));
+                    tvQuotas.setText(getString(
+                            R.string.org_quota_label,
+                            (maxRooms != null ? maxRooms : 50),
+                            (maxStaff != null ? maxStaff : 3),
+                            (maxInv != null ? maxInv : 200)));
 
                     String bankCode = tdoc.getString("bankCode");
                     String bankNo = tdoc.getString("bankAccountNo");
@@ -120,7 +125,9 @@ public class OrgAdminActivity extends AppCompatActivity {
                     String bankLine = (bankCode != null ? bankCode : "")
                             + (bankNo != null && !bankNo.isEmpty() ? (" - " + bankNo) : "")
                             + (bankName != null && !bankName.isEmpty() ? (" (" + bankName + ")") : "");
-                    tvBank.setText("Bank: " + (bankLine.trim().isEmpty() ? "(chưa cấu hình)" : bankLine));
+                    tvBank.setText(getString(
+                            R.string.org_bank_label,
+                            (bankLine.trim().isEmpty() ? getString(R.string.org_not_configured) : bankLine)));
                 });
     }
 
@@ -136,10 +143,10 @@ public class OrgAdminActivity extends AppCompatActivity {
             etName.setText(safe(tdoc.getString("bankAccountName")));
 
             new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("Thông tin chuyển khoản")
+                    .setTitle(R.string.org_transfer_info_title)
                     .setView(v)
-                    .setNegativeButton("Hủy", null)
-                    .setPositiveButton("Lưu", (d, w) -> {
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.save, (d, w) -> {
                         String code = safe(etCode.getText().toString()).trim().toUpperCase(Locale.US);
                         String no = safe(etNo.getText().toString()).trim();
                         String name = safe(etName.getText().toString()).trim();
@@ -153,10 +160,12 @@ public class OrgAdminActivity extends AppCompatActivity {
                         db.collection("tenants").document(tenantId)
                                 .update(update)
                                 .addOnSuccessListener(v2 -> {
-                                    Toast.makeText(this, "Đã lưu", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show();
                                     loadTenantInfo(tenantId);
                                 })
-                                .addOnFailureListener(e -> Toast.makeText(this, "Lưu thất bại", Toast.LENGTH_SHORT).show());
+                                .addOnFailureListener(
+                                        e -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT)
+                                                .show());
                     })
                     .show();
         });
@@ -169,7 +178,7 @@ public class OrgAdminActivity extends AppCompatActivity {
     private void loadUsage(@NonNull String tenantId) {
         String period = new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date());
 
-        db.collection("tenants").document(tenantId).collection("phong_tro").get()
+        db.collection("tenants").document(tenantId).collection("rooms").get()
                 .addOnSuccessListener(rooms -> {
                     int roomCount = rooms != null ? rooms.size() : 0;
 
@@ -179,12 +188,17 @@ public class OrgAdminActivity extends AppCompatActivity {
                             .addOnSuccessListener(staff -> {
                                 int staffCount = staff != null ? staff.size() : 0;
 
-                                db.collection("tenants").document(tenantId).collection("hoa_don")
-                                        .whereEqualTo("thangNam", period)
+                                db.collection("tenants").document(tenantId).collection("invoices")
+                                        .whereEqualTo("billingPeriod", period)
                                         .get()
                                         .addOnSuccessListener(inv -> {
                                             int invCount = inv != null ? inv.size() : 0;
-                                            tvUsage.setText("Usage: rooms=" + roomCount + ", staff=" + staffCount + ", invoices(" + period + ")=" + invCount);
+                                            tvUsage.setText(getString(
+                                                    R.string.org_usage_label,
+                                                    roomCount,
+                                                    staffCount,
+                                                    period,
+                                                    invCount));
                                         });
                             });
                 });
@@ -216,7 +230,8 @@ public class OrgAdminActivity extends AppCompatActivity {
                         String role = doc.getString("role");
                         String status = doc.getString("status");
                         String roomId = doc.getString("roomId");
-                        items.add(new OrgInviteAdapter.InviteItem(code != null ? code : doc.getId(), email, role, status, roomId));
+                        items.add(new OrgInviteAdapter.InviteItem(code != null ? code : doc.getId(), email, role,
+                                status, roomId));
                     }
                     inviteAdapter.setItems(items);
                 });
@@ -224,15 +239,17 @@ public class OrgAdminActivity extends AppCompatActivity {
 
     private void revokeInvite(@NonNull String code) {
         String tid = tenantId != null ? tenantId : TenantSession.getActiveTenantId();
-        if (tid == null || tid.trim().isEmpty()) return;
+        if (tid == null || tid.trim().isEmpty())
+            return;
 
         db.collection("tenants").document(tid)
                 .collection("invites").document(code)
                 .update("status", "REVOKED")
                 .addOnSuccessListener(v -> {
-                    Toast.makeText(this, "Đã thu hồi invite", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.org_invite_revoked), Toast.LENGTH_SHORT).show();
                     loadInvites(tid);
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Thu hồi thất bại", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast
+                        .makeText(this, getString(R.string.org_invite_revoke_failed), Toast.LENGTH_SHORT).show());
     }
 }

@@ -18,24 +18,24 @@ public class InvoiceViewModel extends ViewModel {
         return danhSachInvoice;
     }
 
-    public LiveData<List<Invoice>> getInvoicesByRoom(String idPhong) {
-        return repository.getInvoicesByRoom(idPhong);
+    public LiveData<List<Invoice>> getInvoicesByRoom(String roomId) {
+        return repository.getInvoicesByRoom(roomId);
     }
 
-    public void addInvoice(Invoice hoaDon, Runnable onSuccess, Runnable onFail) {
-        repository.addInvoice(hoaDon, onSuccess, onFail);
+    public void addInvoice(Invoice invoice, Runnable onSuccess, Runnable onFail) {
+        repository.addInvoice(invoice, onSuccess, onFail);
     }
 
-    public void addInvoiceUnique(Invoice hoaDon, Runnable onSuccess, Runnable onDuplicate, Runnable onFail) {
-        repository.addInvoiceUnique(hoaDon, onSuccess, onDuplicate, onFail);
+    public void addInvoiceUnique(Invoice invoice, Runnable onSuccess, Runnable onDuplicate, Runnable onFail) {
+        repository.addInvoiceUnique(invoice, onSuccess, onDuplicate, onFail);
     }
 
-    public void updateInvoice(Invoice hoaDon, Runnable onSuccess, Runnable onFail) {
-        repository.updateInvoice(hoaDon, onSuccess, onFail);
+    public void updateInvoice(Invoice invoice, Runnable onSuccess, Runnable onFail) {
+        repository.updateInvoice(invoice, onSuccess, onFail);
     }
 
-    public void updateStatus(String id, String trangThai, Runnable onSuccess, Runnable onFail) {
-        repository.updateStatus(id, trangThai, onSuccess, onFail);
+    public void updateStatus(String id, String status, Runnable onSuccess, Runnable onFail) {
+        repository.updateStatus(id, status, onSuccess, onFail);
     }
 
     public void deleteInvoice(String id, Runnable onSuccess, Runnable onFail) {

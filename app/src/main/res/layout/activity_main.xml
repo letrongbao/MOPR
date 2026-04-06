@@ -1,37 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:background="@drawable/loginbkg"
     tools:context=".MainActivity">
 
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
+    <!-- Language Switcher Component (moved down to avoid notification bar) -->
+    <include
+        layout="@layout/include_language_switcher"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="30dp"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="?attr/colorSurface"
-        app:strokeColor="?attr/colorOutline"
-        app:strokeWidth="1dp">
+        android:layout_gravity="end|top"
+        android:layout_marginTop="70dp"
+        android:layout_marginEnd="16dp" />
 
-        <LinearLayout
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_gravity="center_horizontal"
-            android:padding="24dp">
+            android:layout_margin="30dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_gravity="center_horizontal"
+                android:padding="24dp">
 
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Đăng nhập"
+                android:text="@string/login"
                 android:id="@+id/loginText"
                 android:textSize="36sp"
                 android:textAlignment="center"
@@ -41,7 +54,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Quản lý nhà trọ"
+                android:text="@string/app_subtitle_manage_rental"
                 android:textSize="14sp"
                 android:textAlignment="center"
                 android:textColor="?attr/colorOnSurfaceVariant"
@@ -54,7 +67,7 @@
                 android:background="@drawable/custome_edittext"
                 android:drawableStart="@drawable/ic_email"
                 android:drawablePadding="8dp"
-                android:hint="Email"
+                android:hint="@string/email"
                 android:padding="8dp"
                 android:inputType="textEmailAddress"
                 android:autofillHints="emailAddress"
@@ -68,7 +81,7 @@
                 android:background="@drawable/custome_edittext"
                 android:drawableStart="@drawable/lock_24dp_1f1f1f_fill0_wght400_grad0_opsz24"
                 android:drawablePadding="8dp"
-                android:hint="Mật khẩu"
+                android:hint="@string/password"
                 android:padding="8dp"
                 android:inputType="textPassword"
                 android:autofillHints="password"
@@ -79,35 +92,51 @@
                 android:id="@+id/cbRememberMe"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ghi nhớ đăng nhập"
+                android:text="@string/remember_login"
                 android:textSize="14sp"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="12dp"
                 app:buttonTint="@color/primary"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:id="@+id/loginButton"
-                android:text="Đăng nhập"
-                android:textSize="18sp"
-                android:layout_marginTop="16dp"
-                app:cornerRadius="20dp"
-                app:backgroundTint="@color/primary"/>
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:id="@+id/loginButton"
+                    android:text="@string/login"
+                    android:textSize="18sp"
+                    android:layout_marginTop="16dp"
+                    app:cornerRadius="20dp"
+                    app:backgroundTint="@color/primary"/>
 
-        </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGoogleSignIn"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/login_with_google"
+                    android:textColor="?attr/colorOnSurface"
+                    app:cornerRadius="18dp"
+                    app:icon="@drawable/ic_profile"
+                    app:iconTint="@null"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="1dp"
+                    app:backgroundTint="?attr/colorSurface" />
 
-    </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:text="Chưa có tài khoản? Đăng ký ngay"
-        android:textSize="14sp"
-        android:textAlignment="center"
-        android:id="@+id/signupText"
-        android:textColor="@color/primary"
-        android:layout_marginBottom="20dp"/>
+        </com.google.android.material.card.MaterialCardView>
 
-</LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="@string/no_account_signup_now"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:id="@+id/signupText"
+            android:textColor="@color/primary"
+            android:layout_marginBottom="20dp"/>
+
+    </LinearLayout>
+
+</FrameLayout>

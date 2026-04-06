@@ -8,7 +8,10 @@ import android.widget.NumberPicker;
 
 import androidx.annotation.NonNull;
 
+import com.example.myapplication.R;
+
 import java.util.Calendar;
+import java.util.Locale;
 
 public final class MonthYearPickerDialog {
 
@@ -36,7 +39,7 @@ public final class MonthYearPickerDialog {
         monthPicker.setMaxValue(12);
         monthPicker.setWrapSelectorWheel(true);
         monthPicker.setValue(clamp(initialMonth + 1, 1, 12));
-        monthPicker.setFormatter(value -> String.format("%02d", value));
+        monthPicker.setFormatter(value -> String.format(Locale.US, "%02d", value));
 
         NumberPicker yearPicker = new NumberPicker(context);
         yearPicker.setMinValue(minYear);
@@ -52,12 +55,12 @@ public final class MonthYearPickerDialog {
         container.addView(yearPicker, itemParams);
 
         new AlertDialog.Builder(context)
-                .setTitle("Chọn tháng/năm")
+                .setTitle(context.getString(R.string.month_year_picker_title))
                 .setView(container)
-                .setPositiveButton("OK", (dialog, which) -> listener.onMonthYearSet(
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> listener.onMonthYearSet(
                         yearPicker.getValue(),
                         monthPicker.getValue() - 1))
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(context.getString(R.string.cancel), null)
                 .show();
     }
 

@@ -8,4 +8,12 @@
         <item>m³</item>
         <item>Lần</item>
     </string-array>
+
+    <string-array name="room_type_options">
+        <item>Studio</item>
+        <item>Duplex</item>
+        <item>1 phòng ngủ</item>
+        <item>2 phòng ngủ</item>
+        <item>3 phòng ngủ</item>
+    </string-array>
 </resources>

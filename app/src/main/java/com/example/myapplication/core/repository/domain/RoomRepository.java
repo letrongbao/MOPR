@@ -13,7 +13,7 @@ import java.util.List;
 public class RoomRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "phong_tro";
+    private static final String COLLECTION = "rooms";
 
     private CollectionReference getUserCollection() {
         String tenantId = TenantSession.getActiveTenantId();
@@ -43,21 +43,21 @@ public class RoomRepository {
         return data;
     }
 
-    public void addRoom(Room phong, Runnable onSuccess, Runnable onFail) {
+    public void addRoom(Room room, Runnable onSuccess, Runnable onFail) {
         // Set creation timestamp
-        phong.setCreatedAt(com.google.firebase.Timestamp.now());
-        phong.setUpdatedAt(com.google.firebase.Timestamp.now());
+        room.setCreatedAt(com.google.firebase.Timestamp.now());
+        room.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        getUserCollection().add(phong)
+        getUserCollection().add(room)
                 .addOnSuccessListener(ref -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
 
-    public void updateRoom(Room phong, Runnable onSuccess, Runnable onFail) {
+    public void updateRoom(Room room, Runnable onSuccess, Runnable onFail) {
         // Set update timestamp
-        phong.setUpdatedAt(com.google.firebase.Timestamp.now());
+        room.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        getUserCollection().document(phong.getId()).set(phong)
+        getUserCollection().document(room.getId()).set(room)
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -68,5 +68,3 @@ public class RoomRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 }
-
-

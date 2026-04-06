@@ -54,7 +54,7 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Lịch sử thanh toán của bạn");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.your_payment_history));
 
         tvEmpty = findViewById(R.id.tvEmpty);
         tvPaid = findViewById(R.id.tvPaid);
@@ -85,7 +85,7 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
         String tenantId = TenantSession.getActiveTenantId();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (tenantId == null || tenantId.trim().isEmpty() || user == null) {
-            showEmpty("Chưa có dữ liệu tenant");
+            showEmpty(getString(R.string.no_tenant_data));
             return;
         }
 
@@ -97,41 +97,41 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
                     String roomId = doc != null ? doc.getString("roomId") : null;
 
                     if (!TenantRoles.TENANT.equals(role)) {
-                        Toast.makeText(this, "Màn này dành cho tenant", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.screen_for_tenants), Toast.LENGTH_SHORT).show();
                         finish();
                         return;
                     }
 
                     if (roomId == null || roomId.trim().isEmpty()) {
-                        showEmpty("Chưa có thanh toán");
+                        showEmpty(getString(R.string.no_payments_yet));
                         return;
                     }
 
                     observePayments(roomId);
                 })
-                .addOnFailureListener(e -> showEmpty("Không tải được dữ liệu"));
+                .addOnFailureListener(e -> showEmpty(getString(R.string.error_load_data)));
     }
 
     private void observePayments(String roomId) {
         repository.listByRoom(roomId).observe(this, list -> {
             List<Payment> safe = list != null ? new ArrayList<>(list) : new ArrayList<>();
             Collections.sort(safe, (a, b) -> Long.compare(parseDate(b.getPaidAt()), parseDate(a.getPaidAt())));
-            adapter.setDanhSach(safe);
+            adapter.setDataList(safe);
             tvEmpty.setVisibility(safe.isEmpty() ? View.VISIBLE : View.GONE);
 
             double paid = 0;
             for (Payment p : safe) {
                 paid += p.getAmount();
             }
-            tvPaid.setText("Tổng đã thanh toán: " + fmtMoney(paid));
+            tvPaid.setText(getString(R.string.total_paid_colon) + fmtMoney(paid));
         });
     }
 
     private void showEmpty(String message) {
-        adapter.setDanhSach(new ArrayList<>());
+        adapter.setDataList(new ArrayList<>());
         tvEmpty.setText(message);
         tvEmpty.setVisibility(View.VISIBLE);
-        tvPaid.setText("Tổng đã thanh toán: 0 đ");
+        tvPaid.setText(getString(R.string.total_paid_colon) + fmtMoney(0));
     }
 
     private long parseDate(String s) {
@@ -146,7 +146,7 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
     }
 
     private String fmtMoney(double amount) {
-        NumberFormat nf = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-        return nf.format(amount) + " đ";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"));
+        return nf.format(amount) + " ₫";
     }
 }

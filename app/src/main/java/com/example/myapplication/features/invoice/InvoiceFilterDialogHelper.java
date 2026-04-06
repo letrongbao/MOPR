@@ -3,6 +3,7 @@ package com.example.myapplication.features.invoice;
 import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,7 +39,8 @@ public final class InvoiceFilterDialogHelper {
     public static void showMonthFilterDialog(@NonNull AppCompatActivity activity,
             String selectedMonth,
             @NonNull MonthPickedCallback callback) {
-        View content = LayoutInflater.from(activity).inflate(R.layout.dialog_month_year_picker, null, false);
+        ViewGroup root = activity.findViewById(android.R.id.content);
+        View content = LayoutInflater.from(activity).inflate(R.layout.dialog_month_year_picker, root, false);
         BottomSheetDialog dialog = new BottomSheetDialog(activity);
         dialog.setContentView(content);
 
@@ -81,7 +83,7 @@ public final class InvoiceFilterDialogHelper {
         Runnable updatePreview = () -> {
             int monthValue = npMonth.getValue();
             int yearValue = npYear.getValue();
-            tvPreviewMonth.setText(String.format(Locale.getDefault(), "Tháng %d/%d", monthValue, yearValue));
+            tvPreviewMonth.setText(activity.getString(R.string.month_year_format, monthValue, yearValue));
         };
         updatePreview.run();
 
@@ -118,21 +120,21 @@ public final class InvoiceFilterDialogHelper {
             String selectedHouseId,
             @NonNull HousePickedCallback callback) {
         if (rooms.isEmpty()) {
-            Toast.makeText(activity, "Chưa có dữ liệu căn nhà", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, activity.getString(R.string.no_house_data), Toast.LENGTH_SHORT).show();
             return;
         }
 
         LinkedHashMap<String, String> houseMap = new LinkedHashMap<>();
-        houseMap.put("", "Tất cả căn nhà");
+        houseMap.put("", activity.getString(R.string.all_houses));
         for (Room room : rooms) {
             if (room == null)
                 continue;
             String houseId = room.getHouseId();
-            String houseName = room.getHouseTen();
+            String houseName = room.getHouseName();
             if (houseId == null || houseId.trim().isEmpty())
                 continue;
             if (houseName == null || houseName.trim().isEmpty())
-                houseName = "Căn nhà";
+                houseName = activity.getString(R.string.house);
             houseMap.put(houseId, houseName);
         }
 
@@ -141,12 +143,12 @@ public final class InvoiceFilterDialogHelper {
         int checked = Math.max(0, ids.indexOf(selectedHouseId == null ? "" : selectedHouseId));
 
         new AlertDialog.Builder(activity)
-                .setTitle("Chọn căn nhà")
+                .setTitle(activity.getString(R.string.select_house))
                 .setSingleChoiceItems(labels.toArray(new String[0]), checked, (dialog, which) -> {
                     callback.onPicked(ids.get(which), labels.get(which));
                     dialog.dismiss();
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(activity.getString(R.string.cancel), null)
                 .show();
     }
 }

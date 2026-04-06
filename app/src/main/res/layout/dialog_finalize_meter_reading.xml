@@ -9,13 +9,13 @@
         android:id="@+id/etThangNam"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Tháng/Năm (MM/yyyy)"
+        android:hint="@string/meter_month_year_hint"
         android:inputType="date" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Điện (kWh)"
+        android:text="@string/meter_electricity_title"
         android:textStyle="bold"
         android:layout_marginTop="8dp"/>
 
@@ -28,21 +28,21 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Đầu kỳ"
+            android:hint="@string/meter_start_period"
             android:inputType="numberDecimal" />
         <EditText
             android:id="@+id/etDienCuoi"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Cuối kỳ"
+            android:hint="@string/meter_end_period"
             android:inputType="numberDecimal" />
     </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nước (m3)"
+        android:text="@string/meter_water_title"
         android:textStyle="bold"
         android:layout_marginTop="8dp"/>
 
@@ -55,14 +55,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Đầu kỳ"
+            android:hint="@string/meter_start_period"
             android:inputType="numberDecimal" />
         <EditText
             android:id="@+id/etNuocCuoi"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Cuối kỳ"
+            android:hint="@string/meter_end_period"
             android:inputType="numberDecimal" />
     </LinearLayout>
 

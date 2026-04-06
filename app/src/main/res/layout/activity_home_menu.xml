@@ -9,7 +9,7 @@
     android:fitsSystemWindows="false"
     tools:openDrawer="end">
 
-    <!-- Nội dung chính -->
+    <!-- UI section note -->
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -52,18 +52,18 @@
                         android:id="@+id/tvAppTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="QUẢN LÍ TRỌ"
+                        android:text="@string/app_subtitle_manage_rental_upper"
                         android:textColor="@color/white"
-                        android:textSize="22sp"
-                        android:fontFamily="sans-serif-black"
-                        android:letterSpacing="0.06"
+                        android:textSize="19sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:letterSpacing="0.09"
                         android:shadowColor="#40000000"
                         android:shadowDx="1"
                         android:shadowDy="1"
                         android:shadowRadius="2"/>
                 </LinearLayout>
 
-                <!-- Icon Người dùng -->
+                <!-- UI section note -->
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnProfile"
                     android:layout_width="52dp"
@@ -72,7 +72,7 @@
                     android:layout_centerVertical="true"
                     android:padding="2dp"
                     android:src="@drawable/ic_profile"
-                    android:contentDescription="Tài khoản"
+                    android:contentDescription="@string/account_management"
                     app:tint="@color/white"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     app:shapeAppearanceOverlay="@style/CircleImage" />
@@ -99,3 +99,4 @@
         android:layout_height="match_parent"
         android:layout_gravity="end" />
 </androidx.drawerlayout.widget.DrawerLayout>
+

@@ -12,15 +12,14 @@ import java.util.List;
 public interface FavoriteRoomDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(FavoriteRoom phong);
+    void insert(FavoriteRoom room);
 
-    @Query("SELECT * FROM phong_yeu_thich ORDER BY ngayLuu DESC")
+    @Query("SELECT * FROM favorite_rooms ORDER BY savedAt DESC")
     LiveData<List<FavoriteRoom>> getAll();
 
-    @Query("SELECT EXISTS(SELECT 1 FROM phong_yeu_thich WHERE id = :phongId)")
-    LiveData<Boolean> isFavorite(String phongId);
+    @Query("SELECT EXISTS(SELECT 1 FROM favorite_rooms WHERE id = :roomId)")
+    LiveData<Boolean> isFavorite(String roomId);
 
-    @Query("DELETE FROM phong_yeu_thich WHERE id = :phongId")
-    void deleteById(String phongId);
+    @Query("DELETE FROM favorite_rooms WHERE id = :roomId")
+    void deleteById(String roomId);
 }
-

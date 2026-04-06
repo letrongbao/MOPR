@@ -1,164 +1,164 @@
 # Android Source Structure Guide (NextJS Mindset)
 
-## Muc tieu
-Tai lieu nay map tu duy chia nho cua NextJS sang Android Java de code gon, de maintain va de nang cap.
+## Objective
+This document maps NextJS architecture patterns to Android Java to create clean, maintainable, and upgradeable code.
 
-## 1) Map tu duy NextJS -> Android
+## 1) NextJS Architecture → Android Mapping
 
-1. NextJS page -> Android Activity/Fragment
-2. NextJS component -> Custom View / Adapter item binder / include layout
-3. NextJS hook -> ViewModel state + use-case helper
-4. NextJS service/api client -> Repository
-5. NextJS shared UI/util -> core/widget + core/util
+1. NextJS page → Android Activity/Fragment
+2. NextJS component → Custom View / Adapter item binder / include layout
+3. NextJS hook → ViewModel state + use-case helper
+4. NextJS service/api client → Repository
+5. NextJS shared UI/util → core/widget + core/util
 
-## 2) Cau truc khuyen nghi theo feature
+## 2) Recommended Structure per Feature
 
 ```text
 features/
   invoice/
-    InvoiceActivity.java           # Entry screen, dieu phoi UI
+    InvoiceActivity.java           # Entry screen, UI orchestration
     InvoiceAdapter.java            # Recycler adapter
     InvoicePermissionResolver.java # Resolve role + access mode
-    InvoiceDialogs.java            # (goi y) tach cac dialog lon
-    InvoiceFormatters.java         # (goi y) format text/money/status
+    InvoiceDialogs.java            # (recommended) extract large dialogs
+    InvoiceFormatters.java         # (recommended) format text/money/status
 ```
 
-Rule:
-1. Moi feature tu chua file cua no.
-2. Activity/Fragment khong chua business rule lon.
-3. Logic quyen, filter, mapping tach thanh helper class.
+Rules:
+1. Each feature contains its own files.
+2. Activity/Fragment must not contain large business logic.
+3. Permission logic, filtering, mapping must be extracted to helper classes.
 
-## 3) Gioi han kich thuoc file (muc tieu)
+## 3) Target File Size Limits
 
-1. Activity/Fragment: <= 400 dong
-2. Adapter: <= 300 dong
-3. XML layout: <= 300 dong
-4. Utility helper: <= 200 dong
+1. Activity/Fragment: <= 400 lines
+2. Adapter: <= 300 lines
+3. XML layout: <= 300 lines
+4. Utility helper: <= 200 lines
 
-Neu vuot nguong, uu tien tach theo chuc nang (role, filter, dialog, formatter).
+If exceeding limits, prioritize extraction by functionality (role, filter, dialog, formatter).
 
-## 4) Nguyen tac tach file an toan
+## 4) Safe File Extraction Principles
 
-1. Khong doi schema Firestore khi refactor UI/logic.
-2. Tien hanh theo batch nho, build sau moi batch.
-3. Uu tien tach class stateless truoc (resolver/formatter).
-4. Khi can doi hanh vi, bat buoc co note trong docs contract.
+1. Do not modify Firestore schema during UI/logic refactor.
+2. Proceed in small batches, build after each batch.
+3. Prioritize extracting stateless classes first (resolver/formatter).
+4. If behavior changes, must document in docs contract.
 
-## 5) Refactor pattern de ap dung ngay cho MOPR
+## 5) Refactor Patterns to Apply Immediately to MOPR
 
 ### Pattern A: Role resolver
 
-- Muc dich: dua logic role check ra khoi Activity.
-- Vi du da ap dung:
-  - `InvoicePermissionResolver` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract role check logic from Activity.
+- Applied example:
+  - `InvoicePermissionResolver` extracted from `InvoiceActivity`.
 
 ### Pattern B: Dialog factory
 
-- Muc dich: dialog tao/sua/xac nhan dua ra class rieng.
-- Ten goi y:
+- Purpose: Extract create/edit/confirm dialogs to separate class.
+- Suggested names:
   - `InvoiceDialogFactory`
   - `ContractDialogFactory`
 
 ### Pattern C: Filter coordinator
 
-- Muc dich: filter theo month/house/status/search dua ra class rieng.
-- Ten goi y:
+- Purpose: Extract filtering by month/house/status/search to separate class.
+- Suggested names:
   - `InvoiceFilterCoordinator`
 
 ### Pattern D: Layout include decomposition
 
-- Muc dich: tach XML lon thanh nhieu section include de de doc/de sua.
-- Vi du da ap dung:
-  - `activity_home_menu.xml` -> include `home_menu_scroll_content.xml` + `home_menu_profile_drawer.xml`.
+- Purpose: Extract large XML into multiple section includes for readability.
+- Applied example:
+  - `activity_home_menu.xml` → includes `home_menu_scroll_content.xml` + `home_menu_profile_drawer.xml`.
 
 ### Pattern E: Payment flow helper
 
-- Muc dich: tach luong thu tien + QR + submit payment khoi Activity.
-- Vi du da ap dung:
-  - `InvoicePaymentFlowHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract payment receipt + QR + submit payment from Activity.
+- Applied example:
+  - `InvoicePaymentFlowHelper` extracted from `InvoiceActivity`.
 
 ### Pattern F: Export dialog helper
 
-- Muc dich: tach dialog xuat hoa don + tenant confirm meter khoi Activity.
-- Vi du da ap dung:
-  - `InvoiceExportDialogHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract invoice export dialog + tenant meter confirmation from Activity.
+- Applied example:
+  - `InvoiceExportDialogHelper` extracted from `InvoiceActivity`.
 
 ### Pattern G: Fee notification helper
 
-- Muc dich: tach bottom-sheet bao phi va cap nhat chi so khoi Activity.
-- Vi du da ap dung:
-  - `InvoiceFeeNotificationHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract fee bottom-sheet and meter index update from Activity.
+- Applied example:
+  - `InvoiceFeeNotificationHelper` extracted from `InvoiceActivity`.
 
 ### Pattern H: Meter helper
 
-- Muc dich: tach doc/ghi meter reading theo room+period khoi Activity.
-- Vi du da ap dung:
-  - `InvoiceMeterHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract meter reading entry/display by room+period from Activity.
+- Applied example:
+  - `InvoiceMeterHelper` extracted from `InvoiceActivity`.
 
 ### Pattern I: Form value helper
 
-- Muc dich: tach parse/format/watch tong tien cua form add/edit hoa don.
-- Vi du da ap dung:
-  - `InvoiceFormValueHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract form data parsing/formatting/validation for add/edit invoice.
+- Applied example:
+  - `InvoiceFormValueHelper` extracted from `InvoiceActivity`.
 
 ### Pattern J: Dialog submit helper
 
-- Muc dich: tach validate + map du lieu form add/edit invoice khoi Activity.
-- Vi du da ap dung:
-  - `InvoiceDialogSubmitHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract form validation + data mapping for add/edit invoice from Activity.
+- Applied example:
+  - `InvoiceDialogSubmitHelper` extracted from `InvoiceActivity`.
 
 ### Pattern K: Dialog UI helper
 
-- Muc dich: tach spinner binding + form fill + read-only state + estimated-total wiring khoi Activity.
-- Vi du da ap dung:
-  - `InvoiceDialogUiHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract spinner binding + form fill + read-only state + estimated-total wiring from Activity.
+- Applied example:
+  - `InvoiceDialogUiHelper` extracted from `InvoiceActivity`.
 
 ### Pattern L: Period suggestion helper
 
-- Muc dich: tach goi y ky hoa don tiep theo theo room khoi Activity.
-- Vi du da ap dung:
-  - `InvoicePeriodSuggestionHelper` duoc tach khoi `InvoiceActivity`.
+- Purpose: Extract next invoice period suggestion by room from Activity.
+- Applied example:
+  - `InvoicePeriodSuggestionHelper` extracted from `InvoiceActivity`.
 
-## 6) Lo trinh refactor uu tien
+## 6) Refactor Priority Timeline
 
-1. InvoiceActivity (lon nhat): da giam ve muc quan ly duoc, tiep tuc tach dialog factory neu co thay doi lon tiep theo.
-2. ContractActivity: tach form validator + pdf/export helper.
-3. RoomActivity: tach tenant-room binding + status filter helper.
-4. Layout lon: tach `include` cho header/stats/grid/drawer.
+1. InvoiceActivity (largest): already reduced to manageable size, continue extracting dialog factory if major changes occur next.
+2. ContractActivity: extract form validator + pdf/export helper.
+3. RoomActivity: extract tenant-room binding + status filter helper.
+4. Large layouts: extract `include` for header/stats/grid/drawer.
 
 ### Pattern M: Contract form data helper
 
-- Muc dich: tach parse/validate/map du lieu form hop dong ra khoi Activity.
-- Vi du da ap dung:
-  - `ContractFormDataHelper` duoc tach khoi `ContractActivity`.
+- Purpose: Extract form data parsing/validation/mapping from Activity.
+- Applied example:
+  - `ContractFormDataHelper` extracted from `ContractActivity`.
 
 ### Pattern N: Contract HTML builder
 
-- Muc dich: tach template HTML hop dong + format helper khoi Activity.
-- Vi du da ap dung:
-  - `ContractHtmlBuilder` duoc tach khoi `ContractActivity`.
+- Purpose: Extract invoice template HTML + formatting helper from Activity.
+- Applied example:
+  - `ContractHtmlBuilder` extracted from `ContractActivity`.
 
 ### Pattern O: Contract date helper
 
-- Muc dich: tach parse/normalize/compute ngay hop dong khoi Activity.
-- Vi du da ap dung:
-  - `ContractDateHelper` duoc tach khoi `ContractActivity`.
+- Purpose: Extract contract date parsing/normalization/computation from Activity.
+- Applied example:
+  - `ContractDateHelper` extracted from `ContractActivity`.
 
 ### Pattern P: Contract list item UI helper
 
-- Muc dich: tach format hien thi item hop dong (chip status, trang thai coc, money format) khoi adapter.
-- Vi du da ap dung:
-  - `ContractListItemUiHelper` duoc tach khoi `ContractListAdapter`.
+- Purpose: Extract contract list item display formatting (status chip, deposit state, money format) from adapter.
+- Applied example:
+  - `ContractListItemUiHelper` extracted from `ContractListAdapter`.
 
 ### Pattern Q: Shared screen scaffold helper
 
-- Muc dich: dong bo edge-to-edge + top inset + back-toolbar cho nhieu man hinh.
-- Vi du da ap dung:
-  - `ScreenUiHelper` duoc dung trong `InvoiceActivity`, `PaymentHistoryActivity`, `TenantPaymentHistoryActivity`, `ContractActivity`, `ContractListActivity`, `ContractDetailsActivity`, `ExpenseActivity`, `RevenueActivity`, `EditProfileActivity`, `ChangePasswordActivity`.
+- Purpose: Synchronize edge-to-edge + top inset + back-toolbar across multiple screens.
+- Applied example:
+  - `ScreenUiHelper` used in `InvoiceActivity`, `PaymentHistoryActivity`, `TenantPaymentHistoryActivity`, `ContractActivity`, `ContractListActivity`, `ContractDetailsActivity`, `ExpenseActivity`, `RevenueActivity`, `EditProfileActivity`, `ChangePasswordActivity`.
 
-## 7) Checklist Definition of Done cho moi batch
+## 7) Definition of Done Checklist per Batch
 
-1. Build pass: `./gradlew.bat :app:assembleDebug`
-2. Khong doi Firestore key/collection ngoai y muon
-3. UI behavior khong doi (tru khi co task doi behavior)
-4. Cap nhat docs neu thay doi data-flow/permission flow
+1. Build passes: `./gradlew.bat :app:assembleDebug`
+2. Do not modify Firestore key/collection names unintentionally
+3. UI behavior unchanged (except when task explicitly requires behavior change)
+4. Update documentation if data-flow/permission flow changes

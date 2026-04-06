@@ -1,7 +1,10 @@
 package com.example.myapplication.features.invoice;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 
+import com.example.myapplication.R;
 import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
@@ -44,26 +47,26 @@ public final class InvoiceFilterCoordinator {
                 continue;
             }
 
-            String invoiceMonth = FinancePeriodUtil.normalizeMonthYear(invoice.getThangNam());
+            String invoiceMonth = FinancePeriodUtil.normalizeMonthYear(invoice.getBillingPeriod());
             if (!normalizedSelectedMonth.isEmpty() && !normalizedSelectedMonth.equals(invoiceMonth)) {
                 continue;
             }
 
             if (selectedHouseId != null && !selectedHouseId.trim().isEmpty()) {
-                String invoiceHouseId = roomToHouse.get(invoice.getIdPhong());
+                String invoiceHouseId = roomToHouse.get(invoice.getRoomId());
                 if (invoiceHouseId == null || !selectedHouseId.equals(invoiceHouseId)) {
                     continue;
                 }
             }
 
             if (!normalizedSearch.isEmpty()) {
-                String roomName = invoice.getSoPhong() != null
-                        ? invoice.getSoPhong().toLowerCase(Locale.getDefault())
+                String roomName = invoice.getRoomNumber() != null
+                        ? invoice.getRoomNumber().toLowerCase(Locale.getDefault())
                         : "";
-                String tenant = tenantDisplayByRoom.get(invoice.getIdPhong());
+                String tenant = tenantDisplayByRoom.get(invoice.getRoomId());
                 tenant = tenant != null ? tenant.toLowerCase(Locale.getDefault()) : "";
-                String month = invoice.getThangNam() != null
-                        ? invoice.getThangNam().toLowerCase(Locale.getDefault())
+                String month = invoice.getBillingPeriod() != null
+                        ? invoice.getBillingPeriod().toLowerCase(Locale.getDefault())
                         : "";
                 if (!roomName.contains(normalizedSearch)
                         && !tenant.contains(normalizedSearch)
@@ -81,7 +84,7 @@ public final class InvoiceFilterCoordinator {
     }
 
     private static boolean matchesTab(@NonNull Invoice invoice, int tabIndex) {
-        String status = invoice.getTrangThai();
+        String status = invoice.getStatus();
         if (status == null || status.trim().isEmpty()) {
             status = InvoiceStatus.UNREPORTED;
         }
@@ -99,15 +102,15 @@ public final class InvoiceFilterCoordinator {
     }
 
     @NonNull
-    public static String buildSummaryText(@NonNull List<Invoice> visibleInvoices) {
+    public static String buildSummaryText(@NonNull Context context, @NonNull List<Invoice> visibleInvoices) {
         double total = 0;
         int unpaidCount = 0;
         for (Invoice invoice : visibleInvoices) {
             if (invoice == null) {
                 continue;
             }
-            total += invoice.getTongTien();
-            String status = invoice.getTrangThai();
+            total += invoice.getTotalAmount();
+            String status = invoice.getStatus();
             if (status == null || status.trim().isEmpty()
                     || InvoiceStatus.UNREPORTED.equals(status)
                     || InvoiceStatus.REPORTED.equals(status)
@@ -116,10 +119,10 @@ public final class InvoiceFilterCoordinator {
             }
         }
 
-        return visibleInvoices.size()
-                + " hóa đơn | Tạm tính: "
-                + MoneyFormatter.format(total)
-                + " | Chưa thu: "
-                + unpaidCount;
+        return context.getString(
+                R.string.invoice_filter_summary,
+                visibleInvoices.size(),
+                MoneyFormatter.format(total),
+                unpaidCount);
     }
 }

@@ -47,17 +47,17 @@ public class ContractListActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_contract_list);
 
-        // Xử lý padding cho AppBarLayout để không bị lẹm thanh thông báo
+        // Internal note.
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
             ScreenUiHelper.applyTopInset(appBarLayout);
         }
 
-        // Setup Toolbar và nút Back đồng nhất
+        // Internal note.
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Hợp đồng thông minh");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.contract_list_title));
 
-        // Ánh xạ các View còn lại
+        // Internal note.
         tvCountDangThue = findViewById(R.id.tvCountDangThue);
         tvCountSapHet = findViewById(R.id.tvCountSapHet);
         tvCountKetThuc = findViewById(R.id.tvCountKetThuc);
@@ -69,13 +69,13 @@ public class ContractListActivity extends AppCompatActivity {
         rvHopDong.setLayoutManager(new LinearLayoutManager(this));
         rvHopDong.setAdapter(adapter);
 
-        // Nhắc tái ký qua Zalo
+        // Internal note.
         adapter.setOnNhacTaiKyListener(this::sendZaloReminder);
 
-        // Xử lý cập nhật trạng thái thu cọc
+        // Internal note.
         adapter.setOnDepositUpdateListener(this::updateDepositStatus);
 
-        // Xử lý xóa hợp đồng
+        // Internal note.
         adapter.setOnContractDeleteListener(this::deleteContract);
 
         // SearchView
@@ -119,13 +119,13 @@ public class ContractListActivity extends AppCompatActivity {
             if (s == null)
                 continue;
             switch (s) {
-                case DANG_THUE:
+                case ACTIVE_RENTAL:
                     dangThue++;
                     break;
-                case SAP_HET_HAN:
+                case EXPIRING_SOON:
                     sapHet++;
                     break;
-                case DA_KET_THUC:
+                case ENDED:
                     ketThuc++;
                     break;
             }
@@ -147,14 +147,13 @@ public class ContractListActivity extends AppCompatActivity {
     }
 
     private void sendZaloReminder(Tenant contract) {
-        String soPhong = contract.getSoPhong() != null ? contract.getSoPhong() : "?";
-        String ngayKT = contract.getNgayKetThucHopDong() != null ? contract.getNgayKetThucHopDong() : "?";
-        String msg = "Hợp đồng phòng " + soPhong + " của bạn sắp hết hạn vào ngày "
-                + ngayKT + ", vui lòng liên hệ chủ trọ để gia hạn.";
+        String roomNumber = contract.getRoomNumber() != null ? contract.getRoomNumber() : "?";
+        String contractEndDateText = contract.getContractEndDate() != null ? contract.getContractEndDate() : "?";
+        String msg = getString(R.string.contract_renewal_reminder, roomNumber, contractEndDateText);
 
-        String sdt = contract.getSoDienThoai();
-        if (sdt != null && !sdt.trim().isEmpty()) {
-            String normalized = sdt.replaceAll("[^0-9]", "");
+        String phoneNumber = contract.getPhoneNumber();
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            String normalized = phoneNumber.replaceAll("[^0-9]", "");
             if (normalized.startsWith("0"))
                 normalized = "84" + normalized.substring(1);
             try {
@@ -169,7 +168,7 @@ public class ContractListActivity extends AppCompatActivity {
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
         share.putExtra(Intent.EXTRA_TEXT, msg);
-        startActivity(Intent.createChooser(share, "Gửi nhắc nhở qua..."));
+        startActivity(Intent.createChooser(share, getString(R.string.contract_send_reminder_via)));
     }
 
     private void updateDepositStatus(Tenant contract) {
@@ -178,11 +177,12 @@ public class ContractListActivity extends AppCompatActivity {
 
         repo.updateStatusThuCoc(contract.getId(), true)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Đã cập nhật trạng thái thu cọc", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.contract_deposit_updated), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    contract.setTrangThaiThuCoc(false);
+                    Toast.makeText(this, getString(R.string.contract_update_error, e.getMessage()), Toast.LENGTH_LONG)
+                            .show();
+                    contract.setDepositCollected(false);
                     adapter.notifyDataSetChanged();
                 });
     }
@@ -193,11 +193,11 @@ public class ContractListActivity extends AppCompatActivity {
 
         repo.deleteContract(contractId,
                 () -> {
-                    Toast.makeText(this, "✓ Đã xóa hợp đồng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.contract_deleted), Toast.LENGTH_SHORT).show();
                     adapter.removeItemById(contractId);
                 },
                 () -> {
-                    Toast.makeText(this, "❌ Lỗi: Không thể xóa hợp đồng", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.contract_delete_error), Toast.LENGTH_LONG).show();
                 });
     }
 }

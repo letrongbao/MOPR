@@ -1,6 +1,7 @@
 package com.example.myapplication.core.repository.domain;
 
 import androidx.lifecycle.MutableLiveData;
+import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.domain.Tenant;
 import com.google.android.gms.tasks.Task;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class TenantRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String COLLECTION = "nguoi_thue";
+    private static final String COLLECTION = "contracts";
 
     private CollectionReference getUserCollection() {
         String tenantId = TenantSession.getActiveTenantId();
@@ -48,9 +49,9 @@ public class TenantRepository {
         return data;
     }
 
-    public MutableLiveData<List<Tenant>> layTenantTheoPhong(String idPhong) {
+    public MutableLiveData<List<Tenant>> getTenantsByRoom(String roomId) {
         MutableLiveData<List<Tenant>> data = new MutableLiveData<>();
-        getUserCollection().whereEqualTo("idPhong", idPhong)
+        getUserCollection().whereEqualTo("roomId", roomId)
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null)
                         return;
@@ -66,11 +67,11 @@ public class TenantRepository {
     }
 
     /**
-     * Lấy danh sách hợp đồng đã kết thúc (lịch sử cho thuê)
+     * Internal note.
      */
-    public MutableLiveData<List<Tenant>> layLichSuChoThue() {
+    public MutableLiveData<List<Tenant>> getRentalHistory() {
         MutableLiveData<List<Tenant>> data = new MutableLiveData<>();
-        getUserCollection().whereEqualTo("trangThaiHopDong", "ENDED")
+        getUserCollection().whereEqualTo("contractStatus", "ENDED")
                 .addSnapshotListener((snapshot, e) -> {
                     if (e != null || snapshot == null) {
                         data.setValue(new ArrayList<>());
@@ -82,19 +83,19 @@ public class TenantRepository {
                         n.setId(doc.getId());
                         list.add(n);
                     });
-                    // Sắp xếp theo thời gian kết thúc mới nhất
+                    // Internal note.
                     list.sort((a, b) -> Long.compare(b.getEndedAt(), a.getEndedAt()));
                     data.setValue(list);
                 });
         return data;
     }
 
-    public void addTenant(Tenant nguoiThue, Runnable onSuccess, Runnable onFail) {
-        getUserCollection().add(nguoiThue)
+    public void addTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {
+        getUserCollection().add(tenant)
                 .addOnSuccessListener(ref -> {
                     // If tenant is ACTIVE, atomically update room status
-                    if ("ACTIVE".equals(nguoiThue.getTrangThaiHopDong()) && nguoiThue.getIdPhong() != null) {
-                        updateRoomStatusAtomic(nguoiThue.getIdPhong(), "Đã thuê", onSuccess, onFail);
+                    if ("ACTIVE".equals(tenant.getContractStatus()) && tenant.getRoomId() != null) {
+                        updateRoomStatusAtomic(tenant.getRoomId(), RoomStatus.RENTED, onSuccess, onFail);
                     } else {
                         onSuccess.run();
                     }
@@ -102,8 +103,8 @@ public class TenantRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 
-    public void updateTenant(Tenant nguoiThue, Runnable onSuccess, Runnable onFail) {
-        getUserCollection().document(nguoiThue.getId()).set(nguoiThue)
+    public void updateTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {
+        getUserCollection().document(tenant.getId()).set(tenant)
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -119,16 +120,16 @@ public class TenantRepository {
         db.runTransaction(transaction -> {
             // Update tenant
             Map<String, Object> tenantUpdates = new HashMap<>();
-            tenantUpdates.put("trangThaiHopDong", "ENDED");
+            tenantUpdates.put("contractStatus", "ENDED");
             tenantUpdates.put("endedAt", System.currentTimeMillis());
             tenantUpdates.put("updatedAt", System.currentTimeMillis());
-            tenantUpdates.put("idPhongCu", roomId); // Save room history
-            tenantUpdates.put("idPhong", null); // Clear current room
+            tenantUpdates.put("previousRoomId", roomId); // Save room history
+            tenantUpdates.put("roomId", null); // Clear current room
             transaction.update(tenantRef, tenantUpdates);
 
             // Update room status
             Map<String, Object> roomUpdates = new HashMap<>();
-            roomUpdates.put("trangThai", "Trống");
+            roomUpdates.put("status", RoomStatus.VACANT);
             roomUpdates.put("updatedAt", com.google.firebase.Timestamp.now());
             transaction.update(roomRef, roomUpdates);
 
@@ -141,26 +142,26 @@ public class TenantRepository {
     /**
      * Start new contract atomically - updates tenant AND room status
      */
-    public void startContractAtomic(Tenant nguoiThue, Runnable onSuccess, Runnable onFail) {
-        if (nguoiThue.getIdPhong() == null) {
+    public void startContractAtomic(Tenant tenant, Runnable onSuccess, Runnable onFail) {
+        if (tenant.getRoomId() == null) {
             onFail.run();
             return;
         }
 
-        DocumentReference tenantRef = nguoiThue.getId() != null ? getUserCollection().document(nguoiThue.getId())
+        DocumentReference tenantRef = tenant.getId() != null ? getUserCollection().document(tenant.getId())
                 : getUserCollection().document();
-        DocumentReference roomRef = getRoomCollection().document(nguoiThue.getIdPhong());
+        DocumentReference roomRef = getRoomCollection().document(tenant.getRoomId());
 
         db.runTransaction(transaction -> {
             // Set tenant active
-            nguoiThue.setTrangThaiHopDong("ACTIVE");
-            nguoiThue.setCreatedAt(System.currentTimeMillis());
-            nguoiThue.setUpdatedAt(System.currentTimeMillis());
-            transaction.set(tenantRef, nguoiThue);
+            tenant.setContractStatus("ACTIVE");
+            tenant.setCreatedAt(System.currentTimeMillis());
+            tenant.setUpdatedAt(System.currentTimeMillis());
+            transaction.set(tenantRef, tenant);
 
             // Set room rented
             Map<String, Object> roomUpdates = new HashMap<>();
-            roomUpdates.put("trangThai", "Đã thuê");
+            roomUpdates.put("status", RoomStatus.RENTED);
             roomUpdates.put("updatedAt", com.google.firebase.Timestamp.now());
             transaction.update(roomRef, roomUpdates);
 
@@ -172,7 +173,7 @@ public class TenantRepository {
 
     private void updateRoomStatusAtomic(String roomId, String status, Runnable onSuccess, Runnable onFail) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put("trangThai", status);
+        updates.put("status", status);
         updates.put("updatedAt", com.google.firebase.Timestamp.now());
 
         getRoomCollection().document(roomId)
@@ -184,13 +185,13 @@ public class TenantRepository {
     private CollectionReference getRoomCollection() {
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId != null && !tenantId.isEmpty()) {
-            return db.collection("tenants").document(tenantId).collection("phong_tro");
+            return db.collection("tenants").document(tenantId).collection("rooms");
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null)
             throw new IllegalStateException("User not logged in");
-        return db.collection("users").document(user.getUid()).collection("phong_tro");
+        return db.collection("users").document(user.getUid()).collection("rooms");
     }
 
     public void deleteTenant(String id, Runnable onSuccess, Runnable onFail) {
@@ -200,37 +201,38 @@ public class TenantRepository {
     }
 
     /**
-     * Cập nhật trạng thái thu tiền cọc
+     * Internal note.
      */
-    public Task<Void> updateStatusThuCoc(String contractId, boolean trangThaiThuCoc) {
+    public Task<Void> updateStatusThuCoc(String contractId, boolean depositCollectionStatus) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put("trangThaiThuCoc", trangThaiThuCoc);
+        updates.put("depositCollectionStatus", depositCollectionStatus);
         updates.put("updatedAt", System.currentTimeMillis());
-        
+
         return getUserCollection().document(contractId).update(updates);
     }
 
     /**
-     * Xóa hợp đồng khỏi Firestore
+     * Internal note.
      * 
-     * @param contractId ID của hợp đồng cần xóa
-     * @param onSuccess Callback khi xóa thành công
-     * @param onFail Callback khi xóa thất bại
+     * Internal note.
+     * Internal note.
+     * Internal note.
      */
     public void deleteContract(String contractId, Runnable onSuccess, Runnable onFail) {
         if (contractId == null || contractId.trim().isEmpty()) {
-            if (onFail != null) onFail.run();
+            if (onFail != null)
+                onFail.run();
             return;
         }
-        
+
         getUserCollection().document(contractId).delete()
                 .addOnSuccessListener(aVoid -> {
-                    if (onSuccess != null) onSuccess.run();
+                    if (onSuccess != null)
+                        onSuccess.run();
                 })
                 .addOnFailureListener(e -> {
-                    if (onFail != null) onFail.run();
+                    if (onFail != null)
+                        onFail.run();
                 });
     }
 }
-
-

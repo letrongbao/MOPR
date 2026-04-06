@@ -18,12 +18,12 @@ public class RoomViewModel extends ViewModel {
         return danhSachPhong;
     }
 
-    public void addRoom(Room phong, Runnable onSuccess, Runnable onFail) {
-        repository.addRoom(phong, onSuccess, onFail);
+    public void addRoom(Room room, Runnable onSuccess, Runnable onFail) {
+        repository.addRoom(room, onSuccess, onFail);
     }
 
-    public void updateRoom(Room phong, Runnable onSuccess, Runnable onFail) {
-        repository.updateRoom(phong, onSuccess, onFail);
+    public void updateRoom(Room room, Runnable onSuccess, Runnable onFail) {
+        repository.updateRoom(room, onSuccess, onFail);
     }
 
     public void deleteRoom(String id, Runnable onSuccess, Runnable onFail) {

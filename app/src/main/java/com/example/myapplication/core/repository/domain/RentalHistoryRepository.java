@@ -15,11 +15,11 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 /**
- * Repository quản lý Lịch sử cho thuê trong Firestore
+ * Internal note.
  */
 public class RentalHistoryRepository {
     private static final String TAG = "RentalHistoryRepository";
-    private static final String COLLECTION_RENTAL_HISTORY = "rental_history";
+    private static final String COLLECTION_RENTAL_HISTORY = "rentalHistory";
 
     private final FirebaseFirestore db;
 
@@ -28,7 +28,7 @@ public class RentalHistoryRepository {
     }
 
     /**
-     * Lấy collection reference cho rental_history
+     * Internal note.
      */
     @NonNull
     private CollectionReference getHistoryCollection() {
@@ -46,15 +46,15 @@ public class RentalHistoryRepository {
     }
 
     /**
-     * Thêm một bản ghi lịch sử cho thuê mới
+     * Internal note.
      */
     public Task<DocumentReference> addHistory(RentalHistory history) {
-        Log.d(TAG, "Adding rental history for contract: " + history.getIdHopDong());
+        Log.d(TAG, "Adding rental history for contract: " + history.getContractId());
         return getHistoryCollection().add(history);
     }
 
     /**
-     * Lấy tất cả lịch sử cho thuê, sắp xếp theo ngày kết thúc mới nhất
+     * Internal note.
      */
     public Task<QuerySnapshot> getAllHistory() {
         return getHistoryCollection()
@@ -63,37 +63,37 @@ public class RentalHistoryRepository {
     }
 
     /**
-     * Lấy lịch sử cho thuê theo phòng
+     * Internal note.
      */
     public Task<QuerySnapshot> getHistoryByRoom(String roomId) {
         return getHistoryCollection()
-                .whereEqualTo("idPhong", roomId)
+                .whereEqualTo("roomId", roomId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get();
     }
 
     /**
-     * Lấy lịch sử cho thuê theo người thuê
+     * Internal note.
      */
     public Task<QuerySnapshot> getHistoryByTenant(String tenantId) {
         return getHistoryCollection()
-                .whereEqualTo("idTenant", tenantId)
+                .whereEqualTo("tenantId", tenantId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get();
     }
 
     /**
-     * Lấy lịch sử cho thuê theo hợp đồng
+     * Internal note.
      */
     public Task<QuerySnapshot> getHistoryByContract(String contractId) {
         return getHistoryCollection()
-                .whereEqualTo("idHopDong", contractId)
+                .whereEqualTo("contractId", contractId)
                 .limit(1)
                 .get();
     }
 
     /**
-     * Xóa một bản ghi lịch sử
+     * Internal note.
      */
     public Task<Void> deleteHistory(String historyId) {
         Log.d(TAG, "Deleting rental history: " + historyId);
@@ -101,7 +101,7 @@ public class RentalHistoryRepository {
     }
 
     /**
-     * Cập nhật thông tin lịch sử
+     * Internal note.
      */
     public Task<Void> updateHistory(String historyId, RentalHistory history) {
         Log.d(TAG, "Updating rental history: " + historyId);
@@ -109,7 +109,7 @@ public class RentalHistoryRepository {
     }
 
     /**
-     * Lấy thống kê lịch sử cho thuê
+     * Internal note.
      */
     public void getStatistics(StatisticsCallback callback) {
         getAllHistory().addOnSuccessListener(querySnapshot -> {
@@ -120,8 +120,8 @@ public class RentalHistoryRepository {
             for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
                 RentalHistory history = doc.toObject(RentalHistory.class);
                 if (history != null) {
-                    totalRevenue += history.getTongTienDaThanhToan();
-                    totalDays += history.getSoNgayThueThucTe();
+                    totalRevenue += history.getTotalPaidAmount();
+                    totalDays += history.getActualRentalDays();
                 }
             }
 
@@ -136,4 +136,3 @@ public class RentalHistoryRepository {
         void onStatistics(int totalContracts, double totalRevenue, int totalDays);
     }
 }
-

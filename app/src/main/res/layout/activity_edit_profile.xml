@@ -19,7 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
             app:titleCentered="true"
-            app:title="Quản lý tài khoản"
+            app:title="@string/profile_manage_account_title"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationIconTint="@color/white"/>
@@ -27,7 +27,8 @@
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,7 +36,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Avatar + Tên -->
+            <!-- UI section note -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -55,22 +56,41 @@
                     app:shapeAppearanceOverlay="@style/CircleImage"
                     app:strokeColor="@color/primary"
                     app:strokeWidth="2dp"
-                    android:contentDescription="Đổi ảnh đại diện"/>
+                    android:contentDescription="@string/profile_change_avatar_desc"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nhấn để đổi ảnh"
+                    android:text="@string/profile_tap_change_avatar"
                     android:textSize="12sp"
                     android:textColor="@color/primary"
                     android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/auth_method_label"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_sub" />
+
+                <TextView
+                    android:id="@+id/tvAuthMethod"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/auth_method_unknown"
+                    android:textColor="@color/text_main"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Thông tin cá nhân"
+                android:text="@string/profile_personal_info"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_main"
@@ -79,7 +99,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Họ và tên"
+                android:text="@string/full_name"
                 android:textSize="13sp"
                 android:textColor="@color/text_sub"/>
             <com.google.android.material.textfield.TextInputLayout
@@ -97,13 +117,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
-                    android:hint="Nhập họ và tên"/>
+                    android:hint="@string/profile_name_hint"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Email"
+                android:text="@string/email"
                 android:textSize="13sp"
                 android:textColor="@color/text_sub"/>
             <com.google.android.material.textfield.TextInputLayout
@@ -122,13 +142,13 @@
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
                     android:enabled="false"
-                    android:hint="Email"/>
+                    android:hint="@string/email"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Số điện thoại"
+                android:text="@string/phone_number"
                 android:textSize="13sp"
                 android:textColor="@color/text_sub"/>
             <com.google.android.material.textfield.TextInputLayout
@@ -146,14 +166,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="phone"
-                    android:hint="Nhập số điện thoại"/>
+                    android:hint="@string/profile_phone_hint"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveProfile"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:text="Lưu thông tin"
+                android:text="@string/house_save_info"
                 android:textSize="16sp"
                 android:textAllCaps="false"
                 app:cornerRadius="12dp"
@@ -166,7 +186,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nhập mã giới thiệu"
+                android:text="@string/profile_invite_code_title"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_main"
@@ -185,7 +205,7 @@
                     android:id="@+id/edtInviteCode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Nhập mã giới thiệu"
+                    android:hint="@string/profile_invite_code_hint"
                     android:inputType="textCapCharacters"
                     android:maxLength="12"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -195,7 +215,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
-                android:text="Xác nhận"
+                android:text="@string/confirm"
                 android:textAllCaps="false"
                 app:cornerRadius="12dp"
                 app:backgroundTint="@color/primary"/>
@@ -207,3 +227,4 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

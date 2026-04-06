@@ -29,6 +29,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.bumptech.glide.Glide;
 import com.example.myapplication.core.service.ImageUploadService;
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
@@ -56,32 +57,32 @@ import java.util.Locale;
 
 public class ContractActivity extends AppCompatActivity {
 
-    public static final String EXTRA_PHONG_ID = "PHONG_ID";
+    public static final String EXTRA_ROOM_ID = "ROOM_ID";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    private String phongId;
-    private String editContractId; // ID hợp đồng đang edit
-    private boolean isEditMode = false; // Flag để phân biệt mode CREATE/EDIT
+    private String roomId;
+    private String editContractId;
+    private boolean isEditMode = false;
 
-    private Room currentPhong;
-    private House currentKhu;
+    private Room currentRoom;
+    private House currentHouse;
 
     private Tenant currentContract;
 
-    private EditText etSoHopDong, etTenKhach, etDienThoai, etCccd;
+    private EditText etContractNumber, etCustomerName, etPhoneInput, etPersonalId;
     private ImageView ivFront, ivBack, ivEditFront, ivEditBack;
-    private EditText etPhong, etSoNguoi, etTienPhong, etTienCoc;
+    private EditText etRoomNumber, etMemberCount, etRentAmountInput, etDepositAmount;
     private CheckBox cbShowDeposit;
-    private EditText etNgayKy, etSoThang;
+    private EditText etContractDate, etContractMonths;
     private ImageView ivPickDate;
     private CheckBox cbRemind;
     private RadioGroup rgBillingReminder;
-    private EditText etChiSoDien;
-    private CheckBox cbGuiXe, cbInternet, cbGiatSay;
-    private TextView tvGuiXePrice;
-    private EditText etSoXe;
-    private EditText etGhiChu;
+    private EditText etElectricStartReading;
+    private CheckBox cbParkingService, cbInternet, cbLaundryService;
+    private TextView tvParkingPrice;
+    private EditText etVehicleCount;
+    private EditText etNote;
     private CheckBox cbShowNote;
 
     private MaterialButton btnSave, btnPrint, btnEnd, btnUpdate;
@@ -106,25 +107,25 @@ public class ContractActivity extends AppCompatActivity {
 
         ScreenUiHelper.enableEdgeToEdge(this, false);
 
-        // Kiểm tra mode: CREATE hoặc EDIT
-        String mode = getIntent().getStringExtra("MODE");
+        // Internal note.
+        String mode = getIntent().getStringExtra(ContractIntentKeys.MODE);
         isEditMode = "EDIT".equals(mode);
 
         if (isEditMode) {
-            // Mode EDIT: Lấy dữ liệu từ Intent
-            editContractId = getIntent().getStringExtra("CONTRACT_ID");
-            phongId = getIntent().getStringExtra("PHONG_ID");
+            // Internal note.
+            editContractId = getIntent().getStringExtra(ContractIntentKeys.CONTRACT_ID);
+            roomId = getIntent().getStringExtra(ContractIntentKeys.ROOM_ID);
 
             if (editContractId == null || editContractId.trim().isEmpty()) {
-                Toast.makeText(this, "Lỗi: Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error_contract_not_found), Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
         } else {
-            // Mode CREATE: Lấy PHONG_ID như cũ
-            phongId = getIntent().getStringExtra(EXTRA_PHONG_ID);
-            if (phongId == null || phongId.trim().isEmpty()) {
-                Toast.makeText(this, "Thiếu ID phòng", Toast.LENGTH_SHORT).show();
+            // Internal note.
+            roomId = getIntent().getStringExtra(EXTRA_ROOM_ID);
+            if (roomId == null || roomId.trim().isEmpty()) {
+                Toast.makeText(this, getString(R.string.missing_room_id), Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
@@ -147,18 +148,19 @@ public class ContractActivity extends AppCompatActivity {
                 if (pendingUploadTarget == UploadTarget.FRONT) {
                     if (currentContract == null)
                         currentContract = new Tenant();
-                    currentContract.setCccdFrontUrl(imageUrl);
+                    currentContract.setPersonalIdFrontUrl(imageUrl);
                     Glide.with(ContractActivity.this).load(imageUrl).centerCrop().into(ivFront);
                 } else {
                     if (currentContract == null)
                         currentContract = new Tenant();
-                    currentContract.setCccdBackUrl(imageUrl);
+                    currentContract.setPersonalIdBackUrl(imageUrl);
                     Glide.with(ContractActivity.this).load(imageUrl).centerCrop().into(ivBack);
                 }
 
                 pendingUploadTarget = null;
                 setUploadEnabled(true);
-                Toast.makeText(ContractActivity.this, "Tải ảnh lên thành công", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ContractActivity.this, getString(R.string.image_upload_success), Toast.LENGTH_SHORT)
+                        .show();
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(uploadReceiver,
@@ -185,7 +187,7 @@ public class ContractActivity extends AppCompatActivity {
 
         bindViews();
         wireUI();
-        loadPhongThenContract();
+        loadRoomThenContract();
     }
 
     @Override
@@ -198,33 +200,33 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void bindViews() {
-        etSoHopDong = findViewById(R.id.etSoHopDong);
-        etTenKhach = findViewById(R.id.etTenKhach);
-        etDienThoai = findViewById(R.id.etDienThoai);
-        etCccd = findViewById(R.id.etCccd);
+        etContractNumber = findViewById(R.id.etSoHopDong);
+        etCustomerName = findViewById(R.id.etTenKhach);
+        etPhoneInput = findViewById(R.id.etDienThoai);
+        etPersonalId = findViewById(R.id.etCccd);
         ivFront = findViewById(R.id.ivFront);
         ivBack = findViewById(R.id.ivBack);
         ivEditFront = findViewById(R.id.ivEditFront);
         ivEditBack = findViewById(R.id.ivEditBack);
-        etPhong = findViewById(R.id.etPhong);
-        etSoNguoi = findViewById(R.id.etSoNguoi);
-        etTienPhong = findViewById(R.id.etTienPhong);
-        etTienCoc = findViewById(R.id.etTienCoc);
+        etRoomNumber = findViewById(R.id.etPhong);
+        etMemberCount = findViewById(R.id.etSoNguoi);
+        etRentAmountInput = findViewById(R.id.etTienPhong);
+        etDepositAmount = findViewById(R.id.etTienCoc);
         cbShowDeposit = findViewById(R.id.cbShowDeposit);
-        MoneyFormatter.applyTo(etTienPhong);
-        MoneyFormatter.applyTo(etTienCoc);
-        etNgayKy = findViewById(R.id.etNgayKy);
-        etSoThang = findViewById(R.id.etSoThang);
+        MoneyFormatter.applyTo(etRentAmountInput);
+        MoneyFormatter.applyTo(etDepositAmount);
+        etContractDate = findViewById(R.id.etNgayKy);
+        etContractMonths = findViewById(R.id.etSoThang);
         ivPickDate = findViewById(R.id.ivPickDate);
         cbRemind = findViewById(R.id.cbRemind);
         rgBillingReminder = findViewById(R.id.rgBillingReminder);
-        etChiSoDien = findViewById(R.id.etChiSoDien);
-        cbGuiXe = findViewById(R.id.cbGuiXe);
-        tvGuiXePrice = findViewById(R.id.tvGuiXePrice);
-        etSoXe = findViewById(R.id.etSoXe);
+        etElectricStartReading = findViewById(R.id.etChiSoDien);
+        cbParkingService = findViewById(R.id.cbGuiXe);
+        tvParkingPrice = findViewById(R.id.tvGuiXePrice);
+        etVehicleCount = findViewById(R.id.etSoXe);
         cbInternet = findViewById(R.id.cbInternet);
-        cbGiatSay = findViewById(R.id.cbGiatSay);
-        etGhiChu = findViewById(R.id.etGhiChu);
+        cbLaundryService = findViewById(R.id.cbGiatSay);
+        etNote = findViewById(R.id.etGhiChu);
         cbShowNote = findViewById(R.id.cbShowNote);
         btnSave = findViewById(R.id.btnSave);
         btnPrint = findViewById(R.id.btnPrint);
@@ -234,13 +236,14 @@ public class ContractActivity extends AppCompatActivity {
 
     private void wireUI() {
         View.OnClickListener pickDate = v -> showDatePicker();
-        etNgayKy.setOnClickListener(pickDate);
+        etContractDate.setOnClickListener(pickDate);
         ivPickDate.setOnClickListener(pickDate);
-        cbGuiXe.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            etSoXe.setEnabled(isChecked);
-            etSoXe.setBackgroundResource(isChecked ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
+        cbParkingService.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            etVehicleCount.setEnabled(isChecked);
+            etVehicleCount
+                    .setBackgroundResource(isChecked ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
             if (!isChecked)
-                etSoXe.setText("");
+                etVehicleCount.setText("");
         });
         ivEditFront.setOnClickListener(v -> {
             pendingUploadTarget = UploadTarget.FRONT;
@@ -294,39 +297,39 @@ public class ContractActivity extends AppCompatActivity {
         return db.collection("users").document(user.getUid());
     }
 
-    private void loadPhongThenContract() {
-        scopedCollection("phong_tro").document(phongId).get()
+    private void loadRoomThenContract() {
+        scopedCollection("rooms").document(roomId).get()
                 .addOnSuccessListener(doc -> {
-                    currentPhong = doc != null && doc.exists() ? doc.toObject(Room.class) : null;
-                    if (currentPhong == null) {
-                        Toast.makeText(this, "Không tìm thấy phòng", Toast.LENGTH_SHORT).show();
+                    currentRoom = doc != null && doc.exists() ? doc.toObject(Room.class) : null;
+                    if (currentRoom == null) {
+                        Toast.makeText(this, getString(R.string.room_not_found), Toast.LENGTH_SHORT).show();
                         finish();
                         return;
                     }
-                    currentPhong.setId(doc.getId());
-                    bindPhongToUI();
-                    loadKhuFeesThenContract();
+                    currentRoom.setId(doc.getId());
+                    bindRoomToUI();
+                    loadHouseFeesThenContract();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi tải phòng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.room_load_error), Toast.LENGTH_SHORT).show();
                     finish();
                 });
     }
 
-    private void loadKhuFeesThenContract() {
-        String canNhaId = currentPhong.getHouseId();
-        if (canNhaId == null || canNhaId.trim().isEmpty()) {
-            currentKhu = null;
+    private void loadHouseFeesThenContract() {
+        String houseId = currentRoom.getHouseId();
+        if (houseId == null || houseId.trim().isEmpty()) {
+            currentHouse = null;
             bindFeesToUI(null);
             loadExistingContract();
             return;
         }
-        scopedCollection("can_nha").document(canNhaId).get()
+        scopedCollection("houses").document(houseId).get()
                 .addOnSuccessListener(doc -> {
-                    currentKhu = doc != null && doc.exists() ? doc.toObject(House.class) : null;
-                    if (currentKhu != null)
-                        currentKhu.setId(doc.getId());
-                    bindFeesToUI(currentKhu);
+                    currentHouse = doc != null && doc.exists() ? doc.toObject(House.class) : null;
+                    if (currentHouse != null)
+                        currentHouse.setId(doc.getId());
+                    bindFeesToUI(currentHouse);
                     loadExistingContract();
                     updateFullToolbarHeader();
                 })
@@ -338,34 +341,34 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void bindFeesToUI(House khu) {
-        double giaXe = khu != null ? khu.getGiaXe() : 0;
-        double giaInternet = khu != null ? khu.getGiaInternet() : 0;
-        double giaGiatSay = khu != null ? khu.getGiaGiatSay() : 0;
-        tvGuiXePrice.setText("Gửi xe " + formatVnd(giaXe) + "/chiếc");
-        cbInternet.setText("Internet " + formatVnd(giaInternet) + "/phòng");
-        cbGiatSay.setText("Giặt sấy " + formatVnd(giaGiatSay) + "/phòng");
+        double parkingPrice = khu != null ? khu.getParkingPrice() : 0;
+        double internetPrice = khu != null ? khu.getInternetPrice() : 0;
+        double laundryPrice = khu != null ? khu.getLaundryPrice() : 0;
+        tvParkingPrice.setText(getString(R.string.parking_service_price_format, formatVnd(parkingPrice)));
+        cbInternet.setText(getString(R.string.internet_service_price_format, formatVnd(internetPrice)));
+        cbLaundryService.setText(getString(R.string.laundry_service_price_format, formatVnd(laundryPrice)));
     }
 
-    private void bindPhongToUI() {
-        etPhong.setText(currentPhong.getSoPhong() != null ? currentPhong.getSoPhong() : "");
-        MoneyFormatter.setValue(etTienPhong, currentPhong.getGiaThue());
-        etSoHopDong.setText(generateContractNo());
-        etNgayKy.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
-        MoneyFormatter.setValue(etTienCoc, currentPhong.getGiaThue());
+    private void bindRoomToUI() {
+        etRoomNumber.setText(currentRoom.getRoomNumber() != null ? currentRoom.getRoomNumber() : "");
+        MoneyFormatter.setValue(etRentAmountInput, currentRoom.getRentAmount());
+        etContractNumber.setText(generateContractNo());
+        etContractDate.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
+        MoneyFormatter.setValue(etDepositAmount, currentRoom.getRentAmount());
         updateFullToolbarHeader();
     }
 
     private void loadExistingContract() {
-        // Nếu đang ở EDIT mode, load theo ID hợp đồng
+        // Internal note.
         if (isEditMode && editContractId != null) {
             loadContractById(editContractId);
             return;
         }
 
-        // Mode CREATE: load existing contract theo phòng (như cũ)
-        scopedCollection("nguoi_thue")
-                .whereEqualTo("idPhong", phongId)
-                .whereEqualTo("trangThaiHopDong", "ACTIVE")
+        // Internal note.
+        scopedCollection("contracts")
+                .whereEqualTo("roomId", roomId)
+                .whereEqualTo("contractStatus", "ACTIVE")
                 .limit(1).get()
                 .addOnSuccessListener(qs -> {
                     if (qs != null && !qs.isEmpty()) {
@@ -384,10 +387,10 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     /**
-     * Load hợp đồng theo ID (dùng cho EDIT mode)
+     * Internal note.
      */
     private void loadContractById(String contractId) {
-        scopedCollection("nguoi_thue").document(contractId).get()
+        scopedCollection("contracts").document(contractId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc != null && doc.exists()) {
                         Tenant n = doc.toObject(Tenant.class);
@@ -395,7 +398,7 @@ public class ContractActivity extends AppCompatActivity {
                             n.setId(doc.getId());
                             currentContract = n;
 
-                            // Pre-fill tất cả dữ liệu từ Intent (fallback nếu Firestore thiếu)
+                            // Internal note.
                             fillDataFromIntent();
 
                             // Apply mode EDIT
@@ -403,17 +406,18 @@ public class ContractActivity extends AppCompatActivity {
                             return;
                         }
                     }
-                    Toast.makeText(this, "Không tìm thấy hợp đồng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.contract_not_found), Toast.LENGTH_SHORT).show();
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi tải hợp đồng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.contract_load_error) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                     finish();
                 });
     }
 
     /**
-     * Điền dữ liệu từ Intent khi EDIT
+     * Internal note.
      */
     private void fillDataFromIntent() {
         Intent intent = getIntent();
@@ -422,60 +426,67 @@ public class ContractActivity extends AppCompatActivity {
             currentContract = new Tenant();
         }
 
-        // Lấy dữ liệu từ Intent và điền vào currentContract
-        if (intent.hasExtra("SO_HOP_DONG"))
-            currentContract.setSoHopDong(intent.getStringExtra("SO_HOP_DONG"));
-        if (intent.hasExtra("HO_TEN"))
-            currentContract.setHoTen(intent.getStringExtra("HO_TEN"));
-        if (intent.hasExtra("SO_DIEN_THOAI"))
-            currentContract.setSoDienThoai(intent.getStringExtra("SO_DIEN_THOAI"));
-        if (intent.hasExtra("CCCD"))
-            currentContract.setCccd(intent.getStringExtra("CCCD"));
-        if (intent.hasExtra("SO_THANH_VIEN"))
-            currentContract.setSoThanhVien(intent.getIntExtra("SO_THANH_VIEN", 0));
-        if (intent.hasExtra("NGAY_BAT_DAU"))
-            currentContract.setNgayBatDauThue(intent.getStringExtra("NGAY_BAT_DAU"));
-        if (intent.hasExtra("SO_THANG"))
-            currentContract.setSoThangHopDong(intent.getIntExtra("SO_THANG", 0));
-        if (intent.hasExtra("GIA_THUE"))
-            currentContract.setGiaThue(intent.getLongExtra("GIA_THUE", 0));
-        if (intent.hasExtra("TIEN_COC"))
-            currentContract.setTienCoc(intent.getLongExtra("TIEN_COC", 0));
-        if (intent.hasExtra("CHI_SO_DIEN"))
-            currentContract.setChiSoDienDau(intent.getIntExtra("CHI_SO_DIEN", 0));
-        if (intent.hasExtra("DICH_VU_GUI_XE"))
-            currentContract.setDichVuGuiXe(intent.getBooleanExtra("DICH_VU_GUI_XE", false));
-        if (intent.hasExtra("SO_LUONG_XE"))
-            currentContract.setSoLuongXe(intent.getIntExtra("SO_LUONG_XE", 0));
-        if (intent.hasExtra("DICH_VU_INTERNET"))
-            currentContract.setDichVuInternet(intent.getBooleanExtra("DICH_VU_INTERNET", false));
-        if (intent.hasExtra("DICH_VU_GIAT_SAY"))
-            currentContract.setDichVuGiatSay(intent.getBooleanExtra("DICH_VU_GIAT_SAY", false));
-        if (intent.hasExtra("GHI_CHU"))
-            currentContract.setGhiChu(intent.getStringExtra("GHI_CHU"));
-        if (intent.hasExtra("HIEN_THI_COC"))
-            currentContract.setHienThiTienCocTrenInvoice(intent.getBooleanExtra("HIEN_THI_COC", false));
-        if (intent.hasExtra("HIEN_THI_GHI_CHU"))
-            currentContract.setHienThiGhiChuTrenInvoice(intent.getBooleanExtra("HIEN_THI_GHI_CHU", false));
-        if (intent.hasExtra("NHAC_TRUOC_1_THANG"))
-            currentContract.setNhacTruoc1Thang(intent.getBooleanExtra("NHAC_TRUOC_1_THANG", false));
-        if (intent.hasExtra("NHAC_BAO_PHI_VAO"))
-            currentContract.setNhacBaoPhiVao(intent.getStringExtra("NHAC_BAO_PHI_VAO"));
-        if (intent.hasExtra("CCCD_FRONT_URL"))
-            currentContract.setCccdFrontUrl(intent.getStringExtra("CCCD_FRONT_URL"));
-        if (intent.hasExtra("CCCD_BACK_URL"))
-            currentContract.setCccdBackUrl(intent.getStringExtra("CCCD_BACK_URL"));
+        // Internal note.
+        if (intent.hasExtra(ContractIntentKeys.CONTRACT_NUMBER))
+            currentContract.setContractNumber(intent.getStringExtra(ContractIntentKeys.CONTRACT_NUMBER));
+        if (intent.hasExtra(ContractIntentKeys.FULL_NAME))
+            currentContract.setFullName(intent.getStringExtra(ContractIntentKeys.FULL_NAME));
+        if (intent.hasExtra(ContractIntentKeys.PHONE_NUMBER))
+            currentContract.setPhoneNumber(intent.getStringExtra(ContractIntentKeys.PHONE_NUMBER));
+        if (intent.hasExtra(ContractIntentKeys.PERSONAL_ID))
+            currentContract.setPersonalId(intent.getStringExtra(ContractIntentKeys.PERSONAL_ID));
+        if (intent.hasExtra(ContractIntentKeys.MEMBER_COUNT))
+            currentContract.setMemberCount(intent.getIntExtra(ContractIntentKeys.MEMBER_COUNT, 0));
+        if (intent.hasExtra(ContractIntentKeys.RENTAL_START_DATE))
+            currentContract.setRentalStartDate(intent.getStringExtra(ContractIntentKeys.RENTAL_START_DATE));
+        if (intent.hasExtra(ContractIntentKeys.CONTRACT_DURATION_MONTHS))
+            currentContract
+                    .setContractDurationMonths(intent.getIntExtra(ContractIntentKeys.CONTRACT_DURATION_MONTHS, 0));
+        if (intent.hasExtra(ContractIntentKeys.RENT_AMOUNT))
+            currentContract.setRentAmount(intent.getLongExtra(ContractIntentKeys.RENT_AMOUNT, 0));
+        if (intent.hasExtra(ContractIntentKeys.DEPOSIT_AMOUNT))
+            currentContract.setDepositAmount(intent.getLongExtra(ContractIntentKeys.DEPOSIT_AMOUNT, 0));
+        if (intent.hasExtra(ContractIntentKeys.ELECTRIC_START_READING))
+            currentContract
+                    .setElectricStartReading(intent.getIntExtra(ContractIntentKeys.ELECTRIC_START_READING, 0));
+        if (intent.hasExtra(ContractIntentKeys.HAS_PARKING_SERVICE))
+            currentContract.setHasParkingService(intent.getBooleanExtra(ContractIntentKeys.HAS_PARKING_SERVICE, false));
+        if (intent.hasExtra(ContractIntentKeys.VEHICLE_COUNT))
+            currentContract.setVehicleCount(intent.getIntExtra(ContractIntentKeys.VEHICLE_COUNT, 0));
+        if (intent.hasExtra(ContractIntentKeys.HAS_INTERNET_SERVICE))
+            currentContract
+                    .setHasInternetService(intent.getBooleanExtra(ContractIntentKeys.HAS_INTERNET_SERVICE, false));
+        if (intent.hasExtra(ContractIntentKeys.HAS_LAUNDRY_SERVICE))
+            currentContract
+                    .setHasLaundryService(intent.getBooleanExtra(ContractIntentKeys.HAS_LAUNDRY_SERVICE, false));
+        if (intent.hasExtra(ContractIntentKeys.NOTE))
+            currentContract.setNote(intent.getStringExtra(ContractIntentKeys.NOTE));
+        if (intent.hasExtra(ContractIntentKeys.SHOW_DEPOSIT_ON_INVOICE))
+            currentContract.setShowDepositOnInvoice(
+                    intent.getBooleanExtra(ContractIntentKeys.SHOW_DEPOSIT_ON_INVOICE, false));
+        if (intent.hasExtra(ContractIntentKeys.SHOW_NOTE_ON_INVOICE))
+            currentContract.setShowNoteOnInvoice(
+                    intent.getBooleanExtra(ContractIntentKeys.SHOW_NOTE_ON_INVOICE, false));
+        if (intent.hasExtra(ContractIntentKeys.REMIND_ONE_MONTH_BEFORE))
+            currentContract.setRemindOneMonthBefore(
+                    intent.getBooleanExtra(ContractIntentKeys.REMIND_ONE_MONTH_BEFORE, false));
+        if (intent.hasExtra(ContractIntentKeys.BILLING_REMINDER_AT))
+            currentContract.setBillingReminderAt(intent.getStringExtra(ContractIntentKeys.BILLING_REMINDER_AT));
+        if (intent.hasExtra(ContractIntentKeys.PERSONAL_ID_FRONT_URL))
+            currentContract.setPersonalIdFrontUrl(intent.getStringExtra(ContractIntentKeys.PERSONAL_ID_FRONT_URL));
+        if (intent.hasExtra(ContractIntentKeys.PERSONAL_ID_BACK_URL))
+            currentContract.setPersonalIdBackUrl(intent.getStringExtra(ContractIntentKeys.PERSONAL_ID_BACK_URL));
     }
 
     private void loadExistingContractLegacyFallback() {
-        scopedCollection("nguoi_thue").whereEqualTo("idPhong", phongId).limit(1).get()
+        scopedCollection("contracts").whereEqualTo("roomId", roomId).limit(1).get()
                 .addOnSuccessListener(qs -> {
                     Tenant best = null;
                     if (qs != null && !qs.isEmpty()) {
                         com.google.firebase.firestore.DocumentSnapshot d = qs.getDocuments().get(0);
                         Tenant n = d.toObject(Tenant.class);
                         if (n != null) {
-                            String st = n.getTrangThaiHopDong();
+                            String st = n.getContractStatus();
                             if (st == null || !st.equalsIgnoreCase("ENDED")) {
                                 n.setId(d.getId());
                                 best = n;
@@ -514,7 +525,7 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     /**
-     * Apply mode EDIT: Hiển thị nút "Cập nhật", ẩn các nút khác, pre-fill dữ liệu
+     * Internal note.
      */
     private void applyModeEdit() {
         btnSave.setVisibility(View.GONE);
@@ -522,30 +533,30 @@ public class ContractActivity extends AppCompatActivity {
         btnEnd.setVisibility(View.GONE);
         btnUpdate.setVisibility(View.VISIBLE);
 
-        // Đổi text nút thành "Cập nhật"
-        btnUpdate.setText("Cập nhật");
+        // Internal note.
+        btnUpdate.setText(R.string.update);
 
-        // Đổi tiêu đề toolbar
+        // Internal note.
         if (tvTitleLine1 != null) {
-            tvTitleLine1.setText("Chỉnh sửa hợp đồng");
+            tvTitleLine1.setText(R.string.edit_contract);
         }
 
-        // Pre-fill toàn bộ dữ liệu vào form
+        // Internal note.
         bindContractToUI(currentContract);
         setUploadEnabled(true);
     }
 
     private void updateFullToolbarHeader() {
-        String title = "Hợp đồng";
-        if (currentPhong != null)
-            title = "Hợp đồng phòng " + nullToEmpty(currentPhong.getSoPhong());
+        String title = getString(R.string.contract_header_title);
+        if (currentRoom != null)
+            title = getString(R.string.contract_header_room_title, nullToEmpty(currentRoom.getRoomNumber()));
         String subtitle = "";
-        if (currentKhu != null) {
-            subtitle = (currentKhu.getDiaChi() != null && !currentKhu.getDiaChi().trim().isEmpty())
-                    ? currentKhu.getDiaChi()
-                    : currentKhu.getTenHouse();
-        } else if (currentPhong != null)
-            subtitle = currentPhong.getHouseTen();
+        if (currentHouse != null) {
+            subtitle = (currentHouse.getAddress() != null && !currentHouse.getAddress().trim().isEmpty())
+                    ? currentHouse.getAddress()
+                    : currentHouse.getHouseName();
+        } else if (currentRoom != null)
+            subtitle = currentRoom.getHouseName();
         if (tvTitleLine1 != null)
             tvTitleLine1.setText(nullToEmpty(title));
         if (tvTitleLine2 != null)
@@ -553,49 +564,47 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void bindContractToUI(@NonNull Tenant c) {
-        if (c.getSoHopDong() != null && !c.getSoHopDong().trim().isEmpty())
-            etSoHopDong.setText(c.getSoHopDong());
-        etTenKhach.setText(nullToEmpty(c.getHoTen()));
-        etDienThoai.setText(nullToEmpty(c.getSoDienThoai()));
-        etCccd.setText(nullToEmpty(c.getCccd()));
-        etSoNguoi.setText(c.getSoThanhVien() > 0 ? String.valueOf(c.getSoThanhVien()) : "");
+        if (c.getContractNumber() != null && !c.getContractNumber().trim().isEmpty())
+            etContractNumber.setText(c.getContractNumber());
+        etCustomerName.setText(nullToEmpty(c.getFullName()));
+        etPhoneInput.setText(nullToEmpty(c.getPhoneNumber()));
+        etPersonalId.setText(nullToEmpty(c.getPersonalId()));
+        etMemberCount.setText(c.getMemberCount() > 0 ? String.valueOf(c.getMemberCount()) : "");
 
-        // Sử dụng long fields nếu có, fallback về double cũ
-        if (c.getGiaThue() > 0) {
-            MoneyFormatter.setValue(etTienPhong, (double) c.getGiaThue());
-        } else if (c.getTienPhong() > 0) {
-            MoneyFormatter.setValue(etTienPhong, c.getTienPhong());
+        if (c.getRentAmount() > 0) {
+            MoneyFormatter.setValue(etRentAmountInput, (double) c.getRentAmount());
         }
 
-        if (c.getTienCoc() > 0) {
-            MoneyFormatter.setValue(etTienCoc, (double) c.getTienCoc());
-        } else if (c.getTienCoc_old() > 0) {
-            MoneyFormatter.setValue(etTienCoc, c.getTienCoc_old());
+        if (c.getDepositAmount() > 0) {
+            MoneyFormatter.setValue(etDepositAmount, (double) c.getDepositAmount());
         }
 
-        cbShowDeposit.setChecked(c.isHienThiTienCocTrenInvoice());
-        etNgayKy.setText(ContractDateHelper.formatMonthYearForInput(c.getNgayBatDauThue()));
-        etSoThang.setText(c.getSoThangHopDong() > 0 ? String.valueOf(c.getSoThangHopDong()) : "");
-        cbRemind.setChecked(c.isNhacTruoc1Thang());
-        bindBillingReminderSelection(c.getNhacBaoPhiVao());
-        etChiSoDien.setText(c.getChiSoDienDau() > 0 ? String.valueOf(c.getChiSoDienDau()) : "");
-        cbGuiXe.setChecked(c.isDichVuGuiXe());
-        etSoXe.setEnabled(c.isDichVuGuiXe());
-        etSoXe.setBackgroundResource(c.isDichVuGuiXe() ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
-        etSoXe.setText(c.getSoLuongXe() > 0 ? String.valueOf(c.getSoLuongXe()) : "");
-        cbInternet.setChecked(c.isDichVuInternet());
-        cbGiatSay.setChecked(c.isDichVuGiatSay());
-        etGhiChu.setText(nullToEmpty(c.getGhiChu()));
-        cbShowNote.setChecked(c.isHienThiGhiChuTrenInvoice());
-        if (c.getCccdFrontUrl() != null && !c.getCccdFrontUrl().trim().isEmpty())
-            Glide.with(this).load(c.getCccdFrontUrl()).centerCrop().into(ivFront);
-        if (c.getCccdBackUrl() != null && !c.getCccdBackUrl().trim().isEmpty())
-            Glide.with(this).load(c.getCccdBackUrl()).centerCrop().into(ivBack);
+        cbShowDeposit.setChecked(c.isShowDepositOnInvoice());
+        etContractDate.setText(ContractDateHelper.formatMonthYearForInput(c.getRentalStartDate()));
+        etContractMonths
+                .setText(c.getContractDurationMonths() > 0 ? String.valueOf(c.getContractDurationMonths()) : "");
+        cbRemind.setChecked(c.isRemindOneMonthBefore());
+        bindBillingReminderSelection(c.getBillingReminderAt());
+        etElectricStartReading
+                .setText(c.getElectricStartReading() > 0 ? String.valueOf(c.getElectricStartReading()) : "");
+        cbParkingService.setChecked(c.hasParkingService());
+        etVehicleCount.setEnabled(c.hasParkingService());
+        etVehicleCount.setBackgroundResource(
+                c.hasParkingService() ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
+        etVehicleCount.setText(c.getVehicleCount() > 0 ? String.valueOf(c.getVehicleCount()) : "");
+        cbInternet.setChecked(c.hasInternetService());
+        cbLaundryService.setChecked(c.hasLaundryService());
+        etNote.setText(nullToEmpty(c.getNote()));
+        cbShowNote.setChecked(c.isShowNoteOnInvoice());
+        if (c.getPersonalIdFrontUrl() != null && !c.getPersonalIdFrontUrl().trim().isEmpty())
+            Glide.with(this).load(c.getPersonalIdFrontUrl()).centerCrop().into(ivFront);
+        if (c.getPersonalIdBackUrl() != null && !c.getPersonalIdBackUrl().trim().isEmpty())
+            Glide.with(this).load(c.getPersonalIdBackUrl()).centerCrop().into(ivBack);
     }
 
     private void showDatePicker() {
         final Calendar cal = Calendar.getInstance();
-        String cur = etNgayKy.getText() != null ? etNgayKy.getText().toString().trim() : "";
+        String cur = etContractDate.getText() != null ? etContractDate.getText().toString().trim() : "";
         Calendar parsed = ContractDateHelper.parseContractDate(cur);
         if (parsed != null)
             cal.setTimeInMillis(parsed.getTimeInMillis());
@@ -606,7 +615,8 @@ public class ContractActivity extends AppCompatActivity {
                 cal.get(Calendar.MONTH),
                 MonthYearPickerDialog.defaultMinYear(),
                 MonthYearPickerDialog.defaultMaxYear(),
-                (year, month) -> etNgayKy.setText(String.format(Locale.getDefault(), "%02d/%04d", month + 1, year)));
+                (year, month) -> etContractDate
+                        .setText(String.format(Locale.getDefault(), "%02d/%04d", month + 1, year)));
     }
 
     private void saveOrUpdate(boolean isCreate) {
@@ -615,25 +625,29 @@ public class ContractActivity extends AppCompatActivity {
         ContractFormDataHelper.FormData formData;
         try {
             formData = ContractFormDataHelper.parseAndValidate(
-                    text(etSoHopDong),
-                    text(etTenKhach),
-                    text(etDienThoai),
-                    text(etCccd),
-                    text(etSoNguoi),
-                    text(etNgayKy),
-                    text(etSoThang),
-                    text(etChiSoDien),
-                    cbGuiXe.isChecked(),
-                    text(etSoXe),
+                    text(etContractNumber),
+                    text(etCustomerName),
+                    text(etPhoneInput),
+                    text(etPersonalId),
+                    text(etMemberCount),
+                    text(etContractDate),
+                    text(etContractMonths),
+                    text(etElectricStartReading),
+                    cbParkingService.isChecked(),
+                    text(etVehicleCount),
                     cbInternet.isChecked(),
-                    cbGiatSay.isChecked(),
+                    cbLaundryService.isChecked(),
                     cbRemind.isChecked(),
                     cbShowDeposit.isChecked(),
                     cbShowNote.isChecked(),
                     getSelectedBillingReminder(),
-                    MoneyFormatter.getValue(etTienPhong),
-                    MoneyFormatter.getValue(etTienCoc),
-                    text(etGhiChu),
+                    MoneyFormatter.getValue(etRentAmountInput),
+                    MoneyFormatter.getValue(etDepositAmount),
+                    text(etNote),
+                    getString(R.string.fill_required_fields),
+                    getString(R.string.contract_signing_date_invalid),
+                    getString(R.string.enter_vehicle_count),
+                    getString(R.string.invalid_data),
                     this::normalizeMonthYearToStorage);
         } catch (ContractFormDataHelper.ValidationException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -643,8 +657,8 @@ public class ContractActivity extends AppCompatActivity {
         ContractFormDataHelper.applyToContract(
                 currentContract,
                 formData,
-                phongId,
-                currentPhong != null ? currentPhong.getSoPhong() : null,
+                roomId,
+                currentRoom != null ? currentRoom.getRoomNumber() : null,
                 this::computeEndDate);
 
         long now = System.currentTimeMillis();
@@ -652,33 +666,35 @@ public class ContractActivity extends AppCompatActivity {
             currentContract.setCreatedAt(now);
         currentContract.setUpdatedAt(now);
         if (isCreate || currentContract.getId() == null || currentContract.getId().trim().isEmpty()) {
-            // Mode CREATE: Thêm mới
-            scopedCollection("nguoi_thue").add(currentContract)
+            // Internal note.
+            scopedCollection("contracts").add(currentContract)
                     .addOnSuccessListener(ref -> {
                         currentContract.setId(ref.getId());
                         markRoomStatus(RoomStatus.RENTED);
-                        Toast.makeText(this, "✓ Đã lưu hợp đồng", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.contract_saved), Toast.LENGTH_SHORT).show();
                         navigateToRoomList(RoomStatus.RENTED);
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, "❌ Lưu thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.save_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG)
+                                .show();
                     });
         } else {
-            // Mode UPDATE hoặc EDIT: Cập nhật
+            // Internal note.
             String updateId = isEditMode && editContractId != null ? editContractId : currentContract.getId();
 
-            scopedCollection("nguoi_thue").document(updateId).set(currentContract)
+            scopedCollection("contracts").document(updateId).set(currentContract)
                     .addOnSuccessListener(v -> {
                         markRoomStatus(RoomStatus.RENTED);
-                        Toast.makeText(this, "✓ Đã cập nhật hợp đồng", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
 
-                        // Nếu đang ở EDIT mode, quay về màn hình danh sách
+                        // Internal note.
                         if (isEditMode) {
-                            finish(); // Quay về ContractListActivity
+                            finish();
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, "❌ Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.update_failed) + ": " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
                     });
         }
     }
@@ -709,9 +725,9 @@ public class ContractActivity extends AppCompatActivity {
 
     private String normalizeBillingReminder(String value) {
         if (value == null || value.trim().isEmpty()) {
-            if (currentKhu != null && currentKhu.getNhacBaoPhi() != null
-                    && !currentKhu.getNhacBaoPhi().trim().isEmpty()) {
-                String legacy = currentKhu.getNhacBaoPhi();
+            if (currentHouse != null && currentHouse.getBillingReminderAt() != null
+                    && !currentHouse.getBillingReminderAt().trim().isEmpty()) {
+                String legacy = currentHouse.getBillingReminderAt();
                 if ("end_month".equals(legacy))
                     return "end_month";
                 return "start_month";
@@ -727,42 +743,42 @@ public class ContractActivity extends AppCompatActivity {
         if (currentContract == null || currentContract.getId() == null)
             return;
         new AlertDialog.Builder(this)
-                .setTitle("Xác nhận kết thúc hợp đồng")
-                .setMessage(
-                        "Bạn có chắc chắn muốn kết thúc hợp đồng này?\n\n• Phòng sẽ chuyển về trạng thái 'Trống'\n• Thông tin hợp đồng sẽ được lưu vào lịch sử")
-                .setPositiveButton("Kết thúc", (d, w) -> endContract())
-                .setNegativeButton("Hủy", null).setCancelable(false).show();
+                .setTitle(getString(R.string.contract_end_confirm_title))
+                .setMessage(getString(R.string.contract_end_confirm_message))
+                .setPositiveButton(getString(R.string.contract_end_action), (d, w) -> endContract())
+                .setNegativeButton(getString(R.string.cancel), null).setCancelable(false).show();
     }
 
     private void endContract() {
         if (currentContract == null || currentContract.getId() == null)
             return;
-        String oldRoomId = phongId;
+        String oldRoomId = roomId;
         long now = System.currentTimeMillis();
         createRentalHistoryLog(currentContract, oldRoomId, now);
-        currentContract.setTrangThaiHopDong("ENDED");
+        currentContract.setContractStatus("ENDED");
         currentContract.setEndedAt(now);
-        currentContract.setIdPhongCu(oldRoomId);
-        currentContract.setIdPhong("");
+        currentContract.setPreviousRoomId(oldRoomId);
+        currentContract.setRoomId("");
         currentContract.setUpdatedAt(now);
-        scopedCollection("nguoi_thue").document(currentContract.getId()).set(currentContract)
+        scopedCollection("contracts").document(currentContract.getId()).set(currentContract)
                 .addOnSuccessListener(v -> {
                     markRoomStatus(RoomStatus.VACANT);
-                    Toast.makeText(this, "Đã kết thúc hợp đồng và lưu lịch sử", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
                     navigateToRoomList(RoomStatus.VACANT);
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Thao tác thất bại", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(
+                        e -> Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
     }
 
     private void navigateToRoomList(@NonNull String status) {
         Intent intent = new Intent(this, RoomActivity.class);
         intent.putExtra("FILTER_STATUS", status);
-        if (currentPhong != null && currentPhong.getHouseId() != null
-                && !currentPhong.getHouseId().trim().isEmpty()) {
-            intent.putExtra("CAN_NHA_ID", currentPhong.getHouseId());
-            intent.putExtra("CAN_NHA_NAME", currentPhong.getHouseTen());
-            if (currentKhu != null)
-                intent.putExtra("CAN_NHA_ADDR", currentKhu.getDiaChi());
+        if (currentRoom != null && currentRoom.getHouseId() != null
+                && !currentRoom.getHouseId().trim().isEmpty()) {
+            intent.putExtra("HOUSE_ID", currentRoom.getHouseId());
+            intent.putExtra("HOUSE_NAME", currentRoom.getHouseName());
+            if (currentHouse != null)
+                intent.putExtra("HOUSE_ADDRESS", currentHouse.getAddress());
         }
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
@@ -771,59 +787,60 @@ public class ContractActivity extends AppCompatActivity {
 
     private void createRentalHistoryLog(Tenant contract, String roomId, long endTime) {
         RentalHistory history = new RentalHistory();
-        history.setIdHopDong(contract.getId());
-        history.setIdPhong(roomId);
-        history.setIdTenant(contract.getId());
-        if (currentPhong != null) {
-            history.setSoPhong(currentPhong.getSoPhong());
-            history.setHouseTen(currentPhong.getHouseTen());
-            history.setTang(currentPhong.getTang());
+        history.setContractId(contract.getId());
+        history.setRoomId(roomId);
+        history.setContractId(contract.getId());
+        if (currentRoom != null) {
+            history.setRoomNumber(currentRoom.getRoomNumber());
+            history.setHouseName(currentRoom.getHouseName());
+            history.setFloor(currentRoom.getFloor());
         } else
-            history.setSoPhong(contract.getSoPhong());
-        history.setHoTen(contract.getHoTen());
-        history.setCccd(contract.getCccd());
-        history.setSoDienThoai(contract.getSoDienThoai());
-        history.setDiaChi(contract.getDiaChi());
-        history.setSoHopDong(contract.getSoHopDong());
-        history.setSoThanhVien(contract.getSoThanhVien());
-        history.setNgayBatDauThue(contract.getNgayBatDauThue());
-        history.setNgayKetThucHopDong(contract.getNgayKetThucHopDong());
-        history.setSoThangHopDong(contract.getSoThangHopDong());
+            history.setRoomNumber(contract.getRoomNumber());
+        history.setFullName(contract.getFullName());
+        history.setPersonalId(contract.getPersonalId());
+        history.setPhoneNumber(contract.getPhoneNumber());
+        history.setAddress(contract.getAddress());
+        history.setContractNumber(contract.getContractNumber());
+        history.setMemberCount(contract.getMemberCount());
+        history.setRentalStartDate(contract.getRentalStartDate());
+        history.setContractEndDate(contract.getContractEndDate());
+        history.setContractMonths(contract.getContractDurationMonths());
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        history.setNgayKetThucThucTe(sdf.format(new Date(endTime)));
-        if (contract.getNgayBatDauThue() != null && !contract.getNgayBatDauThue().isEmpty()) {
+        history.setActualEndDate(sdf.format(new Date(endTime)));
+        if (contract.getRentalStartDate() != null && !contract.getRentalStartDate().isEmpty()) {
             try {
-                Date startDate = sdf.parse(contract.getNgayBatDauThue());
+                Date startDate = sdf.parse(contract.getRentalStartDate());
                 if (startDate != null) {
                     long diff = endTime - startDate.getTime();
-                    history.setSoNgayThueThucTe((int) (diff / (1000 * 60 * 60 * 24)));
+                    history.setActualRentalDays((int) (diff / (1000 * 60 * 60 * 24)));
                     history.setStartTimestamp(startDate.getTime());
                 }
             } catch (Exception e) {
-                history.setSoNgayThueThucTe(0);
+                history.setActualRentalDays(0);
             }
         }
         history.setEndTimestamp(endTime);
-        history.setTienPhong(contract.getTienPhong());
-        history.setTienCoc(contract.getTienCoc());
-        history.setDichVuGuiXe(contract.isDichVuGuiXe());
-        history.setDichVuInternet(contract.isDichVuInternet());
-        history.setDichVuGiatSay(contract.isDichVuGiatSay());
-        history.setSoLuongXe(contract.getSoLuongXe());
-        history.setGhiChu(contract.getGhiChu());
-        history.setLyDoKetThuc("Kết thúc hợp đồng");
+        history.setRoomPrice(contract.getRentAmount());
+        history.setDepositAmount(contract.getDepositAmount());
+        history.setHasParkingService(contract.hasParkingService());
+        history.setHasInternetService(contract.hasInternetService());
+        history.setHasLaundryService(contract.hasLaundryService());
+        history.setVehicleCount(contract.getVehicleCount());
+        history.setNote(contract.getNote());
+        history.setEndReason(getString(R.string.contract_end_reason_default));
         history.setCreatedAt(Timestamp.now());
         calculateInvoiceStats(contract.getId(), (totalPaid, paidCount, unpaidCount) -> {
-            history.setTongTienDaThanhToan(totalPaid);
-            history.setSoInvoiceDaThanhToan(paidCount);
-            history.setSoInvoiceChuaThanhToan(unpaidCount);
+            history.setTotalPaidAmount(totalPaid);
+            history.setPaidInvoiceCount(paidCount);
+            history.setUnpaidInvoiceCount(unpaidCount);
             rentalHistoryRepo.addHistory(history)
                     .addOnSuccessListener(ref -> {
                         history.setId(ref.getId());
-                        android.util.Log.d("ContractActivity", "Đã lưu lịch sử cho thuê: " + ref.getId());
+                        android.util.Log.d("ContractActivity", "Rental history saved: " + ref.getId());
                     })
                     .addOnFailureListener(
-                            e -> android.util.Log.e("ContractActivity", "Lỗi lưu lịch sử: " + e.getMessage()));
+                            e -> android.util.Log.e("ContractActivity",
+                                    "Failed to save rental history: " + e.getMessage()));
         });
     }
 
@@ -831,17 +848,18 @@ public class ContractActivity extends AppCompatActivity {
         void onDone(double totalPaid, int paidCount, int unpaidCount);
     }
 
-    private void calculateInvoiceStats(String tenantId, @NonNull InvoiceStatsCallback callback) {
-        scopedCollection("hoa_don").whereEqualTo("idTenant", tenantId).get()
+    private void calculateInvoiceStats(String contractId, @NonNull InvoiceStatsCallback callback) {
+        scopedCollection("invoices").whereEqualTo("contractId", contractId).get()
                 .addOnSuccessListener(querySnapshot -> {
                     double totalPaid = 0;
                     int paidCount = 0, unpaidCount = 0;
                     for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        String trangThai = doc.getString("trangThai");
-                        if ("Đã thanh toán".equals(trangThai)) {
-                            Double tongTien = doc.getDouble("tongTien");
-                            if (tongTien != null)
-                                totalPaid += tongTien;
+                        String status = doc.getString("status");
+                        if (InvoiceStatus.PAID.equals(status)
+                                || getString(R.string.legacy_paid_status_vi).equals(status)) {
+                            Double totalAmount = doc.getDouble("totalAmount");
+                            if (totalAmount != null)
+                                totalPaid += totalAmount;
                             paidCount++;
                         } else
                             unpaidCount++;
@@ -855,21 +873,22 @@ public class ContractActivity extends AppCompatActivity {
         DocumentReference scope = scopedDoc();
         if (scope == null)
             return;
-        scope.collection("phong_tro").document(phongId).update("trangThai", status);
+        scope.collection("rooms").document(roomId).update("status", status);
     }
 
     private void printContract() {
         if (currentContract == null) {
-            Toast.makeText(this, "Chưa có dữ liệu", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_data_yet), Toast.LENGTH_SHORT).show();
             return;
         }
-        String html = ContractHtmlBuilder.buildContractHtml(currentContract, currentPhong, currentKhu);
+        String html = ContractHtmlBuilder.buildContractHtml(this, currentContract, currentRoom, currentHouse);
         PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
         if (printManager == null) {
-            Toast.makeText(this, "Thiết bị không hỗ trợ in", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.device_not_support_print), Toast.LENGTH_SHORT).show();
             return;
         }
-        String jobName = "HopDong_" + (currentContract.getSoHopDong() != null ? currentContract.getSoHopDong() : "");
+        String jobName = "Contract_"
+                + (currentContract.getContractNumber() != null ? currentContract.getContractNumber() : "");
         WebView webView = new WebView(this);
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -902,6 +921,6 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private String formatVnd(double value) {
-        return NumberFormat.getNumberInstance(new Locale("vi", "VN")).format((long) value) + " đ";
+        return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN")).format((long) value) + " ₫";
     }
 }

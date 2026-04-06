@@ -20,13 +20,13 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Quản lý khách thuê"
+            app:title="@string/tenant_management_title"
             app:titleCentered="true"
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationIconTint="@color/white"/>
 
-        <!-- Search bar bên dưới Toolbar -->
+        <!-- UI section note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:background="@drawable/bg_input_rounded"
-                android:hint="Tìm kiếm khách thuê (SĐT/Tên)..."
+                android:hint="@string/tenant_search_hint"
                 android:textSize="14sp"
                 android:textColorHint="#999999"
                 android:textColor="#333333"
@@ -71,7 +71,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Chưa có người thuê\nNhấn + để thêm"
+        android:text="@string/tenant_empty_state"
         android:textAlignment="center"
         android:textSize="15sp"
         android:textColor="#999999"
@@ -83,7 +83,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="20dp"
-        android:contentDescription="Thêm người thuê"
+        android:contentDescription="@string/add_tenant"
         app:srcCompat="@drawable/ic_add"
         app:backgroundTint="@color/primary"
         app:tint="@color/white"
