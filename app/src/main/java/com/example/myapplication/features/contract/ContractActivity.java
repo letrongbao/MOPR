@@ -35,6 +35,7 @@ import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.core.widget.MonthYearPickerDialog;
+import com.example.myapplication.core.repository.domain.ContractMemberRepository;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Tenant;
 import com.example.myapplication.domain.Room;
@@ -99,6 +100,7 @@ public class ContractActivity extends AppCompatActivity {
     private BroadcastReceiver uploadReceiver;
 
     private RentalHistoryRepository rentalHistoryRepo;
+    private ContractMemberRepository contractMemberRepository;
     private TextView tvTitleLine1, tvTitleLine2;
 
     @Override
@@ -167,6 +169,7 @@ public class ContractActivity extends AppCompatActivity {
                 new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE));
 
         rentalHistoryRepo = new RentalHistoryRepository();
+        contractMemberRepository = new ContractMemberRepository();
 
         setContentView(R.layout.activity_contract);
 
@@ -654,6 +657,14 @@ public class ContractActivity extends AppCompatActivity {
             return;
         }
 
+        int maxOccupancy = currentRoom != null ? currentRoom.getMaxOccupancy() : 0;
+        if (maxOccupancy > 0 && formData.memberCount > maxOccupancy) {
+            Toast.makeText(this,
+                    getString(R.string.contract_member_count_exceeds_room_limit, formData.memberCount, maxOccupancy),
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
         ContractFormDataHelper.applyToContract(
                 currentContract,
                 formData,
@@ -670,9 +681,20 @@ public class ContractActivity extends AppCompatActivity {
             scopedCollection("contracts").add(currentContract)
                     .addOnSuccessListener(ref -> {
                         currentContract.setId(ref.getId());
-                        markRoomStatus(RoomStatus.RENTED);
-                        Toast.makeText(this, getString(R.string.contract_saved), Toast.LENGTH_SHORT).show();
-                        navigateToRoomList(RoomStatus.RENTED);
+                        contractMemberRepository.upsertPrimaryMemberFromContract(
+                                currentContract,
+                                () -> {
+                                    markRoomStatus(RoomStatus.RENTED);
+                                    Toast.makeText(this, getString(R.string.contract_saved), Toast.LENGTH_SHORT).show();
+                                    navigateToRoomList(RoomStatus.RENTED);
+                                },
+                                () -> {
+                                    markRoomStatus(RoomStatus.RENTED);
+                                    Toast.makeText(this,
+                                            getString(R.string.contract_saved_with_member_sync_warning),
+                                            Toast.LENGTH_SHORT).show();
+                                    navigateToRoomList(RoomStatus.RENTED);
+                                });
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(this, getString(R.string.save_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG)
@@ -684,13 +706,26 @@ public class ContractActivity extends AppCompatActivity {
 
             scopedCollection("contracts").document(updateId).set(currentContract)
                     .addOnSuccessListener(v -> {
-                        markRoomStatus(RoomStatus.RENTED);
-                        Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
+                        contractMemberRepository.upsertPrimaryMemberFromContract(
+                                currentContract,
+                                () -> {
+                                    markRoomStatus(RoomStatus.RENTED);
+                                    Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
 
-                        // Internal note.
-                        if (isEditMode) {
-                            finish();
-                        }
+                                    // Internal note.
+                                    if (isEditMode) {
+                                        finish();
+                                    }
+                                },
+                                () -> {
+                                    markRoomStatus(RoomStatus.RENTED);
+                                    Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
+
+                                    // Internal note.
+                                    if (isEditMode) {
+                                        finish();
+                                    }
+                                });
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(this, getString(R.string.update_failed) + ": " + e.getMessage(),
@@ -762,9 +797,11 @@ public class ContractActivity extends AppCompatActivity {
         currentContract.setUpdatedAt(now);
         scopedCollection("contracts").document(currentContract.getId()).set(currentContract)
                 .addOnSuccessListener(v -> {
-                    markRoomStatus(RoomStatus.VACANT);
-                    Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
-                    navigateToRoomList(RoomStatus.VACANT);
+                    contractMemberRepository.deactivateMembersByContract(currentContract.getId(), () -> {
+                        markRoomStatus(RoomStatus.VACANT);
+                        Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
+                        navigateToRoomList(RoomStatus.VACANT);
+                    });
                 })
                 .addOnFailureListener(
                         e -> Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Quản Lý Trọ</string>
+    <string name="app_name">Quản Lí Trọ</string>
     <string name="widget_invoice_description">Hiển thị số hóa đơn chưa thanh toán và tổng phòng trọ</string>
 
     <!-- Common Validations & Messages -->
@@ -54,6 +54,7 @@
     <string name="laundry_service">Giặt sấy </string>
     <string name="edit_contract">Chỉnh sửa hợp đồng</string>
     <string name="contract_saved">✓ Đã lưu hợp đồng</string>
+    <string name="contract_saved_with_member_sync_warning">✓ Đã lưu hợp đồng (cảnh báo đồng bộ thành viên)</string>
     <string name="enter_vehicle_count">Vui lòng nhập số lượng xe</string>
 
     <!-- Invoice & Payments -->
@@ -81,8 +82,8 @@
     <string name="room_no_tenant">Phòng chưa có người thuê</string>
     <string name="payment_code_added">Đã thêm mã thanh toán</string>
     <string name="please_enter_address">Vui lòng nhập địa chỉ</string>
-    <string name="please_enter_manager_name">Vui lòng nhập tên quản lý</string>
-    <string name="please_enter_manager_phone">Vui lòng nhập số điện thoại quản lý</string>
+    <string name="please_enter_manager_name">Vui lòng nhập tên quản lí</string>
+    <string name="please_enter_manager_phone">Vui lòng nhập số điện thoại quản lí</string>
 
     <!-- Tickets & Support -->
     <string name="complaints_repairs">Phản ánh / Sửa chữa</string>
@@ -90,7 +91,7 @@
     <string name="completed">Hoàn thành</string>
 
     <!-- Finance & Expenses -->
-    <string name="tenant_no_permission_view_expenses">Tài khoản người thuê không có quyền xem quản lý chi</string>
+    <string name="tenant_no_permission_view_expenses">Tài khoản người thuê không có quyền xem quản lí chi</string>
     <string name="failed_load_permissions">Không tải được quyền truy cập</string>
     <string name="month">Tháng </string>
     <string name="select_month">Chọn tháng</string>
@@ -138,7 +139,7 @@
     <string name="contract_html_signatures">CHỮ KÝ CÁC BÊN:</string>
     <string name="contract_html_landlord_signature">Bên cho thuê (Bên A)</string>
     <string name="contract_html_tenant_signature">Bên thuê (Bên B)</string>
-    <string name="contract_html_note">Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</string>
+    <string name="contract_html_note">Hợp đồng được lập thành 02 bản có giá trị pháp lí như nhau, mỗi bên giữ 01 bản.</string>
 
     <!-- Added During Vietnamese String Migration -->
     <string name="updating">Đang cập nhật</string>
@@ -236,7 +237,7 @@
     <string name="failed_check_firebase">Thất bại — kiểm tra Firebase</string>
     <string name="edit_invoice_month">Chỉnh sửa hóa đơn tháng %1$s</string>
     <string name="payment_title_format">Thanh toán • Phòng %1$s • %2$s</string>
-    <string name="expense_management">Quản lý chi</string>
+    <string name="expense_management">Quản lí chi</string>
     <string name="other">Khác</string>
     <string name="total_expense">Tổng chi: </string>
     <string name="number_of_items">Số khoản: </string>
@@ -273,7 +274,7 @@
     <string name="please_login_again">Vui lòng đăng nhập lại</string>
     <string name="please_login_again_to_change_password">Vui lòng đăng nhập lại để đổi mật khẩu</string>
     <string name="error_upload_image">Lỗi khi tải ảnh lên</string>
-    <string name="account_management">Quản lý tài khoản</string>
+    <string name="account_management">Quản lí tài khoản</string>
     <string name="uploading_image">Đang tải ảnh lên...</string>
     <string name="update_success">Cập nhật thành công!</string>
     <string name="error_update">Lỗi cập nhật: </string>
@@ -340,7 +341,7 @@
     <string name="ticket_change_status">Đổi trạng thái</string>
     <string name="ticket_update_failed">Cập nhật thất bại</string>
     <string name="ticket_status_new">Mới</string>
-    <string name="ticket_status_processing">Đang xử lý</string>
+    <string name="ticket_status_processing">Đang xử lí</string>
     <string name="ticket_no_title">(Không tiêu đề)</string>
     <string name="widget_unpaid_invoices">Hóa đơn chưa TT: %1$d</string>
     <string name="widget_total_rooms">Tổng phòng: %1$d</string>
@@ -350,7 +351,10 @@
     <string name="reminder_unpaid_count">Bạn có %1$d hoá đơn chưa thu</string>
     <string name="reminder_channel_name">Nhắc nhở</string>
     <string name="reminder_channel_description">Nhắc thu tiền/hoá đơn</string>
-    <string name="tenant_management_title">Quản lý người thuê</string>
+    <string name="tenant_management_title">Quản lí người thuê</string>
+    <string name="tenant_manage_moved_to_contract">Chức năng này đã chuyển sang màn Hợp đồng. Vui lòng thao tác tại đó.</string>
+    <string name="tenant_add_moved_to_room_details">Vui lòng vào Chi tiết phòng để tạo hợp đồng/người thuê.</string>
+    <string name="tenant_open_contract">Mở hợp đồng</string>
     <string name="delete_tenant_confirm">Xóa %1$s?</string>
     <string name="edit_tenant_info">Chỉnh sửa thông tin người thuê</string>
     <string name="migrated_tenants_to_room">Đã đồng bộ %1$d người thuê về đúng phòng</string>
@@ -391,14 +395,14 @@
     <string name="logout">Đăng xuất</string>
     <string name="logout_confirm_message">Bạn có chắc chắn muốn đăng xuất?</string>
     <string name="support_contact">Liên hệ hỗ trợ: 0987.654.321</string>
-    <string name="share_app_text">Ứng dụng quản lý nhà trọ tuyệt vời dành cho bạn!</string>
+    <string name="share_app_text">Ứng dụng quản lí nhà trọ tuyệt vời dành cho bạn!</string>
     <string name="share_app_chooser_title">Chia sẻ ứng dụng</string>
     <string name="home_tenant_room_label">Phòng\ncủa bạn</string>
-    <string name="home_owner_house_label">Quản lý\nnhà phòng</string>
+    <string name="home_owner_house_label">Quản lí\nnhà phòng</string>
     <string name="home_tenant_invoice_label">Hóa đơn\ncủa bạn</string>
     <string name="home_owner_invoice_label">Báo phí\nhóa đơn</string>
     <string name="home_tenant_payment_history_label">Lịch sử\nthanh toán</string>
-    <string name="home_owner_expense_label">Quản lý\nchi phí</string>
+    <string name="home_owner_expense_label">Quản lí\nchi phí</string>
     <string name="home_tenant_support_label">Yêu cầu\nhỗ trợ</string>
     <string name="home_owner_report_label">Thống kê\nbáo cáo</string>
     <string name="contract_not_found">Không tìm thấy hợp đồng</string>
@@ -441,7 +445,7 @@
     <string name="org_invite_revoke_failed">Thu hồi thất bại</string>
 
     <string name="house_no_address">Chưa có địa chỉ</string>
-    <string name="house_no_manager_name">Chưa có tên quản lý</string>
+    <string name="house_no_manager_name">Chưa có tên quản lí</string>
     <string name="bank_account_owner_prefix">Chủ TK: </string>
     <string name="bank_name_prefix">Ngân hàng </string>
     <string name="bank_account_number_prefix">STK: </string>
@@ -531,8 +535,8 @@
     <string name="end_contract">Kết thúc hợp đồng</string>
     <string name="update_contract">Cập nhật hợp đồng</string>
     <string name="login">Đăng nhập</string>
-    <string name="app_subtitle_manage_rental">Quản lý nhà trọ</string>
-    <string name="app_subtitle_manage_rental_upper">QUẢN LÝ NHÀ TRỌ</string>
+    <string name="app_subtitle_manage_rental">Quản lí trọ</string>
+    <string name="app_subtitle_manage_rental_upper">QUẢN LÍ TRỌ</string>
     <string name="password">Mật khẩu</string>
     <string name="remember_login">Ghi nhớ đăng nhập</string>
     <string name="no_account_signup_now">Chưa có tài khoản? Đăng ký ngay</string>
@@ -556,7 +560,7 @@
     <string name="no_data_yet_exclamation">Chưa có dữ liệu!</string>
     <string name="meter_empty_data">Chưa có dữ liệu công tơ</string>
     <string name="sort">Sắp xếp</string>
-    <string name="profile_manage_account_title">Quản lý tài khoản</string>
+    <string name="profile_manage_account_title">Quản lí tài khoản</string>
     <string name="profile_change_avatar_desc">Đổi ảnh đại diện</string>
     <string name="profile_tap_change_avatar">Nhấn để đổi ảnh</string>
     <string name="profile_personal_info">Thông tin cá nhân</string>
@@ -605,7 +609,7 @@
     <string name="none_option">(Không chọn)</string>
     <string name="room_edit_title">Chỉnh sửa phòng %1$s</string>
     <string name="add">Thêm</string>
-    <string name="home_owner_tenant_label">Quản lý\nkhách thuê</string>
+    <string name="home_owner_tenant_label">Phòng\nđang thuê</string>
     <string name="home_owner_contract_label">Hợp đồng\nthông minh</string>
     <string name="app_version_label">Phiên bản 2.6.3</string>
     <string name="feedback">Góp ý</string>
@@ -695,11 +699,11 @@
     <string name="backup_restore_preview_hint">Chạm để xem tuỳ chọn khôi phục (sắp có)</string>
     <string name="house_address_required_label">Địa chỉ căn nhà *</string>
     <string name="house_address_hint">Nhập địa chỉ</string>
-    <string name="house_management_info">Thông tin quản lý căn nhà</string>
-    <string name="house_manager_name_required_label">Tên quản lý *</string>
-    <string name="house_manager_name_hint">Nhập tên quản lý</string>
-    <string name="house_manager_phone_required_label">Số điện thoại quản lý *</string>
-    <string name="house_manager_phone_hint">Nhập SĐT quản lý</string>
+    <string name="house_management_info">Thông tin quản lí căn nhà</string>
+    <string name="house_manager_name_required_label">Tên quản lí *</string>
+    <string name="house_manager_name_hint">Nhập tên quản lí</string>
+    <string name="house_manager_phone_required_label">Số điện thoại quản lí *</string>
+    <string name="house_manager_phone_hint">Nhập SĐT quản lí</string>
     <string name="house_account_owner_hint">Chủ TK</string>
     <string name="house_bank_hint">Ngân hàng</string>
     <string name="house_fee_table_title">Bảng giá phí</string>
@@ -754,6 +758,14 @@
     <string name="add_room_area_hint">VD: 20</string>
     <string name="add_room_rent_price_label">Giá thuê (VNĐ/tháng)</string>
     <string name="add_room_rent_price_hint">VD: 2.500.000</string>
+    <string name="room_max_occupancy_label">Số người tối đa</string>
+    <string name="room_max_occupancy_hint">VD: 4</string>
+    <string name="room_max_occupancy_required">Vui lòng nhập số người tối đa hợp lệ (&gt; 0)</string>
+    <string name="room_max_occupancy_value">%1$d người</string>
+    <string name="room_current_occupancy_label">Đang ở</string>
+    <string name="room_current_occupancy_value">%1$d/%2$d người</string>
+    <string name="room_current_occupancy_unknown">%1$d/N/A người</string>
+    <string name="contract_member_count_exceeds_room_limit">Số người ở (%1$d) vượt quá giới hạn phòng (%2$d).</string>
     <string name="add_room_duplicate_check_note">Số phòng sẽ được kiểm tra trùng trong cùng căn nhà trước khi lưu.</string>
     <string name="export_invoice_title">HÓA ĐƠN TIỀN TRỌ</string>
     <string name="export_invoice_details_placeholder">Chi tiết hóa đơn...</string>

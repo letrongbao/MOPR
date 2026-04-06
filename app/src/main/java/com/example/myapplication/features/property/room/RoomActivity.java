@@ -422,6 +422,7 @@ public class RoomActivity extends AppCompatActivity {
         EditText etRoomNumber = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
         EditText etRentAmount = dialogView.findViewById(R.id.etGiaThue);
+        EditText etMaxOccupancy = dialogView.findViewById(R.id.etSoNguoiToiDa);
         Spinner spinnerHouse = dialogView.findViewById(R.id.spinnerHouse);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
         View layoutHouseField = dialogView.findViewById(R.id.layoutHouseField);
@@ -461,10 +462,24 @@ public class RoomActivity extends AppCompatActivity {
                     String roomNumber = etRoomNumber.getText().toString().trim();
                     String dienTichStr = etDienTich.getText().toString().trim();
                     double rentAmount = MoneyFormatter.getValue(etRentAmount);
+                    String maxOccupancyStr = etMaxOccupancy.getText().toString().trim();
                     if (roomNumber.isEmpty() || dienTichStr.isEmpty() || rentAmount == 0) {
                         Toast.makeText(this, R.string.please_fill_all_information, Toast.LENGTH_SHORT).show();
                         return;
                     }
+
+                    int maxOccupancy;
+                    try {
+                        maxOccupancy = Integer.parseInt(maxOccupancyStr);
+                        if (maxOccupancy <= 0) {
+                            Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    } catch (Exception parseError) {
+                        Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     try {
                         String selectedHouseId = lockHouse ? presetHouseId.trim() : "";
                         String selectedHouseLabel = lockHouse
@@ -498,6 +513,7 @@ public class RoomActivity extends AppCompatActivity {
                                     Double.parseDouble(dienTichStr),
                                     rentAmount,
                                     RoomStatus.VACANT);
+                            room.setMaxOccupancy(maxOccupancy);
 
                             if (!finalSelectedHouseId.isEmpty()) {
                                 room.setHouseId(finalSelectedHouseId);
@@ -603,6 +619,7 @@ public class RoomActivity extends AppCompatActivity {
         EditText etRoomNumber = dialogView.findViewById(R.id.etSoPhong);
         EditText etDienTich = dialogView.findViewById(R.id.etDienTich);
         EditText etRentAmount = dialogView.findViewById(R.id.etGiaThue);
+        EditText etMaxOccupancy = dialogView.findViewById(R.id.etSoNguoiToiDa);
         Spinner spinnerHouse = dialogView.findViewById(R.id.spinnerHouse);
         Spinner spinnerLoai = dialogView.findViewById(R.id.spinnerLoaiPhong);
         View layoutHouseField = dialogView.findViewById(R.id.layoutHouseField);
@@ -645,6 +662,7 @@ public class RoomActivity extends AppCompatActivity {
         etDienTich.setText(room.getArea() % 1 == 0 ? String.valueOf((long) room.getArea())
                 : String.valueOf(room.getArea()));
         MoneyFormatter.setValue(etRentAmount, room.getRentAmount());
+        etMaxOccupancy.setText(room.getMaxOccupancy() > 0 ? String.valueOf(room.getMaxOccupancy()) : "");
         for (int i = 0; i < loaiOptions.length; i++) {
             if (loaiOptions[i].equals(room.getRoomType())) {
                 spinnerLoai.setSelection(i);
@@ -659,10 +677,24 @@ public class RoomActivity extends AppCompatActivity {
                     String roomNumber = etRoomNumber.getText().toString().trim();
                     String dienTichStr = etDienTich.getText().toString().trim();
                     double rentAmount = MoneyFormatter.getValue(etRentAmount);
+                    String maxOccupancyStr = etMaxOccupancy.getText().toString().trim();
                     if (roomNumber.isEmpty() || dienTichStr.isEmpty() || rentAmount == 0) {
                         Toast.makeText(this, R.string.please_fill_all_information, Toast.LENGTH_SHORT).show();
                         return;
                     }
+
+                    int maxOccupancy;
+                    try {
+                        maxOccupancy = Integer.parseInt(maxOccupancyStr);
+                        if (maxOccupancy <= 0) {
+                            Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    } catch (Exception parseError) {
+                        Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     try {
                         String selectedHouseId = lockHouse ? presetHouseId.trim() : "";
                         String selectedHouseLabel = lockHouse
@@ -698,6 +730,13 @@ public class RoomActivity extends AppCompatActivity {
                                             rentAmount,
                                             room.getStatus());
                                     updated.setId(room.getId());
+                                    updated.setMaxOccupancy(maxOccupancy);
+
+                                    // Preserve existing extended fields to avoid overwriting old data
+                                    updated.setFloor(room.getFloor());
+                                    updated.setDescription(room.getDescription());
+                                    updated.setAmenities(room.getAmenities());
+                                    updated.setCreatedAt(room.getCreatedAt());
 
                                     if (!finalSelectedHouseId.isEmpty()) {
                                         updated.setHouseId(finalSelectedHouseId);

@@ -56,6 +56,11 @@ This document defines the standard execution flow so any agent in the team can w
 3. Do not copy/paste UI boilerplate between screens when helper abstractions already exist.
 4. If a special screen cannot use shared helpers, document the reason in the batch description.
 
+## Vietnamese Copy Convention
+
+1. Use `lí` for management wording in Vietnamese UI/docs.
+2. Brand phrase must be exactly `Quản lí trọ`.
+
 ## Definition Of Done (DoD)
 
 1. Build passes: `./gradlew.bat assembleDebug`

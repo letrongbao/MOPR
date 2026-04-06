@@ -49,6 +49,7 @@ public class BackupRestoreActivity extends AppCompatActivity {
             "houses",
             "rooms",
             "contracts",
+            "contractMembers",
             "invoices",
             "rentalHistory",
             "payments",

@@ -6,7 +6,7 @@ Format: <string name="key">Vietnamese text</string>
 
 ===== PROFILE & ACCOUNT =====
 <string name="profile_title">Thông tin cá nhân</string>
-<string name="account_management">Quản lý tài khoản</string>
+<string name="account_management">Quản lí tài khoản</string>
 <string name="change_password">Đổi mật khẩu</string>
 <string name="error_receive_image_link">Lỗi khi nhận link ảnh</string>
 <string name="uploading_image_to_system">Đang tải ảnh lên hệ thống...</string>
@@ -36,7 +36,7 @@ Format: <string name="key">Vietnamese text</string>
 <string name="cannot_read_data">Không đọc được dữ liệu: </string>
 
 ===== EXPENSE MANAGEMENT =====
-<string name="expense_management">Quản lý chi</string>
+<string name="expense_management">Quản lí chi</string>
 <string name="other">Khác</string>
 <string name="total_expense">Tổng chi: </string>
 <string name="number_of_items">Số khoản: </string>

@@ -100,7 +100,7 @@ Generated: 04/04/2026 07:38:54
 **Context:** Toast
 ---
 
-**Vietnamese:** "Quản lý tài khoản"
+**Vietnamese:** "Quản lí tài khoản"
 **Key:** qu_n_l__t_i_kho_n
 **File:** com\example\myapplication\features\settings\EditProfileActivity.java
 **Line:** 90

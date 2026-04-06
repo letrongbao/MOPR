@@ -363,8 +363,8 @@ public class TenantAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         // Internal note.
         h.btnMenu.setOnClickListener(v -> {
             PopupMenu popup = new PopupMenu(v.getContext(), v);
-            popup.getMenu().add(0, 1, 0, v.getContext().getString(R.string.edit));
-            popup.getMenu().add(0, 2, 1, v.getContext().getString(R.string.delete));
+            popup.getMenu().add(0, 1, 0, v.getContext().getString(R.string.update_contract));
+            popup.getMenu().add(0, 2, 1, v.getContext().getString(R.string.tenant_open_contract));
             popup.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == 1) {
                     actionListener.onSua(n);

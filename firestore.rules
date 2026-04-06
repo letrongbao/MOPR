@@ -128,6 +128,12 @@ service cloud.firestore {
         allow write: if isStaffOrOwner(tenantId);
       }
 
+      match /contractMembers/{docId} {
+        allow read: if isStaffOrOwner(tenantId)
+          || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));
+        allow write: if isStaffOrOwner(tenantId);
+      }
+
       match /invoices/{docId} {
         allow read: if isStaffOrOwner(tenantId)
           || (isTenantMember(tenantId) && memberRole(tenantId) == 'TENANT' && resource.data.roomId == memberRoomId(tenantId));

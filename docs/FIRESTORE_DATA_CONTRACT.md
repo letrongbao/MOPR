@@ -49,12 +49,13 @@ Under `tenants/{tenantId}` (and `users/{uid}` fallback), the app uses:
 1. `houses`
 2. `rooms`
 3. `contracts`
-4. `invoices`
-5. `payments`
-6. `meterReadings`
-7. `expenses`
-8. `tickets`
-9. `rentalHistory`
+4. `contractMembers`
+5. `invoices`
+6. `payments`
+7. `meterReadings`
+8. `expenses`
+9. `tickets`
+10. `rentalHistory`
 
 Additional tenant-root collections:
 
@@ -145,7 +146,22 @@ Duplicate-safe invoice ID rule (currently supported):
 - `invoiceId = roomId + "_" + yyyyMM`
 - Example: `roomA_202603`
 
-### 3.4 `payments/{paymentId}`
+### 3.4 `contractMembers/{memberId}`
+
+Primary source: `domain/ContractMember.java`
+
+Canonical fields (current code path):
+
+- `contractId`: String (FK -> `contracts/{contractId}`)
+- `roomId`: String (FK -> `rooms/{roomId}`)
+- `roomNumber`: String (denormalized)
+- `fullName`, `personalId`, `phoneNumber`
+- Role flags: `primaryContact`, `contractRepresentative`
+- Compliance flags: `temporaryResident`, `fullyDocumented`
+- `active`: Boolean
+- `createdAt`, `updatedAt`: Int64 millis
+
+### 3.5 `payments/{paymentId}`
 
 Primary source: `domain/Payment.java`
 
@@ -237,7 +253,7 @@ This is why storing `roomId` in `payments`, `tickets`, `invoices`, and similar c
 Rules compatibility note:
 
 - `firestore.rules` is aligned with current English collection names.
-- Active collections in rules: `houses`, `rooms`, `contracts`, `invoices`, `payments`, `meterReadings`, `expenses`, `tickets`, `rentalHistory`, `backups`.
+- Active collections in rules: `houses`, `rooms`, `contracts`, `contractMembers`, `invoices`, `payments`, `meterReadings`, `expenses`, `tickets`, `rentalHistory`, `backups`.
 
 ## 7) Meaning of "Current Existing Data"
 
@@ -251,7 +267,7 @@ Therefore, this document records:
 
 Current in-app backup snapshot set (`BackupRestoreActivity.BACKUP_COLLECTIONS`):
 
-- `houses`, `rooms`, `contracts`, `invoices`, `rentalHistory`, `payments`, `meterReadings`, `expenses`
+- `houses`, `rooms`, `contracts`, `contractMembers`, `invoices`, `rentalHistory`, `payments`, `meterReadings`, `expenses`
 
 Not included in the current backup array:
 
