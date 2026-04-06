@@ -36,6 +36,7 @@ Use these facts as non-negotiable runtime behavior unless the task explicitly ch
 	- non-`OWNER` => guest UI
 5. If `primaryRole` changes from non-OWNER to OWNER during active Home session, app forces sign-out and requires re-login.
 6. Change password is available only when account has `password` provider; Google-only accounts must not see/use password change flow.
+7. Vietnamese wording convention for UI/docs: use `lí` in management wording, and keep the brand phrase exactly `Quản lí trọ`.
 
 ## Workflow Guide
 - Working process standard: `docs/WORKFLOW_GUIDE.md`

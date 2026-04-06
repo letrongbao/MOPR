@@ -128,8 +128,19 @@
     <string name="room_edit_title">Edit room %1$s</string>
     <string name="room_duplicate_in_house">Room number already exists in selected house</string>
     <string name="room_limit_exceeded">Room limit exceeded (%1$d)</string>
+    <string name="room_max_occupancy_label">Max occupants</string>
+    <string name="room_max_occupancy_hint">e.g. 4</string>
+    <string name="room_max_occupancy_required">Please enter a valid max occupants value (&gt; 0)</string>
+    <string name="room_max_occupancy_value">%1$d people</string>
+    <string name="room_current_occupancy_label">Current occupancy</string>
+    <string name="room_current_occupancy_value">%1$d/%2$d people</string>
+    <string name="room_current_occupancy_unknown">%1$d/N/A people</string>
+    <string name="contract_member_count_exceeds_room_limit">Member count (%1$d) exceeds room limit (%2$d).</string>
 
     <string name="tenant_management_title">Tenant management</string>
+    <string name="tenant_manage_moved_to_contract">This action has moved to the Contract screen. Please manage it there.</string>
+    <string name="tenant_add_moved_to_room_details">Please open Room details to create a contract/tenant.</string>
+    <string name="tenant_open_contract">Open contract</string>
     <string name="tenant_search_hint">Search by phone or name...</string>
     <string name="tenant_empty_state">No tenant yet\nTap + to add</string>
     <string name="tenant_info">Tenant information</string>
@@ -151,6 +162,7 @@
     <string name="end_contract">End contract</string>
     <string name="print_contract">Print contract</string>
     <string name="contract_saved">✓ Contract saved</string>
+    <string name="contract_saved_with_member_sync_warning">✓ Contract saved (member sync warning)</string>
     <string name="contract_deleted">✓ Contract deleted</string>
     <string name="contract_not_found">Contract not found</string>
     <string name="contract_status_expiring_soon">⚠ Expiring soon</string>
@@ -250,6 +262,7 @@
     <string name="tenant_id_card_hint">012345678901</string>
     <string name="tenant_phone_hint">0901234567</string>
     <string name="tenant_rented_room_label">Rented room</string>
+    <string name="home_owner_tenant_label">Rented\nrooms</string>
     <string name="tenant_member_count_label">Number of members</string>
     <string name="tenant_member_count_hint">1</string>
     <string name="tenant_rental_start_date">Rental start date</string>

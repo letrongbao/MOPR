@@ -1,0 +1,165 @@
+# VIETNAMESE STRINGS EXTRACTION REPORT
+Generated: 04/04/2026 07:38:54
+
+## Summary
+- Total occurrences: 426
+- Unique strings: 294
+- By Context: Toast=Microsoft.PowerShell.Commands.GenericMeasureInfo.Count, Dialog=Microsoft.PowerShell.Commands.GenericMeasureInfo.Count, TextView=Microsoft.PowerShell.Commands.GenericMeasureInfo.Count
+
+---
+
+## AUTHENTICATION & REGISTRATION
+**Vietnamese:** "Cập nhật thành công!"
+**Key:** c_p_nh_t_th_nh_c_ng_
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 206
+**Context:** Toast
+---
+
+**Vietnamese:** "Chưa có tenant đang hoạt động"
+**Key:** ch_a_c__tenant__ang_ho_t___ng
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 254
+**Context:** Toast
+---
+
+**Vietnamese:** "Đăng ký thành công!"
+**Key:** __ng_k__th_nh_c_ng_
+**File:** com\example\myapplication\features\auth\SignUpActivity.java
+**Line:** 102
+**Context:** Toast
+---
+
+**Vietnamese:** "Đăng ký thất bại: "
+**Key:** __ng_k__th_t_b_i__
+**File:** com\example\myapplication\features\auth\SignUpActivity.java
+**Line:** 114
+**Context:** Toast
+---
+
+**Vietnamese:** "Đang tải ảnh lên..."
+**Key:** _ang_t_i__nh_l_n___
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 171
+**Context:** Toast
+---
+
+**Vietnamese:** "Đổi mật khẩu thành công!"
+**Key:** __i_m_t_kh_u_th_nh_c_ng_
+**File:** com\example\myapplication\features\settings\ChangePasswordActivity.java
+**Line:** 76
+**Context:** Toast
+---
+
+**Vietnamese:** "Lỗi cập nhật: "
+**Key:** l_i_c_p_nh_t__
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 234
+**Context:** Toast
+---
+
+**Vietnamese:** "Lỗi khi tải ảnh lên"
+**Key:** l_i_khi_t_i__nh_l_n
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 56
+**Context:** Toast
+---
+
+**Vietnamese:** "Lỗi lưu thông tin: "
+**Key:** l_i_l_u_th_ng_tin__
+**File:** com\example\myapplication\features\auth\SignUpActivity.java
+**Line:** 107
+**Context:** Toast
+---
+
+**Vietnamese:** "Lỗi: "
+**Key:** l_i__
+**File:** com\example\myapplication\features\settings\ChangePasswordActivity.java
+**Line:** 85
+**Context:** Toast
+---
+
+**Vietnamese:** "Mã không hợp lệ"
+**Key:** m__kh_ng_h_p_l_
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 274
+**Context:** Toast
+---
+
+**Vietnamese:** "Mật khẩu phải có ít nhất 6 ký tự"
+**Key:** m_t_kh_u_ph_i_c___t_nh_t_6_k__t_
+**File:** com\example\myapplication\features\auth\SignUpActivity.java
+**Line:** 72
+**Context:** Toast
+---
+
+**Vietnamese:** "Mật khẩu xác nhận không khớp"
+**Key:** m_t_kh_u_x_c_nh_n_kh_ng_kh_p
+**File:** com\example\myapplication\features\auth\SignUpActivity.java
+**Line:** 67
+**Context:** Toast
+---
+
+**Vietnamese:** "Quản lí tài khoản"
+**Key:** qu_n_l__t_i_kho_n
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 90
+**Context:** 
+---
+
+**Vietnamese:** "Sai tài khoản hoặc mật khẩu"
+**Key:** sai_t_i_kho_n_ho_c_m_t_kh_u
+**File:** com\example\myapplication\features\auth\MainActivity.java
+**Line:** 92
+**Context:** Toast
+---
+
+**Vietnamese:** "Vui lòng đăng nhập lại"
+**Key:** vui_l_ng___ng_nh_p_l_i
+**File:** com\example\myapplication\features\settings\ChangePasswordActivity.java
+**Line:** 68
+**Context:** Toast
+---
+
+**Vietnamese:** "Vui lòng đăng nhập lại để đổi mật khẩu"
+**Key:** vui_l_ng___ng_nh_p_l_i______i_m_t_kh_u
+**File:** com\example\myapplication\features\settings\ChangePasswordActivity.java
+**Line:** 83
+**Context:** Toast
+---
+
+**Vietnamese:** "Vui lòng nhập đầy đủ"
+**Key:** vui_l_ng_nh_p___y___
+**File:** com\example\myapplication\features\auth\MainActivity.java
+**Line:** 70
+**Context:** Toast
+---
+
+**Vietnamese:** "Vui lòng nhập đầy đủ thông tin"
+**Key:** vui_l_ng_nh_p___y____th_ng_tin
+**File:** com\example\myapplication\features\auth\SignUpActivity.java
+**Line:** 62
+**Context:** Toast
+---
+
+**Vietnamese:** "Vui lòng nhập họ tên"
+**Key:** vui_l_ng_nh_p_h__t_n
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 161
+**Context:** Toast
+---
+
+**Vietnamese:** "Vui lòng nhập mã mời"
+**Key:** vui_l_ng_nh_p_m__m_i
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 248
+**Context:** Toast
+---
+
+**Vietnamese:** "Xác nhận mã mời thành công"
+**Key:** x_c_nh_n_m__m_i_th_nh_c_ng
+**File:** com\example\myapplication\features\settings\EditProfileActivity.java
+**Line:** 263
+**Context:** Toast
+---
+

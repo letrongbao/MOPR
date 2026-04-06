@@ -186,6 +186,26 @@
             android:textColorHint="#98A2B3" />
 
         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/room_max_occupancy_label"
+            android:textColor="#202124"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etSoNguoiToiDa"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_input_rounded"
+            android:hint="@string/room_max_occupancy_hint"
+            android:inputType="number"
+            android:paddingHorizontal="12dp"
+            android:textColor="#101828"
+            android:textColorHint="#98A2B3" />
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"

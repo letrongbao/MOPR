@@ -110,6 +110,8 @@
                         <include layout="@layout/row_detail_info" android:id="@+id/rowLoaiPhong"/>
                         <include layout="@layout/row_detail_info" android:id="@+id/rowDienTich"/>
                         <include layout="@layout/row_detail_info" android:id="@+id/rowGiaThue"/>
+                        <include layout="@layout/row_detail_info" android:id="@+id/rowSucChuaToiDa"/>
+                        <include layout="@layout/row_detail_info" android:id="@+id/rowSoNguoiDangO"/>
                         <include layout="@layout/row_detail_info" android:id="@+id/rowTrangThai"/>
 
                     </LinearLayout>
@@ -209,6 +211,16 @@
                         android:textColor="#333333"/>
                 </LinearLayout>
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQuanLyHopDong"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/create_contract"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:backgroundTint="@color/primary" />
                 <Button
                     android:id="@+id/btnGenerateCode"
                     android:layout_width="match_parent"
