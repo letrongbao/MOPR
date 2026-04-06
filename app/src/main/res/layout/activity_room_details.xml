@@ -221,6 +221,18 @@
                     android:textAllCaps="false"
                     app:cornerRadius="12dp"
                     app:backgroundTint="@color/primary" />
+                <Button
+                    android:id="@+id/btnGenerateCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="@color/primary"
+                    android:text="Tạo mã vào phòng (Mã ẩn danh)"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_content_copy"
+                    app:iconGravity="textStart" />
 
             </LinearLayout>
         </LinearLayout>

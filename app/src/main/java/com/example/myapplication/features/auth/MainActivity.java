@@ -15,9 +15,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.core.util.LanguageSwitcherHelper;
 import com.example.myapplication.features.home.HomeMenuActivity;
+import com.example.myapplication.features.home.TenantMenuActivity;
+import com.example.myapplication.core.constants.TenantRoles;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -53,11 +56,66 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // If already signed in, ensure Firestore profile exists before entering app.
+        // Nếu đã đăng nhập, kiểm tra role để điều hướng đúng màn hình.
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            ensureUserProfileDocument(currentUser, this::navigateToHome);
+            ensureUserProfileDocument(currentUser, () -> checkRoleAndNavigate(currentUser));
         }
+    }
+
+    /**
+     * Kiểm tra role của user trong Firestore.
+     * - TENANT + activeTenantId: vào TenantMenuActivity (auto-login cho khách đã liên kết phòng)
+     * - TENANT + không có activeTenantId: vào JoinRoomActivity
+     * - OWNER hoặc khác: vào HomeMenuActivity
+     */
+    private void checkRoleAndNavigate(FirebaseUser user) {
+        db.collection("users").document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        navigateToHome();
+                        return;
+                    }
+
+                    String role = doc.getString("primaryRole");
+                    String activeTenantId = doc.getString("activeTenantId");
+
+                    boolean isTenant = TenantRoles.TENANT.equalsIgnoreCase(role);
+                    boolean hasRoom  = activeTenantId != null && !activeTenantId.trim().isEmpty();
+
+                    if (isTenant && hasRoom) {
+                        // Khách đã liên kết phòng: lấy roomId rồi vào TenantMenuActivity
+                        fetchRoomIdAndNavigateToTenantMenu(activeTenantId, user.getUid());
+                    } else {
+                        // Chủ nhà hoặc khách chưa liên kết: vào HomeMenuActivity bình thường
+                        navigateToHome();
+                    }
+                })
+                .addOnFailureListener(e -> navigateToHome());
+    }
+
+    private void fetchRoomIdAndNavigateToTenantMenu(String tenantId, String uid) {
+        db.collection("tenants").document(tenantId)
+                .collection("members").document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    String roomId = doc.exists() ? doc.getString("roomId") : null;
+                    Intent intent = new Intent(this, TenantMenuActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.putExtra("TENANT_ID", tenantId);
+                    if (roomId != null) intent.putExtra("ROOM_ID", roomId);
+                    startActivity(intent);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    // Fallback: vào TenantMenuActivity không có roomId
+                    Intent intent = new Intent(this, TenantMenuActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.putExtra("TENANT_ID", tenantId);
+                    startActivity(intent);
+                    finish();
+                });
     }
 
     @Override
@@ -181,7 +239,12 @@ public class MainActivity extends AppCompatActivity {
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("uid", user.getUid());
                     payload.put("email", user.getEmail());
-                    payload.put("fullName", user.getDisplayName());
+                    // BUG FIX: Chỉ cập nhật fullName nếu có giá trị thực
+                    // (tránh ghi đè null khi login bằng email/password)
+                    String displayName = user.getDisplayName();
+                    if (displayName != null && !displayName.trim().isEmpty()) {
+                        payload.put("fullName", displayName);
+                    }
                     payload.put("updatedAt", Timestamp.now());
 
                     // Only set default role fields when the profile document does not exist yet.
@@ -216,6 +279,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigateToHome() {
+        // BUG FIX: Xóa TenantSession khi chủ nhà đăng nhập
+        // Tránh việc RoomActivity.scopedCollection() dùng nhầm path tenants/ thay vì users/
+        TenantSession.clear(this);
         startActivity(new Intent(this, HomeMenuActivity.class));
         finish();
     }
