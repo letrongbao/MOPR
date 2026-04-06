@@ -1,21 +1,29 @@
 package com.example.myapplication.features.property.room;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
+import com.example.myapplication.core.session.InviteRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Tenant;
@@ -38,6 +46,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
     private TextView tvTenantName, tvTenantPhone;
     private View cardTenant;
     private View btnCall, btnMessage, llActionButtons;
+    private Button btnGenerateCode;
     private Room currentRoom;
 
     private String tenantPhoneNumber;
@@ -93,6 +102,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
         btnCall = findViewById(R.id.btnGoiDien);
         btnMessage = findViewById(R.id.btnNhanTin);
         llActionButtons = findViewById(R.id.llActionButtons);
+        btnGenerateCode = findViewById(R.id.btnGenerateCode);
 
         roomId = getIntent().getStringExtra("ROOM_ID");
         if (roomId == null) {
@@ -122,8 +132,54 @@ public class RoomDetailsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        btnGenerateCode.setOnClickListener(v -> generateAnonymousCode());
+
         loadRoomData(roomId);
         loadTenantData(roomId);
+    }
+
+    private void generateAnonymousCode() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, R.string.not_logged_in, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = user.getUid();
+        }
+
+        btnGenerateCode.setEnabled(false);
+        btnGenerateCode.setText("Đang tạo mã...");
+
+        new InviteRepository().createAnonymousTenantInvite(tenantId, roomId, new InviteRepository.InviteCallback() {
+            @Override
+            public void onSuccess(@NonNull String code) {
+                btnGenerateCode.setEnabled(true);
+                btnGenerateCode.setText("Tạo mã vào phòng (Mã ẩn danh)");
+
+                new AlertDialog.Builder(RoomDetailsActivity.this)
+                        .setTitle("Mã phòng được tạo thành công!")
+                        .setMessage("Đây là mã dùng 1 lần. Hãy sao chép và gửi cho khách để họ kết nối phòng.\n\nCode: " + code)
+                        .setPositiveButton("Copy Mã", (dialog, which) -> {
+                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                            ClipData clip = ClipData.newPlainText("Room Code", code);
+                            clipboard.setPrimaryClip(clip);
+                            Toast.makeText(RoomDetailsActivity.this, "Đã sao chép: " + code, Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("Đóng", null)
+                        .setCancelable(false)
+                        .show();
+            }
+
+            @Override
+            public void onError(@NonNull Exception e) {
+                btnGenerateCode.setEnabled(true);
+                btnGenerateCode.setText("Tạo mã vào phòng (Mã ẩn danh)");
+                Toast.makeText(RoomDetailsActivity.this, "Lỗi tạo mã: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void loadRoomData(String roomId) {

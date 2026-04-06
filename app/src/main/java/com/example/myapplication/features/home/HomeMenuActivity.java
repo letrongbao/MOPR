@@ -390,6 +390,23 @@ public class HomeMenuActivity extends AppCompatActivity {
                     if (!roleInitialized) {
                         roleInitialized = true;
                         resolvedRole = role;
+
+                        if (TenantRoles.TENANT.equals(role)) {
+                            String activeTenantId = doc.getString("activeTenantId");
+                            if (activeTenantId == null || activeTenantId.trim().isEmpty()) {
+                                // Khách chưa liên kết phòng => vào màn hình nhập mã
+                                Intent joinIntent = new Intent(HomeMenuActivity.this, com.example.myapplication.features.auth.JoinRoomActivity.class);
+                                joinIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(joinIntent);
+                                finish();
+                                return;
+                            } else {
+                                // Khách đã liên kết phòng => vào dashboard riêng của khách
+                                navigateToTenantMenu(activeTenantId);
+                                return;
+                            }
+                        }
+
                         applyRoleUi(role);
                         setupMenuCards(role);
                         return;
@@ -415,6 +432,41 @@ public class HomeMenuActivity extends AppCompatActivity {
         }
         return TenantRoles.TENANT;
     }
+
+    /**
+     * Lấy roomId của khách từ Firestore members collection rồi chuyển sang TenantMenuActivity.
+     * Luôn dùng FLAG_ACTIVITY_CLEAR_TASK để ngăn người dùng quay lui về HomeMenuActivity.
+     */
+    private void navigateToTenantMenu(String tenantId) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            forceLogoutToReLogin();
+            return;
+        }
+
+        db.collection("tenants").document(tenantId)
+                .collection("members").document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    String roomId = doc.exists() ? doc.getString("roomId") : null;
+                    mapsToTenantMenu(tenantId, roomId);
+                })
+                .addOnFailureListener(e -> mapsToTenantMenu(tenantId, null));
+    }
+
+    private void mapsToTenantMenu(String tenantId, String roomId) {
+        Intent intent = new Intent(this, TenantMenuActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        if (tenantId != null) {
+            intent.putExtra("TENANT_ID", tenantId);
+        }
+        if (roomId != null) {
+            intent.putExtra("ROOM_ID", roomId);
+        }
+        startActivity(intent);
+        finish();
+    }
+
 
     private void forceLogoutToReLogin() {
         mAuth.signOut();

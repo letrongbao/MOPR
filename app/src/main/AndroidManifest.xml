@@ -31,9 +31,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".features.auth.SignUpActivity" />
+        <activity android:name=".features.auth.JoinRoomActivity" />
 
         <!-- Home -->
         <activity android:name=".features.home.HomeMenuActivity" />
+        <activity android:name=".features.home.TenantMenuActivity" />
 
         <!-- Property -->
         <activity android:name=".features.property.house.HouseActivity" />
