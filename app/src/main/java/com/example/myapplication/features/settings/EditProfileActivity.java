@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,6 +23,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.session.InviteRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.service.ImageUploadService;
+import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -38,6 +40,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private TextInputEditText edtProfileName, edtProfileEmail, edtProfilePhone;
     private TextInputEditText edtInviteCode;
+    private TextView tvAuthMethod;
     private Button btnSaveProfile;
     private Button btnApplyInvite;
     private ShapeableImageView imgAvatar;
@@ -94,6 +97,7 @@ public class EditProfileActivity extends AppCompatActivity {
         edtProfileName = findViewById(R.id.edtProfileName);
         edtProfileEmail = findViewById(R.id.edtProfileEmail);
         edtProfilePhone = findViewById(R.id.edtProfilePhone);
+        tvAuthMethod = findViewById(R.id.tvAuthMethod);
         edtInviteCode = findViewById(R.id.edtInviteCode);
         btnSaveProfile = findViewById(R.id.btnSaveProfile);
         btnApplyInvite = findViewById(R.id.btnApplyInvite);
@@ -130,6 +134,9 @@ public class EditProfileActivity extends AppCompatActivity {
         String email = user.getEmail();
 
         edtProfileEmail.setText(email);
+        if (tvAuthMethod != null) {
+            tvAuthMethod.setText(AuthProviderUtil.resolveLoginMethodLabel(this, user));
+        }
 
         if (displayName != null && !displayName.isEmpty()) {
             edtProfileName.setText(displayName);

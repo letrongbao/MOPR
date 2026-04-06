@@ -28,6 +28,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,15 +48,15 @@ public class MainActivity extends AppCompatActivity {
     private Button btnGoogleSignIn;
     private GoogleSignInClient googleSignInClient;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
+    private FirebaseFirestore db;
 
     @Override
     protected void onStart() {
         super.onStart();
-        // If already signed in, navigate directly to Home
+        // If already signed in, ensure Firestore profile exists before entering app.
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            startActivity(new Intent(this, HomeMenuActivity.class));
-            finish();
+            ensureUserProfileDocument(currentUser, this::navigateToHome);
         }
     }
 
@@ -60,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         prefs = getSharedPreferences("NhaTroPrefs", MODE_PRIVATE);
 
         googleSignInLauncher = registerForActivityResult(
@@ -157,10 +164,42 @@ public class MainActivity extends AppCompatActivity {
                     FirebaseUser user = authResult.getUser();
                     String email = user != null ? user.getEmail() : "";
                     saveRememberPreference(email != null ? email : "");
-                    navigateToHome();
+                    if (user == null) {
+                        navigateToHome();
+                        return;
+                    }
+                    ensureUserProfileDocument(user, this::navigateToHome);
                 })
                 .addOnFailureListener(e -> Toast
                         .makeText(this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show());
+    }
+
+    private void ensureUserProfileDocument(FirebaseUser user, Runnable onDone) {
+        db.collection("users").document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("uid", user.getUid());
+                    payload.put("email", user.getEmail());
+                    payload.put("fullName", user.getDisplayName());
+                    payload.put("updatedAt", Timestamp.now());
+
+                    // Only set default role fields when the profile document does not exist yet.
+                    if (!doc.exists()) {
+                        payload.put("primaryRole", "TENANT");
+                        payload.put("activeTenantId", null);
+                        payload.put("createdAt", Timestamp.now());
+                    }
+
+                    db.collection("users").document(user.getUid())
+                            .set(payload, SetOptions.merge())
+                            .addOnSuccessListener(unused -> onDone.run())
+                            .addOnFailureListener(e -> onDone.run());
+                })
+                .addOnFailureListener(e -> {
+                    // Do not block the login flow if profile bootstrap fails.
+                    onDone.run();
+                });
     }
 
     private void saveRememberPreference(String email) {

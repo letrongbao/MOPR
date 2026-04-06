@@ -63,6 +63,13 @@
     <string name="profile_display_name_placeholder">Username</string>
     <string name="profile_account_info">Account information</string>
     <string name="profile_new_password_hint">Enter new password</string>
+    <string name="auth_method_label">Sign-in method</string>
+    <string name="auth_method_password">Email and password</string>
+    <string name="auth_method_google">Google</string>
+    <string name="auth_method_google_and_password">Google + Email and password</string>
+    <string name="auth_method_unknown">Unknown</string>
+    <string name="change_password_not_available_for_google">Google accounts cannot change password in this app. Please change it from your Google account.</string>
+    <string name="session_expired_relogin_for_owner_ui">Your account role has changed. Please sign in again to enter the OWNER UI.</string>
     <string name="change_password">Change password</string>
     <string name="change_password_subtitle">Enter a new password to continue</string>
     <string name="new_password">New password</string>
@@ -73,6 +80,7 @@
     <string name="password_changed_success">Password changed successfully!</string>
 
     <string name="app_subtitle_manage_rental">Boarding House Management</string>
+    <string name="app_subtitle_manage_rental_upper">BOARDING HOUSE MANAGEMENT</string>
     <string name="app_version_label">Version 2.6.3</string>
     <string name="feedback">Feedback</string>
     <string name="share">Share</string>

@@ -322,6 +322,7 @@
                         app:tint="@color/white" />
 
                     <TextView
+                        android:id="@+id/tvCardTenantLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentBottom="true"
@@ -359,6 +360,7 @@
                         app:tint="@color/white" />
 
                     <TextView
+                        android:id="@+id/tvCardContractLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentBottom="true"
@@ -371,13 +373,5 @@
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tvVersion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:paddingVertical="16dp"
-        android:text="@string/app_version_label"
-        android:textColor="#999999"
-        android:textSize="12sp" />
+    
 </LinearLayout>

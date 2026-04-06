@@ -13,6 +13,11 @@ Source API naming note:
 
 ## 1) Current Data Scope
 
+Important naming clarification:
+
+- There is NO top-level Firestore collection named `org` or `organizations` in the current runtime schema.
+- "Org" in UI/module names (for example `OrgAdminActivity`) maps to tenant-level data under `tenants/{tenantId}`.
+
 The app currently supports two storage scopes:
 
 1. Legacy per-user scope:
@@ -105,7 +110,12 @@ Tenant/contract information fields:
 - Flags: `depositCollectionStatus`, `showDepositOnInvoice`, `showNoteOnInvoice`
 - Services: `hasParkingService`, `vehicleCount`, `hasInternetService`, `hasLaundryService`
 - `contractDurationMonths`: Number
-- `billingReminderAt`: String (`start_month` / `end_month`)
+- `billingReminderAt`: String (`start_month` / `mid_month` / `end_month`)
+
+Legacy compatibility fields still read by current domain model:
+
+- `roomPrice`: Number (legacy fallback for `rentAmount`)
+- `legacyDepositAmount`: Number (legacy fallback for `depositAmount`)
 
 ### 3.3 `invoices/{invoiceId}`
 
@@ -217,6 +227,11 @@ Tenant roles:
 - `OWNER`, `STAFF`: read/write for most business collections
 - `TENANT`: read access limited by membership `roomId`
 
+Current payment write rule:
+
+- `payments` write is currently restricted to `OWNER`/`STAFF` in `firestore.rules`.
+- Tenant self-service payment write is not enabled in rules yet.
+
 This is why storing `roomId` in `payments`, `tickets`, `invoices`, and similar collections is required for tenant data isolation.
 
 Rules compatibility note:
@@ -233,6 +248,14 @@ Therefore, this document records:
 1. The data structure currently used by the app.
 2. Collections that are currently included in in-app backup.
 3. Fields and relationships actively read/written by current screens.
+
+Current in-app backup snapshot set (`BackupRestoreActivity.BACKUP_COLLECTIONS`):
+
+- `houses`, `rooms`, `contracts`, `invoices`, `rentalHistory`, `payments`, `meterReadings`, `expenses`
+
+Not included in the current backup array:
+
+- `tickets`, `members`, `invites`, `auditLogs`
 
 To inspect real live data counts, use:
 
@@ -283,28 +306,21 @@ meterReadings     : (empty)
 Total: 277 records
 ```
 
-## 10) Role-Based Flow (Roadmap, Tenant Rollout Pending)
+## 10) Role-Based Flow (Current Runtime)
 
-Invoice and payment screens already include role-specific structure for TENANT and OWNER/STAFF. Current rollout strategy:
+Invoice/payment role flow currently runs in compatibility mode:
 
-1. Active now: OWNER/STAFF flow (default).
-2. TENANT self-service: code scaffold exists, temporarily disabled behind feature flag until tenant role rollout is fully completed in DB and UI.
+1. `InvoiceActivity` keeps tenant self-service behind feature flag (`ENABLE_TENANT_SELF_SERVICE = false`).
+2. `PaymentHistoryActivity` also keeps tenant self-service flag disabled (`ENABLE_TENANT_SELF_SERVICE = false`), so owner/staff style add/delete is used there by default.
+3. `TenantPaymentHistoryActivity` exists as read-only tenant payment history UI:
+   - add button hidden
+   - delete disabled
+4. Firestore rules enforce payment write for owner/staff only.
 
-Expected flow when TENANT self-service is enabled:
+Planned direction (not fully enabled yet):
 
-1. TENANT on invoice screen:
-   - Cannot delete/edit/issue invoice notifications.
-   - Gets self-service actions based on invoice status:
-   - `Wait for owner notice` when invoice is `UNREPORTED`.
-   - `Pay now` when invoice is `REPORTED` or `PARTIAL`.
-   - `View payment history` when invoice is `PAID`.
-2. TENANT on payment history screen:
-   - Can add payment transaction.
-   - Cannot delete payment transaction.
-3. OWNER/STAFF:
-   - Keep current management flow.
-
-Goal of this phase: prepare self-service direction without affecting current owner flow.
+1. TENANT on invoice screen: wait/pay/history actions by invoice status.
+2. TENANT payment submission flow requires coordinated app flag + rules update.
 
 ## 11) Role and Membership Schema Baseline
 
@@ -320,11 +336,13 @@ Goal of this phase: prepare self-service direction without affecting current own
 Suggested root user document:
 
 - `users/{uid}`
-   - `displayName`: String
+   - `uid`: String
+   - `fullName`: String
    - `email`: String
-   - `phone`: String
+   - `phoneNumber`: String
+   - `avatarUrl`: String
    - `primaryRole`: String (`OWNER`/`STAFF`/`TENANT`)
-   - `activeTenantId`: String
+   - `activeTenantId`: String or `null`
    - `createdAt`: Timestamp
    - `updatedAt`: Timestamp
 
@@ -349,14 +367,18 @@ Standard document:
 ### 11.4 Invite Collection
 
 - `tenants/{tenantId}/invites/{inviteId}`
+  - `inviteId` is currently the invite code itself.
    - `email`: String
    - `role`: String (`STAFF` or `TENANT`)
-   - `houseId`: String
-   - `houseCode`: String
+   - `houseId`: String (optional, STAFF)
+   - `houseCode`: String (optional)
+   - `roomId`: String (required for TENANT invites)
    - `code`: String (invite code)
-   - `status`: String (`PENDING`/`ACCEPTED`/`EXPIRED`)
+   - `status`: String (`PENDING`/`ACCEPTED`)
    - `createdAt`: Timestamp
-   - `expiresAt`: Timestamp
+   - `createdBy`: String
+   - `acceptedAt`: Timestamp (set on join)
+   - `acceptedBy`: String (set on join)
 
 ### 11.5 Role Matrix
 
@@ -373,14 +395,26 @@ Standard document:
 
 ### 11.6 Onboarding Flow (Suggested)
 
-1. App signup -> create `users/{uid}` with `primaryRole = TENANT`.
-2. TENANT enters `roomCode` to join a room.
-3. OWNER bootstraps tenant/house and can invite STAFF.
-4. STAFF enters `houseCode` or invite code to join assigned house.
+1. App signup -> create `users/{uid}` with `primaryRole = TENANT`, `activeTenantId = null`.
+2. OWNER bootstrap tenant via `core/session/TenantRepository.createTenant(...)`.
+3. STAFF/TENANT join through invite code via `core/session/InviteRepository.joinByInvite(...)`.
+4. App updates `tenants/{tenantId}/members/{uid}` + invite status + `users/{uid}.activeTenantId` in one batch.
+
+## 12) Bootstrap Migration Note
+
+When creating default tenant from legacy user scope, current migration copies only these collections:
+
+- `rooms`
+- `contracts`
+- `invoices`
+
+Implementation note:
+
+- Migration uses batched writes with a simple guard (`opCount >= 450`), so very large legacy datasets may require manual follow-up migration for remaining records.
 
 This schema supports all three roles without requiring future data-model rewrites.
 
-### 11.7 Current Implementation Status
+## 13) Current Implementation Status
 
 Part of membership schema is already implemented:
 
@@ -393,7 +427,7 @@ Part of membership schema is already implemented:
 
 Remaining work (roomCode/houseCode join UI and role-based screen switching) is planned for upcoming batches.
 
-### 11.8 Current Update (2026-04-04)
+## 14) Current Update (2026-04-04)
 
 A basic tenant payment history flow has been added without changing owner flow:
 

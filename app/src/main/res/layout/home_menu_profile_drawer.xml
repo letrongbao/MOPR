@@ -17,16 +17,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_drawer_header"
-        android:paddingTop="48dp"
-        android:paddingBottom="24dp"
-        android:paddingHorizontal="20dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp">
+
+        <include
+            android:id="@+id/languageSwitchHome"
+            layout="@layout/include_language_switcher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
 
         <LinearLayout
             android:id="@+id/logoContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/languageSwitchHome"
             android:layout_centerHorizontal="true"
+            android:layout_marginTop="14dp"
             android:layout_marginBottom="20dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
@@ -43,11 +52,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.05"
-                android:text="@string/app_subtitle_manage_rental"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.09"
+                android:text="@string/app_subtitle_manage_rental_upper"
                 android:textColor="@color/white"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <com.google.android.material.imageview.ShapeableImageView

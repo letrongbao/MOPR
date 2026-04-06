@@ -25,7 +25,7 @@ import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
-import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
@@ -47,6 +47,7 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class HomeMenuActivity extends AppCompatActivity {
 
@@ -57,9 +58,12 @@ public class HomeMenuActivity extends AppCompatActivity {
     private TextView drawerUserName, drawerUserEmail;
     private ShapeableImageView drawerAvatar;
     private ActivityResultLauncher<Intent> editProfileLauncher;
-    private String resolvedRole = TenantRoles.OWNER;
+    private String resolvedRole = TenantRoles.TENANT;
     private View btnLangEn;
     private View btnLangVi;
+    private ListenerRegistration userRoleListener;
+    private boolean roleInitialized = false;
+    private boolean isLanguageSwitching;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,8 +135,8 @@ public class HomeMenuActivity extends AppCompatActivity {
             });
         }
 
-        btnLangEn = findViewById(R.id.btnLangEnHome);
-        btnLangVi = findViewById(R.id.btnLangViHome);
+        btnLangEn = findViewById(R.id.btnLangEn);
+        btnLangVi = findViewById(R.id.btnLangVi);
         setupLanguageSwitcher();
 
         // Setup drawer menu items
@@ -141,10 +145,11 @@ public class HomeMenuActivity extends AppCompatActivity {
         // Load user info to drawer
         loadUserInfoToDrawer();
 
-        applyRoleUi(TenantRoles.OWNER);
+        // Default to guest UI until role is resolved from users/{uid}.primaryRole.
+        applyRoleUi(TenantRoles.TENANT);
+        setupMenuCards(TenantRoles.TENANT);
         updateStatistics();
-        setupMenuCards(TenantRoles.OWNER);
-        resolveRoleAndApplyUi();
+        observeUserPrimaryRole();
     }
 
     private void setupMenuCards(String role) {
@@ -153,47 +158,45 @@ public class HomeMenuActivity extends AppCompatActivity {
         MaterialCardView cardExpense = findViewById(R.id.cardExpense);
         MaterialCardView cardReport = findViewById(R.id.cardReport);
         MaterialCardView cardKhachThue = findViewById(R.id.cardKhachThue);
-        boolean isTenant = TenantRoles.TENANT.equals(role);
-
-        if (cardHouse != null) {
-            if (isTenant) {
-                cardHouse.setOnClickListener(v -> startActivity(new Intent(this, HouseActivity.class)));
-            } else {
-                cardHouse.setOnClickListener(v -> startActivity(new Intent(this, HouseActivity.class)));
-            }
-        }
-
-        if (cardInvoice != null) {
-            cardInvoice.setOnClickListener(v -> startActivity(new Intent(this, InvoiceActivity.class)));
-        }
-
-        if (cardExpense != null) {
-            if (isTenant) {
-                cardExpense
-                        .setOnClickListener(v -> startActivity(new Intent(this, TenantPaymentHistoryActivity.class)));
-            } else {
-                cardExpense.setOnClickListener(v -> startActivity(new Intent(this, ExpenseActivity.class)));
-            }
-        }
-
-        if (cardReport != null) {
-            if (isTenant) {
-                cardReport.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
-            } else {
-                cardReport.setOnClickListener(v -> startActivity(new Intent(this, RevenueActivity.class)));
-            }
-        }
-
-        // Tenant Management card
-        if (cardKhachThue != null) {
-            cardKhachThue.setOnClickListener(v -> startActivity(new Intent(this, TenantActivity.class)));
-        }
-
-        // Smart Contract card
         MaterialCardView cardHopDong = findViewById(R.id.cardHopDong);
-        if (cardHopDong != null) {
-            cardHopDong.setOnClickListener(v -> startActivity(new Intent(this, ContractListActivity.class)));
+
+        boolean isOwner = TenantRoles.OWNER.equals(role);
+        if (!isOwner) {
+            disableHomeCard(cardHouse);
+            disableHomeCard(cardInvoice);
+            disableHomeCard(cardExpense);
+            disableHomeCard(cardReport);
+            disableHomeCard(cardKhachThue);
+            disableHomeCard(cardHopDong);
+            return;
         }
+
+        enableHomeCard(cardHouse, v -> startActivity(new Intent(this, HouseActivity.class)));
+        enableHomeCard(cardInvoice, v -> startActivity(new Intent(this, InvoiceActivity.class)));
+        enableHomeCard(cardExpense, v -> startActivity(new Intent(this, ExpenseActivity.class)));
+        enableHomeCard(cardReport, v -> startActivity(new Intent(this, RevenueActivity.class)));
+        enableHomeCard(cardKhachThue, v -> startActivity(new Intent(this, TenantActivity.class)));
+        enableHomeCard(cardHopDong, v -> startActivity(new Intent(this, ContractListActivity.class)));
+    }
+
+    private void enableHomeCard(MaterialCardView card, View.OnClickListener listener) {
+        if (card == null) {
+            return;
+        }
+        card.setAlpha(1f);
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setOnClickListener(listener);
+    }
+
+    private void disableHomeCard(MaterialCardView card) {
+        if (card == null) {
+            return;
+        }
+        card.setAlpha(0.45f);
+        card.setClickable(false);
+        card.setFocusable(false);
+        card.setOnClickListener(null);
     }
 
     private void setupDrawerMenu() {
@@ -218,10 +221,15 @@ public class HomeMenuActivity extends AppCompatActivity {
         // Change Password
         LinearLayout menuChangePassword = findViewById(R.id.menuChangePassword);
         if (menuChangePassword != null) {
-            menuChangePassword.setOnClickListener(v -> {
-                drawerLayout.closeDrawer(GravityCompat.END);
-                startActivity(new Intent(this, ChangePasswordActivity.class));
-            });
+            FirebaseUser user = mAuth.getCurrentUser();
+            boolean canChangePassword = AuthProviderUtil.canChangePassword(user);
+            menuChangePassword.setVisibility(canChangePassword ? View.VISIBLE : View.GONE);
+            if (canChangePassword) {
+                menuChangePassword.setOnClickListener(v -> {
+                    drawerLayout.closeDrawer(GravityCompat.END);
+                    startActivity(new Intent(this, ChangePasswordActivity.class));
+                });
+            }
         }
 
         // Logout
@@ -307,8 +315,16 @@ public class HomeMenuActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadUserInfoToDrawer();
-        resolveRoleAndApplyUi();
         refreshLanguageButtons();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (userRoleListener != null) {
+            userRoleListener.remove();
+            userRoleListener = null;
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -353,65 +369,111 @@ public class HomeMenuActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_app_chooser_title)));
     }
 
-    private void resolveRoleAndApplyUi() {
-        String tenantId = TenantSession.getActiveTenantId();
+    private void observeUserPrimaryRole() {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (tenantId == null || tenantId.trim().isEmpty() || user == null) {
-            applyRoleUi(TenantRoles.OWNER);
-            setupMenuCards(TenantRoles.OWNER);
+        if (user == null) {
+            forceLogoutToReLogin();
             return;
         }
 
-        db.collection("tenants").document(tenantId)
-                .collection("members").document(user.getUid())
-                .get()
-                .addOnSuccessListener(doc -> {
-                    String role = doc != null ? doc.getString("role") : null;
-                    if (role == null || role.trim().isEmpty()) {
-                        role = TenantRoles.OWNER;
+        userRoleListener = db.collection("users").document(user.getUid())
+                .addSnapshotListener(this, (doc, error) -> {
+                    if (error != null || doc == null || !doc.exists()) {
+                        if (!roleInitialized) {
+                            applyRoleUi(TenantRoles.TENANT);
+                            setupMenuCards(TenantRoles.TENANT);
+                        }
+                        return;
                     }
-                    applyRoleUi(role);
-                    setupMenuCards(role);
-                })
-                .addOnFailureListener(e -> {
-                    applyRoleUi(TenantRoles.OWNER);
-                    setupMenuCards(TenantRoles.OWNER);
+
+                    String role = normalizePrimaryRole(doc.getString("primaryRole"));
+                    if (!roleInitialized) {
+                        roleInitialized = true;
+                        resolvedRole = role;
+                        applyRoleUi(role);
+                        setupMenuCards(role);
+                        return;
+                    }
+
+                    // Promotion during active session requires fresh login to refresh session context.
+                    if (!TenantRoles.OWNER.equals(resolvedRole) && TenantRoles.OWNER.equals(role)) {
+                        forceLogoutToReLogin();
+                        return;
+                    }
+
+                    if (!role.equals(resolvedRole)) {
+                        resolvedRole = role;
+                        applyRoleUi(role);
+                        setupMenuCards(role);
+                    }
                 });
+    }
+
+    private String normalizePrimaryRole(String role) {
+        if (role != null && TenantRoles.OWNER.equalsIgnoreCase(role.trim())) {
+            return TenantRoles.OWNER;
+        }
+        return TenantRoles.TENANT;
+    }
+
+    private void forceLogoutToReLogin() {
+        mAuth.signOut();
+        Toast.makeText(this, getString(R.string.session_expired_relogin_for_owner_ui), Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void applyRoleUi(String role) {
         resolvedRole = role;
-        boolean isTenant = TenantRoles.TENANT.equals(role);
+        boolean isOwner = TenantRoles.OWNER.equals(role);
 
         View cardStats = findViewById(R.id.cardStats);
+        View rowTop = findViewById(R.id.rowTop);
+        View rowMiddle = findViewById(R.id.rowMiddle);
         View rowBottom = findViewById(R.id.rowBottom);
+        View menuRentalHistory = findViewById(R.id.menuRentalHistory);
         TextView tvCardHouseLabel = findViewById(R.id.tvCardHouseLabel);
         TextView tvCardInvoiceLabel = findViewById(R.id.tvCardInvoiceLabel);
         TextView tvCardExpenseLabel = findViewById(R.id.tvCardExpenseLabel);
         TextView tvCardReportLabel = findViewById(R.id.tvCardReportLabel);
+        TextView tvCardTenantLabel = findViewById(R.id.tvCardTenantLabel);
+        TextView tvCardContractLabel = findViewById(R.id.tvCardContractLabel);
 
         if (cardStats != null) {
-            cardStats.setVisibility(isTenant ? View.GONE : View.VISIBLE);
+            cardStats.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        }
+        if (rowTop != null) {
+            rowTop.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        }
+        if (rowMiddle != null) {
+            rowMiddle.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
         if (rowBottom != null) {
-            rowBottom.setVisibility(isTenant ? View.GONE : View.VISIBLE);
+            rowBottom.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        }
+        if (menuRentalHistory != null) {
+            menuRentalHistory.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
 
         if (tvCardHouseLabel != null) {
-            tvCardHouseLabel.setText(
-                    isTenant ? getString(R.string.home_tenant_room_label) : getString(R.string.home_owner_house_label));
+            tvCardHouseLabel.setText(isOwner ? getString(R.string.home_owner_house_label) : "");
         }
         if (tvCardInvoiceLabel != null) {
-            tvCardInvoiceLabel.setText(isTenant ? getString(R.string.home_tenant_invoice_label)
-                    : getString(R.string.home_owner_invoice_label));
+            tvCardInvoiceLabel.setText(isOwner ? getString(R.string.home_owner_invoice_label) : "");
         }
         if (tvCardExpenseLabel != null) {
-            tvCardExpenseLabel.setText(isTenant ? getString(R.string.home_tenant_payment_history_label)
-                    : getString(R.string.home_owner_expense_label));
+            tvCardExpenseLabel.setText(isOwner ? getString(R.string.home_owner_expense_label) : "");
         }
         if (tvCardReportLabel != null) {
-            tvCardReportLabel.setText(isTenant ? getString(R.string.home_tenant_support_label)
-                    : getString(R.string.home_owner_report_label));
+            tvCardReportLabel.setText(isOwner ? getString(R.string.home_owner_report_label) : "");
+        }
+        if (tvCardTenantLabel != null) {
+            tvCardTenantLabel.setText(isOwner ? getString(R.string.home_owner_tenant_label) : "");
+        }
+        if (tvCardContractLabel != null) {
+            tvCardContractLabel.setText(isOwner ? getString(R.string.home_owner_contract_label) : "");
         }
     }
 
@@ -426,9 +488,21 @@ public class HomeMenuActivity extends AppCompatActivity {
     }
 
     private void switchLanguage(String languageTag) {
+        if (isLanguageSwitching) {
+            return;
+        }
         if (LanguageManager.isCurrentLanguage(this, languageTag)) {
             return;
         }
+
+        isLanguageSwitching = true;
+        if (btnLangEn != null) {
+            btnLangEn.setEnabled(false);
+        }
+        if (btnLangVi != null) {
+            btnLangVi.setEnabled(false);
+        }
+
         LanguageManager.setLanguage(this, languageTag);
         recreate();
     }
@@ -436,10 +510,16 @@ public class HomeMenuActivity extends AppCompatActivity {
     private void refreshLanguageButtons() {
         boolean isEnglish = LanguageManager.isCurrentLanguage(this, "en");
         if (btnLangEn != null) {
-            btnLangEn.setAlpha(isEnglish ? 1f : 0.55f);
+            btnLangEn.setAlpha(isEnglish ? 1f : 0.72f);
+            btnLangEn.setBackgroundResource(isEnglish
+                    ? R.drawable.language_option_selected
+                    : R.drawable.language_option_unselected);
         }
         if (btnLangVi != null) {
-            btnLangVi.setAlpha(isEnglish ? 0.55f : 1f);
+            btnLangVi.setAlpha(isEnglish ? 0.72f : 1f);
+            btnLangVi.setBackgroundResource(isEnglish
+                    ? R.drawable.language_option_unselected
+                    : R.drawable.language_option_selected);
         }
     }
 }

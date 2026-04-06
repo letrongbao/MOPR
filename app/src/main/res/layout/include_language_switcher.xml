@@ -8,18 +8,21 @@
     android:orientation="horizontal"
     android:background="@drawable/language_switcher_bg"
     android:gravity="center"
-    android:padding="4dp">
+    android:elevation="8dp"
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="4dp">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLangEn"
         style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:minHeight="0dp"
         android:minWidth="0dp"
         android:padding="0dp"
+        android:background="@drawable/language_option_unselected"
         android:text="🇬🇧"
-        android:textSize="20sp"
+        android:textSize="19sp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:insetLeft="0dp"
@@ -29,22 +32,21 @@
         app:rippleColor="@color/primary_alpha"
         android:contentDescription="@string/english_language" />
 
-    <View
-        android:layout_width="1dp"
-        android:layout_height="24dp"
-        android:layout_margin="4dp"
-        android:background="@color/language_switcher_divider" />
+    <Space
+        android:layout_width="3dp"
+        android:layout_height="1dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLangVi"
         style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:minHeight="0dp"
         android:minWidth="0dp"
         android:padding="0dp"
+        android:background="@drawable/language_option_unselected"
         android:text="🇻🇳"
-        android:textSize="20sp"
+        android:textSize="19sp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:insetLeft="0dp"

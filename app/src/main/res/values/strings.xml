@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Quản Lí Trọ</string>
+    <string name="app_name">Quản Lý Trọ</string>
     <string name="widget_invoice_description">Hiển thị số hóa đơn chưa thanh toán và tổng phòng trọ</string>
 
     <!-- Common Validations & Messages -->
@@ -394,11 +394,11 @@
     <string name="share_app_text">Ứng dụng quản lý nhà trọ tuyệt vời dành cho bạn!</string>
     <string name="share_app_chooser_title">Chia sẻ ứng dụng</string>
     <string name="home_tenant_room_label">Phòng\ncủa bạn</string>
-    <string name="home_owner_house_label">Quản lí\nnhà phòng</string>
+    <string name="home_owner_house_label">Quản lý\nnhà phòng</string>
     <string name="home_tenant_invoice_label">Hóa đơn\ncủa bạn</string>
     <string name="home_owner_invoice_label">Báo phí\nhóa đơn</string>
     <string name="home_tenant_payment_history_label">Lịch sử\nthanh toán</string>
-    <string name="home_owner_expense_label">Quản lí\nchi phí</string>
+    <string name="home_owner_expense_label">Quản lý\nchi phí</string>
     <string name="home_tenant_support_label">Yêu cầu\nhỗ trợ</string>
     <string name="home_owner_report_label">Thống kê\nbáo cáo</string>
     <string name="contract_not_found">Không tìm thấy hợp đồng</string>
@@ -532,6 +532,7 @@
     <string name="update_contract">Cập nhật hợp đồng</string>
     <string name="login">Đăng nhập</string>
     <string name="app_subtitle_manage_rental">Quản lý nhà trọ</string>
+    <string name="app_subtitle_manage_rental_upper">QUẢN LÝ NHÀ TRỌ</string>
     <string name="password">Mật khẩu</string>
     <string name="remember_login">Ghi nhớ đăng nhập</string>
     <string name="no_account_signup_now">Chưa có tài khoản? Đăng ký ngay</string>
@@ -566,6 +567,13 @@
     <string name="profile_display_name_placeholder">Tên người dùng</string>
     <string name="profile_account_info">Thông tin tài khoản</string>
     <string name="profile_new_password_hint">Nhập mật khẩu mới</string>
+    <string name="auth_method_label">Phương thức đăng nhập</string>
+    <string name="auth_method_password">Email và mật khẩu</string>
+    <string name="auth_method_google">Google</string>
+    <string name="auth_method_google_and_password">Google + Email và mật khẩu</string>
+    <string name="auth_method_unknown">Không xác định</string>
+    <string name="change_password_not_available_for_google">Tài khoản Google không đổi mật khẩu trong ứng dụng. Vui lòng đổi mật khẩu từ tài khoản Google.</string>
+    <string name="session_expired_relogin_for_owner_ui">Quyền tài khoản đã thay đổi. Vui lòng đăng nhập lại để vào giao diện OWNER.</string>
     <string name="rental_history_contract_count_default">Số hợp đồng: 0</string>
     <string name="rental_history_empty">Chưa có lịch sử cho thuê\n\nLịch sử sẽ được ghi lại khi bạn kết thúc hợp đồng</string>
     <string name="tenant_search_hint">Tìm kiếm khách thuê (SĐT/Tên)...</string>
