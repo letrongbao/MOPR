@@ -67,11 +67,14 @@ public final class InvoiceExportDialogHelper {
                 .append(")\n");
 
         if (invoice.getTrashFee() > 0)
-            sb.append(activity.getString(R.string.trash_fee_colon)).append(fmt.format(invoice.getTrashFee())).append("\n");
+            sb.append(activity.getString(R.string.trash_fee_colon)).append(fmt.format(invoice.getTrashFee()))
+                    .append("\n");
         if (invoice.getWifiFee() > 0)
-            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getWifiFee())).append("\n");
+            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getWifiFee()))
+                    .append("\n");
         if (invoice.getParkingFee() > 0)
-            sb.append(activity.getString(R.string.parking_fee_colon)).append(fmt.format(invoice.getParkingFee())).append("\n");
+            sb.append(activity.getString(R.string.parking_fee_colon)).append(fmt.format(invoice.getParkingFee()))
+                    .append("\n");
 
         tvChiTiet.setText(sb + "\n\n" + activity.getString(R.string.loading_payments));
         tvTong.setText(activity.getString(R.string.total_amount_colon) + fmt.format(invoice.getTotalAmount()));
@@ -93,13 +96,17 @@ public final class InvoiceExportDialogHelper {
         AlertDialog.Builder b = new AlertDialog.Builder(activity)
                 .setView(view)
                 .setPositiveButton(activity.getString(R.string.close), null)
-                .setNegativeButton(activity.getString(R.string.payment_history), (d, w) -> openPaymentHistory.run(invoice));
+                .setNegativeButton(activity.getString(R.string.payment_history),
+                        (d, w) -> openPaymentHistory.run(invoice));
 
         if (isTenantUser) {
-            b.setNeutralButton(activity.getString(R.string.confirm_meter), (d, w) -> openTenantConfirmMeter.run(invoice));
+            b.setNeutralButton(activity.getString(R.string.confirm_meter),
+                    (d, w) -> openTenantConfirmMeter.run(invoice));
         } else {
             b.setNeutralButton(activity.getString(R.string.screenshot),
-                    (d, w) -> Toast.makeText(activity, activity.getString(R.string.screenshot_to_send), Toast.LENGTH_LONG).show());
+                    (d, w) -> Toast
+                            .makeText(activity, activity.getString(R.string.screenshot_to_send), Toast.LENGTH_LONG)
+                            .show());
         }
 
         b.show();
@@ -154,9 +161,12 @@ public final class InvoiceExportDialogHelper {
 
                     scopedCollection.get("meterReadings").document(docId)
                             .update(update)
-                            .addOnSuccessListener(v -> Toast.makeText(activity, activity.getString(R.string.confirmation_sent), Toast.LENGTH_SHORT)
+                            .addOnSuccessListener(v -> Toast
+                                    .makeText(activity, activity.getString(R.string.confirmation_sent),
+                                            Toast.LENGTH_SHORT)
                                     .show())
-                            .addOnFailureListener(e -> Toast.makeText(activity, activity.getString(R.string.send_failed), Toast.LENGTH_SHORT)
+                            .addOnFailureListener(e -> Toast
+                                    .makeText(activity, activity.getString(R.string.send_failed), Toast.LENGTH_SHORT)
                                     .show());
                 })
                 .show();

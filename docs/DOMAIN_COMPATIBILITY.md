@@ -5,6 +5,10 @@ This project has live/legacy data. Some names must remain stable to avoid data l
 
 ## Keep Stable Unless Data Migration Is Planned
 - Firestore collection names currently used by runtime queries, such as:
+  - `tenants`
+  - `users`
+  - `members` (under `tenants/{tenantId}`)
+  - `invites` (under `tenants/{tenantId}`)
   - `invoices`
   - `contracts`
   - `rooms`

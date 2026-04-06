@@ -208,4 +208,3 @@ public class ImageUploadService extends Service {
         return null;
     }
 }
-

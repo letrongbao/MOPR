@@ -54,7 +54,8 @@ public class ProfileActivity extends AppCompatActivity {
                 // After successful Cloudinary upload, save URL to Firebase
                 saveUserInfoToFirebase(imageUrl);
             } else {
-                Toast.makeText(ProfileActivity.this, getString(R.string.error_receive_image_link), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.error_receive_image_link), Toast.LENGTH_SHORT)
+                        .show();
                 btnSaveProfile.setEnabled(true);
             }
         }
@@ -222,17 +223,20 @@ public class ProfileActivity extends AppCompatActivity {
                                         .addOnSuccessListener(aVoid3 -> {
                                             tvDisplayName.setText(fullName);
                                             selectedAvatarUri = null;
-                                            Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT)
+                                                    .show();
                                             btnSaveProfile.setEnabled(true);
                                         })
                                         .addOnFailureListener(e2 -> {
-                                            Toast.makeText(this, getString(R.string.error_colon) + e2.getMessage(), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(this, getString(R.string.error_colon) + e2.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
                                             btnSaveProfile.setEnabled(true);
                                         });
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, getString(R.string.error_update_profile) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_update_profile) + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                     btnSaveProfile.setEnabled(true);
                 });
     }

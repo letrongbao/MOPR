@@ -130,12 +130,14 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         Room room = dataList.get(position);
         holder.tvRoomNumber.setText(room.getRoomNumber() != null ? "P." + room.getRoomNumber() : "P.???");
 
-        holder.tvRentAmount.setText(MoneyFormatter.format(room.getRentAmount()) + holder.itemView.getContext().getString(R.string.room_per_month));
+        holder.tvRentAmount.setText(MoneyFormatter.format(room.getRentAmount())
+                + holder.itemView.getContext().getString(R.string.room_per_month));
 
         boolean trong = RoomStatus.VACANT.equals(room.getStatus());
         int color = Color.parseColor(trong ? "#F44336" : "#2196F3"); // red=vacant, blue=rented
 
-        holder.tvStatus.setText(trong ? holder.itemView.getContext().getString(R.string.room_status_vacant) : holder.itemView.getContext().getString(R.string.room_status_rented));
+        holder.tvStatus.setText(trong ? holder.itemView.getContext().getString(R.string.room_status_vacant)
+                : holder.itemView.getContext().getString(R.string.room_status_rented));
         holder.tvStatus.setTextColor(color);
 
         // Load room image
@@ -196,7 +198,8 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
             }
         }
 
-        holder.btnCreateContract.setText(trong ? holder.itemView.getContext().getString(R.string.room_create_contract) : holder.itemView.getContext().getString(R.string.room_view_contract));
+        holder.btnCreateContract.setText(trong ? holder.itemView.getContext().getString(R.string.room_create_contract)
+                : holder.itemView.getContext().getString(R.string.room_view_contract));
         holder.btnCreateContract.setOnClickListener(v -> listener.onCreateContract(room));
     }
 
@@ -233,5 +236,3 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         return a.equals(b);
     }
 }
-
-

@@ -180,7 +180,8 @@ public class ContractListActivity extends AppCompatActivity {
                     Toast.makeText(this, getString(R.string.contract_deposit_updated), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, getString(R.string.contract_update_error, e.getMessage()), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.contract_update_error, e.getMessage()), Toast.LENGTH_LONG)
+                            .show();
                     contract.setDepositCollected(false);
                     adapter.notifyDataSetChanged();
                 });

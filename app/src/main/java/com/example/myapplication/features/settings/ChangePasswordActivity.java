@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -40,6 +41,13 @@ public class ChangePasswordActivity extends AppCompatActivity {
         edtConfirmNewPassword = findViewById(R.id.edtConfirmNewPassword);
         btnChangePassword = findViewById(R.id.btnChangePassword);
 
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (!AuthProviderUtil.canChangePassword(user)) {
+            Toast.makeText(this, getString(R.string.change_password_not_available_for_google), Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         btnChangePassword.setOnClickListener(v -> changePassword());
     }
 
@@ -66,6 +74,10 @@ public class ChangePasswordActivity extends AppCompatActivity {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
             Toast.makeText(this, getString(R.string.please_login_again), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!AuthProviderUtil.canChangePassword(user)) {
+            Toast.makeText(this, getString(R.string.change_password_not_available_for_google), Toast.LENGTH_LONG).show();
             return;
         }
 

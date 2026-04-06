@@ -24,6 +24,19 @@ Stabilize and finalize the English naming refactor while preserving runtime beha
 - Firebase ops guide for seed/reset/test: `docs/FIREBASE_DATA_MANAGEMENT_GUIDE.md`
 - Before adding/changing any screen that reads/writes business data, align with this contract.
 
+## Runtime Truth Snapshot (2026-04-06)
+
+Use these facts as non-negotiable runtime behavior unless the task explicitly changes them:
+
+1. Firestore root data scope is `tenants/{tenantId}/...` with legacy fallback `users/{uid}/...`.
+2. There is no top-level `org` or `organizations` collection; `Org*` names are UI/module terminology only.
+3. Google sign-in (`MainActivity`) ensures `users/{uid}` exists and must NOT overwrite existing `primaryRole`/`activeTenantId`.
+4. Home shell role rendering (`HomeMenuActivity`) is currently binary by `users/{uid}.primaryRole`:
+	- `OWNER` => owner UI
+	- non-`OWNER` => guest UI
+5. If `primaryRole` changes from non-OWNER to OWNER during active Home session, app forces sign-out and requires re-login.
+6. Change password is available only when account has `password` provider; Google-only accounts must not see/use password change flow.
+
 ## Workflow Guide
 - Working process standard: `docs/WORKFLOW_GUIDE.md`
 - Follow this guide for batching changes, validation, and clean commits.

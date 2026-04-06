@@ -11,6 +11,11 @@ Android Java app for rental/property management.
 - Local persistence: `room/*` (Room DB).
 - Remote persistence: Firebase Auth + Firestore.
 
+## Firestore Scope Baseline
+- Preferred runtime scope: `tenants/{tenantId}/...`
+- Legacy compatibility fallback: `users/{uid}/...`
+- `Org*` feature names are module/UI naming; they still map to tenant-scope Firestore data.
+
 ## Main Feature Modules
 - Invoice: `features/invoice/*`
 - Finance: `features/finance/*`

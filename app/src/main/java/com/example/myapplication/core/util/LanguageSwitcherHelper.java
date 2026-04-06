@@ -14,6 +14,7 @@ public class LanguageSwitcherHelper {
     private final AppCompatActivity activity;
     private View btnLangEn;
     private View btnLangVi;
+    private boolean isLanguageSwitching;
 
     public LanguageSwitcherHelper(AppCompatActivity activity) {
         this.activity = activity;
@@ -42,8 +43,19 @@ public class LanguageSwitcherHelper {
      * Switch language with a smooth scale animation
      */
     private void switchLanguageWithAnimation(String languageTag, View view) {
+        if (isLanguageSwitching) {
+            return;
+        }
         if (LanguageManager.isCurrentLanguage(activity, languageTag)) {
             return;
+        }
+
+        isLanguageSwitching = true;
+        if (btnLangEn != null) {
+            btnLangEn.setEnabled(false);
+        }
+        if (btnLangVi != null) {
+            btnLangVi.setEnabled(false);
         }
 
         // Scale animation on click
@@ -66,11 +78,16 @@ public class LanguageSwitcherHelper {
         boolean isEnglish = LanguageManager.isCurrentLanguage(activity, "en");
 
         if (btnLangEn != null) {
-            // Selected button: full opacity, unselected: semi-transparent
-            btnLangEn.setAlpha(isEnglish ? 1f : 0.5f);
+            btnLangEn.setAlpha(isEnglish ? 1f : 0.72f);
+            btnLangEn.setBackgroundResource(isEnglish
+                    ? R.drawable.language_option_selected
+                    : R.drawable.language_option_unselected);
         }
         if (btnLangVi != null) {
-            btnLangVi.setAlpha(isEnglish ? 0.5f : 1f);
+            btnLangVi.setAlpha(isEnglish ? 0.72f : 1f);
+            btnLangVi.setBackgroundResource(isEnglish
+                    ? R.drawable.language_option_unselected
+                    : R.drawable.language_option_selected);
         }
     }
 

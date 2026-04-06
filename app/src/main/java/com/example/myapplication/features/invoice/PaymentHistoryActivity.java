@@ -96,9 +96,12 @@ public class PaymentHistoryActivity extends AppCompatActivity {
                         .setMessage(getString(R.string.delete_payment, fmtMoney(payment.getAmount())))
                         .setPositiveButton(getString(R.string.delete), (d, w) -> repository.delete(payment.getId(),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(PaymentHistoryActivity.this, getString(R.string.deleted), Toast.LENGTH_SHORT).show()),
+                                        .makeText(PaymentHistoryActivity.this, getString(R.string.deleted),
+                                                Toast.LENGTH_SHORT)
+                                        .show()),
                                 () -> runOnUiThread(() -> Toast
-                                        .makeText(PaymentHistoryActivity.this, getString(R.string.delete_failed), Toast.LENGTH_SHORT)
+                                        .makeText(PaymentHistoryActivity.this, getString(R.string.delete_failed),
+                                                Toast.LENGTH_SHORT)
                                         .show())))
                         .setNegativeButton(getString(R.string.cancel), null)
                         .show();
@@ -181,7 +184,8 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         etPaidAt.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
 
         android.widget.ArrayAdapter<String> methodAdapter = new android.widget.ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, new String[] { getString(R.string.cash), getString(R.string.bank_transfer) });
+                android.R.layout.simple_spinner_item,
+                new String[] { getString(R.string.cash), getString(R.string.bank_transfer) });
         methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMethod.setAdapter(methodAdapter);
 
@@ -207,9 +211,12 @@ public class PaymentHistoryActivity extends AppCompatActivity {
 
                         repository.add(p,
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.payment_saved), Toast.LENGTH_SHORT).show()),
+                                        () -> Toast
+                                                .makeText(this, getString(R.string.payment_saved), Toast.LENGTH_SHORT)
+                                                .show()),
                                 () -> runOnUiThread(
-                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()));
+                                        () -> Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT)
+                                                .show()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(this, getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
                     }

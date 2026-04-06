@@ -3,9 +3,75 @@
 ## Purpose
 This document guides data management for MOPR Firebase: creating users/roles, seeding test data, safe reset procedures, and testing without corrupting production data.
 
+Naming clarification:
+
+- Current top-level Firestore collection is `tenants` (not `org`/`organizations`).
+- "Org" in screen/module names is organizational UI terminology mapped to `tenants/{tenantId}` data.
+
+## 0) Auth Flows In Current App
+
+### 0.1 Email/password login (`MainActivity`)
+
+1. Sign-in uses Firebase Auth only.
+2. No Firestore write occurs during login itself.
+3. Remember-me stores only email in SharedPreferences (`savedEmail`), not password.
+
+### 0.2 Google Sign-In (`MainActivity`)
+
+1. Google credential signs in with Firebase Auth.
+2. App auto-creates/merges `users/{uid}` profile right after Google sign-in.
+3. If `users/{uid}` already exists, app updates basic profile fields (`uid`, `email`, `fullName`, `updatedAt`) and does NOT override existing `primaryRole`/`activeTenantId`.
+4. If `users/{uid}` does not exist, default bootstrap fields include `primaryRole=TENANT`, `activeTenantId=null`, `createdAt`, `updatedAt`.
+5. After sign-in succeeds, app navigates directly to Home (no second manual login step).
+6. If user already has an active Firebase session, app auto-enters Home on app open.
+
+### 0.3 Public signup (`SignUpActivity`)
+
+Signup creates `users/{uid}` with:
+
+- `uid`, `fullName`, `email`, `phoneNumber`
+- `primaryRole = TENANT`
+- `activeTenantId = null`
+- `createdAt`, `updatedAt`
+
+### 0.4 Profile update (`ProfileActivity`, `EditProfileActivity`)
+
+1. App updates Firebase Auth displayName/photo.
+2. App updates `users/{uid}` fields (`fullName`, `phoneNumber`, optional `avatarUrl`).
+3. If update fails due to missing doc, app falls back to `set(...)` to create user document.
+
+### 0.5 Change password (`ChangePasswordActivity`)
+
+1. Uses Firebase Auth `updatePassword(...)`.
+2. Available only when account has `password` provider.
+3. Google-only account is blocked from change-password flow (menu hidden in Home drawer and screen auto-exits if opened directly).
+4. Does not update Firestore.
+5. If Firebase requires recent login, user must re-authenticate.
+
+### 0.6 Tenant session (`TenantSession`)
+
+1. Active tenant is cached in SharedPreferences key `activeTenantId`.
+2. Most repositories resolve data scope from `TenantSession.getActiveTenantId()` first, then fallback to `users/{uid}`.
+
+### 0.7 Home role UI switching (`HomeMenuActivity`)
+
+1. Home defaults to guest UI (all Home action rows hidden).
+2. `users/{uid}.primaryRole` is the role source used by Home UI:
+   - `OWNER` => show current OWNER Home UI.
+   - any other value/missing => keep guest UI (no Home action buttons shown).
+3. If `primaryRole` changes from non-OWNER to `OWNER` while user is in an active session, app forces logout and asks user to sign in again.
+4. After signing in again with `primaryRole=OWNER`, user sees OWNER UI.
+5. Drawer behavior by role:
+   - `OWNER`: shows Rental History menu.
+   - non-OWNER: hides Rental History menu.
+6. Current role mapping in Home UI is binary:
+   - `OWNER` => OWNER UI.
+   - `STAFF` and `TENANT` => guest UI.
+7. Role-promotion auto-logout is enforced by the role listener in `HomeMenuActivity` while Home is active.
+
 ## 1) How the App Understands Data
 
-The source of truth for current role is not stored in a single location, but distributed across 2 scopes:
+Role-related data is distributed across 2 scopes, with different usages:
 
 1. User scope:
    - `users/{uid}`
@@ -17,8 +83,9 @@ The source of truth for current role is not stored in a single location, but dis
 
 Important conventions:
 
-- `OWNER`, `STAFF`, `TENANT` must be read from tenant membership.
-- `users/{uid}.primaryRole` is only metadata/status, should not be treated as the only source of truth.
+- Home UI role rendering currently reads `users/{uid}.primaryRole`.
+- Domain permission inside tenant (staff/tenant/owner operations) still depends on `tenants/{tenantId}/members/{uid}.role`.
+- `STAFF` is not rendered as a dedicated Home UI role yet (currently falls back to guest UI).
 - `activeTenantId` must match the tenant being tested.
 
 ## 2) How to Create OWNER
@@ -34,6 +101,12 @@ Correct flow in app:
    - `tenants/{tenantId}/members/{uid}` with `role = OWNER`
    - `users/{uid}` with `primaryRole = OWNER`
    - `users/{uid}.activeTenantId = tenantId`
+
+Additional tenant fields created by app in `tenants/{tenantId}`:
+
+- `name`, `ownerUid`, `timezone`, `currency`, `billingCycleDay`
+- `plan`, `maxRooms`, `maxStaff`, `maxInvoicesPerMonth`
+- `createdAt`
 
 To seed manually on Firebase Console, create these 3 documents:
 
@@ -76,6 +149,11 @@ STAFF should be created via invite:
    - after join: `tenants/{tenantId}/members/{uid}` with `role = STAFF`
    - `users/{uid}.primaryRole = STAFF`
 
+Current invite fields for STAFF:
+
+- required: `code`, `email`, `role`, `status`, `createdAt`, `createdBy`
+- optional: `houseId`, `houseCode`
+
 To seed manually:
 
 ```text
@@ -104,6 +182,10 @@ users/{tenantUid}
 ```
 
 After that, tenant user will receive an invite and join a room/tenant.
+
+Current invite requirement for TENANT:
+
+- `roomId` is required in invite document.
 
 To seed manually:
 
@@ -142,6 +224,10 @@ Safe recommendations:
 - Use 3 separate test accounts: `owner`, `staff`, `tenant`.
 - Name test documents clearly, e.g. `tenant_test_01`.
 
+Invite cleanup recommendation:
+
+- If invite testing is stuck, set invite `status` to a non-pending state (for example `REVOKED`) or delete the invite document.
+
 ## 6) Checklist Before Testing Role
 
 Before running the app, verify these 3 points:
@@ -150,7 +236,12 @@ Before running the app, verify these 3 points:
 2. `users/{uid}.activeTenantId`
 3. `tenants/{tenantId}/members/{uid}.role`
 
-If these 3 values are not synchronized, UI role display may be incorrect.
+Expected Home UI behavior in current build:
+
+- `primaryRole = OWNER` => OWNER Home UI (cards + rental history visible).
+- `primaryRole != OWNER` or missing => guest Home UI (cards hidden, rental history hidden).
+
+If these values are not synchronized, Home UI and tenant-domain permissions may look inconsistent.
 
 ## 7) How to Manage Data on Firebase Console
 
@@ -168,6 +259,10 @@ Rules:
 - Do not rename collections/fields without migration plan.
 - Do not use one test user for multiple roles if testing broad UI scope.
 - Do not add test data to production tenant.
+
+Important app-specific note:
+
+- `EditProfileActivity.applyInviteCode()` requires an active tenant id in session. If `activeTenantId` is null, invite join from that screen will not proceed.
 
 ## 8) Recommended Test Data Suite
 
@@ -202,5 +297,17 @@ If only testing UI and role, no need to delete everything.
 
 1. Owner bootstrap goes through `TenantRepository.createTenant(...)`.
 2. Public signup is always `TENANT`.
-3. Actual role must come from tenant membership.
-4. Each seeding/reset, prefer modifying test documents only, do not delete global data unless necessary.
+3. Home shell UI role gate currently follows `users/{uid}.primaryRole` (OWNER vs non-OWNER).
+4. Tenant-domain authorization must come from `tenants/{tenantId}/members/{uid}.role`.
+5. Each seeding/reset, prefer modifying test documents only, do not delete global data unless necessary.
+
+## 11) Legacy Data Migration During Tenant Bootstrap
+
+When `ensureActiveTenant(...)` creates a default tenant for a legacy user, app migration currently copies only:
+
+1. `rooms`
+2. `contracts`
+3. `invoices`
+
+Current implementation uses batch write guard around 450 operations per collection pass.
+Large legacy datasets may need manual follow-up migration for remaining documents.
