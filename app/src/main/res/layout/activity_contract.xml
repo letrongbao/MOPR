@@ -436,6 +436,7 @@
                         android:checked="true"/>
 
                     <TextView
+                        android:id="@+id/tvElectricStartLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/contract_form_initial_electric_required"
@@ -451,8 +452,26 @@
                         android:paddingHorizontal="14dp"
                         android:inputType="number"/>
 
+                    <TextView
+                        android:id="@+id/tvWaterStartLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/contract_form_initial_water_required"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginTop="12dp"/>
+                    <EditText
+                        android:id="@+id/etChiSoNuoc"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_rounded"
+                        android:paddingHorizontal="14dp"
+                        android:inputType="number"/>
+
                     <!-- UI section note -->
                     <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/layoutParkingService"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp">

@@ -34,7 +34,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Xin chào, Khách thuê!"
+                        android:text="@string/tenant_menu_greeting"
                         android:textColor="#CCFFFFFF"
                         android:textSize="14sp" />
 
@@ -43,7 +43,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Người thuê"
+                        android:text="@string/tenant_menu_default_name"
                         android:textColor="@color/white"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -53,7 +53,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Phòng: --"
+                        android:text="@string/tenant_menu_room_unknown"
                         android:textColor="#CCFFFFFF"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -66,7 +66,7 @@
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:src="@drawable/ic_user_avatar"
-                    android:contentDescription="Avatar"
+                    android:contentDescription="@string/tenant_menu_avatar_desc"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
@@ -111,14 +111,14 @@
                                 android:layout_width="55dp"
                                 android:layout_height="55dp"
                                 android:src="@drawable/ic_house"
-                                android:contentDescription="Phòng của tôi"
+                                android:contentDescription="@string/tenant_menu_my_room"
                                 app:tint="@color/white" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentBottom="true"
-                                android:text="Phòng của tôi"
+                                android:text="@string/tenant_menu_my_room"
                                 android:textColor="@color/white"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -147,14 +147,14 @@
                                 android:layout_width="55dp"
                                 android:layout_height="55dp"
                                 android:src="@drawable/ic_invoice"
-                                android:contentDescription="Chốt Hóa đơn"
+                                android:contentDescription="@string/tenant_menu_finalize_bill"
                                 app:tint="@color/white" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentBottom="true"
-                                android:text="Chốt Hóa đơn"
+                                android:text="@string/tenant_menu_finalize_bill"
                                 android:textColor="@color/white"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -192,14 +192,14 @@
                                 android:layout_width="55dp"
                                 android:layout_height="55dp"
                                 android:src="@drawable/ic_report"
-                                android:contentDescription="Báo cáo sự cố"
+                                android:contentDescription="@string/tenant_menu_report_issue"
                                 app:tint="@color/white" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentBottom="true"
-                                android:text="Báo cáo sự cố"
+                                android:text="@string/tenant_menu_report_issue"
                                 android:textColor="@color/white"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -228,14 +228,14 @@
                                 android:layout_width="55dp"
                                 android:layout_height="55dp"
                                 android:src="@drawable/ic_notification"
-                                android:contentDescription="Thông báo"
+                                android:contentDescription="@string/tenant_menu_notification"
                                 app:tint="@color/white" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentBottom="true"
-                                android:text="Thông báo"
+                                android:text="@string/tenant_menu_notification"
                                 android:textColor="@color/white"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />

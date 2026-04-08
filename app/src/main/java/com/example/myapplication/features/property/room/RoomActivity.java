@@ -50,6 +50,7 @@ public class RoomActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private ImageView dialogImgPreview;
     private ActivityResultLauncher<String> imagePickerLauncher;
+    private ActivityResultLauncher<Intent> roomDetailsLauncher;
 
     // Internal note.
     private Room pendingUploadRoom;
@@ -61,6 +62,8 @@ public class RoomActivity extends AppCompatActivity {
     private String presetHouseName;
     private String presetHouseAddr;
     private String initialStatusFilter;
+    private String pendingEditRoomId;
+    private boolean pendingEditHandled;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +78,21 @@ public class RoomActivity extends AppCompatActivity {
                         if (dialogImgPreview != null) {
                             Glide.with(this).load(uri).centerCrop().into(dialogImgPreview);
                         }
+                    }
+                });
+
+        roomDetailsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result == null || result.getResultCode() != RESULT_OK || result.getData() == null) {
+                        return;
+                    }
+                    String deletedRoomNumber = result.getData()
+                            .getStringExtra(RoomDetailsActivity.EXTRA_DELETED_ROOM_NUMBER);
+                    if (deletedRoomNumber != null && !deletedRoomNumber.trim().isEmpty()) {
+                        Toast.makeText(this,
+                                getString(R.string.room_deleted_message, deletedRoomNumber),
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -128,6 +146,7 @@ public class RoomActivity extends AppCompatActivity {
         presetHouseName = getIntent().getStringExtra("HOUSE_NAME");
         presetHouseAddr = getIntent().getStringExtra("HOUSE_ADDRESS");
         initialStatusFilter = getIntent().getStringExtra("FILTER_STATUS");
+        pendingEditRoomId = getIntent().getStringExtra("EDIT_ROOM_ID");
         final String finalFilterHouseId = presetHouseId;
 
         if (getSupportActionBar() != null) {
@@ -195,7 +214,7 @@ public class RoomActivity extends AppCompatActivity {
             public void onViewDetails(Room room) {
                 Intent intent = new Intent(RoomActivity.this, RoomDetailsActivity.class);
                 intent.putExtra("ROOM_ID", room.getId());
-                startActivity(intent);
+                roomDetailsLauncher.launch(intent);
             }
 
             @Override
@@ -250,7 +269,7 @@ public class RoomActivity extends AppCompatActivity {
                             arr.add(d);
                         }
 
-                        java.util.Map<String, String> out = new java.util.HashMap<>();
+                        java.util.Map<String, RoomAdapter.TenantCardInfo> out = new java.util.HashMap<>();
                         for (java.util.Map.Entry<String, java.util.List<com.google.firebase.firestore.DocumentSnapshot>> e : byRoom
                                 .entrySet()) {
                             java.util.List<com.google.firebase.firestore.DocumentSnapshot> arr = e.getValue();
@@ -259,15 +278,12 @@ public class RoomActivity extends AppCompatActivity {
                             com.google.firebase.firestore.DocumentSnapshot first = arr.get(0);
                             String name = first.getString("fullName");
                             String phone = first.getString("phoneNumber");
-                            String base = (name != null ? name : "")
-                                    + (phone != null && !phone.trim().isEmpty()
-                                            ? getString(R.string.room_tenant_phone_prefix, phone)
-                                            : "");
                             int extra = arr.size() - 1;
-                            if (extra > 0) {
-                                base = base + " ( +" + extra + ")";
+                            String displayName = name != null ? name.trim() : "";
+                            if (extra > 0 && !displayName.isEmpty()) {
+                                displayName = displayName + " (+" + extra + ")";
                             }
-                            out.put(e.getKey(), base.trim());
+                            out.put(e.getKey(), new RoomAdapter.TenantCardInfo(displayName, phone));
                         }
                         adapter.setTenantByRoomId(out);
                     });
@@ -277,6 +293,17 @@ public class RoomActivity extends AppCompatActivity {
         viewModel.getRoomList().observe(this, list -> {
             if (list == null)
                 return;
+
+            if (!pendingEditHandled && pendingEditRoomId != null && !pendingEditRoomId.trim().isEmpty()) {
+                for (Room room : list) {
+                    if (room != null && pendingEditRoomId.equals(room.getId())) {
+                        pendingEditHandled = true;
+                        showEditRoomDialog(room);
+                        break;
+                    }
+                }
+            }
+
             applyFilters(list, finalFilterHouseId, tabIdx.get());
         });
     }
@@ -307,6 +334,19 @@ public class RoomActivity extends AppCompatActivity {
 
     private interface BoolCallback {
         void onResult(boolean value);
+    }
+
+    private static void clearInputError(EditText editText) {
+        if (editText != null) {
+            editText.setError(null);
+        }
+    }
+
+    private static void showInputError(EditText editText, String message) {
+        if (editText != null) {
+            editText.setError(message);
+            editText.requestFocus();
+        }
     }
 
     private String normalizeHouseId(String houseId) {
@@ -455,89 +495,108 @@ public class RoomActivity extends AppCompatActivity {
         loaiAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLoai.setAdapter(loaiAdapter);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.room_add_new_title)
                 .setView(dialogView)
-                .setPositiveButton(R.string.add, (d, w) -> {
-                    String roomNumber = etRoomNumber.getText().toString().trim();
-                    String dienTichStr = etDienTich.getText().toString().trim();
-                    double rentAmount = MoneyFormatter.getValue(etRentAmount);
-                    String maxOccupancyStr = etMaxOccupancy.getText().toString().trim();
-                    if (roomNumber.isEmpty() || dienTichStr.isEmpty() || rentAmount == 0) {
-                        Toast.makeText(this, R.string.please_fill_all_information, Toast.LENGTH_SHORT).show();
+                .setPositiveButton(R.string.add, null)
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            clearInputError(etRoomNumber);
+            clearInputError(etDienTich);
+            clearInputError(etRentAmount);
+            clearInputError(etMaxOccupancy);
+
+            String roomNumber = etRoomNumber.getText().toString().trim();
+            String dienTichStr = etDienTich.getText().toString().trim();
+            double rentAmount = MoneyFormatter.getValue(etRentAmount);
+            String maxOccupancyStr = etMaxOccupancy.getText().toString().trim();
+
+            if (roomNumber.isEmpty()) {
+                showInputError(etRoomNumber, getString(R.string.please_fill_all_information));
+                return;
+            }
+            if (dienTichStr.isEmpty()) {
+                showInputError(etDienTich, getString(R.string.please_fill_all_information));
+                return;
+            }
+            if (rentAmount <= 0) {
+                showInputError(etRentAmount, getString(R.string.please_fill_all_information));
+                return;
+            }
+
+            int maxOccupancy;
+            try {
+                maxOccupancy = Integer.parseInt(maxOccupancyStr);
+                if (maxOccupancy <= 0) {
+                    showInputError(etMaxOccupancy, getString(R.string.room_max_occupancy_required));
+                    return;
+                }
+            } catch (Exception parseError) {
+                showInputError(etMaxOccupancy, getString(R.string.room_max_occupancy_required));
+                return;
+            }
+
+            try {
+                String selectedHouseId = lockHouse ? presetHouseId.trim() : "";
+                String selectedHouseLabel = lockHouse
+                        ? ((presetHouseName != null && !presetHouseName.trim().isEmpty()) ? presetHouseName
+                                : (presetHouseAddr != null ? presetHouseAddr : ""))
+                        : "";
+                if (!lockHouse && spinnerHouse != null) {
+                    int houseIndex = spinnerHouse.getSelectedItemPosition();
+                    if (houseIndex >= 0 && houseIndex < houseIds.size()) {
+                        selectedHouseId = houseIds.get(houseIndex);
+                        selectedHouseLabel = houseLabels.get(houseIndex);
+                    }
+                }
+                final String finalSelectedHouseId = selectedHouseId;
+                final String finalSelectedHouseLabel = selectedHouseLabel;
+
+                if (hasDuplicateRoomNumberInSameHouse(roomNumber, finalSelectedHouseId, null)) {
+                    showInputError(etRoomNumber, getString(R.string.room_duplicate_in_house));
+                    return;
+                }
+
+                hasDuplicateRoomNumberInSameHouseRemote(roomNumber, finalSelectedHouseId, null, exists -> {
+                    if (exists) {
+                        showInputError(etRoomNumber, getString(R.string.room_duplicate_in_house));
                         return;
                     }
 
-                    int maxOccupancy;
-                    try {
-                        maxOccupancy = Integer.parseInt(maxOccupancyStr);
-                        if (maxOccupancy <= 0) {
-                            Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                    } catch (Exception parseError) {
-                        Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
-                        return;
+                    Room room = new Room(
+                            roomNumber,
+                            spinnerLoai.getSelectedItem().toString(),
+                            Double.parseDouble(dienTichStr),
+                            rentAmount,
+                            RoomStatus.VACANT);
+                    room.setMaxOccupancy(maxOccupancy);
+
+                    if (!finalSelectedHouseId.isEmpty()) {
+                        room.setHouseId(finalSelectedHouseId);
+                        room.setHouseName(finalSelectedHouseLabel);
                     }
 
-                    try {
-                        String selectedHouseId = lockHouse ? presetHouseId.trim() : "";
-                        String selectedHouseLabel = lockHouse
-                                ? ((presetHouseName != null && !presetHouseName.trim().isEmpty()) ? presetHouseName
-                                        : (presetHouseAddr != null ? presetHouseAddr : ""))
-                                : "";
-                        if (!lockHouse && spinnerHouse != null) {
-                            int houseIndex = spinnerHouse.getSelectedItemPosition();
-                            if (houseIndex >= 0 && houseIndex < houseIds.size()) {
-                                selectedHouseId = houseIds.get(houseIndex);
-                                selectedHouseLabel = houseLabels.get(houseIndex);
-                            }
+                    ensureRoomQuotaThen(() -> {
+                        if (selectedImageUri != null) {
+                            uploadImageAndSave(room);
+                        } else {
+                            viewModel.addRoom(room,
+                                    () -> runOnUiThread(() -> Toast
+                                            .makeText(this, R.string.add_success, Toast.LENGTH_SHORT).show()),
+                                    () -> runOnUiThread(() -> Toast.makeText(this,
+                                            R.string.room_add_failed_check_firebase, Toast.LENGTH_LONG)
+                                            .show()));
                         }
-                        final String finalSelectedHouseId = selectedHouseId;
-                        final String finalSelectedHouseLabel = selectedHouseLabel;
-
-                        if (hasDuplicateRoomNumberInSameHouse(roomNumber, finalSelectedHouseId, null)) {
-                            Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG).show();
-                            return;
-                        }
-
-                        hasDuplicateRoomNumberInSameHouseRemote(roomNumber, finalSelectedHouseId, null, exists -> {
-                            if (exists) {
-                                Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
-                            Room room = new Room(
-                                    roomNumber,
-                                    spinnerLoai.getSelectedItem().toString(),
-                                    Double.parseDouble(dienTichStr),
-                                    rentAmount,
-                                    RoomStatus.VACANT);
-                            room.setMaxOccupancy(maxOccupancy);
-
-                            if (!finalSelectedHouseId.isEmpty()) {
-                                room.setHouseId(finalSelectedHouseId);
-                                room.setHouseName(finalSelectedHouseLabel);
-                            }
-
-                            ensureRoomQuotaThen(() -> {
-                                if (selectedImageUri != null) {
-                                    uploadImageAndSave(room);
-                                } else {
-                                    viewModel.addRoom(room,
-                                            () -> runOnUiThread(() -> Toast
-                                                    .makeText(this, R.string.add_success, Toast.LENGTH_SHORT).show()),
-                                            () -> runOnUiThread(() -> Toast.makeText(this,
-                                                    R.string.room_add_failed_check_firebase, Toast.LENGTH_LONG)
-                                                    .show()));
-                                }
-                            });
-                        });
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, R.string.invalid_data, Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton(R.string.cancel, null).show();
+                        runOnUiThread(dialog::dismiss);
+                    });
+                });
+            } catch (NumberFormatException e) {
+                showInputError(etDienTich, getString(R.string.invalid_data));
+            }
+        });
     }
 
     private void ensureRoomQuotaThen(@NonNull Runnable onAllowed) {
@@ -670,100 +729,117 @@ public class RoomActivity extends AppCompatActivity {
             }
         }
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.room_edit_title, room.getRoomNumber()))
                 .setView(dialogView)
-                .setPositiveButton(R.string.update, (d, w) -> {
-                    String roomNumber = etRoomNumber.getText().toString().trim();
-                    String dienTichStr = etDienTich.getText().toString().trim();
-                    double rentAmount = MoneyFormatter.getValue(etRentAmount);
-                    String maxOccupancyStr = etMaxOccupancy.getText().toString().trim();
-                    if (roomNumber.isEmpty() || dienTichStr.isEmpty() || rentAmount == 0) {
-                        Toast.makeText(this, R.string.please_fill_all_information, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+                .setPositiveButton(R.string.update, null)
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+        dialog.show();
 
-                    int maxOccupancy;
-                    try {
-                        maxOccupancy = Integer.parseInt(maxOccupancyStr);
-                        if (maxOccupancy <= 0) {
-                            Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                    } catch (Exception parseError) {
-                        Toast.makeText(this, R.string.room_max_occupancy_required, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            clearInputError(etRoomNumber);
+            clearInputError(etDienTich);
+            clearInputError(etRentAmount);
+            clearInputError(etMaxOccupancy);
 
-                    try {
-                        String selectedHouseId = lockHouse ? presetHouseId.trim() : "";
-                        String selectedHouseLabel = lockHouse
-                                ? ((presetHouseName != null && !presetHouseName.trim().isEmpty()) ? presetHouseName
-                                        : (presetHouseAddr != null ? presetHouseAddr : ""))
-                                : "";
-                        if (!lockHouse && spinnerHouse != null) {
-                            int houseIndex = spinnerHouse.getSelectedItemPosition();
-                            if (houseIndex >= 0 && houseIndex < houseIds.size()) {
-                                selectedHouseId = houseIds.get(houseIndex);
-                                selectedHouseLabel = houseLabels.get(houseIndex);
+            String roomNumber = etRoomNumber.getText().toString().trim();
+            String dienTichStr = etDienTich.getText().toString().trim();
+            double rentAmount = MoneyFormatter.getValue(etRentAmount);
+            String maxOccupancyStr = etMaxOccupancy.getText().toString().trim();
+
+            if (roomNumber.isEmpty()) {
+                showInputError(etRoomNumber, getString(R.string.please_fill_all_information));
+                return;
+            }
+            if (dienTichStr.isEmpty()) {
+                showInputError(etDienTich, getString(R.string.please_fill_all_information));
+                return;
+            }
+            if (rentAmount <= 0) {
+                showInputError(etRentAmount, getString(R.string.please_fill_all_information));
+                return;
+            }
+
+            int maxOccupancy;
+            try {
+                maxOccupancy = Integer.parseInt(maxOccupancyStr);
+                if (maxOccupancy <= 0) {
+                    showInputError(etMaxOccupancy, getString(R.string.room_max_occupancy_required));
+                    return;
+                }
+            } catch (Exception parseError) {
+                showInputError(etMaxOccupancy, getString(R.string.room_max_occupancy_required));
+                return;
+            }
+
+            try {
+                String selectedHouseId = lockHouse ? presetHouseId.trim() : "";
+                String selectedHouseLabel = lockHouse
+                        ? ((presetHouseName != null && !presetHouseName.trim().isEmpty()) ? presetHouseName
+                                : (presetHouseAddr != null ? presetHouseAddr : ""))
+                        : "";
+                if (!lockHouse && spinnerHouse != null) {
+                    int houseIndex = spinnerHouse.getSelectedItemPosition();
+                    if (houseIndex >= 0 && houseIndex < houseIds.size()) {
+                        selectedHouseId = houseIds.get(houseIndex);
+                        selectedHouseLabel = houseLabels.get(houseIndex);
+                    }
+                }
+                final String finalSelectedHouseId = selectedHouseId;
+                final String finalSelectedHouseLabel = selectedHouseLabel;
+
+                if (hasDuplicateRoomNumberInSameHouse(roomNumber, finalSelectedHouseId, room.getId())) {
+                    showInputError(etRoomNumber, getString(R.string.room_duplicate_in_house));
+                    return;
+                }
+
+                hasDuplicateRoomNumberInSameHouseRemote(roomNumber, finalSelectedHouseId, room.getId(),
+                        exists -> {
+                            if (exists) {
+                                showInputError(etRoomNumber, getString(R.string.room_duplicate_in_house));
+                                return;
                             }
-                        }
-                        final String finalSelectedHouseId = selectedHouseId;
-                        final String finalSelectedHouseLabel = selectedHouseLabel;
 
-                        if (hasDuplicateRoomNumberInSameHouse(roomNumber, finalSelectedHouseId, room.getId())) {
-                            Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG).show();
-                            return;
-                        }
+                            Room updated = new Room(roomNumber,
+                                    spinnerLoai.getSelectedItem().toString(),
+                                    Double.parseDouble(dienTichStr),
+                                    rentAmount,
+                                    room.getStatus());
+                            updated.setId(room.getId());
+                            updated.setMaxOccupancy(maxOccupancy);
 
-                        hasDuplicateRoomNumberInSameHouseRemote(roomNumber, finalSelectedHouseId, room.getId(),
-                                exists -> {
-                                    if (exists) {
-                                        Toast.makeText(this, R.string.room_duplicate_in_house, Toast.LENGTH_LONG)
-                                                .show();
-                                        return;
-                                    }
+                            // Preserve existing extended fields to avoid overwriting old data
+                            updated.setFloor(room.getFloor());
+                            updated.setDescription(room.getDescription());
+                            updated.setAmenities(room.getAmenities());
+                            updated.setCreatedAt(room.getCreatedAt());
 
-                                    Room updated = new Room(roomNumber,
-                                            spinnerLoai.getSelectedItem().toString(),
-                                            Double.parseDouble(dienTichStr),
-                                            rentAmount,
-                                            room.getStatus());
-                                    updated.setId(room.getId());
-                                    updated.setMaxOccupancy(maxOccupancy);
+                            if (!finalSelectedHouseId.isEmpty()) {
+                                updated.setHouseId(finalSelectedHouseId);
+                                updated.setHouseName(finalSelectedHouseLabel);
+                            }
 
-                                    // Preserve existing extended fields to avoid overwriting old data
-                                    updated.setFloor(room.getFloor());
-                                    updated.setDescription(room.getDescription());
-                                    updated.setAmenities(room.getAmenities());
-                                    updated.setCreatedAt(room.getCreatedAt());
-
-                                    if (!finalSelectedHouseId.isEmpty()) {
-                                        updated.setHouseId(finalSelectedHouseId);
-                                        updated.setHouseName(finalSelectedHouseLabel);
-                                    }
-
-                                    enforceRentedIfHasTenants(updated, () -> {
-                                        if (selectedImageUri != null) {
-                                            uploadImageAndSave(updated);
-                                        } else {
-                                            // Internal note.
-                                            updated.setImageUrl(room.getImageUrl());
-                                            viewModel.updateRoom(updated,
-                                                    () -> runOnUiThread(() -> Toast
-                                                            .makeText(this, R.string.update_success, Toast.LENGTH_SHORT)
-                                                            .show()),
-                                                    () -> runOnUiThread(() -> Toast
-                                                            .makeText(this, R.string.update_failed, Toast.LENGTH_SHORT)
-                                                            .show()));
-                                        }
-                                    });
-                                });
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, R.string.invalid_data, Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton(R.string.cancel, null).show();
+                            enforceRentedIfHasTenants(updated, () -> {
+                                if (selectedImageUri != null) {
+                                    uploadImageAndSave(updated);
+                                } else {
+                                    updated.setImageUrl(room.getImageUrl());
+                                    viewModel.updateRoom(updated,
+                                            () -> runOnUiThread(() -> Toast
+                                                    .makeText(this, R.string.update_success, Toast.LENGTH_SHORT)
+                                                    .show()),
+                                            () -> runOnUiThread(() -> Toast
+                                                    .makeText(this, R.string.update_failed, Toast.LENGTH_SHORT)
+                                                    .show()));
+                                }
+                                runOnUiThread(dialog::dismiss);
+                            });
+                        });
+            } catch (NumberFormatException e) {
+                showInputError(etDienTich, getString(R.string.invalid_data));
+            }
+        });
     }
 
     // Internal note.

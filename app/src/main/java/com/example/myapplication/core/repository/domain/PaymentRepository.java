@@ -10,7 +10,9 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PaymentRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -63,7 +65,7 @@ public class PaymentRepository {
     }
 
     public void add(Payment payment, Runnable onSuccess, Runnable onFail) {
-        getScopedCollection().add(payment)
+        getScopedCollection().add(toPayload(payment))
                 .addOnSuccessListener(ref -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -76,5 +78,24 @@ public class PaymentRepository {
         getScopedCollection().document(id).delete()
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
+    }
+
+    private Map<String, Object> toPayload(Payment payment) {
+        Map<String, Object> payload = new HashMap<>();
+        putIfNotBlank(payload, "invoiceId", payment.getInvoiceId());
+        putIfNotBlank(payload, "roomId", payment.getRoomId());
+        if (payment.getAmount() > 0) {
+            payload.put("amount", payment.getAmount());
+        }
+        putIfNotBlank(payload, "method", payment.getMethod());
+        putIfNotBlank(payload, "paidAt", payment.getPaidAt());
+        putIfNotBlank(payload, "note", payment.getNote());
+        return payload;
+    }
+
+    private static void putIfNotBlank(Map<String, Object> payload, String key, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            payload.put(key, value.trim());
+        }
     }
 }

@@ -66,8 +66,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Kiểm tra role của user trong Firestore.
      * - TENANT + activeTenantId: vào TenantMenuActivity (auto-login cho khách đã liên kết phòng)
-     * - TENANT + không có activeTenantId: vào JoinRoomActivity
-     * - OWNER hoặc khác: vào HomeMenuActivity
+        * - TENANT + không có activeTenantId: vào HomeMenuActivity (sau đó Home điều hướng sang JoinRoomActivity)
+        * - OWNER hoặc khác: vào HomeMenuActivity
      */
     private void checkRoleAndNavigate(FirebaseUser user) {
         db.collection("users").document(user.getUid())

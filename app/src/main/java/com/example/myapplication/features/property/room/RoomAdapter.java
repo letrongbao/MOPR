@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,9 +27,19 @@ import java.util.Map;
 public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
 
     private List<Room> dataList = new ArrayList<>();
-    private Map<String, String> tenantByRoomId = new HashMap<>();
+    private Map<String, TenantCardInfo> tenantByRoomId = new HashMap<>();
     private boolean readOnly;
     private final OnItemActionListener listener;
+
+    public static class TenantCardInfo {
+        public final String representativeName;
+        public final String phone;
+
+        public TenantCardInfo(String representativeName, String phone) {
+            this.representativeName = representativeName;
+            this.phone = phone;
+        }
+    }
 
     public interface OnItemActionListener {
         void onDelete(Room room);
@@ -92,8 +101,8 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         diff.dispatchUpdatesTo(this);
     }
 
-    public void setTenantByRoomId(@NonNull Map<String, String> map) {
-        Map<String, String> oldMap = tenantByRoomId != null ? tenantByRoomId : new HashMap<>();
+    public void setTenantByRoomId(@NonNull Map<String, TenantCardInfo> map) {
+        Map<String, TenantCardInfo> oldMap = tenantByRoomId != null ? tenantByRoomId : new HashMap<>();
         tenantByRoomId = map != null ? map : new HashMap<>();
 
         for (int i = 0; i < dataList.size(); i++) {
@@ -101,9 +110,9 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
             if (room == null || room.getId() == null)
                 continue;
             String roomId = room.getId();
-            String oldTenant = oldMap.get(roomId);
-            String newTenant = tenantByRoomId.get(roomId);
-            if (!safeEq(oldTenant, newTenant)) {
+            TenantCardInfo oldTenant = oldMap.get(roomId);
+            TenantCardInfo newTenant = tenantByRoomId.get(roomId);
+            if (!sameTenantInfo(oldTenant, newTenant)) {
                 notifyItemChanged(i);
             }
         }
@@ -140,16 +149,34 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
                 : holder.itemView.getContext().getString(R.string.room_status_rented));
         holder.tvStatus.setTextColor(color);
 
+        String roomType = room.getRoomType();
+        holder.tvRoomType.setText(holder.itemView.getContext().getString(
+            R.string.item_room_type_value,
+            (roomType != null && !roomType.trim().isEmpty())
+                ? roomType
+                : holder.itemView.getContext().getString(R.string.common_not_available)));
+
+        holder.tvArea.setText(holder.itemView.getContext().getString(
+            R.string.item_room_area_value,
+            room.getArea() > 0 ? String.format(Locale.getDefault(), "%.1f", room.getArea())
+                : holder.itemView.getContext().getString(R.string.common_not_available)));
+
+        holder.tvMaxOccupancy.setText(holder.itemView.getContext().getString(
+            R.string.item_room_max_occupancy_value,
+            room.getMaxOccupancy() > 0
+                ? holder.itemView.getContext().getString(R.string.room_max_occupancy_value, room.getMaxOccupancy())
+                : holder.itemView.getContext().getString(R.string.common_not_available)));
+
         // Load room image
         if (room.getImageUrl() != null && !room.getImageUrl().isEmpty()) {
             Glide.with(holder.itemView.getContext())
                     .load(room.getImageUrl())
                     .centerCrop()
-                    .placeholder(R.drawable.baseline_home_24)
-                    .error(R.drawable.baseline_home_24)
+                .placeholder(R.drawable.bg_room_placeholder)
+                .error(R.drawable.bg_room_placeholder)
                     .into(holder.ivRoomImage);
         } else {
-            holder.ivRoomImage.setImageResource(R.drawable.baseline_home_24);
+            holder.ivRoomImage.setImageResource(R.drawable.bg_room_placeholder);
         }
 
         // Chip background
@@ -161,46 +188,34 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         holder.tvStatus.setBackground(chipBg);
 
         String roomId = room.getId();
-        String tenant = (roomId != null) ? tenantByRoomId.get(roomId) : null;
-        if (holder.tvTenant != null) {
-            if (!trong && tenant != null && !tenant.trim().isEmpty()) {
-                holder.tvTenant.setVisibility(View.VISIBLE);
-                holder.tvTenant.setText(holder.itemView.getContext().getString(R.string.room_tenant_label, tenant));
+        TenantCardInfo tenant = (roomId != null) ? tenantByRoomId.get(roomId) : null;
+        if (holder.tvTenantName != null && holder.tvTenantPhone != null) {
+            String name = tenant != null ? tenant.representativeName : null;
+            String phone = tenant != null ? tenant.phone : null;
+            boolean hasName = name != null && !name.trim().isEmpty();
+            boolean hasPhone = phone != null && !phone.trim().isEmpty();
+
+            if (!trong && (hasName || hasPhone)) {
+                holder.tvTenantName.setVisibility(View.VISIBLE);
+                holder.tvTenantName.setText(holder.itemView.getContext().getString(
+                        R.string.room_representative_value,
+                        hasName ? name.trim() : holder.itemView.getContext().getString(R.string.common_not_available)));
+
+                if (hasPhone) {
+                    holder.tvTenantPhone.setVisibility(View.VISIBLE);
+                    holder.tvTenantPhone
+                            .setText(holder.itemView.getContext().getString(R.string.room_phone_value, phone.trim()));
+                } else {
+                    holder.tvTenantPhone.setVisibility(View.GONE);
+                }
             } else {
-                holder.tvTenant.setVisibility(View.GONE);
+                holder.tvTenantName.setVisibility(View.GONE);
+                holder.tvTenantPhone.setVisibility(View.GONE);
             }
         }
 
         holder.itemView.setOnClickListener(v -> listener.onViewDetails(room));
 
-        if (holder.btnMore != null) {
-            // Hide menu button when room is occupied or in read-only mode
-            boolean isRented = !trong;
-            holder.btnMore.setVisibility((readOnly || isRented) ? View.GONE : View.VISIBLE);
-            if (!readOnly && !isRented) {
-                holder.btnMore.setOnClickListener(v -> {
-                    PopupMenu pm = new PopupMenu(v.getContext(), v);
-                    pm.getMenu().add(0, 1, 0, v.getContext().getString(R.string.room_edit));
-                    pm.getMenu().add(0, 2, 1, v.getContext().getString(R.string.room_delete));
-                    pm.setOnMenuItemClickListener(item -> {
-                        if (item.getItemId() == 1) {
-                            listener.onSelect(room);
-                            return true;
-                        }
-                        if (item.getItemId() == 2) {
-                            listener.onDelete(room);
-                            return true;
-                        }
-                        return false;
-                    });
-                    pm.show();
-                });
-            }
-        }
-
-        holder.btnCreateContract.setText(trong ? holder.itemView.getContext().getString(R.string.room_create_contract)
-                : holder.itemView.getContext().getString(R.string.room_view_contract));
-        holder.btnCreateContract.setOnClickListener(v -> listener.onCreateContract(room));
     }
 
     @Override
@@ -209,9 +224,8 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvRoomNumber, tvRentAmount, tvStatus, tvTenant;
-        ImageView btnMore, ivRoomImage;
-        com.google.android.material.button.MaterialButton btnCreateContract;
+        TextView tvRoomNumber, tvRentAmount, tvStatus, tvTenantName, tvTenantPhone, tvRoomType, tvArea, tvMaxOccupancy;
+        ImageView ivRoomImage;
 
         ViewHolder(View v) {
             super(v);
@@ -219,9 +233,11 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
             tvRoomNumber = v.findViewById(R.id.tvSoPhong);
             tvRentAmount = v.findViewById(R.id.tvGiaThue);
             tvStatus = v.findViewById(R.id.tvTrangThai);
-            tvTenant = v.findViewById(R.id.tvTenant);
-            btnMore = v.findViewById(R.id.btnMore);
-            btnCreateContract = v.findViewById(R.id.btnCreateContract);
+            tvTenantName = v.findViewById(R.id.tvTenantName);
+            tvTenantPhone = v.findViewById(R.id.tvTenantPhone);
+            tvRoomType = v.findViewById(R.id.tvRoomType);
+            tvArea = v.findViewById(R.id.tvArea);
+            tvMaxOccupancy = v.findViewById(R.id.tvMaxOccupancy);
         }
     }
 
@@ -234,5 +250,14 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         if (a == null)
             return b == null;
         return a.equals(b);
+    }
+
+    private static boolean sameTenantInfo(TenantCardInfo a, TenantCardInfo b) {
+        if (a == null)
+            return b == null;
+        if (b == null)
+            return false;
+        return safeEq(a.representativeName, b.representativeName)
+                && safeEq(a.phone, b.phone);
     }
 }

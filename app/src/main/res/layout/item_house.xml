@@ -181,6 +181,7 @@
                     android:layout_marginBottom="10dp"/>
 
                 <LinearLayout
+                    android:id="@+id/rowFeeHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -212,61 +213,74 @@
 
                 <!-- Rows -->
                 <LinearLayout
+                    android:id="@+id/rowFeeDien"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_electricity" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_kwh" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeDienUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_kwh" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
                     <TextView android:id="@+id/tvFeeDien" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+                <LinearLayout android:id="@+id/rowFeeNuoc" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_water" android:textSize="14sp" android:textColor="@color/black"/>
                     <TextView android:id="@+id/tvFeeNuocUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
                     <TextView android:id="@+id/tvFeeNuoc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+                <LinearLayout android:id="@+id/rowFeeXe" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_parking" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_vehicle" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeXeUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_vehicle" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
                     <TextView android:id="@+id/tvFeeXe" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+                <LinearLayout android:id="@+id/rowFeeInternet" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_internet" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeInternetUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
                     <TextView android:id="@+id/tvFeeInternet" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+                <LinearLayout android:id="@+id/rowFeeGiatSay" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_laundry" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeGiatSayUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
                     <TextView android:id="@+id/tvFeeGiatSay" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_elevator" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeThangMay" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
-                </LinearLayout>
-
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_cable_tv" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeTiviCap" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
-                </LinearLayout>
-
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+                <LinearLayout android:id="@+id/rowFeeRac" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_garbage" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
+                    <TextView android:id="@+id/tvFeeRacUnit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
                     <TextView android:id="@+id/tvFeeRac" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_service" android:textSize="14sp" android:textColor="@color/black"/>
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_unit_room" android:textSize="14sp" android:textColor="@color/black" android:gravity="center"/>
-                    <TextView android:id="@+id/tvFeeDichVu" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_house_fee_value_zero" android:textSize="14sp" android:textColor="@color/black" android:gravity="end"/>
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/tvExtraFeesTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/item_house_custom_fees"
+                    android:textColor="@color/text_sub"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvExtraFees"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/black"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvNoFeeConfigured"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/item_house_no_fee_configured"
+                    android:textColor="@color/text_sub"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

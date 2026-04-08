@@ -101,16 +101,15 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
         h.tvBankInfo.setText(bank);
 
         // Fee values
-        h.tvFeeDien.setText(formatVnd(k.getElectricityPrice()));
-        h.tvFeeNuoc.setText(formatVnd(k.getWaterPrice()));
-        h.tvFeeXe.setText(formatVnd(k.getParkingPrice()));
-        h.tvFeeInternet.setText(formatVnd(k.getInternetPrice()));
-        h.tvFeeGiatSay.setText(formatVnd(k.getLaundryPrice()));
-        h.tvFeeThangMay.setText(formatVnd(k.getElevatorPrice()));
-        h.tvFeeTiviCap.setText(formatVnd(k.getCableTvPrice()));
-        h.tvFeeRac.setText(formatVnd(k.getTrashPrice()));
-        h.tvFeeDichVu.setText(formatVnd(k.getServicePrice()));
+        boolean hasAnyStandardFee = false;
+        hasAnyStandardFee |= bindFeeRow(h.rowFeeDien, h.tvFeeDien, k.getElectricityPrice());
+        hasAnyStandardFee |= bindFeeRow(h.rowFeeNuoc, h.tvFeeNuoc, k.getWaterPrice());
+        hasAnyStandardFee |= bindFeeRow(h.rowFeeXe, h.tvFeeXe, k.getParkingPrice());
+        hasAnyStandardFee |= bindFeeRow(h.rowFeeInternet, h.tvFeeInternet, k.getInternetPrice());
+        hasAnyStandardFee |= bindFeeRow(h.rowFeeGiatSay, h.tvFeeGiatSay, k.getLaundryPrice());
+        hasAnyStandardFee |= bindFeeRow(h.rowFeeRac, h.tvFeeRac, k.getTrashPrice());
 
+        h.tvFeeDienUnit.setText(getElectricityUnitLabel(context, k.getElectricityCalculationMethod()));
         String nuocUnit = context.getString(R.string.item_house_unit_room);
         String mode = k.getWaterCalculationMethod();
         if (mode != null) {
@@ -120,6 +119,18 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
                 nuocUnit = context.getString(R.string.unit_cubic_meter);
         }
         h.tvFeeNuocUnit.setText(nuocUnit);
+        h.tvFeeXeUnit.setText(getParkingUnitLabel(context, k.getParkingUnit()));
+        h.tvFeeInternetUnit.setText(getRoomPersonUnitLabel(context, k.getInternetUnit()));
+        h.tvFeeGiatSayUnit.setText(getRoomPersonUnitLabel(context, k.getLaundryUnit()));
+        h.tvFeeRacUnit.setText(getRoomPersonUnitLabel(context, k.getTrashUnit()));
+
+        boolean hasCustomFee = bindCustomFees(h, k.getExtraFees());
+        if (h.rowFeeHeader != null) {
+            h.rowFeeHeader.setVisibility(hasAnyStandardFee ? View.VISIBLE : View.GONE);
+        }
+        if (h.tvNoFeeConfigured != null) {
+            h.tvNoFeeConfigured.setVisibility((hasAnyStandardFee || hasCustomFee) ? View.GONE : View.VISIBLE);
+        }
 
         // Expand/collapse
         String key = k.getId() != null ? k.getId() : ("pos_" + position);
@@ -162,9 +173,86 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
     }
 
     private String formatVnd(double value) {
-        if (value <= 0)
-            return MoneyFormatter.format(0);
         return MoneyFormatter.format(value);
+    }
+
+    private boolean bindFeeRow(View row, TextView valueView, double amount) {
+        boolean visible = amount > 0;
+        if (row != null) {
+            row.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        if (valueView != null && visible) {
+            valueView.setText(formatVnd(amount));
+        }
+        return visible;
+    }
+
+    private boolean bindCustomFees(@NonNull VH h, List<House.ExtraFee> fees) {
+        if (h.tvExtraFeesTitle == null || h.tvExtraFees == null) {
+            return false;
+        }
+
+        if (fees == null || fees.isEmpty()) {
+            h.tvExtraFeesTitle.setVisibility(View.GONE);
+            h.tvExtraFees.setVisibility(View.GONE);
+            return false;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (House.ExtraFee fee : fees) {
+            if (fee == null)
+                continue;
+            String name = fee.getFeeName() != null ? fee.getFeeName().trim() : "";
+            if (name.isEmpty() || fee.getPrice() <= 0)
+                continue;
+
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            String unit = fee.getUnit() != null ? fee.getUnit().trim() : "";
+            sb.append("• ").append(name);
+            if (!unit.isEmpty()) {
+                sb.append(" (").append(unit).append(")");
+            }
+            sb.append(": ").append(formatVnd(fee.getPrice()));
+        }
+
+        if (sb.length() == 0) {
+            h.tvExtraFeesTitle.setVisibility(View.GONE);
+            h.tvExtraFees.setVisibility(View.GONE);
+            return false;
+        }
+
+        h.tvExtraFeesTitle.setVisibility(View.VISIBLE);
+        h.tvExtraFees.setVisibility(View.VISIBLE);
+        h.tvExtraFees.setText(sb.toString());
+        return true;
+    }
+
+    private String getElectricityUnitLabel(@NonNull android.content.Context context, String mode) {
+        if (mode == null || mode.trim().isEmpty() || "kwh".equalsIgnoreCase(mode)) {
+            return context.getString(R.string.item_house_unit_kwh);
+        }
+        if (WaterCalculationMode.isPerPerson(mode)) {
+            return context.getString(R.string.unit_person);
+        }
+        return context.getString(R.string.item_house_unit_room);
+    }
+
+    private String getParkingUnitLabel(@NonNull android.content.Context context, String unit) {
+        if (unit == null || unit.trim().isEmpty() || "vehicle".equalsIgnoreCase(unit)) {
+            return context.getString(R.string.item_house_unit_vehicle);
+        }
+        if ("person".equalsIgnoreCase(unit)) {
+            return context.getString(R.string.unit_person);
+        }
+        return context.getString(R.string.item_house_unit_room);
+    }
+
+    private String getRoomPersonUnitLabel(@NonNull android.content.Context context, String unit) {
+        return "person".equalsIgnoreCase(unit)
+                ? context.getString(R.string.unit_person)
+                : context.getString(R.string.item_house_unit_room);
     }
 
     @Override
@@ -177,8 +265,10 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
         TextView tvHouseAddr, tvHouseName, tvBankInfo;
         LinearLayout llToggleFees, llFeeTable;
         ImageView ivFeesExpand;
-        TextView tvFeeDien, tvFeeNuoc, tvFeeNuocUnit, tvFeeXe, tvFeeInternet, tvFeeGiatSay, tvFeeThangMay, tvFeeTiviCap,
-                tvFeeRac, tvFeeDichVu;
+        TextView tvFeeDien, tvFeeDienUnit, tvFeeNuoc, tvFeeNuocUnit, tvFeeXe, tvFeeXeUnit, tvFeeInternet,
+            tvFeeInternetUnit, tvFeeGiatSay, tvFeeGiatSayUnit, tvFeeRac, tvFeeRacUnit, tvExtraFeesTitle,
+            tvExtraFees, tvNoFeeConfigured;
+        View rowFeeHeader, rowFeeDien, rowFeeNuoc, rowFeeXe, rowFeeInternet, rowFeeGiatSay, rowFeeRac;
         View llEditAction, llRoomsAction;
         ImageView btnMore;
 
@@ -192,17 +282,29 @@ public class HouseAdapter extends RecyclerView.Adapter<HouseAdapter.VH> {
             llToggleFees = itemView.findViewById(R.id.llToggleFees);
             llFeeTable = itemView.findViewById(R.id.llFeeTable);
             ivFeesExpand = itemView.findViewById(R.id.ivFeesExpand);
+            rowFeeHeader = itemView.findViewById(R.id.rowFeeHeader);
+            rowFeeDien = itemView.findViewById(R.id.rowFeeDien);
+            rowFeeNuoc = itemView.findViewById(R.id.rowFeeNuoc);
+            rowFeeXe = itemView.findViewById(R.id.rowFeeXe);
+            rowFeeInternet = itemView.findViewById(R.id.rowFeeInternet);
+            rowFeeGiatSay = itemView.findViewById(R.id.rowFeeGiatSay);
+            rowFeeRac = itemView.findViewById(R.id.rowFeeRac);
 
             tvFeeDien = itemView.findViewById(R.id.tvFeeDien);
+            tvFeeDienUnit = itemView.findViewById(R.id.tvFeeDienUnit);
             tvFeeNuoc = itemView.findViewById(R.id.tvFeeNuoc);
             tvFeeNuocUnit = itemView.findViewById(R.id.tvFeeNuocUnit);
             tvFeeXe = itemView.findViewById(R.id.tvFeeXe);
+            tvFeeXeUnit = itemView.findViewById(R.id.tvFeeXeUnit);
             tvFeeInternet = itemView.findViewById(R.id.tvFeeInternet);
+            tvFeeInternetUnit = itemView.findViewById(R.id.tvFeeInternetUnit);
             tvFeeGiatSay = itemView.findViewById(R.id.tvFeeGiatSay);
-            tvFeeThangMay = itemView.findViewById(R.id.tvFeeThangMay);
-            tvFeeTiviCap = itemView.findViewById(R.id.tvFeeTiviCap);
+            tvFeeGiatSayUnit = itemView.findViewById(R.id.tvFeeGiatSayUnit);
             tvFeeRac = itemView.findViewById(R.id.tvFeeRac);
-            tvFeeDichVu = itemView.findViewById(R.id.tvFeeDichVu);
+            tvFeeRacUnit = itemView.findViewById(R.id.tvFeeRacUnit);
+            tvExtraFeesTitle = itemView.findViewById(R.id.tvExtraFeesTitle);
+            tvExtraFees = itemView.findViewById(R.id.tvExtraFees);
+            tvNoFeeConfigured = itemView.findViewById(R.id.tvNoFeeConfigured);
 
             llEditAction = itemView.findViewById(R.id.llEditAction);
             llRoomsAction = itemView.findViewById(R.id.llRoomsAction);

@@ -340,6 +340,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         intent.putExtra(ContractIntentKeys.RENT_AMOUNT, contract.getRentAmount());
         intent.putExtra(ContractIntentKeys.DEPOSIT_AMOUNT, contract.getDepositAmount());
         intent.putExtra(ContractIntentKeys.ELECTRIC_START_READING, contract.getElectricStartReading());
+        intent.putExtra(ContractIntentKeys.WATER_START_READING, contract.getWaterStartReading());
         intent.putExtra(ContractIntentKeys.HAS_PARKING_SERVICE, contract.hasParkingService());
         intent.putExtra(ContractIntentKeys.VEHICLE_COUNT, contract.getVehicleCount());
         intent.putExtra(ContractIntentKeys.HAS_INTERNET_SERVICE, contract.hasInternetService());

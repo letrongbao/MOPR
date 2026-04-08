@@ -146,9 +146,19 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/unit_per_kwh"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
+                android:layout_marginStart="8dp"
+                android:text="/"
+                android:textColor="@color/text_sub"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <Spinner
+                android:id="@+id/spDienUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="96dp"
+                android:background="@drawable/custome_edittext" />
         </LinearLayout>
 
         <!-- UI section note -->
@@ -171,36 +181,20 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/house_water_method_note"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
+                android:layout_marginStart="8dp"
+                android:text="/"
+                android:textColor="@color/text_sub"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
 
-        <RadioGroup
-            android:id="@+id/rgNuoc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
-            <RadioButton
-                android:id="@+id/rbNuocNguoi"
+            <Spinner
+                android:id="@+id/spNuocUnit"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/water_by_person"
-                android:textSize="13sp"/>
-            <RadioButton
-                android:id="@+id/rbNuocDongHo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/water_by_meter"
-                android:textSize="13sp"/>
-            <RadioButton
-                android:id="@+id/rbNuocPhong"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/water_by_room"
-                android:textSize="13sp"
-                android:checked="true"/>
-        </RadioGroup>
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="96dp"
+                android:background="@drawable/custome_edittext" />
+        </LinearLayout>
 
         <!-- Xe -->
         <LinearLayout
@@ -222,9 +216,19 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/unit_per_vehicle"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
+                android:layout_marginStart="8dp"
+                android:text="/"
+                android:textColor="@color/text_sub"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <Spinner
+                android:id="@+id/spXeUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="96dp"
+                android:background="@drawable/custome_edittext" />
         </LinearLayout>
 
         <!-- Internet -->
@@ -247,9 +251,19 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/per_room"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
+                android:layout_marginStart="8dp"
+                android:text="/"
+                android:textColor="@color/text_sub"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <Spinner
+                android:id="@+id/spInternetUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="96dp"
+                android:background="@drawable/custome_edittext" />
         </LinearLayout>
 
         <!-- UI section note -->
@@ -272,60 +286,21 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/per_room"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
+                android:layout_marginStart="8dp"
+                android:text="/"
+                android:textColor="@color/text_sub"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <Spinner
+                android:id="@+id/spGiatSayUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="96dp"
+                android:background="@drawable/custome_edittext" />
         </LinearLayout>
 
-        <!-- UI section note -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <EditText
-                android:id="@+id/etGiaThangMay"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:background="@drawable/custome_edittext"
-                android:paddingHorizontal="12dp"
-                android:textSize="14sp"
-                android:hint="@string/house_elevator_price_hint"
-                android:inputType="number"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/per_room"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
-
-        <!-- UI section note -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <EditText
-                android:id="@+id/etGiaTiviCap"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:background="@drawable/custome_edittext"
-                android:paddingHorizontal="12dp"
-                android:textSize="14sp"
-                android:hint="@string/house_cable_tv_price_hint"
-                android:inputType="number"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/per_room"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
 
         <!-- UI section note -->
         <LinearLayout
@@ -347,34 +322,19 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/per_room"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
+                android:layout_marginStart="8dp"
+                android:text="/"
+                android:textColor="@color/text_sub"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
 
-        <!-- UI section note -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <EditText
-                android:id="@+id/etGiaDichVu"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:background="@drawable/custome_edittext"
-                android:paddingHorizontal="12dp"
-                android:textSize="14sp"
-                android:hint="@string/house_service_price_hint"
-                android:inputType="number"/>
-            <TextView
+            <Spinner
+                android:id="@+id/spRacUnit"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/per_room"
-                android:textSize="13sp"
-                android:layout_marginStart="8dp"/>
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="96dp"
+                android:background="@drawable/custome_edittext" />
         </LinearLayout>
 
         <TextView
@@ -423,42 +383,6 @@
             android:gravity="top"
             android:textSize="13sp"
             android:hint="@string/house_note_invoice_hint"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/house_payment_code_label"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="16dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-
-            <TextView
-                android:id="@+id/tvQrStatus"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/house_qr_not_added"
-                android:textColor="#666666"
-                android:textSize="12sp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPickQr"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="@string/house_scan_code"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                app:cornerRadius="10dp"
-                app:backgroundTint="@color/btn_orange"/>
-        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

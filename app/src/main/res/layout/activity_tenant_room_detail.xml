@@ -69,7 +69,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:gravity="center"
-                                android:text="Ngày\ncòn lại"
+                                android:text="@string/tenant_room_days_remaining_label"
                                 android:textColor="#757575"
                                 android:textSize="10sp" />
                         </LinearLayout>
@@ -86,7 +86,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Số tháng đã ở"
+                            android:text="@string/tenant_room_months_stayed_label"
                             android:textColor="#999999"
                             android:textSize="11sp" />
 
@@ -95,7 +95,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="-- tháng, -- ngày"
+                            android:text="@string/tenant_room_months_stayed_placeholder"
                             android:textColor="#333333"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -118,7 +118,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
-                                android:text="Trong thời hạn hợp đồng"
+                                android:text="@string/tenant_room_contract_active"
                                 android:textColor="#26a65b"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -134,7 +134,7 @@
                         android:focusable="true"
                         android:paddingHorizontal="10dp"
                         android:paddingVertical="6dp"
-                        android:text="Xem chi tiết →"
+                        android:text="@string/tenant_room_view_contract_detail"
                         android:textColor="#26a65b"
                         android:textSize="12sp" />
 
@@ -163,7 +163,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Ngày vào ở"
+                            android:text="@string/tenant_room_start_date_label"
                             android:textColor="#999999"
                             android:textSize="11sp" />
 
@@ -194,7 +194,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Ngày kết thúc"
+                            android:text="@string/tenant_room_end_date_label"
                             android:textColor="#999999"
                             android:textSize="11sp" />
 
@@ -240,7 +240,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Danh mục tính tiền"
+                        android:text="@string/tenant_room_billing_catalog_title"
                         android:textColor="#26a65b"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -250,7 +250,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Dịch vụ &amp; giá tại --"
+                        android:text="@string/tenant_room_billing_subtitle_placeholder"
                         android:textColor="#757575"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -287,7 +287,7 @@
                                 android:id="@+id/tvPaymentDayLabel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Ngày -- chốt tiền thuê"
+                                android:text="@string/tenant_room_payment_day_placeholder"
                                 android:textColor="#333333"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -297,7 +297,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="1dp"
-                                android:text="Chưa có thông tin"
+                                android:text="@string/tenant_room_payment_info_missing"
                                 android:textColor="#FF9800"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -348,7 +348,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="4dp"
-                                    android:text="Tiền thuê"
+                                    android:text="@string/tenant_room_rent_label"
                                     android:textColor="#757575"
                                     android:textSize="12sp" />
                             </LinearLayout>
@@ -387,7 +387,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="4dp"
-                                    android:text="Tiền cọc"
+                                    android:text="@string/tenant_room_deposit_label"
                                     android:textColor="#757575"
                                     android:textSize="12sp" />
                             </LinearLayout>
@@ -428,7 +428,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tiền nước"
+                                android:text="@string/tenant_room_water_label"
                                 android:textColor="#333333"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -437,7 +437,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="1dp"
-                                android:text="Tính theo đồng hồ"
+                                android:text="@string/tenant_room_meter_based"
                                 android:textColor="#999999"
                                 android:textSize="11sp" />
 
@@ -446,7 +446,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="-- đ / Khối"
+                                android:text="@string/tenant_room_water_rate_placeholder"
                                 android:textColor="#555555"
                                 android:textSize="13sp" />
                         </LinearLayout>
@@ -477,7 +477,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="3dp"
-                                    android:text="Chưa chốt"
+                                    android:text="@string/tenant_room_meter_not_finalized"
                                     android:textColor="#FF9800"
                                     android:textSize="11sp"
                                     android:textStyle="bold" />
@@ -501,7 +501,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="3dp"
-                                    android:text="Số cuối: Chưa có"
+                                    android:text="@string/tenant_room_last_index_placeholder"
                                     android:textColor="#555555"
                                     android:textSize="11sp" />
                             </LinearLayout>
@@ -532,7 +532,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tiền điện"
+                                android:text="@string/tenant_room_electric_label"
                                 android:textColor="#333333"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -541,7 +541,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="1dp"
-                                android:text="Tính theo đồng hồ"
+                                android:text="@string/tenant_room_meter_based"
                                 android:textColor="#999999"
                                 android:textSize="11sp" />
 
@@ -550,7 +550,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="-- đ / KWh"
+                                android:text="@string/tenant_room_electric_rate_placeholder"
                                 android:textColor="#555555"
                                 android:textSize="13sp" />
                         </LinearLayout>
@@ -581,7 +581,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="3dp"
-                                    android:text="Chưa chốt"
+                                    android:text="@string/tenant_room_meter_not_finalized"
                                     android:textColor="#FF9800"
                                     android:textSize="11sp"
                                     android:textStyle="bold" />
@@ -605,7 +605,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="3dp"
-                                    android:text="Số cuối: Chưa có"
+                                    android:text="@string/tenant_room_last_index_placeholder"
                                     android:textColor="#555555"
                                     android:textSize="11sp" />
                             </LinearLayout>
@@ -649,7 +649,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="4dp"
-                                    android:text="Tiền rác (người)"
+                                    android:text="@string/tenant_room_trash_label"
                                     android:textColor="#757575"
                                     android:textSize="12sp" />
                             </LinearLayout>
@@ -659,7 +659,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="-- đ / Người"
+                                android:text="@string/tenant_room_person_rate_placeholder"
                                 android:textColor="#555555"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -688,7 +688,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="4dp"
-                                    android:text="Tiền wifi (người)"
+                                    android:text="@string/tenant_room_wifi_label"
                                     android:textColor="#757575"
                                     android:textSize="12sp" />
                             </LinearLayout>
@@ -698,7 +698,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="-- đ / Người"
+                                android:text="@string/tenant_room_person_rate_placeholder"
                                 android:textColor="#555555"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -725,7 +725,7 @@
                             android:layout_height="40dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:text="L.sử đồng hồ"
+                            android:text="@string/tenant_room_meter_history_short"
                             android:textColor="#757575"
                             android:textSize="12sp"
                             app:strokeColor="#CCCCCC" />
@@ -736,7 +736,7 @@
                             android:layout_width="0dp"
                             android:layout_height="40dp"
                             android:layout_weight="1"
-                            android:text="D.sách chốt"
+                            android:text="@string/tenant_room_meter_list_short"
                             android:textColor="#26a65b"
                             android:textSize="12sp"
                             app:strokeColor="#26a65b" />
@@ -751,7 +751,7 @@
                         android:backgroundTint="#1565C0"
                         android:drawableStart="@drawable/ic_invoice"
                         android:drawablePadding="8dp"
-                        android:text="  Chốt đồng hồ"
+                        android:text="@string/tenant_room_confirm_meter_button"
                         android:textColor="@color/white"
                         android:textSize="15sp"
                         android:textStyle="bold" />

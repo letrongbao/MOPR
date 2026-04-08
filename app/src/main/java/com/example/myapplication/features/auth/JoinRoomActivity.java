@@ -42,7 +42,7 @@ public class JoinRoomActivity extends AppCompatActivity {
         String code = edtInviteCode.getText().toString().trim().toUpperCase();
 
         if (code.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập mã phòng!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.join_room_enter_code_required), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -71,7 +71,7 @@ public class JoinRoomActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
             setLoading(false);
-            Toast.makeText(this, "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.join_room_session_expired), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -82,13 +82,15 @@ public class JoinRoomActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     setLoading(false);
                     String roomId = doc.exists() ? doc.getString("roomId") : null;
-                    Toast.makeText(JoinRoomActivity.this, "Kết nối phòng thành công!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(JoinRoomActivity.this, getString(R.string.join_room_success), Toast.LENGTH_SHORT)
+                            .show();
                     navigateToTenantMenu(tenantId, roomId);
                 })
                 .addOnFailureListener(e -> {
                     setLoading(false);
                     // Vẫn chuyển hướng dù không lấy được roomId
-                    Toast.makeText(JoinRoomActivity.this, "Kết nối phòng thành công!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(JoinRoomActivity.this, getString(R.string.join_room_success), Toast.LENGTH_SHORT)
+                            .show();
                     navigateToTenantMenu(tenantId, null);
                 });
     }

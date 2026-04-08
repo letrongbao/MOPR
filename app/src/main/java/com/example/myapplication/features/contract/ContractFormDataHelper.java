@@ -25,6 +25,7 @@ public final class ContractFormDataHelper {
         public final String signingDate;
         public final int contractMonths;
         public final int electricStartReading;
+        public final int waterStartReading;
         public final boolean hasParkingService;
         public final int vehicleCount;
         public final boolean hasInternetService;
@@ -45,6 +46,7 @@ public final class ContractFormDataHelper {
                 String signingDate,
                 int contractMonths,
                 int electricStartReading,
+                int waterStartReading,
                 boolean hasParkingService,
                 int vehicleCount,
                 boolean hasInternetService,
@@ -64,6 +66,7 @@ public final class ContractFormDataHelper {
             this.signingDate = signingDate;
             this.contractMonths = contractMonths;
             this.electricStartReading = electricStartReading;
+            this.waterStartReading = waterStartReading;
             this.hasParkingService = hasParkingService;
             this.vehicleCount = vehicleCount;
             this.hasInternetService = hasInternetService;
@@ -96,6 +99,9 @@ public final class ContractFormDataHelper {
             @NonNull String signingDateInput,
             @NonNull String contractMonthsInput,
             @NonNull String electricStartReadingInput,
+            @NonNull String waterStartReadingInput,
+            boolean electricMeterMode,
+            boolean waterMeterMode,
             boolean hasParkingService,
             @NonNull String vehicleCountInput,
             boolean hasInternetService,
@@ -114,7 +120,14 @@ public final class ContractFormDataHelper {
             @NonNull MonthYearNormalizer monthYearNormalizer) throws ValidationException {
         if (fullName.isEmpty() || phoneNumber.isEmpty() || personalId.isEmpty() || memberCountInput.isEmpty()
                 || signingDateInput.isEmpty()
-                || contractMonthsInput.isEmpty() || electricStartReadingInput.isEmpty()) {
+                || contractMonthsInput.isEmpty()) {
+            throw new ValidationException(requiredFieldsMessage);
+        }
+
+        if (electricMeterMode && electricStartReadingInput.isEmpty()) {
+            throw new ValidationException(requiredFieldsMessage);
+        }
+        if (waterMeterMode && waterStartReadingInput.isEmpty()) {
             throw new ValidationException(requiredFieldsMessage);
         }
 
@@ -129,12 +142,18 @@ public final class ContractFormDataHelper {
 
         int memberCount;
         int contractMonths;
-        int electricStartReading;
+        int electricStartReading = 0;
+        int waterStartReading = 0;
         int vehicleCount = 0;
         try {
             memberCount = Integer.parseInt(memberCountInput);
             contractMonths = Integer.parseInt(contractMonthsInput);
-            electricStartReading = Integer.parseInt(electricStartReadingInput);
+            if (electricMeterMode) {
+                electricStartReading = Integer.parseInt(electricStartReadingInput);
+            }
+            if (waterMeterMode) {
+                waterStartReading = Integer.parseInt(waterStartReadingInput);
+            }
             if (hasParkingService) {
                 vehicleCount = Integer.parseInt(vehicleCountInput);
             }
@@ -151,6 +170,7 @@ public final class ContractFormDataHelper {
                 signingDate,
                 contractMonths,
                 electricStartReading,
+                waterStartReading,
                 hasParkingService,
                 vehicleCount,
                 hasInternetService,
@@ -187,6 +207,7 @@ public final class ContractFormDataHelper {
         contract.setDepositAmount((long) data.depositAmount);
         contract.setShowDepositOnInvoice(data.showDepositOnInvoice);
         contract.setElectricStartReading(data.electricStartReading);
+        contract.setWaterStartReading(data.waterStartReading);
         contract.setHasParkingService(data.hasParkingService);
         contract.setVehicleCount(data.vehicleCount);
         contract.setHasInternetService(data.hasInternetService);

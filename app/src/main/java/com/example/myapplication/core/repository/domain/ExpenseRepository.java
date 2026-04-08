@@ -12,7 +12,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExpenseRepository {
 
@@ -52,7 +54,7 @@ public class ExpenseRepository {
     public void add(Expense expense, Runnable onSuccess, Runnable onFail) {
         if (expense.getCreatedAt() == null)
             expense.setCreatedAt(Timestamp.now());
-        getScopedCollection().add(expense)
+        getScopedCollection().add(toPayload(expense))
                 .addOnSuccessListener(ref -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -62,7 +64,7 @@ public class ExpenseRepository {
             onFail.run();
             return;
         }
-        getScopedCollection().document(expense.getId()).set(expense)
+        getScopedCollection().document(expense.getId()).set(toPayload(expense))
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -75,5 +77,25 @@ public class ExpenseRepository {
         getScopedCollection().document(id).delete()
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
+    }
+
+    private Map<String, Object> toPayload(Expense expense) {
+        Map<String, Object> payload = new HashMap<>();
+        putIfNotBlank(payload, "category", expense.getCategory());
+        if (expense.getAmount() > 0) {
+            payload.put("amount", expense.getAmount());
+        }
+        putIfNotBlank(payload, "paidAt", expense.getPaidAt());
+        putIfNotBlank(payload, "note", expense.getNote());
+        if (expense.getCreatedAt() != null) {
+            payload.put("createdAt", expense.getCreatedAt());
+        }
+        return payload;
+    }
+
+    private static void putIfNotBlank(Map<String, Object> payload, String key, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            payload.put(key, value.trim());
+        }
     }
 }

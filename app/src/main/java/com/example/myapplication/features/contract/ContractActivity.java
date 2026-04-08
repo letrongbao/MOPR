@@ -31,6 +31,7 @@ import com.example.myapplication.core.service.ImageUploadService;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.core.constants.RoomStatus;
+import com.example.myapplication.core.constants.WaterCalculationMode;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.core.util.ScreenUiHelper;
@@ -79,7 +80,10 @@ public class ContractActivity extends AppCompatActivity {
     private ImageView ivPickDate;
     private CheckBox cbRemind;
     private RadioGroup rgBillingReminder;
+    private TextView tvElectricStartLabel, tvWaterStartLabel;
     private EditText etElectricStartReading;
+    private EditText etWaterStartReading;
+    private View layoutParkingService;
     private CheckBox cbParkingService, cbInternet, cbLaundryService;
     private TextView tvParkingPrice;
     private EditText etVehicleCount;
@@ -223,7 +227,11 @@ public class ContractActivity extends AppCompatActivity {
         ivPickDate = findViewById(R.id.ivPickDate);
         cbRemind = findViewById(R.id.cbRemind);
         rgBillingReminder = findViewById(R.id.rgBillingReminder);
+        tvElectricStartLabel = findViewById(R.id.tvElectricStartLabel);
+        tvWaterStartLabel = findViewById(R.id.tvWaterStartLabel);
         etElectricStartReading = findViewById(R.id.etChiSoDien);
+        etWaterStartReading = findViewById(R.id.etChiSoNuoc);
+        layoutParkingService = findViewById(R.id.layoutParkingService);
         cbParkingService = findViewById(R.id.cbGuiXe);
         tvParkingPrice = findViewById(R.id.tvGuiXePrice);
         etVehicleCount = findViewById(R.id.etSoXe);
@@ -324,6 +332,7 @@ public class ContractActivity extends AppCompatActivity {
         if (houseId == null || houseId.trim().isEmpty()) {
             currentHouse = null;
             bindFeesToUI(null);
+            applyUtilityStartInputRules();
             loadExistingContract();
             return;
         }
@@ -333,11 +342,13 @@ public class ContractActivity extends AppCompatActivity {
                     if (currentHouse != null)
                         currentHouse.setId(doc.getId());
                     bindFeesToUI(currentHouse);
+                    applyUtilityStartInputRules();
                     loadExistingContract();
                     updateFullToolbarHeader();
                 })
                 .addOnFailureListener(e -> {
                     bindFeesToUI(null);
+                    applyUtilityStartInputRules();
                     loadExistingContract();
                     updateFullToolbarHeader();
                 });
@@ -347,6 +358,28 @@ public class ContractActivity extends AppCompatActivity {
         double parkingPrice = khu != null ? khu.getParkingPrice() : 0;
         double internetPrice = khu != null ? khu.getInternetPrice() : 0;
         double laundryPrice = khu != null ? khu.getLaundryPrice() : 0;
+
+        boolean hasParkingFee = parkingPrice > 0;
+        boolean hasInternetFee = internetPrice > 0;
+        boolean hasLaundryFee = laundryPrice > 0;
+
+        if (layoutParkingService != null) {
+            layoutParkingService.setVisibility(hasParkingFee ? View.VISIBLE : View.GONE);
+        }
+        cbInternet.setVisibility(hasInternetFee ? View.VISIBLE : View.GONE);
+        cbLaundryService.setVisibility(hasLaundryFee ? View.VISIBLE : View.GONE);
+
+        if (!hasParkingFee) {
+            cbParkingService.setChecked(false);
+            etVehicleCount.setText("");
+        }
+        if (!hasInternetFee) {
+            cbInternet.setChecked(false);
+        }
+        if (!hasLaundryFee) {
+            cbLaundryService.setChecked(false);
+        }
+
         tvParkingPrice.setText(getString(R.string.parking_service_price_format, formatVnd(parkingPrice)));
         cbInternet.setText(getString(R.string.internet_service_price_format, formatVnd(internetPrice)));
         cbLaundryService.setText(getString(R.string.laundry_service_price_format, formatVnd(laundryPrice)));
@@ -358,6 +391,7 @@ public class ContractActivity extends AppCompatActivity {
         etContractNumber.setText(generateContractNo());
         etContractDate.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
         MoneyFormatter.setValue(etDepositAmount, currentRoom.getRentAmount());
+        applyUtilityStartInputRules();
         updateFullToolbarHeader();
     }
 
@@ -452,6 +486,9 @@ public class ContractActivity extends AppCompatActivity {
         if (intent.hasExtra(ContractIntentKeys.ELECTRIC_START_READING))
             currentContract
                     .setElectricStartReading(intent.getIntExtra(ContractIntentKeys.ELECTRIC_START_READING, 0));
+        if (intent.hasExtra(ContractIntentKeys.WATER_START_READING))
+            currentContract
+                    .setWaterStartReading(intent.getIntExtra(ContractIntentKeys.WATER_START_READING, 0));
         if (intent.hasExtra(ContractIntentKeys.HAS_PARKING_SERVICE))
             currentContract.setHasParkingService(intent.getBooleanExtra(ContractIntentKeys.HAS_PARKING_SERVICE, false));
         if (intent.hasExtra(ContractIntentKeys.VEHICLE_COUNT))
@@ -524,6 +561,7 @@ public class ContractActivity extends AppCompatActivity {
         btnEnd.setVisibility(View.VISIBLE);
         btnUpdate.setVisibility(View.VISIBLE);
         bindContractToUI(currentContract);
+        applyUtilityStartInputRules();
         setUploadEnabled(true);
     }
 
@@ -546,6 +584,7 @@ public class ContractActivity extends AppCompatActivity {
 
         // Internal note.
         bindContractToUI(currentContract);
+        applyUtilityStartInputRules();
         setUploadEnabled(true);
     }
 
@@ -590,13 +629,16 @@ public class ContractActivity extends AppCompatActivity {
         bindBillingReminderSelection(c.getBillingReminderAt());
         etElectricStartReading
                 .setText(c.getElectricStartReading() > 0 ? String.valueOf(c.getElectricStartReading()) : "");
-        cbParkingService.setChecked(c.hasParkingService());
-        etVehicleCount.setEnabled(c.hasParkingService());
+        etWaterStartReading
+            .setText(c.getWaterStartReading() > 0 ? String.valueOf(c.getWaterStartReading()) : "");
+        boolean parkingVisible = layoutParkingService != null && layoutParkingService.getVisibility() == View.VISIBLE;
+        cbParkingService.setChecked(parkingVisible && c.hasParkingService());
+        etVehicleCount.setEnabled(cbParkingService.isChecked());
         etVehicleCount.setBackgroundResource(
-                c.hasParkingService() ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
-        etVehicleCount.setText(c.getVehicleCount() > 0 ? String.valueOf(c.getVehicleCount()) : "");
-        cbInternet.setChecked(c.hasInternetService());
-        cbLaundryService.setChecked(c.hasLaundryService());
+            cbParkingService.isChecked() ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
+        etVehicleCount.setText(parkingVisible && c.getVehicleCount() > 0 ? String.valueOf(c.getVehicleCount()) : "");
+        cbInternet.setChecked(cbInternet.getVisibility() == View.VISIBLE && c.hasInternetService());
+        cbLaundryService.setChecked(cbLaundryService.getVisibility() == View.VISIBLE && c.hasLaundryService());
         etNote.setText(nullToEmpty(c.getNote()));
         cbShowNote.setChecked(c.isShowNoteOnInvoice());
         if (c.getPersonalIdFrontUrl() != null && !c.getPersonalIdFrontUrl().trim().isEmpty())
@@ -627,6 +669,8 @@ public class ContractActivity extends AppCompatActivity {
             currentContract = new Tenant();
         ContractFormDataHelper.FormData formData;
         try {
+            boolean electricMeterMode = isElectricMeterMode();
+            boolean waterMeterMode = isWaterMeterMode();
             formData = ContractFormDataHelper.parseAndValidate(
                     text(etContractNumber),
                     text(etCustomerName),
@@ -636,6 +680,9 @@ public class ContractActivity extends AppCompatActivity {
                     text(etContractDate),
                     text(etContractMonths),
                     text(etElectricStartReading),
+                    text(etWaterStartReading),
+                    electricMeterMode,
+                    waterMeterMode,
                     cbParkingService.isChecked(),
                     text(etVehicleCount),
                     cbInternet.isChecked(),
@@ -959,5 +1006,49 @@ public class ContractActivity extends AppCompatActivity {
 
     private String formatVnd(double value) {
         return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN")).format((long) value) + " ₫";
+    }
+
+    private void applyUtilityStartInputRules() {
+        applyMeterFieldMode(
+                tvElectricStartLabel,
+                etElectricStartReading,
+                isElectricMeterMode(),
+                getString(R.string.contract_form_initial_electric_meter));
+        applyMeterFieldMode(
+                tvWaterStartLabel,
+                etWaterStartReading,
+                isWaterMeterMode(),
+                getString(R.string.contract_form_initial_water_meter));
+    }
+
+    private void applyMeterFieldMode(TextView label, EditText field, boolean meterMode, String meterLabel) {
+        if (field == null || label == null)
+            return;
+
+        label.setVisibility(meterMode ? View.VISIBLE : View.GONE);
+        field.setVisibility(meterMode ? View.VISIBLE : View.GONE);
+
+        if (meterMode) {
+            label.setText(meterLabel);
+            field.setEnabled(true);
+            field.setBackgroundResource(R.drawable.bg_input_rounded);
+        }
+
+        if (!meterMode) {
+            field.setText("");
+        }
+    }
+
+    private boolean isElectricMeterMode() {
+        if (currentHouse == null)
+            return true;
+        String mode = currentHouse.getElectricityCalculationMethod();
+        return mode == null || mode.trim().isEmpty() || "kwh".equalsIgnoreCase(mode);
+    }
+
+    private boolean isWaterMeterMode() {
+        if (currentHouse == null)
+            return true;
+        return WaterCalculationMode.isMeter(currentHouse.getWaterCalculationMethod());
     }
 }

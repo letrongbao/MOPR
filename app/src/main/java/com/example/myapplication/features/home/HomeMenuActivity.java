@@ -43,6 +43,9 @@ import com.example.myapplication.features.contract.ContractListActivity;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.core.repository.domain.HouseRepository;
 import com.example.myapplication.viewmodel.RoomViewModel;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -244,15 +247,7 @@ public class HomeMenuActivity extends AppCompatActivity {
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.logout))
                         .setMessage(getString(R.string.logout_confirm_message))
-                        .setPositiveButton(getString(R.string.logout), (dialog, which) -> {
-                            // BUG FIX: Xóa TenantSession trước khi sign out
-                            TenantSession.clear(this);
-                            mAuth.signOut();
-                            Intent intent = new Intent(this, MainActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                            finish();
-                        })
+                        .setPositiveButton(getString(R.string.logout), (dialog, which) -> signOutAndOpenLogin())
                         .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             });
@@ -273,6 +268,29 @@ public class HomeMenuActivity extends AppCompatActivity {
                 shareApp();
             });
         }
+    }
+
+    private void signOutAndOpenLogin() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        TenantSession.clear(this);
+        mAuth.signOut();
+
+        Runnable navigateToLogin = () -> {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        };
+
+        if (AuthProviderUtil.hasGoogleProvider(currentUser)) {
+            GoogleSignInClient googleClient = GoogleSignIn.getClient(
+                    this,
+                    new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build());
+            googleClient.signOut().addOnCompleteListener(task -> navigateToLogin.run());
+            return;
+        }
+
+        navigateToLogin.run();
     }
 
     private void loadUserInfoToDrawer() {
@@ -476,12 +494,8 @@ public class HomeMenuActivity extends AppCompatActivity {
 
 
     private void forceLogoutToReLogin() {
-        mAuth.signOut();
         Toast.makeText(this, getString(R.string.session_expired_relogin_for_owner_ui), Toast.LENGTH_LONG).show();
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        signOutAndOpenLogin();
     }
 
     private void applyRoleUi(String role) {

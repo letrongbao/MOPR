@@ -163,7 +163,7 @@
                         android:layout_alignParentBottom="true"
                         android:text="@string/home_owner_house_label"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -200,7 +200,7 @@
                         android:layout_alignParentBottom="true"
                         android:text="@string/home_owner_invoice_label"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -245,7 +245,7 @@
                         android:layout_alignParentBottom="true"
                         android:text="@string/home_owner_expense_label"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -282,7 +282,7 @@
                         android:layout_alignParentBottom="true"
                         android:text="@string/home_owner_report_label"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -328,7 +328,7 @@
                         android:layout_alignParentBottom="true"
                         android:text="@string/home_owner_tenant_label"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -366,7 +366,7 @@
                         android:layout_alignParentBottom="true"
                         android:text="@string/home_owner_contract_label"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>

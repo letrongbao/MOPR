@@ -1,9 +1,6 @@
 package com.example.myapplication.features.property.house;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,22 +8,17 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapplication.core.service.ImageUploadService;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.constants.WaterCalculationMode;
@@ -50,13 +42,6 @@ public class HouseActivity extends AppCompatActivity {
     private View tvEmpty;
     private boolean readOnly;
 
-    private ActivityResultLauncher<String> qrPicker;
-    private boolean waitingQrUpload;
-    private boolean uploadingQr;
-    private String dialogQrUrl;
-    private TextView dialogQrStatus;
-    private BroadcastReceiver uploadReceiver;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,41 +59,6 @@ public class HouseActivity extends AppCompatActivity {
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.house_list_title));
 
         tvEmpty = findViewById(R.id.tvEmpty);
-
-        qrPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri == null || !waitingQrUpload)
-                return;
-            waitingQrUpload = false;
-
-            uploadingQr = true;
-            Intent i = new Intent(this, ImageUploadService.class);
-            i.putExtra(ImageUploadService.EXTRA_IMAGE_URI, uri.toString());
-            startService(i);
-
-            if (dialogQrStatus != null) {
-                dialogQrStatus.setText(getString(R.string.house_qr_uploading));
-            }
-        });
-
-        uploadReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String imageUrl = intent.getStringExtra(ImageUploadService.EXTRA_IMAGE_URL);
-                if (imageUrl == null)
-                    return;
-
-                // Only handle when a House dialog is open and we started a QR upload
-                if (dialogQrStatus == null || !uploadingQr)
-                    return;
-
-                uploadingQr = false;
-                dialogQrUrl = imageUrl;
-                dialogQrStatus.setText(getString(R.string.payment_code_added));
-                Toast.makeText(HouseActivity.this, getString(R.string.house_qr_uploaded), Toast.LENGTH_SHORT).show();
-            }
-        };
-        LocalBroadcastManager.getInstance(this)
-                .registerReceiver(uploadReceiver, new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE));
 
         View ivAddHouse = findViewById(R.id.ivAddHouse);
         if (ivAddHouse != null) {
@@ -204,47 +154,45 @@ public class HouseActivity extends AppCompatActivity {
         LinearLayout llExtraFees = v.findViewById(R.id.llExtraFeesContainer);
         View btnAddExtraFee = v.findViewById(R.id.btnAddExtraFee);
 
-        TextView tvQr = v.findViewById(R.id.tvQrStatus);
-        View btnPickQr = v.findViewById(R.id.btnPickQr);
-
         EditText etBankAccountName = v.findViewById(R.id.etChuTaiKhoan);
         EditText etBankName = v.findViewById(R.id.etNganHang);
         EditText etBankAccountNo = v.findViewById(R.id.etSoTaiKhoan);
 
         EditText etElectricityPrice = v.findViewById(R.id.etGiaDien);
         EditText etWaterPrice = v.findViewById(R.id.etGiaNuoc);
-        RadioGroup rgNuoc = v.findViewById(R.id.rgNuoc);
+        Spinner spDienUnit = v.findViewById(R.id.spDienUnit);
+        Spinner spNuocUnit = v.findViewById(R.id.spNuocUnit);
 
         EditText etParkingPrice = v.findViewById(R.id.etGiaXe);
+        Spinner spXeUnit = v.findViewById(R.id.spXeUnit);
         EditText etInternetPrice = v.findViewById(R.id.etGiaInternet);
+        Spinner spInternetUnit = v.findViewById(R.id.spInternetUnit);
         EditText etLaundryPrice = v.findViewById(R.id.etGiaGiatSay);
-        EditText etElevatorPrice = v.findViewById(R.id.etGiaThangMay);
-        EditText etCableTvPrice = v.findViewById(R.id.etGiaTiviCap);
+        Spinner spGiatSayUnit = v.findViewById(R.id.spGiatSayUnit);
         EditText etTrashPrice = v.findViewById(R.id.etGiaRac);
-        EditText etServicePrice = v.findViewById(R.id.etGiaDichVu);
+        Spinner spRacUnit = v.findViewById(R.id.spRacUnit);
 
         EditText etNote = v.findViewById(R.id.etHouseNote);
 
         // Apply money formatters to all price fields
         applyMoneyFormatters(etElectricityPrice, etWaterPrice, etParkingPrice, etInternetPrice,
-                etLaundryPrice, etElevatorPrice, etCableTvPrice, etTrashPrice, etServicePrice);
+            etLaundryPrice, etTrashPrice);
+
+        setupSpinner(spDienUnit, R.array.electricity_unit_options);
+        setupSpinner(spNuocUnit, R.array.water_unit_options);
+        setupSpinner(spXeUnit, R.array.vehicle_fee_unit_options);
+        setupSpinner(spInternetUnit, R.array.room_person_unit_options);
+        setupSpinner(spGiatSayUnit, R.array.room_person_unit_options);
+        setupSpinner(spRacUnit, R.array.room_person_unit_options);
+
+        selectSpinnerByValue(spDienUnit, "KWH");
+        selectSpinnerByValue(spNuocUnit, "Phòng");
+        selectSpinnerByValue(spXeUnit, "Chiếc");
+        selectSpinnerByValue(spInternetUnit, "Phòng");
+        selectSpinnerByValue(spGiatSayUnit, "Phòng");
+        selectSpinnerByValue(spRacUnit, "Phòng");
 
         boolean isEdit = existing != null;
-
-        dialogQrStatus = tvQr;
-        dialogQrUrl = isEdit ? existing.getPaymentQrUrl() : null;
-        if (dialogQrStatus != null) {
-            dialogQrStatus.setText(dialogQrUrl != null && !dialogQrUrl.trim().isEmpty()
-                    ? getString(R.string.payment_code_added)
-                    : getString(R.string.house_qr_not_added));
-        }
-
-        if (btnPickQr != null) {
-            btnPickQr.setOnClickListener(vw -> {
-                waitingQrUpload = true;
-                qrPicker.launch("image/*");
-            });
-        }
 
         if (btnAddExtraFee != null && llExtraFees != null) {
             btnAddExtraFee.setOnClickListener(vw -> addExtraFeeRow(llExtraFees, null));
@@ -261,25 +209,17 @@ public class HouseActivity extends AppCompatActivity {
 
             etElectricityPrice.setText(formatMoneyInput(existing.getElectricityPrice()));
             etWaterPrice.setText(formatMoneyInput(existing.getWaterPrice()));
-
-            String waterMode = existing.getWaterCalculationMethod();
-            if (waterMode != null) {
-                if (WaterCalculationMode.isPerPerson(waterMode)) {
-                    ((android.widget.RadioButton) v.findViewById(R.id.rbNuocNguoi)).setChecked(true);
-                } else if (WaterCalculationMode.isMeter(waterMode)) {
-                    ((android.widget.RadioButton) v.findViewById(R.id.rbNuocDongHo)).setChecked(true);
-                } else {
-                    ((android.widget.RadioButton) v.findViewById(R.id.rbNuocPhong)).setChecked(true);
-                }
-            }
+            selectSpinnerByValue(spDienUnit, toElectricityUnit(existing.getElectricityCalculationMethod()));
+            selectSpinnerByValue(spNuocUnit, toWaterUnit(existing.getWaterCalculationMethod()));
 
             etParkingPrice.setText(formatMoneyInput(existing.getParkingPrice()));
             etInternetPrice.setText(formatMoneyInput(existing.getInternetPrice()));
             etLaundryPrice.setText(formatMoneyInput(existing.getLaundryPrice()));
-            etElevatorPrice.setText(formatMoneyInput(existing.getElevatorPrice()));
-            etCableTvPrice.setText(formatMoneyInput(existing.getCableTvPrice()));
             etTrashPrice.setText(formatMoneyInput(existing.getTrashPrice()));
-            etServicePrice.setText(formatMoneyInput(existing.getServicePrice()));
+            selectSpinnerByValue(spXeUnit, toVehicleUnit(existing.getParkingUnit()));
+            selectSpinnerByValue(spInternetUnit, toRoomPersonUnit(existing.getInternetUnit()));
+            selectSpinnerByValue(spGiatSayUnit, toRoomPersonUnit(existing.getLaundryUnit()));
+            selectSpinnerByValue(spRacUnit, toRoomPersonUnit(existing.getTrashUnit()));
 
             etNote.setText(existing.getNote());
 
@@ -324,16 +264,9 @@ public class HouseActivity extends AppCompatActivity {
 
                 String note = etNote.getText().toString().trim();
 
-                String waterMode = "room";
-                if (rgNuoc != null) {
-                    int checkedId = rgNuoc.getCheckedRadioButtonId();
-                    if (checkedId == R.id.rbNuocNguoi)
-                        waterMode = WaterCalculationMode.PER_PERSON;
-                    else if (checkedId == R.id.rbNuocDongHo)
-                        waterMode = WaterCalculationMode.METER;
-                    else
-                        waterMode = WaterCalculationMode.ROOM;
-                }
+                String electricityUnit = getSelectedSpinnerText(spDienUnit);
+                String waterUnit = getSelectedSpinnerText(spNuocUnit);
+                String waterMode = toWaterCalculationMode(waterUnit);
 
                 java.util.List<House.ExtraFee> extraFees = collectExtraFees(llExtraFees);
 
@@ -348,19 +281,29 @@ public class HouseActivity extends AppCompatActivity {
                 target.setBankAccountNo(etBankAccountNo.getText().toString().trim());
 
                 target.setElectricityPrice(parseMoney(etElectricityPrice));
+                target.setElectricityCalculationMethod(toElectricityCalculationMode(electricityUnit));
                 target.setWaterPrice(parseMoney(etWaterPrice));
                 target.setWaterCalculationMethod(waterMode);
 
                 target.setParkingPrice(parseMoney(etParkingPrice));
+                target.setParkingUnit(toParkingUnit(getSelectedSpinnerText(spXeUnit)));
                 target.setInternetPrice(parseMoney(etInternetPrice));
+                target.setInternetUnit(toRoomPersonStorage(getSelectedSpinnerText(spInternetUnit)));
                 target.setLaundryPrice(parseMoney(etLaundryPrice));
-                target.setElevatorPrice(parseMoney(etElevatorPrice));
-                target.setCableTvPrice(parseMoney(etCableTvPrice));
+                target.setLaundryUnit(toRoomPersonStorage(getSelectedSpinnerText(spGiatSayUnit)));
                 target.setTrashPrice(parseMoney(etTrashPrice));
-                target.setServicePrice(parseMoney(etServicePrice));
+                target.setTrashUnit(toRoomPersonStorage(getSelectedSpinnerText(spRacUnit)));
+
+                // Deprecated fixed-fee fields are replaced by custom fees.
+                target.setElevatorPrice(0);
+                target.setElevatorUnit(null);
+                target.setCableTvPrice(0);
+                target.setCableTvUnit(null);
+                target.setServicePrice(0);
+                target.setServiceUnit(null);
 
                 target.setExtraFees(extraFees);
-                target.setPaymentQrUrl(dialogQrUrl);
+                target.setPaymentQrUrl(null);
 
                 if (isEdit) {
                     repo.update(target,
@@ -379,13 +322,6 @@ public class HouseActivity extends AppCompatActivity {
 
                 dlg.dismiss();
             });
-        });
-
-        dlg.setOnDismissListener(d -> {
-            dialogQrStatus = null;
-            dialogQrUrl = null;
-            waitingQrUpload = false;
-            uploadingQr = false;
         });
 
         dlg.show();
@@ -419,6 +355,8 @@ public class HouseActivity extends AppCompatActivity {
             }
         }
 
+        MoneyFormatter.applyTo(etGia);
+
         ivRemove.setOnClickListener(v -> container.removeView(row));
 
         container.addView(row);
@@ -445,6 +383,9 @@ public class HouseActivity extends AppCompatActivity {
             String unit = spUnit != null && spUnit.getSelectedItem() != null ? spUnit.getSelectedItem().toString()
                     : "";
             double gia = parseMoney(etGia);
+
+            if (gia <= 0)
+                continue;
 
             out.add(new House.ExtraFee(ten, unit, gia));
         }
@@ -476,13 +417,94 @@ public class HouseActivity extends AppCompatActivity {
         }
     }
 
+    private void setupSpinner(Spinner spinner, int arrayResId) {
+        if (spinner == null)
+            return;
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                arrayResId, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private void selectSpinnerByValue(Spinner spinner, String value) {
+        if (spinner == null || value == null)
+            return;
+        for (int i = 0; i < spinner.getCount(); i++) {
+            CharSequence item = (CharSequence) spinner.getItemAtPosition(i);
+            if (item != null && value.equalsIgnoreCase(item.toString())) {
+                spinner.setSelection(i);
+                return;
+            }
+        }
+    }
+
+    private String getSelectedSpinnerText(Spinner spinner) {
+        return spinner != null && spinner.getSelectedItem() != null ? spinner.getSelectedItem().toString() : "";
+    }
+
+    private String toElectricityCalculationMode(String unitText) {
+        String lower = unitText == null ? "" : unitText.trim().toLowerCase();
+        if (lower.contains("người"))
+            return WaterCalculationMode.PER_PERSON;
+        if (lower.contains("phòng"))
+            return WaterCalculationMode.ROOM;
+        return "kwh";
+    }
+
+    private String toElectricityUnit(String mode) {
+        if (mode == null || mode.trim().isEmpty() || "kwh".equalsIgnoreCase(mode))
+            return "KWH";
+        if (WaterCalculationMode.isPerPerson(mode))
+            return "Người";
+        return "Phòng";
+    }
+
+    private String toWaterCalculationMode(String unitText) {
+        String lower = unitText == null ? "" : unitText.trim().toLowerCase();
+        if (lower.contains("người"))
+            return WaterCalculationMode.PER_PERSON;
+        if (lower.contains("m³") || lower.contains("m3"))
+            return WaterCalculationMode.METER;
+        return WaterCalculationMode.ROOM;
+    }
+
+    private String toWaterUnit(String waterMode) {
+        if (WaterCalculationMode.isPerPerson(waterMode))
+            return "Người";
+        if (WaterCalculationMode.isMeter(waterMode))
+            return "m³";
+        return "Phòng";
+    }
+
+    private String toParkingUnit(String unitText) {
+        String lower = unitText == null ? "" : unitText.trim().toLowerCase();
+        if (lower.contains("người"))
+            return "person";
+        if (lower.contains("phòng"))
+            return "room";
+        return "vehicle";
+    }
+
+    private String toVehicleUnit(String storedUnit) {
+        if (storedUnit == null || storedUnit.trim().isEmpty() || "vehicle".equalsIgnoreCase(storedUnit))
+            return "Chiếc";
+        if ("person".equalsIgnoreCase(storedUnit))
+            return "Người";
+        return "Phòng";
+    }
+
+    private String toRoomPersonStorage(String unitText) {
+        String lower = unitText == null ? "" : unitText.trim().toLowerCase();
+        return lower.contains("người") ? "person" : "room";
+    }
+
+    private String toRoomPersonUnit(String storedUnit) {
+        return "person".equalsIgnoreCase(storedUnit) ? "Người" : "Phòng";
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        try {
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(uploadReceiver);
-        } catch (Exception ignored) {
-        }
     }
 
     @Override

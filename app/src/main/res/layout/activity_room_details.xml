@@ -15,16 +15,43 @@
         android:fitsSystemWindows="true"
         app:elevation="0dp">
 
-        <com.google.android.material.appbar.MaterialToolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="@string/room_details_title"
-            app:titleCentered="true"
-            app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:navigationIconTint="@color/white"/>
+            app:navigationIconTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvHeaderTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/room_details_title"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvHeaderSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -38,38 +65,42 @@
             android:orientation="vertical">
 
             <!-- Full-width room image with status overlay -->
-            <FrameLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="240dp">
+                android:layout_height="wrap_content">
 
-                <ImageView
-                    android:id="@+id/imgPhongChiTiet"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/baseline_home_24"
-                    android:background="#E0E0E0"
-                    android:contentDescription="@string/room_image"/>
+                <FrameLayout
+                    android:id="@+id/roomImageFrame"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintDimensionRatio="4:3"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="80dp"
-                    android:layout_gravity="bottom"
-                    android:background="@drawable/bg_gradient_bottom_shadow"/>
+                    <ImageView
+                        android:id="@+id/imgPhongChiTiet"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/bg_room_placeholder"
+                        android:contentDescription="@string/room_image"/>
 
-                <TextView
-                    android:id="@+id/tvTrangThaiChiTiet"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="16dp"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="6dp"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:elevation="4dp"/>
-            </FrameLayout>
+                    <TextView
+                        android:id="@+id/tvTrangThaiChiTiet"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="16dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="6dp"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:elevation="4dp"/>
+                </FrameLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -82,8 +113,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp"
-                    app:strokeWidth="0dp">
+                    app:cardElevation="0dp"
+                    app:strokeColor="#DEE4EC"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -100,6 +132,15 @@
                             android:textColor="#212121"
                             android:text="@string/room_number_placeholder"/>
 
+                        <TextView
+                            android:id="@+id/tvTenantRepresentativeLine"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="#4F6580"
+                            android:textSize="13sp"
+                            android:visibility="gone"/>
+
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
@@ -113,6 +154,7 @@
                         <include layout="@layout/row_detail_info" android:id="@+id/rowSucChuaToiDa"/>
                         <include layout="@layout/row_detail_info" android:id="@+id/rowSoNguoiDangO"/>
                         <include layout="@layout/row_detail_info" android:id="@+id/rowTrangThai"/>
+                        <include layout="@layout/row_detail_info" android:id="@+id/rowQuanLy"/>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -221,6 +263,7 @@
                     android:textAllCaps="false"
                     app:cornerRadius="12dp"
                     app:backgroundTint="@color/primary" />
+
                 <Button
                     android:id="@+id/btnGenerateCode"
                     android:layout_width="match_parent"

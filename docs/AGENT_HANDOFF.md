@@ -31,9 +31,11 @@ Use these facts as non-negotiable runtime behavior unless the task explicitly ch
 1. Firestore root data scope is `tenants/{tenantId}/...` with legacy fallback `users/{uid}/...`.
 2. There is no top-level `org` or `organizations` collection; `Org*` names are UI/module terminology only.
 3. Google sign-in (`MainActivity`) ensures `users/{uid}` exists and must NOT overwrite existing `primaryRole`/`activeTenantId`.
-4. Home shell role rendering (`HomeMenuActivity`) is currently binary by `users/{uid}.primaryRole`:
+4. Home shell role rendering (`HomeMenuActivity`) now routes by `users/{uid}.primaryRole` + `activeTenantId`:
 	- `OWNER` => owner UI
-	- non-`OWNER` => guest UI
+	- `TENANT` + missing `activeTenantId` => redirect to `JoinRoomActivity`
+	- `TENANT` + existing `activeTenantId` => redirect to `TenantMenuActivity`
+	- `STAFF` and other non-`OWNER` roles => guest-compatible Home UI
 5. If `primaryRole` changes from non-OWNER to OWNER during active Home session, app forces sign-out and requires re-login.
 6. Change password is available only when account has `password` provider; Google-only accounts must not see/use password change flow.
 7. Vietnamese wording convention for UI/docs: use `lí` in management wording, and keep the brand phrase exactly `Quản lí trọ`.

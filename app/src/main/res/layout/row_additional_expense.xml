@@ -17,14 +17,6 @@
         android:textSize="14sp"
         android:hint="@string/row_additional_expense_name_hint" />
 
-    <Spinner
-        android:id="@+id/spDonViTinh"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:layout_weight="0.8"
-        android:layout_marginStart="8dp"
-        android:background="@drawable/custome_edittext" />
-
     <EditText
         android:id="@+id/etGia"
         android:layout_width="0dp"
@@ -36,6 +28,23 @@
         android:textSize="14sp"
         android:hint="@string/row_additional_expense_price_hint"
         android:inputType="number" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="/"
+        android:textColor="@color/text_sub"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <Spinner
+        android:id="@+id/spDonViTinh"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="0.8"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/custome_edittext" />
 
     <ImageView
         android:id="@+id/ivRemove"

@@ -21,6 +21,9 @@ import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -104,7 +107,7 @@ public class TenantMenuActivity extends AppCompatActivity {
         if (roomId != null && !roomId.isEmpty()) {
             fetchRoomNumber(roomId);
         } else {
-            tvRoomInfo.setText("Phòng: --");
+            tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
         }
 
         // ===== Click avatar → mở Drawer từ phải =====
@@ -120,16 +123,16 @@ public class TenantMenuActivity extends AppCompatActivity {
         cardBill.setOnClickListener(v -> openRoomDetail());   // cùng màn hình, tab billing
 
         cardReport.setOnClickListener(v ->
-                Toast.makeText(this, "Báo cáo sự cố", Toast.LENGTH_SHORT).show());
+            Toast.makeText(this, getString(R.string.tenant_menu_report_issue), Toast.LENGTH_SHORT).show());
 
         cardNotification.setOnClickListener(v ->
-                Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
+            Toast.makeText(this, getString(R.string.tenant_menu_notification), Toast.LENGTH_SHORT).show());
     }
 
     // ========== MỞ MÀN HÌNH CHI TIẾT PHÒNG ==========
     private void openRoomDetail() {
         if (roomId == null || roomId.isEmpty()) {
-            Toast.makeText(this, "Chưa xác định được phòng", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
             return;
         }
         Intent intent = new Intent(this, TenantRoomDetailActivity.class);
@@ -219,20 +222,34 @@ public class TenantMenuActivity extends AppCompatActivity {
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.logout))
                         .setMessage(getString(R.string.logout_confirm_message))
-                        .setPositiveButton(getString(R.string.logout), (d, which) -> {
-                            // BUG FIX: Xóa TenantSession trước khi signOut
-                            // Nếu không clear, khi owner đăng nhập sau sẽ dùng nhầm path tenants/
-                            TenantSession.clear(this);
-                            mAuth.signOut();
-                            Intent intent = new Intent(this, MainActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                            finish();
-                        })
+                        .setPositiveButton(getString(R.string.logout), (d, which) -> signOutAndOpenLogin())
                         .setNegativeButton(getString(R.string.cancel), null)
                         .show();
             });
         }
+    }
+
+    private void signOutAndOpenLogin() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        TenantSession.clear(this);
+        mAuth.signOut();
+
+        Runnable navigateToLogin = () -> {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        };
+
+        if (AuthProviderUtil.hasGoogleProvider(currentUser)) {
+            GoogleSignInClient googleClient = GoogleSignIn.getClient(
+                    this,
+                    new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build());
+            googleClient.signOut().addOnCompleteListener(task -> navigateToLogin.run());
+            return;
+        }
+
+        navigateToLogin.run();
     }
 
     // ========== LOAD TÊN USER LÊN HEADER ==========
@@ -263,11 +280,11 @@ public class TenantMenuActivity extends AppCompatActivity {
 
     // ========== QUERY TÊN PHÒNG TỪ FIRESTORE ==========
     private void fetchRoomNumber(String roomId) {
-        tvRoomInfo.setText("Phòng: ...");
+        tvRoomInfo.setText(getString(R.string.tenant_menu_room_loading));
 
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
-            tvRoomInfo.setText("Phòng: " + roomId);
+            tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId));
             return;
         }
 
@@ -278,7 +295,7 @@ public class TenantMenuActivity extends AppCompatActivity {
                     String freshTenantId = userDoc.getString("activeTenantId");
 
                     if (freshTenantId == null || freshTenantId.trim().isEmpty()) {
-                        tvRoomInfo.setText("Phòng: " + roomId);
+                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId));
                         return;
                     }
 
@@ -291,7 +308,8 @@ public class TenantMenuActivity extends AppCompatActivity {
                             .addOnSuccessListener(roomDoc -> {
                                 if (roomDoc.exists()) {
                                     String rn = roomDoc.getString("roomNumber");
-                                    tvRoomInfo.setText("Phòng: " + (rn != null && !rn.isEmpty() ? rn : roomId));
+                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
+                                            rn != null && !rn.isEmpty() ? rn : roomId));
                                 } else {
                                     // Bước 2b: rooms lưu ở users/{tenantId}/rooms/ (khi owner không có tenant org)
                                     db.collection("users").document(freshTenantId)
@@ -300,7 +318,8 @@ public class TenantMenuActivity extends AppCompatActivity {
                                             .addOnSuccessListener(userRoomDoc -> {
                                                 if (userRoomDoc.exists()) {
                                                     String rn = userRoomDoc.getString("roomNumber");
-                                                    tvRoomInfo.setText("Phòng: " + (rn != null && !rn.isEmpty() ? rn : roomId));
+                                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
+                                                            rn != null && !rn.isEmpty() ? rn : roomId));
                                                 } else {
                                                     // Bước 3: scan toàn bộ cả 2 path
                                                     scanAllRooms(freshTenantId, roomId);
@@ -311,7 +330,7 @@ public class TenantMenuActivity extends AppCompatActivity {
                             })
                             .addOnFailureListener(e -> scanAllRooms(freshTenantId, roomId));
                 })
-                .addOnFailureListener(e -> tvRoomInfo.setText("Phòng: " + roomId));
+                .addOnFailureListener(e -> tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId)));
     }
 
     private void scanAllRooms(String freshTenantId, String roomId) {
@@ -320,15 +339,17 @@ public class TenantMenuActivity extends AppCompatActivity {
                 .addOnSuccessListener(qs -> {
                     String found = findRoomNumber(qs, roomId);
                     if (found != null) {
-                        tvRoomInfo.setText("Phòng: " + found);
+                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, found));
                     } else {
                         db.collection("users").document(freshTenantId)
                                 .collection("rooms").get()
                                 .addOnSuccessListener(qs2 -> {
                                     String found2 = findRoomNumber(qs2, roomId);
-                                    tvRoomInfo.setText("Phòng: " + (found2 != null ? found2 : roomId));
+                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
+                                        found2 != null ? found2 : roomId));
                                 })
-                                .addOnFailureListener(e -> tvRoomInfo.setText("Phòng: " + roomId));
+                                .addOnFailureListener(
+                                    e -> tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId)));
                     }
                 })
                 .addOnFailureListener(e ->
@@ -336,9 +357,11 @@ public class TenantMenuActivity extends AppCompatActivity {
                                 .collection("rooms").get()
                                 .addOnSuccessListener(qs2 -> {
                                     String found2 = findRoomNumber(qs2, roomId);
-                                    tvRoomInfo.setText("Phòng: " + (found2 != null ? found2 : roomId));
+                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
+                                        found2 != null ? found2 : roomId));
                                 })
-                                .addOnFailureListener(e2 -> tvRoomInfo.setText("Phòng: " + roomId)));
+                                .addOnFailureListener(
+                                    e2 -> tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId))));
     }
 
     private String findRoomNumber(com.google.firebase.firestore.QuerySnapshot qs, String roomId) {

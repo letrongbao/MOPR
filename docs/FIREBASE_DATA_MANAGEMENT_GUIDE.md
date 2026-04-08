@@ -56,17 +56,20 @@ Signup creates `users/{uid}` with:
 ### 0.7 Home role UI switching (`HomeMenuActivity`)
 
 1. Home defaults to guest UI (all Home action rows hidden).
-2. `users/{uid}.primaryRole` is the role source used by Home UI:
+2. `users/{uid}.primaryRole` + `users/{uid}.activeTenantId` are used to route after Home starts:
    - `OWNER` => show current OWNER Home UI.
-   - any other value/missing => keep guest UI (no Home action buttons shown).
+   - `TENANT` + missing `activeTenantId` => redirect to `JoinRoomActivity`.
+   - `TENANT` + existing `activeTenantId` => redirect to `TenantMenuActivity`.
+   - `STAFF` and other non-`OWNER` roles => keep guest-compatible Home UI.
 3. If `primaryRole` changes from non-OWNER to `OWNER` while user is in an active session, app forces logout and asks user to sign in again.
 4. After signing in again with `primaryRole=OWNER`, user sees OWNER UI.
 5. Drawer behavior by role:
    - `OWNER`: shows Rental History menu.
    - non-OWNER: hides Rental History menu.
-6. Current role mapping in Home UI is binary:
+6. Current role mapping in Home UI is owner-first with tenant redirect:
    - `OWNER` => OWNER UI.
-   - `STAFF` and `TENANT` => guest UI.
+   - `TENANT` => JoinRoom/TenantMenu depending on `activeTenantId`.
+   - `STAFF` => guest-compatible UI.
 7. Role-promotion auto-logout is enforced by the role listener in `HomeMenuActivity` while Home is active.
 
 ## 1) How the App Understands Data
@@ -183,9 +186,11 @@ users/{tenantUid}
 
 After that, tenant user will receive an invite and join a room/tenant.
 
-Current invite requirement for TENANT:
+Current invite paths for TENANT:
 
-- `roomId` is required in invite document.
+- Email invite path: `roomId` is required in invite document.
+- Anonymous invite path: invite includes `type = ANONYMOUS`, `roomId`, and can be redeemed from `JoinRoomActivity` by code only.
+- Anonymous code redemption is guarded by a Firestore transaction so one code is accepted at most once under concurrent joins.
 
 To seed manually:
 
@@ -239,7 +244,9 @@ Before running the app, verify these 3 points:
 Expected Home UI behavior in current build:
 
 - `primaryRole = OWNER` => OWNER Home UI (cards + rental history visible).
-- `primaryRole != OWNER` or missing => guest Home UI (cards hidden, rental history hidden).
+- `primaryRole = TENANT` and `activeTenantId` missing => redirect to join room flow.
+- `primaryRole = TENANT` and `activeTenantId` set => redirect to tenant dashboard flow.
+- other non-`OWNER` roles => guest-compatible Home UI (cards hidden, rental history hidden).
 
 If these values are not synchronized, Home UI and tenant-domain permissions may look inconsistent.
 

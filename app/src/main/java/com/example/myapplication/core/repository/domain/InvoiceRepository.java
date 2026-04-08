@@ -76,7 +76,7 @@ public class InvoiceRepository {
         invoice.setCreatedAt(com.google.firebase.Timestamp.now());
         invoice.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        getUserCollection().add(invoice)
+        getUserCollection().add(toPayload(invoice))
                 .addOnSuccessListener(ref -> {
                     audit.log("invoice.create", "invoice", ref.getId(), null);
                     onSuccess.run();
@@ -109,7 +109,7 @@ public class InvoiceRepository {
             if (snap.exists()) {
                 throw new RuntimeException("DUPLICATE_INVOICE");
             }
-            transaction.set(docRef, invoice);
+            transaction.set(docRef, toPayload(invoice));
             return null;
         })
                 .addOnSuccessListener(v -> {
@@ -148,7 +148,7 @@ public class InvoiceRepository {
         // Set update timestamp
         invoice.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        getUserCollection().document(invoice.getId()).set(invoice)
+        getUserCollection().document(invoice.getId()).set(toPayload(invoice))
                 .addOnSuccessListener(v -> {
                     audit.log("invoice.update", "invoice", invoice.getId(), null);
                     onSuccess.run();
@@ -184,5 +184,56 @@ public class InvoiceRepository {
                     onSuccess.run();
                 })
                 .addOnFailureListener(e -> onFail.run());
+    }
+
+    private Map<String, Object> toPayload(Invoice invoice) {
+        Map<String, Object> payload = new HashMap<>();
+
+        putIfNotBlank(payload, "roomId", invoice.getRoomId());
+        putIfNotBlank(payload, "contractId", invoice.getContractId());
+        putIfNotBlank(payload, "roomNumber", invoice.getRoomNumber());
+        putIfNotBlank(payload, "billingPeriod", invoice.getBillingPeriod());
+
+        putIfPositive(payload, "electricStartReading", invoice.getElectricStartReading());
+        putIfPositive(payload, "electricEndReading", invoice.getElectricEndReading());
+        putIfPositive(payload, "electricUnitPrice", invoice.getElectricUnitPrice());
+        putIfPositive(payload, "waterStartReading", invoice.getWaterStartReading());
+        putIfPositive(payload, "waterEndReading", invoice.getWaterEndReading());
+        putIfPositive(payload, "waterUnitPrice", invoice.getWaterUnitPrice());
+
+        putIfPositive(payload, "trashFee", invoice.getTrashFee());
+        putIfPositive(payload, "wifiFee", invoice.getWifiFee());
+        putIfPositive(payload, "parkingFee", invoice.getParkingFee());
+        putIfPositive(payload, "rentAmount", invoice.getRentAmount());
+        payload.put("totalAmount", Math.max(0, invoice.getTotalAmount()));
+
+        putIfNotBlank(payload, "status", invoice.getStatus());
+
+        if (invoice.getPaymentDate() != null) {
+            payload.put("paymentDate", invoice.getPaymentDate());
+        }
+        putIfNotBlank(payload, "paymentMethod", invoice.getPaymentMethod());
+        putIfPositive(payload, "paidAmount", invoice.getPaidAmount());
+
+        if (invoice.getCreatedAt() != null) {
+            payload.put("createdAt", invoice.getCreatedAt());
+        }
+        if (invoice.getUpdatedAt() != null) {
+            payload.put("updatedAt", invoice.getUpdatedAt());
+        }
+
+        return payload;
+    }
+
+    private static void putIfPositive(Map<String, Object> payload, String key, double value) {
+        if (value > 0) {
+            payload.put(key, value);
+        }
+    }
+
+    private static void putIfNotBlank(Map<String, Object> payload, String key, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            payload.put(key, value.trim());
+        }
     }
 }

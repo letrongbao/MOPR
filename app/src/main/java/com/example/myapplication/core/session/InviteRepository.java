@@ -165,67 +165,79 @@ public class InviteRepository {
                     com.google.firebase.firestore.DocumentReference inviteRef = snap.getReference();
                     String tenantId = inviteRef.getParent().getParent().getId();
 
-                    String role = snap.getString("role");
-                    if (role == null)
-                        role = TenantRoles.TENANT;
+                    // Dùng transaction để giữ tính "mã 1 lần" khi có nhiều thiết bị join đồng thời.
+                    db.runTransaction(transaction -> {
+                        com.google.firebase.firestore.DocumentSnapshot freshInvite = transaction.get(inviteRef);
+                        if (!freshInvite.exists()) {
+                            throw new IllegalStateException("Mã phòng không tồn tại hoặc đã được sử dụng.");
+                        }
 
-                    String roomId = snap.getString("roomId");
-                    String houseId = snap.getString("houseId");
-                    if (TenantRoles.TENANT.equals(role) && (roomId == null || roomId.trim().isEmpty())) {
-                        cb.onError(new IllegalStateException("Lỗi dữ liệu: Mã mời không đính kèm phòng."));
-                        return;
-                    }
+                        String freshStatus = freshInvite.getString("status");
+                        String freshType = freshInvite.getString("type");
+                        String freshCode = freshInvite.getString("code");
+                        if (!"PENDING".equals(freshStatus) || !"ANONYMOUS".equals(freshType)
+                                || freshCode == null || !freshCode.equals(code)) {
+                            throw new IllegalStateException("Mã phòng không tồn tại hoặc đã được sử dụng.");
+                        }
 
-                    // 1. Tạo document Khách vào sub-collection "members" của chủ nhà
-                    Map<String, Object> memberDoc = new HashMap<>();
-                    memberDoc.put("uid", user.getUid());
-                    memberDoc.put("role", role);
-                    memberDoc.put("status", "ACTIVE");
-                    memberDoc.put("inviteCode", code);
+                        String role = freshInvite.getString("role");
+                        if (role == null) {
+                            role = TenantRoles.TENANT;
+                        }
 
-                    if (TenantRoles.TENANT.equals(role)) {
-                        memberDoc.put("roomId", roomId);
-                        java.util.List<String> assignedRooms = new java.util.ArrayList<>();
-                        assignedRooms.add(roomId);
-                        memberDoc.put("assignedRoomIds", assignedRooms);
-                    } else {
-                        memberDoc.put("assignedRoomIds", new java.util.ArrayList<>());
-                    }
+                        String roomId = freshInvite.getString("roomId");
+                        String houseId = freshInvite.getString("houseId");
+                        if (TenantRoles.TENANT.equals(role) && (roomId == null || roomId.trim().isEmpty())) {
+                            throw new IllegalStateException("Lỗi dữ liệu: Mã mời không đính kèm phòng.");
+                        }
 
-                    if (houseId != null && !houseId.trim().isEmpty()) {
-                        memberDoc.put("houseId", houseId.trim());
-                        java.util.List<String> assignedHouses = new java.util.ArrayList<>();
-                        assignedHouses.add(houseId.trim());
-                        memberDoc.put("assignedHouseIds", assignedHouses);
-                    } else {
-                        memberDoc.put("assignedHouseIds", new java.util.ArrayList<>());
-                    }
+                        Timestamp now = Timestamp.now();
 
-                    memberDoc.put("createdAt", Timestamp.now());
-                    memberDoc.put("updatedAt", Timestamp.now());
+                        Map<String, Object> memberDoc = new HashMap<>();
+                        memberDoc.put("uid", user.getUid());
+                        memberDoc.put("role", role);
+                        memberDoc.put("status", "ACTIVE");
+                        memberDoc.put("inviteCode", code);
 
-                    // 2. Chuyển trạng thái Mã mời thành Đã sử dụng (ACCEPTED)
-                    Map<String, Object> inviteUpdate = new HashMap<>();
-                    inviteUpdate.put("status", "ACCEPTED");
-                    inviteUpdate.put("acceptedAt", Timestamp.now());
-                    inviteUpdate.put("acceptedBy", user.getUid());
+                        if (TenantRoles.TENANT.equals(role)) {
+                            memberDoc.put("roomId", roomId);
+                            java.util.List<String> assignedRooms = new java.util.ArrayList<>();
+                            assignedRooms.add(roomId);
+                            memberDoc.put("assignedRoomIds", assignedRooms);
+                        } else {
+                            memberDoc.put("assignedRoomIds", new java.util.ArrayList<>());
+                        }
 
-                    // 3. Cập nhật Root User của vị khách (Thêm primaryRole và activeTenantId)
-                    Map<String, Object> userUpdate = new HashMap<>();
-                    userUpdate.put("activeTenantId", tenantId);
-                    userUpdate.put("primaryRole", role);
-                    userUpdate.put("updatedAt", Timestamp.now());
+                        if (houseId != null && !houseId.trim().isEmpty()) {
+                            memberDoc.put("houseId", houseId.trim());
+                            java.util.List<String> assignedHouses = new java.util.ArrayList<>();
+                            assignedHouses.add(houseId.trim());
+                            memberDoc.put("assignedHouseIds", assignedHouses);
+                        } else {
+                            memberDoc.put("assignedHouseIds", new java.util.ArrayList<>());
+                        }
+                        memberDoc.put("createdAt", now);
+                        memberDoc.put("updatedAt", now);
 
-                    // Đẩy dữ liệu theo lô (Batch)
-                    db.runBatch(batch -> {
-                        batch.set(db.collection("tenants").document(tenantId).collection("members")
+                        Map<String, Object> inviteUpdate = new HashMap<>();
+                        inviteUpdate.put("status", "ACCEPTED");
+                        inviteUpdate.put("acceptedAt", now);
+                        inviteUpdate.put("acceptedBy", user.getUid());
+
+                        Map<String, Object> userUpdate = new HashMap<>();
+                        userUpdate.put("activeTenantId", tenantId);
+                        userUpdate.put("primaryRole", role);
+                        userUpdate.put("updatedAt", now);
+
+                        transaction.set(db.collection("tenants").document(tenantId).collection("members")
                                 .document(user.getUid()), memberDoc, SetOptions.merge());
-                        batch.set(inviteRef, inviteUpdate, SetOptions.merge());
-                        batch.set(db.collection("users").document(user.getUid()), userUpdate, SetOptions.merge());
-                    }).addOnSuccessListener(v -> {
-                        // Thành công -> Lưu dữ liệu cache / session
-                        TenantSession.setActiveTenantId(context, tenantId);
-                        cb.onSuccess(tenantId);
+                        transaction.set(inviteRef, inviteUpdate, SetOptions.merge());
+                        transaction.set(db.collection("users").document(user.getUid()), userUpdate, SetOptions.merge());
+
+                        return tenantId;
+                    }).addOnSuccessListener(joinedTenantId -> {
+                        TenantSession.setActiveTenantId(context, joinedTenantId);
+                        cb.onSuccess(joinedTenantId);
                     }).addOnFailureListener(e -> cb.onError(new Exception("Lỗi cập nhật dữ liệu: " + e.getMessage())));
                 })
                 .addOnFailureListener(e -> cb.onError(new Exception("Lỗi server, hãy thử lại: " + e.getMessage())));

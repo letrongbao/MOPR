@@ -25,6 +25,7 @@ import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
+import com.example.myapplication.core.constants.WaterCalculationMode;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
@@ -81,13 +82,16 @@ public class InvoiceActivity extends AppCompatActivity {
         final double trashFee;
         final double wifiFee;
         final double parkingFee;
+        final String waterMode;
 
-        FeePreset(double electricUnitPrice, double waterUnitPrice, double trashFee, double wifiFee, double parkingFee) {
+        FeePreset(double electricUnitPrice, double waterUnitPrice, double trashFee, double wifiFee, double parkingFee,
+                String waterMode) {
             this.electricUnitPrice = electricUnitPrice;
             this.waterUnitPrice = waterUnitPrice;
             this.trashFee = trashFee;
             this.wifiFee = wifiFee;
             this.parkingFee = parkingFee;
+            this.waterMode = waterMode;
         }
     }
 
@@ -679,8 +683,17 @@ public class InvoiceActivity extends AppCompatActivity {
                         hd.setElectricStartReading(elecEnd);
                         hd.setElectricEndReading(elecEnd);
                         hd.setElectricUnitPrice(fee.electricUnitPrice);
-                        hd.setWaterStartReading(waterEnd);
-                        hd.setWaterEndReading(waterEnd);
+                        if (WaterCalculationMode.isPerPerson(fee.waterMode)) {
+                            int memberCount = contract != null ? Math.max(0, contract.getMemberCount()) : 0;
+                            hd.setWaterStartReading(0);
+                            hd.setWaterEndReading(memberCount);
+                        } else if (WaterCalculationMode.ROOM.equals(fee.waterMode)) {
+                            hd.setWaterStartReading(0);
+                            hd.setWaterEndReading(1);
+                        } else {
+                            hd.setWaterStartReading(waterEnd);
+                            hd.setWaterEndReading(waterEnd);
+                        }
                         hd.setWaterUnitPrice(fee.waterUnitPrice);
                         hd.setTrashFee(fee.trashFee);
                         hd.setWifiFee(fee.wifiFee);
@@ -690,9 +703,15 @@ public class InvoiceActivity extends AppCompatActivity {
                         viewModel.addInvoiceUnique(hd,
                                 () -> {
                                     created[0]++;
+                                    double meterWaterStart = WaterCalculationMode.isMeter(fee.waterMode)
+                                        ? hd.getWaterStartReading()
+                                        : waterEnd;
+                                    double meterWaterEnd = WaterCalculationMode.isMeter(fee.waterMode)
+                                        ? hd.getWaterEndReading()
+                                        : waterEnd;
                                     InvoiceMeterHelper.saveMeterReadingFromInvoice(this::scopedCollection,
                                             this::toPeriodKey,
-                                            room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
+                                        room.getId(), period, elecEnd, elecEnd, meterWaterStart, meterWaterEnd);
                                     onAutoCreateDone(pending, created, duplicated, failed);
                                 },
                                 () -> {
@@ -817,8 +836,18 @@ public class InvoiceActivity extends AppCompatActivity {
                         hd.setElectricStartReading(elecEnd);
                         hd.setElectricEndReading(elecEnd);
                         hd.setElectricUnitPrice(electricUnitPrice);
-                        hd.setWaterStartReading(waterEnd);
-                        hd.setWaterEndReading(waterEnd);
+                        FeePreset roomFeePreset = resolveDefaultFeePreset(room);
+                        if (WaterCalculationMode.isPerPerson(roomFeePreset.waterMode)) {
+                            int memberCount = contract != null ? Math.max(0, contract.getMemberCount()) : 0;
+                            hd.setWaterStartReading(0);
+                            hd.setWaterEndReading(memberCount);
+                        } else if (WaterCalculationMode.ROOM.equals(roomFeePreset.waterMode)) {
+                            hd.setWaterStartReading(0);
+                            hd.setWaterEndReading(1);
+                        } else {
+                            hd.setWaterStartReading(waterEnd);
+                            hd.setWaterEndReading(waterEnd);
+                        }
                         hd.setWaterUnitPrice(waterUnitPrice);
                         hd.setTrashFee(trashFee);
                         hd.setWifiFee(wifiFee);
@@ -828,9 +857,15 @@ public class InvoiceActivity extends AppCompatActivity {
                         viewModel.addInvoiceUnique(hd,
                                 () -> {
                                     created[0]++;
+                                    double meterWaterStart = WaterCalculationMode.isMeter(roomFeePreset.waterMode)
+                                        ? hd.getWaterStartReading()
+                                        : waterEnd;
+                                    double meterWaterEnd = WaterCalculationMode.isMeter(roomFeePreset.waterMode)
+                                        ? hd.getWaterEndReading()
+                                        : waterEnd;
                                     InvoiceMeterHelper.saveMeterReadingFromInvoice(this::scopedCollection,
                                             this::toPeriodKey,
-                                            room.getId(), period, elecEnd, elecEnd, waterEnd, waterEnd);
+                                        room.getId(), period, elecEnd, elecEnd, meterWaterStart, meterWaterEnd);
                                     onAutoCreateDone(pending, created, duplicated, failed);
                                 },
                                 () -> {
@@ -920,6 +955,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
         final double[] lastElecEnd = { 0 };
         final double[] lastWaterEnd = { 0 };
+        final boolean[] isWaterMeterMode = { true };
         spinnerPhong.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -941,13 +977,10 @@ public class InvoiceActivity extends AppCompatActivity {
                             lastElecEnd[0] = elecEnd;
                             lastWaterEnd[0] = waterEnd;
                             form.etDienDau.setText(InvoiceFormValueHelper.formatDouble(elecEnd));
-                            form.etNuocDau.setText(InvoiceFormValueHelper.formatDouble(waterEnd));
+                            applyWaterInputMode(selectedRoom, form, waterEnd, isWaterMeterMode);
 
                             if (form.etDienCuoi.getText().toString().trim().isEmpty()) {
                                 form.etDienCuoi.setText(InvoiceFormValueHelper.formatDouble(elecEnd));
-                            }
-                            if (form.etNuocCuoi.getText().toString().trim().isEmpty()) {
-                                form.etNuocCuoi.setText(InvoiceFormValueHelper.formatDouble(waterEnd));
                             }
                         });
 
@@ -984,17 +1017,20 @@ public class InvoiceActivity extends AppCompatActivity {
                                 activeContract,
                                 form,
                                 lastElecEnd[0],
-                                lastWaterEnd[0],
+                            isWaterMeterMode[0] ? lastWaterEnd[0] : 0,
                                 getString(R.string.meter_start_must_gte_previous_end),
                                 getString(R.string.meter_end_less_than_start));
 
                         viewModel.addInvoiceUnique(hd,
                                 () -> {
+                                double meterWaterStart = isWaterMeterMode[0] ? hd.getWaterStartReading()
+                                    : lastWaterEnd[0];
+                                double meterWaterEnd = isWaterMeterMode[0] ? hd.getWaterEndReading() : lastWaterEnd[0];
                                     InvoiceMeterHelper.saveMeterReadingFromInvoice(this::scopedCollection,
                                             this::toPeriodKey,
                                             selectedRoom.getId(), hd.getBillingPeriod(), hd.getElectricStartReading(),
                                             hd.getElectricEndReading(),
-                                            hd.getWaterStartReading(), hd.getWaterEndReading());
+                                    meterWaterStart, meterWaterEnd);
                                     runOnUiThread(() -> Toast
                                             .makeText(this, getString(R.string.invoice_created_success),
                                                     Toast.LENGTH_SHORT)
@@ -1045,6 +1081,11 @@ public class InvoiceActivity extends AppCompatActivity {
             spinnerPhong.setSelection(roomIndex);
         }
         InvoiceDialogUiHelper.fillFormFromInvoice(form, invoice);
+
+        if (roomIndex >= 0 && roomIndex < danhSachPhong.size()) {
+            boolean[] editWaterMeterMode = { true };
+            applyWaterInputMode(danhSachPhong.get(roomIndex), form, invoice.getWaterStartReading(), editWaterMeterMode);
+        }
 
         InvoiceDialogUiHelper.lockIdentityAndMeterStartFields(spinnerPhong, form);
         InvoiceDialogUiHelper.refreshEstimatedTotal(form, tvEstimatedTotal,
@@ -1135,18 +1176,61 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private FeePreset resolveDefaultFeePreset(@NonNull Room room) {
         if (room.getHouseId() == null || room.getHouseId().trim().isEmpty()) {
-            return new FeePreset(0, 0, 0, 0, 0);
+            return new FeePreset(0, 0, 0, 0, 0, WaterCalculationMode.METER);
         }
         House house = housesById.get(room.getHouseId());
         if (house == null) {
-            return new FeePreset(0, 0, 0, 0, 0);
+            return new FeePreset(0, 0, 0, 0, 0, WaterCalculationMode.METER);
         }
         return new FeePreset(
                 Math.max(0, house.getElectricityPrice()),
                 Math.max(0, house.getWaterPrice()),
                 Math.max(0, house.getTrashPrice()),
                 Math.max(0, house.getInternetPrice()),
-                Math.max(0, house.getParkingPrice()));
+                Math.max(0, house.getParkingPrice()),
+                house.getWaterCalculationMethod());
+    }
+
+    private void applyWaterInputMode(@NonNull Room room,
+            @NonNull InvoiceDialogSubmitHelper.FormRefs form,
+            double latestWaterEnd,
+            @NonNull boolean[] isWaterMeterMode) {
+        House house = room.getHouseId() != null ? housesById.get(room.getHouseId()) : null;
+        String waterMode = house != null ? house.getWaterCalculationMethod() : null;
+
+        if (WaterCalculationMode.isPerPerson(waterMode)) {
+            int memberCount = resolveMemberCount(room.getId());
+            form.etNuocDau.setText("0");
+            form.etNuocCuoi.setText(String.valueOf(memberCount));
+            lockFeeField(form.etNuocDau, true);
+            lockFeeField(form.etNuocCuoi, true);
+            isWaterMeterMode[0] = false;
+            return;
+        }
+
+        if (WaterCalculationMode.ROOM.equals(waterMode)) {
+            form.etNuocDau.setText("0");
+            form.etNuocCuoi.setText("1");
+            lockFeeField(form.etNuocDau, true);
+            lockFeeField(form.etNuocCuoi, true);
+            isWaterMeterMode[0] = false;
+            return;
+        }
+
+        form.etNuocDau.setText(InvoiceFormValueHelper.formatDouble(latestWaterEnd));
+        if (form.etNuocCuoi.getText().toString().trim().isEmpty()) {
+            form.etNuocCuoi.setText(InvoiceFormValueHelper.formatDouble(latestWaterEnd));
+        }
+        lockFeeField(form.etNuocDau, true);
+        lockFeeField(form.etNuocCuoi, false);
+        isWaterMeterMode[0] = true;
+    }
+
+    private int resolveMemberCount(String roomId) {
+        if (roomId == null || roomId.trim().isEmpty())
+            return 0;
+        Tenant active = activeContractsByRoom.get(roomId);
+        return active != null ? Math.max(0, active.getMemberCount()) : 0;
     }
 
     private void lockFeeField(@NonNull EditText et, boolean locked) {

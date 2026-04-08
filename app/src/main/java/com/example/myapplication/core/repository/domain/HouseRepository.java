@@ -10,7 +10,9 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HouseRepository {
 
@@ -50,7 +52,7 @@ public class HouseRepository {
         k.setCreatedAt(com.google.firebase.Timestamp.now());
         k.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        scopedCollection().add(k)
+        scopedCollection().add(toPayload(k))
                 .addOnSuccessListener(r -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -59,7 +61,7 @@ public class HouseRepository {
         // Set update timestamp
         k.setUpdatedAt(com.google.firebase.Timestamp.now());
 
-        scopedCollection().document(k.getId()).set(k)
+        scopedCollection().document(k.getId()).set(toPayload(k))
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -68,5 +70,86 @@ public class HouseRepository {
         scopedCollection().document(id).delete()
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
+    }
+
+    private Map<String, Object> toPayload(House k) {
+        Map<String, Object> payload = new HashMap<>();
+
+        putIfNotBlank(payload, "houseName", k.getHouseName());
+        putIfNotBlank(payload, "managerPhone", k.getManagerPhone());
+        putIfNotBlank(payload, "address", k.getAddress());
+        putIfNotBlank(payload, "note", k.getNote());
+
+        putIfNotBlank(payload, "bankAccountName", k.getBankAccountName());
+        putIfNotBlank(payload, "bankName", k.getBankName());
+        putIfNotBlank(payload, "bankAccountNo", k.getBankAccountNo());
+        putIfNotBlank(payload, "paymentQrUrl", k.getPaymentQrUrl());
+        putIfNotBlank(payload, "billingReminderAt", k.getBillingReminderAt());
+
+        putIfPositive(payload, "electricityPrice", k.getElectricityPrice());
+        putIfNotBlank(payload, "electricityCalculationMethod", k.getElectricityCalculationMethod());
+        putIfPositive(payload, "waterPrice", k.getWaterPrice());
+        putIfNotBlank(payload, "waterCalculationMethod", k.getWaterCalculationMethod());
+        putIfPositive(payload, "parkingPrice", k.getParkingPrice());
+        putIfNotBlank(payload, "parkingUnit", k.getParkingUnit());
+        putIfPositive(payload, "internetPrice", k.getInternetPrice());
+        putIfNotBlank(payload, "internetUnit", k.getInternetUnit());
+        putIfPositive(payload, "laundryPrice", k.getLaundryPrice());
+        putIfNotBlank(payload, "laundryUnit", k.getLaundryUnit());
+        putIfPositive(payload, "elevatorPrice", k.getElevatorPrice());
+        putIfNotBlank(payload, "elevatorUnit", k.getElevatorUnit());
+        putIfPositive(payload, "cableTvPrice", k.getCableTvPrice());
+        putIfNotBlank(payload, "cableTvUnit", k.getCableTvUnit());
+        putIfPositive(payload, "trashPrice", k.getTrashPrice());
+        putIfNotBlank(payload, "trashUnit", k.getTrashUnit());
+        putIfPositive(payload, "servicePrice", k.getServicePrice());
+        putIfNotBlank(payload, "serviceUnit", k.getServiceUnit());
+
+        List<Map<String, Object>> extraFeePayload = new ArrayList<>();
+        List<House.ExtraFee> extras = k.getExtraFees();
+        if (extras != null) {
+            for (House.ExtraFee fee : extras) {
+                if (fee == null)
+                    continue;
+                String name = trimToEmpty(fee.getFeeName());
+                if (name.isEmpty() || fee.getPrice() <= 0)
+                    continue;
+
+                Map<String, Object> row = new HashMap<>();
+                row.put("feeName", name);
+                putIfNotBlank(row, "unit", fee.getUnit());
+                row.put("price", fee.getPrice());
+                extraFeePayload.add(row);
+            }
+        }
+        if (!extraFeePayload.isEmpty()) {
+            payload.put("extraFees", extraFeePayload);
+        }
+
+        if (k.getCreatedAt() != null) {
+            payload.put("createdAt", k.getCreatedAt());
+        }
+        if (k.getUpdatedAt() != null) {
+            payload.put("updatedAt", k.getUpdatedAt());
+        }
+
+        return payload;
+    }
+
+    private static void putIfPositive(Map<String, Object> payload, String key, double value) {
+        if (value > 0) {
+            payload.put(key, value);
+        }
+    }
+
+    private static void putIfNotBlank(Map<String, Object> payload, String key, String value) {
+        String trimmed = trimToEmpty(value);
+        if (!trimmed.isEmpty()) {
+            payload.put(key, trimmed);
+        }
+    }
+
+    private static String trimToEmpty(String s) {
+        return s == null ? "" : s.trim();
     }
 }

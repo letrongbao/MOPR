@@ -91,7 +91,7 @@ public class TenantRepository {
     }
 
     public void addTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {
-        getUserCollection().add(tenant)
+        getUserCollection().add(toPayload(tenant))
                 .addOnSuccessListener(ref -> {
                     // If tenant is ACTIVE, atomically update room status
                     if ("ACTIVE".equals(tenant.getContractStatus()) && tenant.getRoomId() != null) {
@@ -104,7 +104,7 @@ public class TenantRepository {
     }
 
     public void updateTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {
-        getUserCollection().document(tenant.getId()).set(tenant)
+        getUserCollection().document(tenant.getId()).set(toPayload(tenant))
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }
@@ -157,7 +157,7 @@ public class TenantRepository {
             tenant.setContractStatus("ACTIVE");
             tenant.setCreatedAt(System.currentTimeMillis());
             tenant.setUpdatedAt(System.currentTimeMillis());
-            transaction.set(tenantRef, tenant);
+            transaction.set(tenantRef, toPayload(tenant));
 
             // Set room rented
             Map<String, Object> roomUpdates = new HashMap<>();
@@ -169,6 +169,90 @@ public class TenantRepository {
         })
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
+    }
+
+    private Map<String, Object> toPayload(Tenant tenant) {
+        Map<String, Object> payload = new HashMap<>();
+
+        putIfNotBlank(payload, "fullName", tenant.getFullName());
+        putIfNotBlank(payload, "personalId", tenant.getPersonalId());
+        putIfNotBlank(payload, "phoneNumber", tenant.getPhoneNumber());
+        putIfNotBlank(payload, "address", tenant.getAddress());
+        putIfNotBlank(payload, "contractNumber", tenant.getContractNumber());
+        putIfNotBlank(payload, "personalIdFrontUrl", tenant.getPersonalIdFrontUrl());
+        putIfNotBlank(payload, "personalIdBackUrl", tenant.getPersonalIdBackUrl());
+        putIfNotBlank(payload, "representativeName", tenant.getRepresentativeName());
+        putIfNotBlank(payload, "representativeId", tenant.getRepresentativeId());
+
+        putIfNotBlank(payload, "roomId", tenant.getRoomId());
+        putIfNotBlank(payload, "previousRoomId", tenant.getPreviousRoomId());
+        putIfNotBlank(payload, "roomNumber", tenant.getRoomNumber());
+
+        putIfPositiveInt(payload, "memberCount", tenant.getMemberCount());
+        putIfNotBlank(payload, "rentalStartDate", tenant.getRentalStartDate());
+        putIfNotBlank(payload, "contractEndDate", tenant.getContractEndDate());
+
+        if (tenant.getRentAmount() > 0) {
+            payload.put("rentAmount", tenant.getRentAmount());
+            payload.put("roomPrice", (double) tenant.getRentAmount());
+        }
+        if (tenant.getDepositAmount() > 0) {
+            payload.put("depositAmount", tenant.getDepositAmount());
+            payload.put("legacyDepositAmount", (double) tenant.getDepositAmount());
+        }
+        if (tenant.getContractEndTimestamp() > 0) {
+            payload.put("contractEndTimestamp", tenant.getContractEndTimestamp());
+        }
+
+        payload.put("showDepositOnInvoice", tenant.isShowDepositOnInvoice());
+        payload.put("showNoteOnInvoice", tenant.isShowNoteOnInvoice());
+        putIfPositiveInt(payload, "contractDurationMonths", tenant.getContractDurationMonths());
+        payload.put("remindOneMonthBefore", tenant.isRemindOneMonthBefore());
+        putIfNotBlank(payload, "billingReminderAt", tenant.getBillingReminderAt());
+        putIfPositiveInt(payload, "electricStartReading", tenant.getElectricStartReading());
+        putIfPositiveInt(payload, "waterStartReading", tenant.getWaterStartReading());
+
+        payload.put("hasParkingService", tenant.hasParkingService());
+        putIfPositiveInt(payload, "vehicleCount", tenant.getVehicleCount());
+        payload.put("hasInternetService", tenant.hasInternetService());
+        payload.put("hasLaundryService", tenant.hasLaundryService());
+
+        putIfNotBlank(payload, "note", tenant.getNote());
+        payload.put("depositCollectionStatus", tenant.isDepositCollected());
+
+        putIfNotBlank(payload, "contractStatus", tenant.getContractStatus());
+
+        Long createdAt = tenant.getCreatedAt();
+        if (createdAt != null && createdAt > 0) {
+            payload.put("createdAt", createdAt);
+        }
+        Long updatedAt = tenant.getUpdatedAt();
+        if (updatedAt != null && updatedAt > 0) {
+            payload.put("updatedAt", updatedAt);
+        }
+        Long endedAt = tenant.getEndedAt();
+        if (endedAt != null && endedAt > 0) {
+            payload.put("endedAt", endedAt);
+        }
+
+        payload.put("primaryContact", tenant.isPrimaryContact());
+        payload.put("contractRepresentative", tenant.isContractRepresentative());
+        payload.put("temporaryResident", tenant.isTemporaryResident());
+        payload.put("fullyDocumented", tenant.isFullyDocumented());
+
+        return payload;
+    }
+
+    private static void putIfNotBlank(Map<String, Object> payload, String key, String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            payload.put(key, value.trim());
+        }
+    }
+
+    private static void putIfPositiveInt(Map<String, Object> payload, String key, int value) {
+        if (value > 0) {
+            payload.put(key, value);
+        }
     }
 
     private void updateRoomStatusAtomic(String roomId, String status, Runnable onSuccess, Runnable onFail) {

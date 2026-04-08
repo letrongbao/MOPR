@@ -52,16 +52,33 @@ public final class ContractHtmlBuilder {
                 expense.append(context.getString(
                         R.string.contract_expense_parking_line,
                         formatVnd(house.getParkingPrice()),
+                        getUnitLabel(context, house.getParkingUnit(), context.getString(R.string.contract_unit_vehicle)),
                         contract.getVehicleCount()));
             }
             if (contract.hasInternetService()) {
                 expense.append(context.getString(R.string.contract_expense_internet_line,
-                        formatVnd(house.getInternetPrice())));
+                        formatVnd(house.getInternetPrice()),
+                        getUnitLabel(context, house.getInternetUnit(), context.getString(R.string.contract_unit_room))));
             }
-            if (contract.hasLaundryService()) {
+
+                if (contract.hasLaundryService() && house.getLaundryPrice() > 0) {
                 expense.append(
-                        context.getString(R.string.contract_expense_laundry_line, formatVnd(house.getLaundryPrice())));
+                        context.getString(
+                                R.string.contract_expense_laundry_line,
+                                formatVnd(house.getLaundryPrice()),
+                                getUnitLabel(context, house.getLaundryUnit(),
+                                        context.getString(R.string.contract_unit_room))));
             }
+            if (house.getTrashPrice() > 0) {
+                expense.append(
+                        context.getString(
+                                R.string.contract_expense_trash_line,
+                                formatVnd(house.getTrashPrice()),
+                                getUnitLabel(context, house.getTrashUnit(),
+                                        context.getString(R.string.contract_unit_room))));
+            }
+
+            appendExtraFees(context, house, expense);
         }
 
         String template = readRawText(context, R.raw.contract_template_vi);
@@ -146,5 +163,46 @@ public final class ContractHtmlBuilder {
     @NonNull
     private static String formatVnd(double value) {
         return NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN")).format((long) value) + " ₫";
+    }
+
+    @NonNull
+    private static String getUnitLabel(@NonNull Context context, String unitValue, @NonNull String defaultLabel) {
+        if (unitValue == null || unitValue.trim().isEmpty()) {
+            return defaultLabel;
+        }
+        String normalized = unitValue.trim().toLowerCase(Locale.ROOT);
+        if ("person".equals(normalized)) {
+            return context.getString(R.string.contract_unit_person);
+        }
+        if ("vehicle".equals(normalized)) {
+            return context.getString(R.string.contract_unit_vehicle);
+        }
+        if ("room".equals(normalized)) {
+            return context.getString(R.string.contract_unit_room);
+        }
+        return unitValue;
+    }
+
+    private static void appendExtraFees(@NonNull Context context, @NonNull House house, @NonNull StringBuilder expense) {
+        java.util.List<House.ExtraFee> extraFees = house.getExtraFees();
+        if (extraFees == null || extraFees.isEmpty()) {
+            return;
+        }
+
+        for (House.ExtraFee fee : extraFees) {
+            if (fee == null)
+                continue;
+            String name = fee.getFeeName() != null ? fee.getFeeName().trim() : "";
+            if (name.isEmpty() || fee.getPrice() <= 0)
+                continue;
+
+                String unit = fee.getUnit() != null ? fee.getUnit().trim() : "";
+                String unitSuffix = unit.isEmpty() ? "" : "/" + unit;
+            expense.append(context.getString(
+                    R.string.contract_expense_extra_line,
+                    name,
+                    formatVnd(fee.getPrice()),
+                    unitSuffix));
+        }
     }
 }

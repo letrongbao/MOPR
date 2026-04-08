@@ -44,6 +44,7 @@ public class Tenant {
     private boolean remindOneMonthBefore = true;
     private String billingReminderAt = "start_month";
     private int electricStartReading;
+    private int waterStartReading;
 
     private boolean hasParkingService;
     private int vehicleCount;
@@ -308,6 +309,14 @@ public class Tenant {
 
     public void setElectricStartReading(int electricStartReading) {
         this.electricStartReading = electricStartReading;
+    }
+
+    public int getWaterStartReading() {
+        return waterStartReading;
+    }
+
+    public void setWaterStartReading(int waterStartReading) {
+        this.waterStartReading = waterStartReading;
     }
 
     @PropertyName("hasParkingService")

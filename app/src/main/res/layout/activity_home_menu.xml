@@ -54,13 +54,14 @@
                         android:layout_height="wrap_content"
                         android:text="@string/app_subtitle_manage_rental_upper"
                         android:textColor="@color/white"
-                        android:textSize="19sp"
-                        android:fontFamily="sans-serif-medium"
-                        android:letterSpacing="0.09"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.05"
                         android:shadowColor="#40000000"
                         android:shadowDx="1"
                         android:shadowDy="1"
-                        android:shadowRadius="2"/>
+                        android:shadowRadius="3"/>
                 </LinearLayout>
 
                 <!-- UI section note -->

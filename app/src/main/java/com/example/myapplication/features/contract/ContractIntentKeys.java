@@ -19,6 +19,7 @@ public final class ContractIntentKeys {
     public static final String RENT_AMOUNT = "RENT_AMOUNT";
     public static final String DEPOSIT_AMOUNT = "DEPOSIT_AMOUNT";
     public static final String ELECTRIC_START_READING = "ELECTRIC_START_READING";
+    public static final String WATER_START_READING = "WATER_START_READING";
     public static final String HAS_PARKING_SERVICE = "HAS_PARKING_SERVICE";
     public static final String VEHICLE_COUNT = "VEHICLE_COUNT";
     public static final String HAS_INTERNET_SERVICE = "HAS_INTERNET_SERVICE";

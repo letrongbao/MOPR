@@ -21,6 +21,10 @@ public final class AuthProviderUtil {
         return hasProvider(user, PROVIDER_PASSWORD);
     }
 
+    public static boolean hasGoogleProvider(FirebaseUser user) {
+        return hasProvider(user, PROVIDER_GOOGLE);
+    }
+
     public static String resolveLoginMethodLabel(Context context, FirebaseUser user) {
         boolean hasGoogle = hasProvider(user, PROVIDER_GOOGLE);
         boolean hasPassword = hasProvider(user, PROVIDER_PASSWORD);

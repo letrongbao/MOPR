@@ -53,7 +53,7 @@
                     android:layout_height="match_parent"
                     android:contentDescription="@string/add_room_image_desc"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/baseline_home_24" />
+                    android:src="@drawable/bg_room_placeholder" />
 
                 <View
                     android:layout_width="match_parent"

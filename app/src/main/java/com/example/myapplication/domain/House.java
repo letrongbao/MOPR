@@ -26,15 +26,23 @@ public class House {
 
     // Fee table (VND)
     private double electricityPrice;
+    private String electricityCalculationMethod; // "kwh" | "per_person" | "room"
     private double waterPrice;
     private String waterCalculationMethod; // "per_person" | "meter" | "room"
     private double parkingPrice;
+    private String parkingUnit; // "vehicle" | "person" | "room"
     private double internetPrice;
+    private String internetUnit; // "room" | "person"
     private double laundryPrice;
+    private String laundryUnit; // "room" | "person"
     private double elevatorPrice;
+    private String elevatorUnit; // "room" | "person"
     private double cableTvPrice;
+    private String cableTvUnit; // "room" | "person"
     private double trashPrice;
+    private String trashUnit; // "room" | "person"
     private double servicePrice;
+    private String serviceUnit; // "room" | "person"
 
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;
@@ -131,6 +139,16 @@ public class House {
         this.electricityPrice = electricityPrice;
     }
 
+    @PropertyName("electricityCalculationMethod")
+    public String getElectricityCalculationMethod() {
+        return electricityCalculationMethod;
+    }
+
+    @PropertyName("electricityCalculationMethod")
+    public void setElectricityCalculationMethod(String electricityCalculationMethod) {
+        this.electricityCalculationMethod = electricityCalculationMethod;
+    }
+
     @PropertyName("waterPrice")
     public double getWaterPrice() {
         return waterPrice;
@@ -161,6 +179,16 @@ public class House {
         this.parkingPrice = parkingPrice;
     }
 
+    @PropertyName("parkingUnit")
+    public String getParkingUnit() {
+        return parkingUnit;
+    }
+
+    @PropertyName("parkingUnit")
+    public void setParkingUnit(String parkingUnit) {
+        this.parkingUnit = parkingUnit;
+    }
+
     @PropertyName("internetPrice")
     public double getInternetPrice() {
         return internetPrice;
@@ -169,6 +197,16 @@ public class House {
     @PropertyName("internetPrice")
     public void setInternetPrice(double internetPrice) {
         this.internetPrice = internetPrice;
+    }
+
+    @PropertyName("internetUnit")
+    public String getInternetUnit() {
+        return internetUnit;
+    }
+
+    @PropertyName("internetUnit")
+    public void setInternetUnit(String internetUnit) {
+        this.internetUnit = internetUnit;
     }
 
     @PropertyName("laundryPrice")
@@ -181,6 +219,16 @@ public class House {
         this.laundryPrice = laundryPrice;
     }
 
+    @PropertyName("laundryUnit")
+    public String getLaundryUnit() {
+        return laundryUnit;
+    }
+
+    @PropertyName("laundryUnit")
+    public void setLaundryUnit(String laundryUnit) {
+        this.laundryUnit = laundryUnit;
+    }
+
     @PropertyName("elevatorPrice")
     public double getElevatorPrice() {
         return elevatorPrice;
@@ -189,6 +237,16 @@ public class House {
     @PropertyName("elevatorPrice")
     public void setElevatorPrice(double elevatorPrice) {
         this.elevatorPrice = elevatorPrice;
+    }
+
+    @PropertyName("elevatorUnit")
+    public String getElevatorUnit() {
+        return elevatorUnit;
+    }
+
+    @PropertyName("elevatorUnit")
+    public void setElevatorUnit(String elevatorUnit) {
+        this.elevatorUnit = elevatorUnit;
     }
 
     @PropertyName("cableTvPrice")
@@ -201,6 +259,16 @@ public class House {
         this.cableTvPrice = cableTvPrice;
     }
 
+    @PropertyName("cableTvUnit")
+    public String getCableTvUnit() {
+        return cableTvUnit;
+    }
+
+    @PropertyName("cableTvUnit")
+    public void setCableTvUnit(String cableTvUnit) {
+        this.cableTvUnit = cableTvUnit;
+    }
+
     @PropertyName("trashPrice")
     public double getTrashPrice() {
         return trashPrice;
@@ -211,6 +279,16 @@ public class House {
         this.trashPrice = trashPrice;
     }
 
+    @PropertyName("trashUnit")
+    public String getTrashUnit() {
+        return trashUnit;
+    }
+
+    @PropertyName("trashUnit")
+    public void setTrashUnit(String trashUnit) {
+        this.trashUnit = trashUnit;
+    }
+
     @PropertyName("servicePrice")
     public double getServicePrice() {
         return servicePrice;
@@ -219,6 +297,16 @@ public class House {
     @PropertyName("servicePrice")
     public void setServicePrice(double servicePrice) {
         this.servicePrice = servicePrice;
+    }
+
+    @PropertyName("serviceUnit")
+    public String getServiceUnit() {
+        return serviceUnit;
+    }
+
+    @PropertyName("serviceUnit")
+    public void setServiceUnit(String serviceUnit) {
+        this.serviceUnit = serviceUnit;
     }
 
     @PropertyName("extraFees")

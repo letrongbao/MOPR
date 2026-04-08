@@ -11,6 +11,7 @@ import androidx.appcompat.widget.Toolbar;
 import com.example.myapplication.R;
 import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.core.util.ScreenUiHelper;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -33,8 +34,12 @@ public class ChangePasswordActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.applyTopInset(toolbar);
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.change_password));
 
         edtNewPassword = findViewById(R.id.edtNewPassword);

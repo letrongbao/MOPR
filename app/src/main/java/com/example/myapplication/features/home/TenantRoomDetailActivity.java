@@ -207,15 +207,15 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
 
         // Cập nhật text
         tvDaysRemaining.setText(String.valueOf(Math.max(0, daysLeft)));
-        tvMonthsStayed.setText(monthsStayed + " tháng, " + extraDays + " ngày");
+        tvMonthsStayed.setText(getString(R.string.tenant_room_months_stayed_value, monthsStayed, extraDays));
         tvStartDate.setText(DATE_FORMAT.format(startDate));
         tvEndDate.setText(DATE_FORMAT.format(endDate));
 
         // Trạng thái hợp đồng
         if (daysLeft > 0) {
-            tvContractStatus.setText("Trong thời hạn hợp đồng");
+            tvContractStatus.setText(getString(R.string.tenant_room_contract_active));
         } else {
-            tvContractStatus.setText("Hợp đồng đã hết hạn");
+            tvContractStatus.setText(getString(R.string.tenant_room_contract_expired));
         }
 
         // Tiền cọc từ contract (depositAmount)
@@ -233,8 +233,8 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
 
     private void showNoContractUI() {
         tvDaysRemaining.setText("--");
-        tvMonthsStayed.setText("Chưa có hợp đồng");
-        tvContractStatus.setText("Không tìm thấy hợp đồng");
+        tvMonthsStayed.setText(getString(R.string.tenant_room_no_contract));
+        tvContractStatus.setText(getString(R.string.tenant_room_contract_not_found));
         tvStartDate.setText("--/--/----");
         tvEndDate.setText("--/--/----");
         contractProgress.setProgress(0);
@@ -278,40 +278,44 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         // Tên nhà
         String houseName = doc.getString("houseName");
         if (houseName != null && !houseName.isEmpty() && tvBillingSubtitle != null) {
-            tvBillingSubtitle.setText("Dịch vụ & giá tại " + houseName);
+            tvBillingSubtitle.setText(getString(R.string.tenant_room_billing_subtitle_with_house, houseName));
         }
 
         // Tiền nước (waterRate)
         Object waterRate = doc.get("waterRate");
         if (waterRate instanceof Number) {
-            tvWaterRate.setText(formatMoneyShort(((Number) waterRate).doubleValue()) + " đ / Khối");
+            tvWaterRate.setText(getString(R.string.tenant_room_rate_water,
+                    formatMoneyShort(((Number) waterRate).doubleValue())));
         }
 
         // Tiền điện (electricityRate hoặc electricRate)
         Object elecRate = doc.get("electricityRate");
         if (!(elecRate instanceof Number)) elecRate = doc.get("electricRate");
         if (elecRate instanceof Number) {
-            tvElecRate.setText(formatMoneyShort(((Number) elecRate).doubleValue()) + " đ / KWh");
+            tvElecRate.setText(getString(R.string.tenant_room_rate_electric,
+                    formatMoneyShort(((Number) elecRate).doubleValue())));
         }
 
         // Tiền rác (garbageFee)
         Object garbage = doc.get("garbageFee");
         if (garbage instanceof Number) {
-            tvGarbageFee.setText(formatMoneyShort(((Number) garbage).doubleValue()) + " đ / Người");
+            tvGarbageFee.setText(getString(R.string.tenant_room_rate_per_person,
+                    formatMoneyShort(((Number) garbage).doubleValue())));
         }
 
         // Tiền wifi (wifiFee hoặc internetFee)
         Object wifi = doc.get("wifiFee");
         if (!(wifi instanceof Number)) wifi = doc.get("internetFee");
         if (wifi instanceof Number) {
-            tvWifiFee.setText(formatMoneyShort(((Number) wifi).doubleValue()) + " đ / Người");
+            tvWifiFee.setText(getString(R.string.tenant_room_rate_per_person,
+                    formatMoneyShort(((Number) wifi).doubleValue())));
         }
 
         // Ngày chốt tiền thuê (paymentDay)
         Object payDay = doc.get("paymentDay");
         if (payDay instanceof Number) {
             int day = ((Number) payDay).intValue();
-            tvPaymentDayLabel.setText("Ngày " + day + " chốt tiền thuê");
+            tvPaymentDayLabel.setText(getString(R.string.tenant_room_payment_day_label, day));
             updatePaymentDaysWarning(day);
         }
     }
@@ -328,9 +332,9 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         }
 
         if (daysUntilPayment <= 5) {
-            tvPaymentDaysWarning.setText(daysUntilPayment + " ngày là hạn chốt thanh toán phí");
+            tvPaymentDaysWarning.setText(getString(R.string.tenant_room_payment_warning_near_due, daysUntilPayment));
         } else {
-            tvPaymentDaysWarning.setText("Còn " + daysUntilPayment + " ngày đến kỳ thanh toán");
+            tvPaymentDaysWarning.setText(getString(R.string.tenant_room_payment_warning_remaining, daysUntilPayment));
         }
     }
 
@@ -386,13 +390,15 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         String suffix = (period != null) ? " (" + period + ")" : "";
 
         if (elecEnd instanceof Number && ((Number) elecEnd).doubleValue() > 0) {
-            tvElecStatus.setText("Đã chốt");
-            tvElecLastIndex.setText("Số cuối: " + (int)((Number) elecEnd).doubleValue() + suffix);
+            tvElecStatus.setText(getString(R.string.tenant_room_meter_finalized));
+            tvElecLastIndex.setText(getString(R.string.tenant_room_last_index_value,
+                    (int) ((Number) elecEnd).doubleValue(), suffix));
         }
 
         if (waterEnd instanceof Number && ((Number) waterEnd).doubleValue() > 0) {
-            tvWaterStatus.setText("Đã chốt");
-            tvWaterLastIndex.setText("Số cuối: " + (int)((Number) waterEnd).doubleValue() + suffix);
+            tvWaterStatus.setText(getString(R.string.tenant_room_meter_finalized));
+            tvWaterLastIndex.setText(getString(R.string.tenant_room_last_index_value,
+                    (int) ((Number) waterEnd).doubleValue(), suffix));
         }
     }
 
@@ -413,19 +419,19 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         // Nút Lịch sử đồng hồ
         if (btnMeterHistory != null) {
             btnMeterHistory.setOnClickListener(v ->
-                    Toast.makeText(this, "Lịch sử đồng hồ", Toast.LENGTH_SHORT).show());
+                    Toast.makeText(this, getString(R.string.tenant_room_meter_history), Toast.LENGTH_SHORT).show());
         }
 
         // Nút Danh sách chốt
         if (btnMeterList != null) {
             btnMeterList.setOnClickListener(v ->
-                    Toast.makeText(this, "Danh sách chốt", Toast.LENGTH_SHORT).show());
+                    Toast.makeText(this, getString(R.string.tenant_room_meter_list), Toast.LENGTH_SHORT).show());
         }
 
         // Xem chi tiết hợp đồng
         if (btnViewContractDetail != null) {
             btnViewContractDetail.setOnClickListener(v ->
-                    Toast.makeText(this, "Chi tiết hợp đồng", Toast.LENGTH_SHORT).show());
+                    Toast.makeText(this, getString(R.string.tenant_room_contract_detail), Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -473,7 +479,7 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         long longVal = (long) amount;
         String formatted = String.format(Locale.getDefault(), "%,d", longVal)
                 .replace(',', '.');
-        return formatted + " đ";
+        return getString(R.string.tenant_room_money_amount, formatted);
     }
 
     /** Format số ngắn (không có đ ở cuối) */
