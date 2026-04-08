@@ -36,6 +36,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         void onSua(Invoice invoice);
 
         void onXuat(Invoice invoice);
+
+        void onEditOwnerNote(Invoice invoice);
     }
 
     public InvoiceAdapter(OnItemActionListener listener) {
@@ -111,6 +113,21 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         // View reported fees link
         holder.tvViewReportedFees.setOnClickListener(v -> listener.onXuat(h));
 
+        boolean showOwnerNoteBlock = !tenantMode && currentTab == 1;
+        holder.tvOwnerNoteTitle.setVisibility(showOwnerNoteBlock ? View.VISIBLE : View.GONE);
+        holder.tvOwnerNote.setVisibility(showOwnerNoteBlock ? View.VISIBLE : View.GONE);
+        holder.btnEditOwnerNote.setVisibility(showOwnerNoteBlock ? View.VISIBLE : View.GONE);
+        if (showOwnerNoteBlock) {
+            String ownerNote = h.getOwnerNote() != null ? h.getOwnerNote().trim() : "";
+            holder.tvOwnerNote
+                    .setText(ownerNote.isEmpty()
+                            ? holder.itemView.getContext().getString(R.string.invoice_owner_note_empty)
+                            : ownerNote);
+            holder.btnEditOwnerNote.setOnClickListener(v -> listener.onEditOwnerNote(h));
+        } else {
+            holder.btnEditOwnerNote.setOnClickListener(null);
+        }
+
         // Main action button changes based on tab
         String buttonText;
         int buttonColor;
@@ -144,21 +161,21 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
             buttonText = holder.itemView.getContext().getString(R.string.report_fee_month, month);
             buttonColor = R.color.purple_500;
             buttonAction = v -> listener.onBaoPhi(h);
+            holder.itemView.setOnClickListener(v -> listener.onBaoPhi(h));
         } else if (currentTab == 1) {
-            // "Notified" tab
+            // "Reported" tab (includes partial payment)
             buttonText = holder.itemView.getContext().getString(R.string.confirm_collected_fee);
             buttonColor = R.color.btn_orange;
-            buttonAction = v -> listener.onDoiTrangThai(h);
-        } else if (currentTab == 2) {
-            // "Partially Paid" tab
-            buttonText = holder.itemView.getContext().getString(R.string.view_payment_history);
-            buttonColor = R.color.btn_blue_action;
             buttonAction = v -> listener.onDoiTrangThai(h);
         } else {
             // "Paid" tab
             buttonText = holder.itemView.getContext().getString(R.string.view_payment_history);
             buttonColor = R.color.success;
             buttonAction = v -> listener.onDoiTrangThai(h);
+        }
+
+        if (currentTab != 0) {
+            holder.itemView.setOnClickListener(null);
         }
 
         holder.btnMainAction.setText(buttonText);
@@ -175,7 +192,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvPhong, tvTenantName, tvPriceMonth, tvReportDate, tvRibbonStatus, tvViewReportedFees;
+        TextView tvPhong, tvTenantName, tvPriceMonth, tvReportDate, tvRibbonStatus, tvViewReportedFees,
+            tvOwnerNoteTitle, tvOwnerNote, btnEditOwnerNote;
         MaterialButton btnMainAction;
 
         ViewHolder(View v) {
@@ -186,6 +204,9 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
             tvReportDate = v.findViewById(R.id.tvReportDate);
             tvRibbonStatus = v.findViewById(R.id.tvRibbonStatus);
             tvViewReportedFees = v.findViewById(R.id.tvViewReportedFees);
+            tvOwnerNoteTitle = v.findViewById(R.id.tvOwnerNoteTitle);
+            tvOwnerNote = v.findViewById(R.id.tvOwnerNote);
+            btnEditOwnerNote = v.findViewById(R.id.btnEditOwnerNote);
             btnMainAction = v.findViewById(R.id.btnMainAction);
         }
     }

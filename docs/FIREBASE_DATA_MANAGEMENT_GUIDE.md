@@ -260,6 +260,11 @@ Recommended action sequence:
 4. Create `tenants/{tenantId}/members/{uid}`.
 5. Create invites if testing join flow.
 6. Add `houses`, `rooms`, `contracts`, `invoices`, `payments` only after role is correct.
+7. For messaging tests, add/verify:
+   - `users/{uid}/fcm_tokens/primary`
+   - `tenants/{tenantId}/chat_conversations`
+   - `tenants/{tenantId}/chat_conversations/{conversationId}/messages`
+   - `tenants/{tenantId}/notifications`
 
 Rules:
 
@@ -290,6 +295,20 @@ This test suite lets you verify:
 - invite/join flow
 - data reading per tenant
 
+For chat/notification validation, use this additional matrix:
+
+1. Owner account + one tenant account in same room:
+   - verify room conversation membership and message persistence.
+2. Owner account + one staff account:
+   - verify private conversation bootstrap and unread badge updates.
+3. House-wide thread with 3 members:
+   - verify house conversation participation and notification fan-out records.
+
+Push note:
+
+- Client FCM receive path is active.
+- If Cloud Function/server dispatcher is not deployed, `notifications` records will exist but device push may not fire in background.
+
 ## 9) When to Delete and Recreate Data
 
 Only reset from scratch if:
@@ -318,3 +337,55 @@ When `ensureActiveTenant(...)` creates a default tenant for a legacy user, app m
 
 Current implementation uses batch write guard around 450 operations per collection pass.
 Large legacy datasets may need manual follow-up migration for remaining documents.
+
+## 12) Chat/Notification Reset Tips
+
+Use targeted cleanup for messaging tests to avoid deleting billing data:
+
+1. Remove only conversation artifacts:
+   - `tenants/{tenantId}/chat_conversations/*`
+   - nested `messages` subcollections
+2. Remove only notification artifacts:
+   - `tenants/{tenantId}/notifications/*`
+3. Refresh a user's token doc if needed:
+   - `users/{uid}/fcm_tokens/primary`
+
+When debugging push issues, compare:
+
+1. token updatedAt timestamp
+2. notification document createdAt timestamp
+3. app foreground/background state during send/receive
+
+## 13) Phase 2 Push Dispatcher Deployment
+
+Cloud Function source has been added:
+
+1. `functions/index.js`
+2. `firebase.json` includes:
+   - `functions.source = "functions"`
+
+Recommended deploy flow:
+
+1. Install dependencies:
+   - `cd functions`
+   - `npm install`
+2. Return to project root and deploy:
+   - `cd ..`
+   - `firebase deploy --only functions`
+
+Local emulator flow:
+
+1. `cd functions && npm install`
+2. Back to root: `firebase emulators:start --only functions,firestore`
+
+Verification checklist after deploy:
+
+1. Create chat message from account A to account B.
+2. Confirm new doc in `tenants/{tenantId}/notifications` has `pushState` updated from `PENDING_SERVER_DISPATCH` to terminal state.
+3. Confirm account B receives push (foreground: in-app handler; background: system notification).
+
+Spark/free-plan fallback (no deploy):
+
+1. App still receives notification documents via Firestore realtime listener.
+2. While app session is active, local notification fallback is emitted by app (`NotificationRealtimeObserver`).
+3. Background/killed-app push is not guaranteed without deployed server dispatcher.

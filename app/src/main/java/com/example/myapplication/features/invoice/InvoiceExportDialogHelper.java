@@ -75,6 +75,17 @@ public final class InvoiceExportDialogHelper {
         if (invoice.getParkingFee() > 0)
             sb.append(activity.getString(R.string.parking_fee_colon)).append(fmt.format(invoice.getParkingFee()))
                     .append("\n");
+        if (invoice.getOtherFee() > 0) {
+            sb.append(activity.getString(R.string.other_fee_colon)).append(fmt.format(invoice.getOtherFee()))
+                .append("\n");
+            if (invoice.getOtherFeeLines() != null && !invoice.getOtherFeeLines().isEmpty()) {
+                for (String line : invoice.getOtherFeeLines()) {
+                    if (line == null || line.trim().isEmpty())
+                        continue;
+                    sb.append("   + ").append(line.trim()).append("\n");
+                }
+            }
+        }
 
         tvChiTiet.setText(sb + "\n\n" + activity.getString(R.string.loading_payments));
         tvTong.setText(activity.getString(R.string.total_amount_colon) + fmt.format(invoice.getTotalAmount()));

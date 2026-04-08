@@ -41,6 +41,23 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 
 public class RoomActivity extends AppCompatActivity {
 
+    private static final class ActiveContractInfo {
+        final String contractId;
+        final String representativeName;
+        final String phone;
+        final int declaredMemberCount;
+        final long order;
+
+        ActiveContractInfo(String contractId, String representativeName, String phone, int declaredMemberCount,
+                long order) {
+            this.contractId = contractId;
+            this.representativeName = representativeName;
+            this.phone = phone;
+            this.declaredMemberCount = declaredMemberCount;
+            this.order = order;
+        }
+    }
+
     private static final String CLOUD_NAME = "dsvkscwti";
     private static final String UPLOAD_PRESET = "MOPR";
 
@@ -57,6 +74,9 @@ public class RoomActivity extends AppCompatActivity {
     private BroadcastReceiver uploadReceiver;
 
     private com.google.firebase.firestore.ListenerRegistration tenantsListener;
+    private com.google.firebase.firestore.ListenerRegistration contractMembersListener;
+    private final java.util.Map<String, ActiveContractInfo> activeContractByRoomId = new java.util.HashMap<>();
+    private final java.util.Map<String, Integer> activeMemberCountByContractId = new java.util.HashMap<>();
 
     private String presetHouseId;
     private String presetHouseName;
@@ -248,7 +268,7 @@ public class RoomActivity extends AppCompatActivity {
         }
 
         viewModel = new ViewModelProvider(this).get(RoomViewModel.class);
-        // Listen tenants to enrich room list UI
+        // Listen active contracts to enrich room list UI (representative + declared members)
         try {
             tenantsListener = scopedCollection("contracts")
                     .whereEqualTo("contractStatus", "ACTIVE")
@@ -256,36 +276,58 @@ public class RoomActivity extends AppCompatActivity {
                         if (snap == null)
                             return;
 
-                        java.util.Map<String, java.util.List<com.google.firebase.firestore.DocumentSnapshot>> byRoom = new java.util.HashMap<>();
+                        java.util.Map<String, ActiveContractInfo> latestByRoom = new java.util.HashMap<>();
                         for (com.google.firebase.firestore.DocumentSnapshot d : snap.getDocuments()) {
                             String roomId = d.getString("roomId");
-                            if (roomId == null || roomId.trim().isEmpty())
+                            if (roomId == null || roomId.trim().isEmpty()) {
                                 continue;
-                            java.util.List<com.google.firebase.firestore.DocumentSnapshot> arr = byRoom.get(roomId);
-                            if (arr == null) {
-                                arr = new java.util.ArrayList<>();
-                                byRoom.put(roomId, arr);
                             }
-                            arr.add(d);
+                            String contractId = d.getId();
+                            String name = d.getString("fullName");
+                            String phone = d.getString("phoneNumber");
+                            Long updatedAt = d.getLong("updatedAt");
+                            Long createdAt = d.getLong("createdAt");
+                            long order = updatedAt != null ? updatedAt : (createdAt != null ? createdAt : 0L);
+                            Long declaredMemberCount = d.getLong("memberCount");
+                            int declared = declaredMemberCount != null ? Math.max(0, declaredMemberCount.intValue()) : 0;
+
+                            ActiveContractInfo candidate = new ActiveContractInfo(
+                                    contractId,
+                                    name != null ? name.trim() : "",
+                                    phone,
+                                    declared,
+                                    order);
+
+                            ActiveContractInfo existing = latestByRoom.get(roomId);
+                            if (existing == null || candidate.order >= existing.order) {
+                                latestByRoom.put(roomId, candidate);
+                            }
+                        }
+                        activeContractByRoomId.clear();
+                        activeContractByRoomId.putAll(latestByRoom);
+                        pushTenantCardsToAdapter();
+                    });
+
+            // Listen active members to compute current occupancy per active contract.
+            contractMembersListener = scopedCollection("contractMembers")
+                    .whereEqualTo("active", true)
+                    .addSnapshotListener((snap, err) -> {
+                        if (snap == null)
+                            return;
+
+                        java.util.Map<String, Integer> byContract = new java.util.HashMap<>();
+                        for (com.google.firebase.firestore.DocumentSnapshot d : snap.getDocuments()) {
+                            String contractId = d.getString("contractId");
+                            if (contractId == null || contractId.trim().isEmpty()) {
+                                continue;
+                            }
+                            int count = byContract.containsKey(contractId) ? byContract.get(contractId) : 0;
+                            byContract.put(contractId, count + 1);
                         }
 
-                        java.util.Map<String, RoomAdapter.TenantCardInfo> out = new java.util.HashMap<>();
-                        for (java.util.Map.Entry<String, java.util.List<com.google.firebase.firestore.DocumentSnapshot>> e : byRoom
-                                .entrySet()) {
-                            java.util.List<com.google.firebase.firestore.DocumentSnapshot> arr = e.getValue();
-                            if (arr == null || arr.isEmpty())
-                                continue;
-                            com.google.firebase.firestore.DocumentSnapshot first = arr.get(0);
-                            String name = first.getString("fullName");
-                            String phone = first.getString("phoneNumber");
-                            int extra = arr.size() - 1;
-                            String displayName = name != null ? name.trim() : "";
-                            if (extra > 0 && !displayName.isEmpty()) {
-                                displayName = displayName + " (+" + extra + ")";
-                            }
-                            out.put(e.getKey(), new RoomAdapter.TenantCardInfo(displayName, phone));
-                        }
-                        adapter.setTenantByRoomId(out);
+                        activeMemberCountByContractId.clear();
+                        activeMemberCountByContractId.putAll(byContract);
+                        pushTenantCardsToAdapter();
                     });
         } catch (Exception ignore) {
         }
@@ -851,6 +893,30 @@ public class RoomActivity extends AppCompatActivity {
         Toast.makeText(this, R.string.uploading_image_to_system, Toast.LENGTH_SHORT).show();
     }
 
+    private void pushTenantCardsToAdapter() {
+        java.util.Map<String, RoomAdapter.TenantCardInfo> out = new java.util.HashMap<>();
+        for (java.util.Map.Entry<String, ActiveContractInfo> e : activeContractByRoomId.entrySet()) {
+            String roomId = e.getKey();
+            ActiveContractInfo info = e.getValue();
+            if (info == null || roomId == null || roomId.trim().isEmpty()) {
+                continue;
+            }
+            int current = 0;
+            if (info.contractId != null && !info.contractId.trim().isEmpty()) {
+                current = Math.max(0, activeMemberCountByContractId.getOrDefault(info.contractId, 0));
+            }
+            if (current == 0 && info.representativeName != null && !info.representativeName.trim().isEmpty()) {
+                current = 1;
+            }
+            out.put(roomId, new RoomAdapter.TenantCardInfo(
+                    info.representativeName,
+                    info.phone,
+                    info.declaredMemberCount,
+                    current));
+        }
+        adapter.setTenantByRoomId(out);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -860,6 +926,10 @@ public class RoomActivity extends AppCompatActivity {
         if (tenantsListener != null) {
             tenantsListener.remove();
             tenantsListener = null;
+        }
+        if (contractMembersListener != null) {
+            contractMembersListener.remove();
+            contractMembersListener = null;
         }
     }
 

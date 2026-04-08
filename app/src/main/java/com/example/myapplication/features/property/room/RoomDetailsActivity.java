@@ -30,6 +30,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
@@ -39,6 +41,7 @@ import com.example.myapplication.core.session.InviteRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.core.util.ScreenUiHelper;
+import com.example.myapplication.domain.ContractMember;
 import com.example.myapplication.domain.Tenant;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.features.contract.ContractActivity;
@@ -53,6 +56,9 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -68,12 +74,18 @@ public class RoomDetailsActivity extends AppCompatActivity {
     private TextView tvTenantName, tvTenantPhone;
     private TextView tvTenantRepresentativeLine, tvManagerRow;
     private View cardTenant;
+    private View cardTenantProfiles;
+    private TextView tvTenantProfileEmpty;
+    private RecyclerView rvTenantProfiles;
+    private View rowMaxOccupancy;
+    private View rowCurrentOccupancy;
     private View btnCall, btnMessage, llActionButtons;
     private Button btnGenerateCode;
     private Room currentRoom;
     private String activeContractId;
 
     private String tenantPhoneNumber;
+    private String representativePersonalId;
     private String currentRoomNumber;
     private String currentRepresentativeName;
     private String currentManagerName;
@@ -90,6 +102,10 @@ public class RoomDetailsActivity extends AppCompatActivity {
     private ListenerRegistration memberListener;
 
     private String roomId;
+    private int declaredMemberCount;
+    private int currentMemberCount;
+    private boolean isVacantRoom = true;
+    private TenantProfileQuickAdapter tenantProfileAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,10 +174,12 @@ public class RoomDetailsActivity extends AppCompatActivity {
         tvRentAmount.setTextColor(getResources().getColor(R.color.primary));
 
         View rowMax = findViewById(R.id.rowSucChuaToiDa);
+        rowMaxOccupancy = rowMax;
         ((TextView) rowMax.findViewById(R.id.tvLabel)).setText(R.string.room_max_occupancy_label);
         tvMaxOccupancy = rowMax.findViewById(R.id.tvValue);
 
         View rowCurrent = findViewById(R.id.rowSoNguoiDangO);
+        rowCurrentOccupancy = rowCurrent;
         ((TextView) rowCurrent.findViewById(R.id.tvLabel)).setText(R.string.room_current_occupancy_label);
         tvCurrentOccupancy = rowCurrent.findViewById(R.id.tvValue);
         tvCurrentOccupancy.setText(getString(R.string.room_current_occupancy_unknown, 0));
@@ -179,6 +197,15 @@ public class RoomDetailsActivity extends AppCompatActivity {
         tvTenantName = findViewById(R.id.tvTenTenant);
         tvTenantPhone = findViewById(R.id.tvSdtTenant);
         cardTenant = findViewById(R.id.cardTenant);
+        cardTenantProfiles = findViewById(R.id.cardTenantProfiles);
+        tvTenantProfileEmpty = findViewById(R.id.tvTenantProfileEmpty);
+        rvTenantProfiles = findViewById(R.id.rvTenantProfiles);
+
+        tenantProfileAdapter = new TenantProfileQuickAdapter();
+        if (rvTenantProfiles != null) {
+            rvTenantProfiles.setLayoutManager(new LinearLayoutManager(this));
+            rvTenantProfiles.setAdapter(tenantProfileAdapter);
+        }
 
         btnCall = findViewById(R.id.btnGoiDien);
         btnMessage = findViewById(R.id.btnNhanTin);
@@ -342,12 +369,16 @@ public class RoomDetailsActivity extends AppCompatActivity {
                         return;
                     if (error != null || value == null || value.isEmpty()) {
                         cardTenant.setVisibility(View.GONE);
+                        updateTenantProfiles(new ArrayList<>(), false);
                         llActionButtons.setVisibility(View.GONE);
                         tenantPhoneNumber = null;
                         currentRepresentativeName = null;
+                        representativePersonalId = null;
                         activeContractId = null;
+                        declaredMemberCount = 0;
+                        currentMemberCount = 0;
                         stopMemberListener();
-                        updateCurrentOccupancy(0);
+                        updateOccupancySection();
                         updateInfoHeaderMeta();
                         updateContractButtonState();
                         invalidateOptionsMenu();
@@ -379,12 +410,16 @@ public class RoomDetailsActivity extends AppCompatActivity {
 
                     if (selectedDoc == null || selectedTenant == null) {
                         cardTenant.setVisibility(View.GONE);
+                        updateTenantProfiles(new ArrayList<>(), false);
                         llActionButtons.setVisibility(View.GONE);
                         tenantPhoneNumber = null;
                         currentRepresentativeName = null;
+                        representativePersonalId = null;
                         activeContractId = null;
+                        declaredMemberCount = 0;
+                        currentMemberCount = 0;
                         stopMemberListener();
-                        updateCurrentOccupancy(0);
+                        updateOccupancySection();
                         updateInfoHeaderMeta();
                         updateContractButtonState();
                         invalidateOptionsMenu();
@@ -397,8 +432,14 @@ public class RoomDetailsActivity extends AppCompatActivity {
                     tvTenantPhone.setText(selectedTenant.getPhoneNumber());
                     tenantPhoneNumber = selectedTenant.getPhoneNumber();
                     currentRepresentativeName = selectedTenant.getFullName();
+                    representativePersonalId = selectedTenant.getPersonalId();
                     activeContractId = selectedDoc.getId();
-                    updateCurrentOccupancy(Math.max(selectedTenant.getMemberCount(), 0));
+                    declaredMemberCount = Math.max(selectedTenant.getMemberCount(), 0);
+                    currentMemberCount = hasRepresentativeTenant() ? 1 : 0;
+                    ArrayList<ContractMember> bootstrap = new ArrayList<>();
+                    bootstrap.add(buildRepresentativeFallbackMember(selectedTenant));
+                    updateTenantProfiles(bootstrap, true);
+                    updateOccupancySection();
                     startMemberListener(scopeDoc, activeContractId);
                     updateInfoHeaderMeta();
                     updateContractButtonState();
@@ -434,7 +475,39 @@ public class RoomDetailsActivity extends AppCompatActivity {
                     if (e != null || snapshot == null) {
                         return;
                     }
-                    updateCurrentOccupancy(Math.max(snapshot.size(), 0));
+                    ArrayList<ContractMember> members = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        ContractMember member = doc.toObject(ContractMember.class);
+                        if (member == null) {
+                            continue;
+                        }
+                        member.setId(doc.getId());
+                        members.add(member);
+                    }
+                    if (members.isEmpty() && hasRepresentativeTenant()) {
+                        Tenant representative = new Tenant();
+                        representative.setFullName(currentRepresentativeName);
+                        representative.setPhoneNumber(tenantPhoneNumber);
+                        representative.setPersonalId(representativePersonalId);
+                        members.add(buildRepresentativeFallbackMember(representative));
+                    }
+                    Collections.sort(members, (left, right) -> {
+                        if (left.isContractRepresentative() != right.isContractRepresentative()) {
+                            return left.isContractRepresentative() ? -1 : 1;
+                        }
+                        if (left.isPrimaryContact() != right.isPrimaryContact()) {
+                            return left.isPrimaryContact() ? -1 : 1;
+                        }
+                        String leftName = left.getFullName() != null ? left.getFullName() : "";
+                        String rightName = right.getFullName() != null ? right.getFullName() : "";
+                        return leftName.compareToIgnoreCase(rightName);
+                    });
+                    updateTenantProfiles(members, true);
+                    currentMemberCount = Math.max(snapshot.size(), 0);
+                    if (currentMemberCount == 0 && hasRepresentativeTenant()) {
+                        currentMemberCount = 1;
+                    }
+                    updateOccupancySection();
                 });
     }
 
@@ -442,6 +515,39 @@ public class RoomDetailsActivity extends AppCompatActivity {
         if (memberListener != null) {
             memberListener.remove();
             memberListener = null;
+        }
+    }
+
+    private ContractMember buildRepresentativeFallbackMember(@NonNull Tenant tenant) {
+        ContractMember member = new ContractMember();
+        member.setFullName(tenant.getFullName());
+        member.setPhoneNumber(tenant.getPhoneNumber());
+        member.setPersonalId(tenant.getPersonalId());
+        member.setPrimaryContact(true);
+        member.setContractRepresentative(true);
+        member.setTemporaryResident(tenant.isTemporaryResident());
+        member.setFullyDocumented(tenant.isFullyDocumented());
+        member.setActive(true);
+        return member;
+    }
+
+    private void updateTenantProfiles(@NonNull List<ContractMember> members, boolean hasActiveContract) {
+        if (cardTenantProfiles == null || tvTenantProfileEmpty == null || tenantProfileAdapter == null) {
+            return;
+        }
+
+        if (!hasActiveContract || isVacantRoom) {
+            cardTenantProfiles.setVisibility(View.GONE);
+            tenantProfileAdapter.submitList(new ArrayList<>());
+            return;
+        }
+
+        cardTenantProfiles.setVisibility(View.VISIBLE);
+        tenantProfileAdapter.submitList(members);
+        boolean empty = members.isEmpty();
+        tvTenantProfileEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (rvTenantProfiles != null) {
+            rvTenantProfiles.setVisibility(empty ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -475,7 +581,12 @@ public class RoomDetailsActivity extends AppCompatActivity {
         String rawStatus = room.getStatus();
         String localizedStatus = getLocalizedRoomStatus(rawStatus);
         boolean isVacant = isVacantStatus(rawStatus);
+        isVacantRoom = isVacant;
         int color = Color.parseColor(isVacant ? "#4CAF50" : "#F44336");
+
+        if (btnGenerateCode != null) {
+            btnGenerateCode.setVisibility(isVacant ? View.GONE : View.VISIBLE);
+        }
 
         // Status badge overlay on image
         tvStatus.setText(localizedStatus);
@@ -495,6 +606,8 @@ public class RoomDetailsActivity extends AppCompatActivity {
                     .placeholder(R.drawable.bg_room_placeholder)
                     .into(imgRoom);
         }
+
+        updateOccupancySection();
 
     }
 
@@ -596,16 +709,40 @@ public class RoomDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    private void updateCurrentOccupancy(int currentMemberCount) {
-        if (tvCurrentOccupancy == null) {
+    private void updateOccupancySection() {
+        if (tvMaxOccupancy == null || tvCurrentOccupancy == null) {
             return;
         }
-        int maxOccupancy = currentRoom != null ? currentRoom.getMaxOccupancy() : 0;
-        if (maxOccupancy > 0) {
-            tvCurrentOccupancy.setText(getString(R.string.room_current_occupancy_value, currentMemberCount, maxOccupancy));
-        } else {
-            tvCurrentOccupancy.setText(getString(R.string.room_current_occupancy_unknown, currentMemberCount));
+
+        if (isVacantRoom) {
+            if (rowMaxOccupancy != null)
+                rowMaxOccupancy.setVisibility(View.VISIBLE);
+            if (rowCurrentOccupancy != null)
+                rowCurrentOccupancy.setVisibility(View.GONE);
+
+            int maxOccupancy = currentRoom != null ? currentRoom.getMaxOccupancy() : 0;
+            tvMaxOccupancy.setText(maxOccupancy > 0
+                    ? getString(R.string.room_max_occupancy_value, maxOccupancy)
+                    : getString(R.string.common_not_available));
+            return;
         }
+
+        if (rowMaxOccupancy != null)
+            rowMaxOccupancy.setVisibility(View.GONE);
+        if (rowCurrentOccupancy != null)
+            rowCurrentOccupancy.setVisibility(View.VISIBLE);
+
+        if (declaredMemberCount > 0) {
+            tvCurrentOccupancy.setText(getString(R.string.room_current_occupancy_value,
+                    Math.max(currentMemberCount, 0), declaredMemberCount));
+        } else {
+            tvCurrentOccupancy.setText(getString(R.string.room_current_occupancy_unknown,
+                    Math.max(currentMemberCount, 0)));
+        }
+    }
+
+    private boolean hasRepresentativeTenant() {
+        return currentRepresentativeName != null && !currentRepresentativeName.trim().isEmpty();
     }
 
     private void updateContractButtonState() {
@@ -614,7 +751,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
             return;
         }
         btnManageContract.setText(activeContractId != null && !activeContractId.trim().isEmpty()
-            ? R.string.update_contract
+            ? R.string.room_view_contract
                 : R.string.create_contract);
     }
 

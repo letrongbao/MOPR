@@ -41,6 +41,12 @@ This document defines the standard execution flow so any agent in the team can w
 3. Prefer existing foreign keys:
    - `roomId`, `contractId`, `invoiceId`
 4. New screens must map to existing schema; do not introduce isolated schema variants
+5. For chat/notification features, validate these paths against the data contract and rules:
+   - `tenants/{tenantId}/chat_conversations`
+   - `tenants/{tenantId}/chat_conversations/{conversationId}/messages`
+   - `tenants/{tenantId}/notifications`
+   - `users/{uid}/fcm_tokens`
+6. If security rules are strict or deny-by-default, do not ship new collection usage without matching `firestore.rules` updates.
 
 ## Role/Onboarding Rules
 
@@ -67,3 +73,25 @@ This document defines the standard execution flow so any agent in the team can w
 2. No merge conflict markers (`UU`) in `git status --short`
 3. No noisy local changes (IDE/build/local files)
 4. Updated functionality works with current Firestore data conventions
+5. For push-related changes, explicitly document whether server-side dispatch is implemented or still pending.
+
+## Chat/Notification Smoke Tests (Free-Only)
+
+Run this matrix after chat/notification changes when Cloud Functions are not deployed:
+
+1. Owner -> room conversation:
+   - Send message from owner account.
+   - Verify tenant account receives unread increment and local notification while app is active.
+2. Active-room suppression:
+   - Keep tenant account inside the same `ChatRoomActivity` conversation.
+   - Send message from owner.
+   - Verify notification doc is auto-marked read and no duplicate local notification is shown.
+3. Chat Hub unread badge:
+   - Leave multiple conversations with unread docs.
+   - Verify unread badge count appears per conversation and sort order uses `lastMessageAt` fallback `updatedAt`.
+4. Message validation:
+   - Try sending message longer than 1000 chars.
+   - Verify UI rejects send and no message document is created.
+5. Permission validation:
+   - Try sending with an account not in `participantIds`.
+   - Verify send is rejected (`chat_send_not_allowed`) and no write is committed.

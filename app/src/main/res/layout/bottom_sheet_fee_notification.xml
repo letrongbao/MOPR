@@ -74,6 +74,7 @@
 
     <!-- UI section note -->
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowElectricOld"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/electric_old_reading_required"
@@ -92,6 +93,7 @@
 
     <!-- UI section note -->
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowElectricNew"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/electric_new_reading_required"
@@ -105,12 +107,47 @@
             android:inputType="number"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowWaterOld"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/water_old_reading_required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoNuocCu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:enabled="false"
+            android:inputType="number"
+            android:textColor="#888888"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowWaterNew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/water_new_reading_required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="20dp"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoNuocMoi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
     <!-- UI section note -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnXemInvoice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/view_invoice"
+        android:text="@string/invoice_mark_reported_and_open"
         android:textAllCaps="false"
         android:textSize="14sp"
         app:cornerRadius="6dp"

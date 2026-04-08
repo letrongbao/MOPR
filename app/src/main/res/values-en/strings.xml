@@ -240,6 +240,7 @@
     <string name="fee_garbage">Trash fee (VND)</string>
     <string name="fee_wifi">Wifi fee (VND)</string>
     <string name="fee_parking">Parking fee (VND)</string>
+    <string name="fee_other">Other fee (VND)</string>
     <string name="invoice_total_estimated">Estimated total</string>
 
     <string name="meter_history_title">Meter history</string>
@@ -252,9 +253,20 @@
     <string name="room_colon">Room: </string>
     <string name="electric_old_reading_required">Old electric reading *</string>
     <string name="electric_new_reading_required">New electric reading *</string>
+        <string name="water_old_reading_required">Old water reading *</string>
+        <string name="water_new_reading_required">New water reading *</string>
     <string name="view_invoice">View invoice</string>
+        <string name="invoice_mark_reported_and_open">Mark reported &amp; open invoice</string>
     <string name="deposit_collect_title">Collect deposit</string>
     <string name="deposit_tenant_info_placeholder">Tenant: John Doe - 0123456789</string>
+        <string name="please_enter_new_water">Please enter new water reading</string>
+        <string name="new_water_must_gte_old">New water reading must be &gt;= old reading</string>
+        <string name="invoice_owner_note_label">Collection note</string>
+        <string name="invoice_owner_note_empty">No note yet.</string>
+        <string name="invoice_owner_note_edit">Update note</string>
+        <string name="invoice_owner_note_title">Collection note - Room %1$s</string>
+        <string name="invoice_owner_note_hint">Example: Tenant paid part of the amount, remaining due on ...</string>
+        <string name="invoice_owner_note_saved">Collection note saved</string>
     <string name="deposit_amount_to_collect">Deposit amount to collect:</string>
     <string name="deposit_amount_placeholder">500,000 VND</string>
     <string name="deposit_send_qr_contact">📲 Send QR &amp; Contact</string>
@@ -269,7 +281,8 @@
     <string name="tenant_id_card_hint">012345678901</string>
     <string name="tenant_phone_hint">0901234567</string>
     <string name="tenant_rented_room_label">Rented room</string>
-    <string name="home_owner_tenant_label">Rented\nrooms</string>
+    <string name="home_owner_tenant_label">Quick\nchat</string>
+    <string name="home_owner_chat_label">Quick\nchat</string>
     <string name="tenant_member_count_label">Number of members</string>
     <string name="tenant_member_count_hint">1</string>
     <string name="tenant_rental_start_date">Rental start date</string>
@@ -313,7 +326,9 @@
     <string name="unit_cubic_meter">m³</string>
     <string name="email">Email</string>
     <string name="profile_email_placeholder">email@example.com</string>
-    <string name="contract_date_month_year_hint">MM/yyyy</string>
+    <string name="contract_date_month_year_hint">dd/MM/yyyy</string>
+    <string name="contract_signing_date_invalid">Invalid signing date (format dd/MM/yyyy)</string>
+    <string name="contract_pick_signing_date">Select contract signing date</string>
     <string name="contract_placeholder_number">CN001</string>
     <string name="contract_placeholder_phone">0987654321</string>
     <string name="contract_placeholder_created_date">01/01/2024</string>
@@ -371,9 +386,11 @@
     <string name="item_room_rent_sample">3,300,000 VND/month</string>
     <string name="item_room_tenant_info_sample">Tenant: Quang - Phone: 0987654321</string>
     <string name="item_room_create_contract">Create contract</string>
+    <string name="room_view_contract">View contract</string>
     <string name="item_room_type_value">Room type: %1$s</string>
     <string name="item_room_area_value">Area: %1$s m²</string>
     <string name="item_room_max_occupancy_value">Capacity: %1$s</string>
+    <string name="item_room_current_occupancy_value">Current occupancy: %1$s</string>
     <string name="item_room_view_details_hint">View details →</string>
     <string name="common_more_options">More options</string>
     <string name="item_tenant_avatar_desc">Tenant avatar</string>
@@ -385,6 +402,25 @@
     <string name="item_tenant_contract_representative">Contract representative</string>
     <string name="item_tenant_temporary_residence_missing">Temporary residence not registered</string>
     <string name="item_tenant_documents_incomplete">Documents incomplete</string>
+    <string name="tenant_profiles_title">Tenant Profiles</string>
+    <string name="tenant_profiles_subtitle">Quick info for temporary residence procedures</string>
+    <string name="tenant_profiles_empty">No tenant profiles found for the active contract</string>
+    <string name="tenant_profiles_count_default">0 tenant profiles</string>
+    <string name="tenant_profiles_count">%1$d tenant profiles</string>
+    <string name="tenant_profiles_filter_house_all">All houses</string>
+    <string name="tenant_profiles_filter_room_all">All rooms</string>
+    <string name="tenant_profiles_select_house">Select house</string>
+    <string name="tenant_profiles_select_room">Select room</string>
+    <string name="tenant_profiles_sort_room">Room (ascending)</string>
+    <string name="tenant_profiles_sort_representative_first">Representative first</string>
+    <string name="tenant_profile_unknown_name">Unknown name</string>
+    <string name="tenant_profile_role_representative">Contract representative</string>
+    <string name="tenant_profile_role_member">Room member</string>
+    <string name="tenant_profile_role_with_room">%1$s • Room %2$s</string>
+    <string name="tenant_profile_status_ready">Profile complete</string>
+    <string name="tenant_profile_status_missing">Profile incomplete</string>
+    <string name="tenant_profile_action_call">Call</string>
+    <string name="tenant_profile_action_update">Update profile</string>
     <string name="item_rental_history_initial_sample">N</string>
     <string name="item_rental_history_tenant_name_sample">Nguyen Van A</string>
     <string name="item_rental_history_room_info_sample">Room 101 - House A</string>
@@ -483,6 +519,8 @@
     <string name="contract_expense_laundry_line">- Laundry: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_expense_extra_line">- %1$s: %2$s%3$s&lt;br/&gt;</string>
     <string name="contract_expense_trash_line">- Garbage: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_extra_fee_options_label">Other fees</string>
+    <string name="contract_extra_fee_option_text">%1$s: %2$s%3$s</string>
 
     <string name="ticket_create_title">Create ticket</string>
     <string name="ticket_title_hint">Title</string>
@@ -525,6 +563,7 @@
     <string name="tenant_menu_finalize_bill">Finalize Bill</string>
     <string name="tenant_menu_report_issue">Issue Report</string>
     <string name="tenant_menu_notification">Notifications</string>
+    <string name="tenant_menu_chat">Chat</string>
     <string name="tenant_menu_room_not_identified">Room is not identified yet</string>
 
     <string name="tenant_room_days_remaining_label">Days\nleft</string>
@@ -570,6 +609,29 @@
     <string name="tenant_room_meter_history">Meter history</string>
     <string name="tenant_room_meter_list">Finalize list</string>
     <string name="tenant_room_contract_detail">Contract detail</string>
+
+    <string name="chat_hub_title">Messages</string>
+    <string name="chat_hub_hint">Chat by room, whole house, or private threads.</string>
+    <string name="chat_hub_hint_owner">Choose a room to start a room thread.</string>
+    <string name="chat_house">House-wide</string>
+    <string name="chat_room">Room group</string>
+    <string name="chat_private">Private</string>
+    <string name="chat_room_with_id">Room %1$s</string>
+    <string name="chat_enter_message_hint">Type your message...</string>
+    <string name="chat_invalid_conversation">Conversation not found</string>
+    <string name="chat_choose_room">Choose room for group chat</string>
+    <string name="chat_no_room_found">No room available for chat</string>
+    <string name="chat_choose_private_target">Choose a user for private chat</string>
+    <string name="chat_no_private_target">No private chat target found</string>
+    <string name="chat_member_with_room">%1$s - room %2$s</string>
+    <string name="chat_private_with_uid">Chat with %1$s</string>
+    <string name="chat_notification_title">New message from %1$s</string>
+    <string name="chat_message_too_long">Message is too long (max %1$d characters)</string>
+    <string name="chat_send_not_allowed">You are not allowed to send in this conversation</string>
+
+    <string name="notification_center_title">Notification Center</string>
+    <string name="chat_notification_channel_name">Message notifications</string>
+    <string name="chat_notification_channel_description">Realtime notifications for messages and reminders</string>
 
     <!-- Language Switcher -->
     <string name="english_language">English</string>

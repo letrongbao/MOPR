@@ -15,6 +15,7 @@ import android.webkit.WebViewClient;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,7 +36,6 @@ import com.example.myapplication.core.constants.WaterCalculationMode;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.core.util.ScreenUiHelper;
-import com.example.myapplication.core.widget.MonthYearPickerDialog;
 import com.example.myapplication.core.repository.domain.ContractMemberRepository;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Tenant;
@@ -45,6 +45,9 @@ import com.example.myapplication.features.property.room.RoomActivity;
 import com.example.myapplication.core.repository.domain.RentalHistoryRepository;
 import com.google.firebase.Timestamp;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointBackward;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -53,9 +56,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class ContractActivity extends AppCompatActivity {
 
@@ -86,9 +92,12 @@ public class ContractActivity extends AppCompatActivity {
     private View layoutParkingService;
     private CheckBox cbParkingService, cbInternet, cbLaundryService;
     private TextView tvParkingPrice;
+    private TextView tvExtraFeeOptionsLabel;
+    private LinearLayout llExtraFeeOptions;
     private EditText etVehicleCount;
     private EditText etNote;
     private CheckBox cbShowNote;
+    private final List<CheckBox> extraFeeOptionBoxes = new ArrayList<>();
 
     private MaterialButton btnSave, btnPrint, btnEnd, btnUpdate;
 
@@ -237,6 +246,8 @@ public class ContractActivity extends AppCompatActivity {
         etVehicleCount = findViewById(R.id.etSoXe);
         cbInternet = findViewById(R.id.cbInternet);
         cbLaundryService = findViewById(R.id.cbGiatSay);
+        tvExtraFeeOptionsLabel = findViewById(R.id.tvExtraFeeOptionsLabel);
+        llExtraFeeOptions = findViewById(R.id.llExtraFeeOptions);
         etNote = findViewById(R.id.etGhiChu);
         cbShowNote = findViewById(R.id.cbShowNote);
         btnSave = findViewById(R.id.btnSave);
@@ -383,6 +394,66 @@ public class ContractActivity extends AppCompatActivity {
         tvParkingPrice.setText(getString(R.string.parking_service_price_format, formatVnd(parkingPrice)));
         cbInternet.setText(getString(R.string.internet_service_price_format, formatVnd(internetPrice)));
         cbLaundryService.setText(getString(R.string.laundry_service_price_format, formatVnd(laundryPrice)));
+        bindExtraFeeOptions(khu);
+    }
+
+    private void bindExtraFeeOptions(House house) {
+        if (llExtraFeeOptions == null) {
+            return;
+        }
+
+        llExtraFeeOptions.removeAllViews();
+        extraFeeOptionBoxes.clear();
+
+        List<House.ExtraFee> extraFees = house != null ? house.getExtraFees() : null;
+        if (extraFees == null || extraFees.isEmpty()) {
+            if (tvExtraFeeOptionsLabel != null) {
+                tvExtraFeeOptionsLabel.setVisibility(View.GONE);
+            }
+            llExtraFeeOptions.setVisibility(View.GONE);
+            return;
+        }
+
+        boolean hasVisibleFee = false;
+        for (House.ExtraFee fee : extraFees) {
+            if (fee == null) {
+                continue;
+            }
+            String feeName = fee.getFeeName() != null ? fee.getFeeName().trim() : "";
+            if (feeName.isEmpty() || fee.getPrice() <= 0) {
+                continue;
+            }
+
+            String unit = fee.getUnit() != null ? fee.getUnit().trim() : "";
+            String unitSuffix = unit.isEmpty() ? "" : "/" + unit;
+
+            CheckBox extraFeeCheckBox = new CheckBox(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.topMargin = (int) (6 * getResources().getDisplayMetrics().density);
+            extraFeeCheckBox.setLayoutParams(params);
+            extraFeeCheckBox.setText(getString(
+                    R.string.contract_extra_fee_option_text,
+                    feeName,
+                    formatVnd(fee.getPrice()),
+                    unitSuffix));
+            extraFeeCheckBox.setTag(normalizeFeeKey(feeName));
+            extraFeeCheckBox.setChecked(true);
+
+            llExtraFeeOptions.addView(extraFeeCheckBox);
+            extraFeeOptionBoxes.add(extraFeeCheckBox);
+            hasVisibleFee = true;
+        }
+
+        if (tvExtraFeeOptionsLabel != null) {
+            tvExtraFeeOptionsLabel.setVisibility(hasVisibleFee ? View.VISIBLE : View.GONE);
+        }
+        llExtraFeeOptions.setVisibility(hasVisibleFee ? View.VISIBLE : View.GONE);
+
+        if (hasVisibleFee && currentContract != null) {
+            applyExtraFeeSelections(currentContract);
+        }
     }
 
     private void bindRoomToUI() {
@@ -639,6 +710,7 @@ public class ContractActivity extends AppCompatActivity {
         etVehicleCount.setText(parkingVisible && c.getVehicleCount() > 0 ? String.valueOf(c.getVehicleCount()) : "");
         cbInternet.setChecked(cbInternet.getVisibility() == View.VISIBLE && c.hasInternetService());
         cbLaundryService.setChecked(cbLaundryService.getVisibility() == View.VISIBLE && c.hasLaundryService());
+        applyExtraFeeSelections(c);
         etNote.setText(nullToEmpty(c.getNote()));
         cbShowNote.setChecked(c.isShowNoteOnInvoice());
         if (c.getPersonalIdFrontUrl() != null && !c.getPersonalIdFrontUrl().trim().isEmpty())
@@ -654,14 +726,39 @@ public class ContractActivity extends AppCompatActivity {
         if (parsed != null)
             cal.setTimeInMillis(parsed.getTimeInMillis());
 
-        MonthYearPickerDialog.show(
-                this,
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                MonthYearPickerDialog.defaultMinYear(),
-                MonthYearPickerDialog.defaultMaxYear(),
-                (year, month) -> etContractDate
-                        .setText(String.format(Locale.getDefault(), "%02d/%04d", month + 1, year)));
+        long today = MaterialDatePicker.todayInUtcMilliseconds();
+        long initialSelection = Math.min(cal.getTimeInMillis(), today);
+
+        CalendarConstraints constraints = new CalendarConstraints.Builder()
+                .setValidator(DateValidatorPointBackward.now())
+                .build();
+
+        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(getString(R.string.contract_pick_signing_date))
+                .setSelection(initialSelection)
+                .setCalendarConstraints(constraints)
+                .build();
+
+        picker.addOnPositiveButtonClickListener(selection -> {
+            if (selection == null) {
+                return;
+            }
+            Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            utc.setTimeInMillis(selection);
+
+            Calendar local = Calendar.getInstance();
+            local.set(
+                    utc.get(Calendar.YEAR),
+                    utc.get(Calendar.MONTH),
+                    utc.get(Calendar.DAY_OF_MONTH),
+                    0,
+                    0,
+                    0);
+            local.set(Calendar.MILLISECOND, 0);
+
+            etContractDate.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(local.getTime()));
+        });
+        picker.show(getSupportFragmentManager(), "contract_signing_date_picker");
     }
 
     private void saveOrUpdate(boolean isCreate) {
@@ -718,6 +815,7 @@ public class ContractActivity extends AppCompatActivity {
                 roomId,
                 currentRoom != null ? currentRoom.getRoomNumber() : null,
                 this::computeEndDate);
+        currentContract.setSelectedExtraFeeNames(collectSelectedExtraFeeNames());
 
         long now = System.currentTimeMillis();
         if (currentContract.getCreatedAt() == null)
@@ -785,9 +883,7 @@ public class ContractActivity extends AppCompatActivity {
         if (rgBillingReminder == null)
             return;
         String remind = normalizeBillingReminder(value);
-        if ("end_month".equals(remind)) {
-            rgBillingReminder.check(R.id.rbRemindEndMonth);
-        } else if ("mid_month".equals(remind)) {
+        if ("mid_month".equals(remind)) {
             rgBillingReminder.check(R.id.rbRemindMidMonth);
         } else {
             rgBillingReminder.check(R.id.rbRemindStartMonth);
@@ -798,8 +894,6 @@ public class ContractActivity extends AppCompatActivity {
         if (rgBillingReminder == null)
             return "start_month";
         int checkedId = rgBillingReminder.getCheckedRadioButtonId();
-        if (checkedId == R.id.rbRemindEndMonth)
-            return "end_month";
         if (checkedId == R.id.rbRemindMidMonth)
             return "mid_month";
         return "start_month";
@@ -810,14 +904,16 @@ public class ContractActivity extends AppCompatActivity {
             if (currentHouse != null && currentHouse.getBillingReminderAt() != null
                     && !currentHouse.getBillingReminderAt().trim().isEmpty()) {
                 String legacy = currentHouse.getBillingReminderAt();
-                if ("end_month".equals(legacy))
-                    return "end_month";
+                if ("mid_month".equals(legacy) || "end_month".equals(legacy))
+                    return "mid_month";
                 return "start_month";
             }
             return "start_month";
         }
-        if ("end_month".equals(value) || "mid_month".equals(value) || "start_month".equals(value))
-            return value;
+        if ("mid_month".equals(value) || "end_month".equals(value))
+            return "mid_month";
+        if ("start_month".equals(value))
+            return "start_month";
         return "start_month";
     }
 
@@ -1002,6 +1098,61 @@ public class ContractActivity extends AppCompatActivity {
 
     private String text(@NonNull EditText et) {
         return et.getText() != null ? et.getText().toString().trim() : "";
+    }
+
+    private List<String> collectSelectedExtraFeeNames() {
+        List<String> selected = new ArrayList<>();
+        for (CheckBox extraFeeCheckBox : extraFeeOptionBoxes) {
+            if (extraFeeCheckBox == null || !extraFeeCheckBox.isChecked()) {
+                continue;
+            }
+            Object keyObj = extraFeeCheckBox.getTag();
+            if (!(keyObj instanceof String)) {
+                continue;
+            }
+            String key = ((String) keyObj).trim();
+            if (!key.isEmpty()) {
+                selected.add(key);
+            }
+        }
+        return selected;
+    }
+
+    private void applyExtraFeeSelections(@NonNull Tenant contract) {
+        if (extraFeeOptionBoxes.isEmpty()) {
+            return;
+        }
+
+        List<String> selected = contract.getSelectedExtraFeeNames();
+        boolean hasStoredSelection = selected != null && !selected.isEmpty();
+
+        for (CheckBox extraFeeCheckBox : extraFeeOptionBoxes) {
+            Object keyObj = extraFeeCheckBox.getTag();
+            String key = keyObj instanceof String ? (String) keyObj : "";
+            boolean checked = !hasStoredSelection || containsNormalizedKey(selected, key);
+            extraFeeCheckBox.setChecked(checked);
+        }
+    }
+
+    private boolean containsNormalizedKey(@NonNull List<String> keys, String target) {
+        String normalizedTarget = normalizeFeeKey(target);
+        if (normalizedTarget.isEmpty()) {
+            return false;
+        }
+        for (String key : keys) {
+            if (normalizedTarget.equals(normalizeFeeKey(key))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @NonNull
+    private String normalizeFeeKey(String feeName) {
+        if (feeName == null) {
+            return "";
+        }
+        return feeName.trim().toLowerCase(Locale.ROOT);
     }
 
     private String formatVnd(double value) {

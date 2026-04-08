@@ -2,6 +2,9 @@ package com.example.myapplication.domain;
 
 import com.google.firebase.firestore.PropertyName;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Invoice {
     private String id;
     private String roomId;
@@ -16,6 +19,8 @@ public class Invoice {
     private double trashFee;
     private double wifiFee;
     private double parkingFee;
+    private double otherFee;
+    private List<String> otherFeeLines;
     private double rentAmount;
     private double totalAmount;
     private String status; // "Unpaid", "Paid"
@@ -24,6 +29,7 @@ public class Invoice {
     private com.google.firebase.Timestamp paymentDate; // Payment date
     private String paymentMethod; // "cash", "transfer", "momo", "bank"
     private double paidAmount; // Amount paid (for partial payments)
+    private String ownerNote; // Owner note for follow-up on unpaid balance
 
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;
@@ -36,7 +42,7 @@ public class Invoice {
     public void calculateTotalAmount() {
         double electricityAmount = (electricEndReading - electricStartReading) * electricUnitPrice;
         double waterAmount = (waterEndReading - waterStartReading) * waterUnitPrice;
-        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + wifiFee + parkingFee;
+        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + wifiFee + parkingFee + otherFee;
     }
 
     public String getId() {
@@ -147,6 +153,26 @@ public class Invoice {
         this.parkingFee = parkingFee;
     }
 
+    public double getOtherFee() {
+        return otherFee;
+    }
+
+    public void setOtherFee(double otherFee) {
+        this.otherFee = otherFee;
+    }
+
+    public List<String> getOtherFeeLines() {
+        return otherFeeLines;
+    }
+
+    public void setOtherFeeLines(List<String> otherFeeLines) {
+        if (otherFeeLines == null) {
+            this.otherFeeLines = null;
+            return;
+        }
+        this.otherFeeLines = new ArrayList<>(otherFeeLines);
+    }
+
     public double getRentAmount() {
         return rentAmount;
     }
@@ -206,6 +232,14 @@ public class Invoice {
 
     public void setPaidAmount(double paidAmount) {
         this.paidAmount = paidAmount;
+    }
+
+    public String getOwnerNote() {
+        return ownerNote;
+    }
+
+    public void setOwnerNote(String ownerNote) {
+        this.ownerNote = ownerNote;
     }
 
     public com.google.firebase.Timestamp getCreatedAt() {

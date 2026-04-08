@@ -32,7 +32,7 @@ public final class ContractDateHelper {
         if (c == null) {
             return rawDate == null ? "" : rawDate;
         }
-        return String.format(Locale.getDefault(), "%02d/%04d", c.get(Calendar.MONTH) + 1, c.get(Calendar.YEAR));
+        return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime());
     }
 
     @NonNull
@@ -41,7 +41,6 @@ public final class ContractDateHelper {
         if (c == null) {
             return "";
         }
-        c.set(Calendar.DAY_OF_MONTH, 1);
         return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(c.getTime());
     }
 

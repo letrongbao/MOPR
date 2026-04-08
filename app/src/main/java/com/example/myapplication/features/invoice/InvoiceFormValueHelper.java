@@ -35,6 +35,7 @@ public final class InvoiceFormValueHelper {
             @NonNull EditText etPhiRac,
             @NonNull EditText etPhiWifi,
             @NonNull EditText etPhiGuiXe,
+            @NonNull EditText etPhiKhac,
             @NonNull TextView tvEstimatedTotal,
             @NonNull Supplier<Double> rentSupplier) {
         TextWatcher watcher = new TextWatcher() {
@@ -45,7 +46,7 @@ public final class InvoiceFormValueHelper {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                        etPhiRac, etPhiWifi, etPhiGuiXe, tvEstimatedTotal, rentSupplier);
+                    etPhiRac, etPhiWifi, etPhiGuiXe, etPhiKhac, tvEstimatedTotal, rentSupplier);
             }
 
             @Override
@@ -62,6 +63,7 @@ public final class InvoiceFormValueHelper {
         etPhiRac.addTextChangedListener(watcher);
         etPhiWifi.addTextChangedListener(watcher);
         etPhiGuiXe.addTextChangedListener(watcher);
+        etPhiKhac.addTextChangedListener(watcher);
     }
 
     public static void updateEstimatedTotal(@NonNull EditText etDienDau,
@@ -73,6 +75,7 @@ public final class InvoiceFormValueHelper {
             @NonNull EditText etPhiRac,
             @NonNull EditText etPhiWifi,
             @NonNull EditText etPhiGuiXe,
+            @NonNull EditText etPhiKhac,
             @NonNull TextView tvEstimatedTotal,
             @NonNull Supplier<Double> rentSupplier) {
         double dienDau = parseDoubleSafe(etDienDau);
@@ -84,12 +87,14 @@ public final class InvoiceFormValueHelper {
         double trashFee = MoneyFormatter.getValue(etPhiRac);
         double wifiFee = MoneyFormatter.getValue(etPhiWifi);
         double parkingFee = MoneyFormatter.getValue(etPhiGuiXe);
+        double otherFee = MoneyFormatter.getValue(etPhiKhac);
         Double rent = rentSupplier.get();
         double rentAmount = rent != null ? rent : 0;
 
         double soDien = Math.max(0, dienCuoi - dienDau);
         double soNuoc = Math.max(0, nuocCuoi - nuocDau);
-        double total = rentAmount + soDien * electricUnitPrice + soNuoc * waterUnitPrice + trashFee + wifiFee + parkingFee;
+        double total = rentAmount + soDien * electricUnitPrice + soNuoc * waterUnitPrice + trashFee + wifiFee
+            + parkingFee + otherFee;
         tvEstimatedTotal.setText(MoneyFormatter.format(total));
     }
 

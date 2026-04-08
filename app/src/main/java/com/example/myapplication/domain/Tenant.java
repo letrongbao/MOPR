@@ -2,6 +2,9 @@ package com.example.myapplication.domain;
 
 import com.google.firebase.firestore.PropertyName;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Tenant {
     private String id;
     private String fullName;
@@ -50,6 +53,7 @@ public class Tenant {
     private int vehicleCount;
     private boolean hasInternetService;
     private boolean hasLaundryService;
+    private List<String> selectedExtraFeeNames;
 
     private String note;
 
@@ -355,6 +359,20 @@ public class Tenant {
     @PropertyName("hasLaundryService")
     public void setHasLaundryService(boolean hasLaundryService) {
         this.hasLaundryService = hasLaundryService;
+    }
+
+    @PropertyName("selectedExtraFeeNames")
+    public List<String> getSelectedExtraFeeNames() {
+        return selectedExtraFeeNames;
+    }
+
+    @PropertyName("selectedExtraFeeNames")
+    public void setSelectedExtraFeeNames(List<String> selectedExtraFeeNames) {
+        if (selectedExtraFeeNames == null) {
+            this.selectedExtraFeeNames = null;
+            return;
+        }
+        this.selectedExtraFeeNames = new ArrayList<>(selectedExtraFeeNames);
     }
 
     public String getNote() {

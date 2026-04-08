@@ -536,6 +536,23 @@
                         android:textStyle="bold"/>
 
                     <TextView
+                        android:id="@+id/tvExtraFeeOptionsLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/contract_extra_fee_options_label"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:id="@+id/llExtraFeeOptions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"/>
+
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/note_label"
@@ -586,12 +603,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/remind_mid_month"/>
-
-                        <RadioButton
-                            android:id="@+id/rbRemindEndMonth"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/remind_end_month"/>
                     </RadioGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

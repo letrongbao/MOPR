@@ -16,7 +16,7 @@ public class House {
     // Extra fees + payment code + billing reminder
     private List<ExtraFee> extraFees;
     private String paymentQrUrl;
-    // "start_month" | "end_month"
+    // "start_month" | "mid_month"
     private String billingReminderAt;
 
     // Bank transfer info

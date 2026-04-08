@@ -39,7 +39,6 @@ import com.example.myapplication.viewmodel.InvoiceViewModel;
 import com.example.myapplication.viewmodel.RoomViewModel;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -82,15 +81,22 @@ public class InvoiceActivity extends AppCompatActivity {
         final double trashFee;
         final double wifiFee;
         final double parkingFee;
+        final double otherFee;
         final String waterMode;
 
-        FeePreset(double electricUnitPrice, double waterUnitPrice, double trashFee, double wifiFee, double parkingFee,
+        FeePreset(double electricUnitPrice,
+                double waterUnitPrice,
+                double trashFee,
+                double wifiFee,
+                double parkingFee,
+                double otherFee,
                 String waterMode) {
             this.electricUnitPrice = electricUnitPrice;
             this.waterUnitPrice = waterUnitPrice;
             this.trashFee = trashFee;
             this.wifiFee = wifiFee;
             this.parkingFee = parkingFee;
+            this.otherFee = otherFee;
             this.waterMode = waterMode;
         }
     }
@@ -109,8 +115,6 @@ public class InvoiceActivity extends AppCompatActivity {
     private EditText etSearchInvoice;
     private View btnSelectKhu;
     private View btnDatePicker;
-    private FloatingActionButton fabThem;
-    private FloatingActionButton fabChotKy;
 
     private String selectedMonth;
     private String selectedKhuId;
@@ -150,8 +154,6 @@ public class InvoiceActivity extends AppCompatActivity {
         etSearchInvoice = findViewById(R.id.etSearchInvoice);
         btnSelectKhu = findViewById(R.id.btnSelectKhu);
         btnDatePicker = findViewById(R.id.btnDatePicker);
-        fabChotKy = findViewById(R.id.fabChotKy);
-        fabThem = findViewById(R.id.fabThem);
         selectedMonth = FinancePeriodUtil
                 .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
         selectedKhuId = null;
@@ -170,7 +172,6 @@ public class InvoiceActivity extends AppCompatActivity {
         if (tabLayout != null) {
             tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.not_reported)));
             tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.reported)));
-            tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.partially_paid)));
             tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.paid)));
         }
 
@@ -233,7 +234,7 @@ public class InvoiceActivity extends AppCompatActivity {
                 }
 
                 String st = invoice.getStatus();
-                if (InvoiceStatus.PAID.equals(st) || InvoiceStatus.PARTIAL.equals(st)) {
+                if (InvoiceStatus.PAID.equals(st)) {
                     openPaymentHistory(invoice);
                     return;
                 }
@@ -251,6 +252,13 @@ public class InvoiceActivity extends AppCompatActivity {
             @Override
             public void onXuat(Invoice invoice) {
                 showInvoiceExportDialog(invoice);
+            }
+
+            @Override
+            public void onEditOwnerNote(Invoice invoice) {
+                if (isTenantUser)
+                    return;
+                showOwnerNoteDialog(invoice);
             }
         });
 
@@ -294,9 +302,6 @@ public class InvoiceActivity extends AppCompatActivity {
     private void setupFilterListeners() {
         if (btnSelectKhu != null) {
             btnSelectKhu.setOnClickListener(v -> showHouseFilterDialog());
-        }
-        if (fabChotKy != null) {
-            fabChotKy.setOnClickListener(v -> showClosePeriodOptions());
         }
         if (btnDatePicker != null) {
             btnDatePicker.setOnClickListener(v -> showMonthFilterDialog());
@@ -362,10 +367,6 @@ public class InvoiceActivity extends AppCompatActivity {
         adapter.setTenantMode(true);
         if (btnSelectKhu != null)
             btnSelectKhu.setVisibility(View.GONE);
-        if (fabThem != null)
-            fabThem.setVisibility(View.GONE);
-        if (fabChotKy != null)
-            fabChotKy.setVisibility(View.GONE);
         if (etSearchInvoice != null)
             etSearchInvoice.setHint(getString(R.string.search_by_room));
 
@@ -663,10 +664,10 @@ public class InvoiceActivity extends AppCompatActivity {
         for (AutoCreateTarget target : targets) {
             Room room = target.room;
             Tenant contract = target.contract;
-            FeePreset fee = resolveDefaultFeePreset(room);
 
             InvoiceMeterHelper.loadLatestMeterEnds(this::scopedCollection, this::toPeriodKey, room.getId(),
                     (elecEnd, waterEnd) -> {
+                        FeePreset fee = resolveDefaultFeePreset(room, contract);
                         Invoice hd = new Invoice();
                         hd.setRoomId(room.getId());
                         hd.setRoomNumber(room.getRoomNumber());
@@ -698,6 +699,8 @@ public class InvoiceActivity extends AppCompatActivity {
                         hd.setTrashFee(fee.trashFee);
                         hd.setWifiFee(fee.wifiFee);
                         hd.setParkingFee(fee.parkingFee);
+                        hd.setOtherFee(fee.otherFee);
+                        hd.setOtherFeeLines(resolveSelectedExtraFeeLines(room, contract));
                         hd.setStatus(InvoiceStatus.UNREPORTED);
 
                         viewModel.addInvoiceUnique(hd,
@@ -827,7 +830,12 @@ public class InvoiceActivity extends AppCompatActivity {
                         Invoice hd = new Invoice();
                         hd.setRoomId(room.getId());
                         hd.setRoomNumber(room.getRoomNumber());
-                        hd.setRentAmount(room.getRentAmount());
+                        if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
+                            long contractRent = contract.getRentAmount();
+                            hd.setRentAmount(contractRent > 0 ? contractRent : room.getRentAmount());
+                        } else {
+                            hd.setRentAmount(room.getRentAmount());
+                        }
                         hd.setBillingPeriod(period);
                         if (contract != null && contract.getId() != null && !contract.getId().trim().isEmpty()) {
                             hd.setContractId(contract.getId());
@@ -836,7 +844,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         hd.setElectricStartReading(elecEnd);
                         hd.setElectricEndReading(elecEnd);
                         hd.setElectricUnitPrice(electricUnitPrice);
-                        FeePreset roomFeePreset = resolveDefaultFeePreset(room);
+                        FeePreset roomFeePreset = resolveDefaultFeePreset(room, contract);
                         if (WaterCalculationMode.isPerPerson(roomFeePreset.waterMode)) {
                             int memberCount = contract != null ? Math.max(0, contract.getMemberCount()) : 0;
                             hd.setWaterStartReading(0);
@@ -850,8 +858,10 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                         hd.setWaterUnitPrice(waterUnitPrice);
                         hd.setTrashFee(trashFee);
-                        hd.setWifiFee(wifiFee);
-                        hd.setParkingFee(parkingFee);
+                        hd.setWifiFee(contract != null && contract.hasInternetService() ? wifiFee : 0);
+                        hd.setParkingFee(contract != null && contract.hasParkingService() ? parkingFee : 0);
+                        hd.setOtherFee(resolveSelectedExtraFeeTotal(room, contract));
+                        hd.setOtherFeeLines(resolveSelectedExtraFeeLines(room, contract));
                         hd.setStatus(InvoiceStatus.UNREPORTED);
 
                         viewModel.addInvoiceUnique(hd,
@@ -897,11 +907,159 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void showFeeNotificationDialog(Invoice invoice) {
-        InvoiceFeeNotificationHelper.showFeeNotificationDialog(
-                this,
-                invoice,
-                viewModel,
-                this::showInvoiceExportDialog);
+        if (invoice == null)
+            return;
+
+        View dialogView = getLayoutInflater().inflate(R.layout.bottom_sheet_fee_notification, null);
+        TextView tvPhong = dialogView.findViewById(R.id.tvPhong);
+        TextView tvTenant = dialogView.findViewById(R.id.tvTenant);
+        EditText etChiSoDienCu = dialogView.findViewById(R.id.etChiSoDienCu);
+        EditText etChiSoDienMoi = dialogView.findViewById(R.id.etChiSoDienMoi);
+        EditText etChiSoNuocCu = dialogView.findViewById(R.id.etChiSoNuocCu);
+        EditText etChiSoNuocMoi = dialogView.findViewById(R.id.etChiSoNuocMoi);
+        View rowElectricOld = dialogView.findViewById(R.id.rowElectricOld);
+        View rowElectricNew = dialogView.findViewById(R.id.rowElectricNew);
+        View rowWaterOld = dialogView.findViewById(R.id.rowWaterOld);
+        View rowWaterNew = dialogView.findViewById(R.id.rowWaterNew);
+        MaterialButton btnXemInvoice = dialogView.findViewById(R.id.btnXemInvoice);
+        ImageView btnClose = dialogView.findViewById(R.id.btnClose);
+
+        Room room = findRoomById(invoice.getRoomId());
+        boolean electricMeterMode = isElectricMeterMode(room);
+        boolean waterMeterMode = isWaterMeterMode(room);
+
+        tvPhong.setText(invoice.getRoomNumber() != null ? invoice.getRoomNumber() : "???");
+        String tenantDisplay = tenantDisplayByRoom.get(invoice.getRoomId());
+        tvTenant.setText(tenantDisplay != null && !tenantDisplay.trim().isEmpty()
+                ? tenantDisplay
+                : getString(R.string.updating));
+
+        rowElectricOld.setVisibility(electricMeterMode ? View.VISIBLE : View.GONE);
+        rowElectricNew.setVisibility(electricMeterMode ? View.VISIBLE : View.GONE);
+        rowWaterOld.setVisibility(waterMeterMode ? View.VISIBLE : View.GONE);
+        rowWaterNew.setVisibility(waterMeterMode ? View.VISIBLE : View.GONE);
+
+        etChiSoDienCu.setText(InvoiceFormValueHelper.formatDouble(invoice.getElectricStartReading()));
+        etChiSoNuocCu.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterStartReading()));
+        if (electricMeterMode) {
+            etChiSoDienMoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getElectricEndReading()));
+        }
+        if (waterMeterMode) {
+            etChiSoNuocMoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterEndReading()));
+        }
+
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(
+                this);
+        bottomSheet.setContentView(dialogView);
+
+        btnClose.setOnClickListener(v -> bottomSheet.dismiss());
+
+        btnXemInvoice.setOnClickListener(v -> {
+            try {
+                if (electricMeterMode) {
+                    String electricNewText = etChiSoDienMoi.getText().toString().trim();
+                    if (electricNewText.isEmpty()) {
+                        Toast.makeText(this, getString(R.string.please_enter_new_electric), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    double newElectric = Double.parseDouble(electricNewText);
+                    if (newElectric < invoice.getElectricStartReading()) {
+                        Toast.makeText(this, getString(R.string.new_electric_must_gte_old), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    invoice.setElectricEndReading(newElectric);
+                }
+
+                if (waterMeterMode) {
+                    String waterNewText = etChiSoNuocMoi.getText().toString().trim();
+                    if (waterNewText.isEmpty()) {
+                        Toast.makeText(this, getString(R.string.please_enter_new_water), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    double newWater = Double.parseDouble(waterNewText);
+                    if (newWater < invoice.getWaterStartReading()) {
+                        Toast.makeText(this, getString(R.string.new_water_must_gte_old), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    invoice.setWaterEndReading(newWater);
+                }
+
+                invoice.setStatus(InvoiceStatus.REPORTED);
+
+                viewModel.updateInvoice(invoice,
+                        () -> runOnUiThread(() -> {
+                            bottomSheet.dismiss();
+                            showInvoiceExportDialog(invoice);
+                        }),
+                        () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.update_failed),
+                                Toast.LENGTH_SHORT).show()));
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, getString(R.string.invalid_meter_reading), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        bottomSheet.show();
+    }
+
+    private void showOwnerNoteDialog(@NonNull Invoice invoice) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_payment, null);
+        EditText etAmount = dialogView.findViewById(R.id.etAmount);
+        Spinner spinnerMethod = dialogView.findViewById(R.id.spinnerMethod);
+        EditText etPaidAt = dialogView.findViewById(R.id.etPaidAt);
+        EditText etNote = dialogView.findViewById(R.id.etNote);
+
+        etAmount.setVisibility(View.GONE);
+        spinnerMethod.setVisibility(View.GONE);
+        etPaidAt.setVisibility(View.GONE);
+        etNote.setHint(getString(R.string.invoice_owner_note_hint));
+        etNote.setText(invoice.getOwnerNote() != null ? invoice.getOwnerNote() : "");
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.invoice_owner_note_title,
+                        invoice.getRoomNumber() != null ? invoice.getRoomNumber() : "--"))
+                .setView(dialogView)
+                .setPositiveButton(getString(R.string.save), (d, w) -> {
+                    invoice.setOwnerNote(etNote.getText() != null ? etNote.getText().toString().trim() : "");
+                    viewModel.updateInvoice(invoice,
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.invoice_owner_note_saved), Toast.LENGTH_SHORT)
+                                    .show()),
+                            () -> runOnUiThread(() -> Toast
+                                    .makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT)
+                                    .show()));
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    private Room findRoomById(String roomId) {
+        if (roomId == null || roomId.trim().isEmpty())
+            return null;
+        for (Room room : danhSachPhong) {
+            if (room != null && roomId.equals(room.getId())) {
+                return room;
+            }
+        }
+        return null;
+    }
+
+    private boolean isElectricMeterMode(Room room) {
+        if (room == null || room.getHouseId() == null)
+            return true;
+        House house = housesById.get(room.getHouseId());
+        if (house == null)
+            return true;
+        String method = house.getElectricityCalculationMethod();
+        return method == null || method.trim().isEmpty() || "kwh".equalsIgnoreCase(method);
+    }
+
+    private boolean isWaterMeterMode(Room room) {
+        if (room == null || room.getHouseId() == null)
+            return true;
+        House house = housesById.get(room.getHouseId());
+        if (house == null)
+            return true;
+        return WaterCalculationMode.isMeter(house.getWaterCalculationMethod());
     }
 
     private void showInvoiceExportDialog(Invoice h) {
@@ -956,10 +1114,12 @@ public class InvoiceActivity extends AppCompatActivity {
         final double[] lastElecEnd = { 0 };
         final double[] lastWaterEnd = { 0 };
         final boolean[] isWaterMeterMode = { true };
+        final java.util.concurrent.atomic.AtomicReference<List<String>> selectedOtherFeeLines = new java.util.concurrent.atomic.AtomicReference<>(new ArrayList<>());
         spinnerPhong.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Room selectedRoom = danhSachPhong.get(position);
+                Tenant activeContract = activeContractsByRoom.get(selectedRoom.getId());
                 InvoiceDialogUiHelper.setMeterStartReadOnly(form);
 
                 InvoicePeriodSuggestionHelper.suggestNextPeriodForRoom(InvoiceActivity.this::scopedCollection,
@@ -984,8 +1144,16 @@ public class InvoiceActivity extends AppCompatActivity {
                             }
                         });
 
-                applyDefaultFeeFromHouse(selectedRoom, form.etDonGiaDien, form.etDonGiaNuoc, form.etPhiRac,
-                        form.etPhiWifi, form.etPhiGuiXe);
+                applyDefaultFeeFromHouse(selectedRoom,
+                        activeContract,
+                        form.etDonGiaDien,
+                        form.etDonGiaNuoc,
+                        form.etPhiRac,
+                        form.etPhiWifi,
+                        form.etPhiGuiXe,
+                        form.etPhiKhac,
+                        form.tvPhiKhacChiTiet);
+                selectedOtherFeeLines.set(resolveSelectedExtraFeeLines(selectedRoom, activeContract));
                 InvoiceDialogUiHelper.refreshEstimatedTotal(form, tvEstimatedTotal,
                         () -> {
                             Tenant c = activeContractsByRoom.get(selectedRoom.getId());
@@ -1020,6 +1188,7 @@ public class InvoiceActivity extends AppCompatActivity {
                             isWaterMeterMode[0] ? lastWaterEnd[0] : 0,
                                 getString(R.string.meter_start_must_gte_previous_end),
                                 getString(R.string.meter_end_less_than_start));
+                        hd.setOtherFeeLines(new ArrayList<>(selectedOtherFeeLines.get()));
 
                         viewModel.addInvoiceUnique(hd,
                                 () -> {
@@ -1110,6 +1279,8 @@ public class InvoiceActivity extends AppCompatActivity {
                         Invoice updated = InvoiceDialogSubmitHelper.buildUpdatedInvoice(
                                 invoice,
                                 selectedRoom,
+                            activeContractsByRoom.get(selectedRoom.getId()),
+                            invoice.getOtherFeeLines(),
                                 form,
                                 getString(R.string.meter_end_less_than_start));
                         viewModel.updateInvoice(updated,
@@ -1130,11 +1301,14 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void applyDefaultFeeFromHouse(@NonNull Room room,
+            Tenant activeContract,
             @NonNull EditText etDonGiaDien,
             @NonNull EditText etDonGiaNuoc,
             @NonNull EditText etPhiRac,
             @NonNull EditText etPhiWifi,
-            @NonNull EditText etPhiGuiXe) {
+            @NonNull EditText etPhiGuiXe,
+            @NonNull EditText etPhiKhac,
+            TextView tvPhiKhacChiTiet) {
         if (room.getHouseId() == null || room.getHouseId().trim().isEmpty())
             return;
 
@@ -1161,34 +1335,137 @@ public class InvoiceActivity extends AppCompatActivity {
             lockFeeField(etPhiRac, false);
         }
         if (house.getInternetPrice() > 0) {
-            MoneyFormatter.setValue(etPhiWifi, house.getInternetPrice());
+            MoneyFormatter.setValue(etPhiWifi,
+                    activeContract != null && activeContract.hasInternetService() ? house.getInternetPrice() : 0);
             lockFeeField(etPhiWifi, true);
         } else {
             lockFeeField(etPhiWifi, false);
         }
         if (house.getParkingPrice() > 0) {
-            MoneyFormatter.setValue(etPhiGuiXe, house.getParkingPrice());
+            MoneyFormatter.setValue(etPhiGuiXe,
+                    activeContract != null && activeContract.hasParkingService() ? house.getParkingPrice() : 0);
             lockFeeField(etPhiGuiXe, true);
         } else {
             lockFeeField(etPhiGuiXe, false);
         }
+
+        List<String> selectedOtherFeeLines = resolveSelectedExtraFeeLines(room, activeContract);
+        double selectedOtherFee = resolveSelectedExtraFeeTotal(room, activeContract);
+        MoneyFormatter.setValue(etPhiKhac, selectedOtherFee);
+        lockFeeField(etPhiKhac, selectedOtherFee > 0);
+        if (tvPhiKhacChiTiet != null) {
+            if (selectedOtherFeeLines.isEmpty()) {
+                tvPhiKhacChiTiet.setText("");
+                tvPhiKhacChiTiet.setVisibility(View.GONE);
+            } else {
+                tvPhiKhacChiTiet.setText(String.join("\n", selectedOtherFeeLines));
+                tvPhiKhacChiTiet.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
-    private FeePreset resolveDefaultFeePreset(@NonNull Room room) {
+    private FeePreset resolveDefaultFeePreset(@NonNull Room room, Tenant activeContract) {
         if (room.getHouseId() == null || room.getHouseId().trim().isEmpty()) {
-            return new FeePreset(0, 0, 0, 0, 0, WaterCalculationMode.METER);
+            return new FeePreset(0, 0, 0, 0, 0, 0, WaterCalculationMode.METER);
         }
         House house = housesById.get(room.getHouseId());
         if (house == null) {
-            return new FeePreset(0, 0, 0, 0, 0, WaterCalculationMode.METER);
+            return new FeePreset(0, 0, 0, 0, 0, 0, WaterCalculationMode.METER);
         }
         return new FeePreset(
                 Math.max(0, house.getElectricityPrice()),
                 Math.max(0, house.getWaterPrice()),
                 Math.max(0, house.getTrashPrice()),
-                Math.max(0, house.getInternetPrice()),
-                Math.max(0, house.getParkingPrice()),
+                activeContract != null && activeContract.hasInternetService() ? Math.max(0, house.getInternetPrice()) : 0,
+                activeContract != null && activeContract.hasParkingService() ? Math.max(0, house.getParkingPrice()) : 0,
+                resolveSelectedExtraFeeTotal(room, activeContract),
                 house.getWaterCalculationMethod());
+    }
+
+    private double resolveSelectedExtraFeeTotal(@NonNull Room room, Tenant activeContract) {
+        if (activeContract == null) {
+            return 0;
+        }
+        if (room.getHouseId() == null || room.getHouseId().trim().isEmpty()) {
+            return 0;
+        }
+        House house = housesById.get(room.getHouseId());
+        if (house == null || house.getExtraFees() == null || house.getExtraFees().isEmpty()) {
+            return 0;
+        }
+
+        List<String> selectedExtraNames = activeContract.getSelectedExtraFeeNames();
+        boolean hasSelectionFilter = selectedExtraNames != null && !selectedExtraNames.isEmpty();
+
+        double total = 0;
+        for (House.ExtraFee fee : house.getExtraFees()) {
+            if (fee == null || fee.getPrice() <= 0) {
+                continue;
+            }
+            String feeName = fee.getFeeName() != null ? fee.getFeeName().trim() : "";
+            if (feeName.isEmpty()) {
+                continue;
+            }
+            if (hasSelectionFilter && !containsNormalizedFeeName(selectedExtraNames, feeName)) {
+                continue;
+            }
+            total += fee.getPrice();
+        }
+        return Math.max(0, total);
+    }
+
+    @NonNull
+    private List<String> resolveSelectedExtraFeeLines(@NonNull Room room, Tenant activeContract) {
+        List<String> lines = new ArrayList<>();
+        if (activeContract == null) {
+            return lines;
+        }
+        if (room.getHouseId() == null || room.getHouseId().trim().isEmpty()) {
+            return lines;
+        }
+        House house = housesById.get(room.getHouseId());
+        if (house == null || house.getExtraFees() == null || house.getExtraFees().isEmpty()) {
+            return lines;
+        }
+
+        List<String> selectedExtraNames = activeContract.getSelectedExtraFeeNames();
+        boolean hasSelectionFilter = selectedExtraNames != null && !selectedExtraNames.isEmpty();
+
+        for (House.ExtraFee fee : house.getExtraFees()) {
+            if (fee == null || fee.getPrice() <= 0) {
+                continue;
+            }
+            String feeName = fee.getFeeName() != null ? fee.getFeeName().trim() : "";
+            if (feeName.isEmpty()) {
+                continue;
+            }
+            if (hasSelectionFilter && !containsNormalizedFeeName(selectedExtraNames, feeName)) {
+                continue;
+            }
+            lines.add(feeName + ": " + MoneyFormatter.format(fee.getPrice()));
+        }
+        return lines;
+    }
+
+    private boolean containsNormalizedFeeName(@NonNull List<String> selected, String target) {
+        String normalizedTarget = normalizeFeeName(target);
+        if (normalizedTarget.isEmpty()) {
+            return false;
+        }
+        for (String item : selected) {
+            if (normalizedTarget.equals(normalizeFeeName(item))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @NonNull
+    private String normalizeFeeName(String name) {
+        if (name == null) {
+            return "";
+        }
+        return name.trim().toLowerCase(Locale.ROOT);
     }
 
     private void applyWaterInputMode(@NonNull Room room,

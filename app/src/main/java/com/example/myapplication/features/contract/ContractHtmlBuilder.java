@@ -15,6 +15,7 @@ import java.text.NumberFormat;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.Locale;
 
 public final class ContractHtmlBuilder {
@@ -78,7 +79,7 @@ public final class ContractHtmlBuilder {
                                         context.getString(R.string.contract_unit_room))));
             }
 
-            appendExtraFees(context, house, expense);
+            appendExtraFees(context, house, contract, expense);
         }
 
         String template = readRawText(context, R.raw.contract_template_vi);
@@ -183,11 +184,18 @@ public final class ContractHtmlBuilder {
         return unitValue;
     }
 
-    private static void appendExtraFees(@NonNull Context context, @NonNull House house, @NonNull StringBuilder expense) {
+    private static void appendExtraFees(
+            @NonNull Context context,
+            @NonNull House house,
+            @NonNull Tenant contract,
+            @NonNull StringBuilder expense) {
         java.util.List<House.ExtraFee> extraFees = house.getExtraFees();
         if (extraFees == null || extraFees.isEmpty()) {
             return;
         }
+
+        List<String> selectedExtraFeeNames = contract.getSelectedExtraFeeNames();
+        boolean hasSelectedFilters = selectedExtraFeeNames != null && !selectedExtraFeeNames.isEmpty();
 
         for (House.ExtraFee fee : extraFees) {
             if (fee == null)
@@ -196,13 +204,38 @@ public final class ContractHtmlBuilder {
             if (name.isEmpty() || fee.getPrice() <= 0)
                 continue;
 
-                String unit = fee.getUnit() != null ? fee.getUnit().trim() : "";
-                String unitSuffix = unit.isEmpty() ? "" : "/" + unit;
+            if (hasSelectedFilters && !containsNormalizedKey(selectedExtraFeeNames, name)) {
+                continue;
+            }
+
+            String unit = fee.getUnit() != null ? fee.getUnit().trim() : "";
+            String unitSuffix = unit.isEmpty() ? "" : "/" + unit;
             expense.append(context.getString(
                     R.string.contract_expense_extra_line,
                     name,
                     formatVnd(fee.getPrice()),
                     unitSuffix));
         }
+    }
+
+    private static boolean containsNormalizedKey(@NonNull List<String> keys, String target) {
+        String normalizedTarget = normalizeFeeKey(target);
+        if (normalizedTarget.isEmpty()) {
+            return false;
+        }
+        for (String key : keys) {
+            if (normalizedTarget.equals(normalizeFeeKey(key))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @NonNull
+    private static String normalizeFeeKey(String feeName) {
+        if (feeName == null) {
+            return "";
+        }
+        return feeName.trim().toLowerCase(Locale.ROOT);
     }
 }

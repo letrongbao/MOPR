@@ -93,10 +93,7 @@ public final class InvoiceFilterCoordinator {
             return InvoiceStatus.UNREPORTED.equals(status);
         }
         if (tabIndex == 1) {
-            return InvoiceStatus.REPORTED.equals(status);
-        }
-        if (tabIndex == 2) {
-            return InvoiceStatus.PARTIAL.equals(status);
+            return InvoiceStatus.REPORTED.equals(status) || InvoiceStatus.PARTIAL.equals(status);
         }
         return InvoiceStatus.PAID.equals(status);
     }

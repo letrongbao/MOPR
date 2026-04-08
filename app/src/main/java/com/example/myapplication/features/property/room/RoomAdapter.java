@@ -34,10 +34,14 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
     public static class TenantCardInfo {
         public final String representativeName;
         public final String phone;
+        public final int declaredMemberCount;
+        public final int currentMemberCount;
 
-        public TenantCardInfo(String representativeName, String phone) {
+        public TenantCardInfo(String representativeName, String phone, int declaredMemberCount, int currentMemberCount) {
             this.representativeName = representativeName;
             this.phone = phone;
+            this.declaredMemberCount = declaredMemberCount;
+            this.currentMemberCount = currentMemberCount;
         }
     }
 
@@ -161,12 +165,6 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
             room.getArea() > 0 ? String.format(Locale.getDefault(), "%.1f", room.getArea())
                 : holder.itemView.getContext().getString(R.string.common_not_available)));
 
-        holder.tvMaxOccupancy.setText(holder.itemView.getContext().getString(
-            R.string.item_room_max_occupancy_value,
-            room.getMaxOccupancy() > 0
-                ? holder.itemView.getContext().getString(R.string.room_max_occupancy_value, room.getMaxOccupancy())
-                : holder.itemView.getContext().getString(R.string.common_not_available)));
-
         // Load room image
         if (room.getImageUrl() != null && !room.getImageUrl().isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -189,6 +187,24 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
 
         String roomId = room.getId();
         TenantCardInfo tenant = (roomId != null) ? tenantByRoomId.get(roomId) : null;
+        if (trong) {
+            holder.tvMaxOccupancy.setText(holder.itemView.getContext().getString(
+                R.string.item_room_max_occupancy_value,
+                room.getMaxOccupancy() > 0
+                    ? holder.itemView.getContext().getString(R.string.room_max_occupancy_value,
+                        room.getMaxOccupancy())
+                    : holder.itemView.getContext().getString(R.string.common_not_available)));
+        } else {
+            int currentCount = tenant != null ? Math.max(tenant.currentMemberCount, 0) : 0;
+            int declaredCount = tenant != null ? Math.max(tenant.declaredMemberCount, 0) : 0;
+            String occupancyText = declaredCount > 0
+                ? holder.itemView.getContext().getString(R.string.room_current_occupancy_value, currentCount,
+                    declaredCount)
+                : holder.itemView.getContext().getString(R.string.room_current_occupancy_unknown, currentCount);
+            holder.tvMaxOccupancy.setText(
+                holder.itemView.getContext().getString(R.string.item_room_current_occupancy_value, occupancyText));
+        }
+
         if (holder.tvTenantName != null && holder.tvTenantPhone != null) {
             String name = tenant != null ? tenant.representativeName : null;
             String phone = tenant != null ? tenant.phone : null;
@@ -258,6 +274,8 @@ public class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.ViewHolder> {
         if (b == null)
             return false;
         return safeEq(a.representativeName, b.representativeName)
-                && safeEq(a.phone, b.phone);
+                && safeEq(a.phone, b.phone)
+                && a.declaredMemberCount == b.declaredMemberCount
+                && a.currentMemberCount == b.currentMemberCount;
     }
 }

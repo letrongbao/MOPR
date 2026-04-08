@@ -31,7 +31,12 @@ import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
+import com.example.myapplication.features.chat.ChatHubActivity;
+import com.example.myapplication.features.notification.NotificationCenterActivity;
+import com.example.myapplication.features.notification.NotificationRealtimeObserver;
+import com.example.myapplication.features.notification.push.AppFirebaseMessagingService;
 import com.example.myapplication.features.history.RentalHistoryActivity;
+import com.example.myapplication.features.tenant.TenantProfilesActivity;
 import com.example.myapplication.features.finance.ExpenseActivity;
 import com.example.myapplication.features.finance.RevenueActivity;
 import com.example.myapplication.features.invoice.InvoiceActivity;
@@ -66,8 +71,10 @@ public class HomeMenuActivity extends AppCompatActivity {
     private View btnLangEn;
     private View btnLangVi;
     private ListenerRegistration userRoleListener;
+    private NotificationRealtimeObserver notificationRealtimeObserver;
     private boolean roleInitialized = false;
     private boolean isLanguageSwitching;
+    private TextView tvDrawerNotificationBadge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,7 +148,9 @@ public class HomeMenuActivity extends AppCompatActivity {
 
         btnLangEn = findViewById(R.id.btnLangEn);
         btnLangVi = findViewById(R.id.btnLangVi);
+        tvDrawerNotificationBadge = findViewById(R.id.tvDrawerNotificationBadge);
         setupLanguageSwitcher();
+        setupNotificationEntry();
 
         // Setup drawer menu items
         setupDrawerMenu();
@@ -154,6 +163,8 @@ public class HomeMenuActivity extends AppCompatActivity {
         setupMenuCards(TenantRoles.TENANT);
         updateStatistics();
         observeUserPrimaryRole();
+        AppFirebaseMessagingService.syncTokenForCurrentUser();
+        observeUnreadNotificationCount();
     }
 
     private void setupMenuCards(String role) {
@@ -179,12 +190,52 @@ public class HomeMenuActivity extends AppCompatActivity {
         enableHomeCard(cardInvoice, v -> startActivity(new Intent(this, InvoiceActivity.class)));
         enableHomeCard(cardExpense, v -> startActivity(new Intent(this, ExpenseActivity.class)));
         enableHomeCard(cardReport, v -> startActivity(new Intent(this, RevenueActivity.class)));
-        enableHomeCard(cardKhachThue, v -> {
-            Intent intent = new Intent(this, RoomActivity.class);
-            intent.putExtra("FILTER_STATUS", RoomStatus.RENTED);
-            startActivity(intent);
-        });
+        enableHomeCard(cardKhachThue, v -> startActivity(new Intent(this, ChatHubActivity.class)));
         enableHomeCard(cardHopDong, v -> startActivity(new Intent(this, ContractListActivity.class)));
+    }
+
+    private void setupNotificationEntry() {
+        View btnDrawerNotification = findViewById(R.id.btnDrawerNotification);
+        if (btnDrawerNotification != null) {
+            btnDrawerNotification.setOnClickListener(v -> {
+                drawerLayout.closeDrawer(GravityCompat.END);
+                startActivity(new Intent(this, NotificationCenterActivity.class));
+            });
+        }
+    }
+
+    private void observeUnreadNotificationCount() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        String tenantId = TenantSession.getActiveTenantId();
+        if (user == null || tenantId == null || tenantId.trim().isEmpty()) {
+            updateUnreadBadge(0);
+            return;
+        }
+
+        if (notificationRealtimeObserver != null) {
+            notificationRealtimeObserver.stop();
+            notificationRealtimeObserver = null;
+        }
+
+        notificationRealtimeObserver = new NotificationRealtimeObserver(
+                this,
+                db,
+                tenantId,
+                user.getUid(),
+                this::updateUnreadBadge);
+        notificationRealtimeObserver.start();
+    }
+
+    private void updateUnreadBadge(int count) {
+        if (tvDrawerNotificationBadge == null) {
+            return;
+        }
+        if (count <= 0) {
+            tvDrawerNotificationBadge.setVisibility(View.GONE);
+            return;
+        }
+        tvDrawerNotificationBadge.setVisibility(View.VISIBLE);
+        tvDrawerNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
     }
 
     private void enableHomeCard(MaterialCardView card, View.OnClickListener listener) {
@@ -214,6 +265,15 @@ public class HomeMenuActivity extends AppCompatActivity {
             menuEditProfile.setOnClickListener(v -> {
                 drawerLayout.closeDrawer(GravityCompat.END);
                 editProfileLauncher.launch(new Intent(this, EditProfileActivity.class));
+            });
+        }
+
+        // Tenant Profiles
+        LinearLayout menuTenantProfiles = findViewById(R.id.menuTenantProfiles);
+        if (menuTenantProfiles != null) {
+            menuTenantProfiles.setOnClickListener(v -> {
+                drawerLayout.closeDrawer(GravityCompat.END);
+                startActivity(new Intent(this, TenantProfilesActivity.class));
             });
         }
 
@@ -348,6 +408,10 @@ public class HomeMenuActivity extends AppCompatActivity {
         if (userRoleListener != null) {
             userRoleListener.remove();
             userRoleListener = null;
+        }
+        if (notificationRealtimeObserver != null) {
+            notificationRealtimeObserver.stop();
+            notificationRealtimeObserver = null;
         }
         super.onDestroy();
     }
@@ -506,6 +570,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         View rowTop = findViewById(R.id.rowTop);
         View rowMiddle = findViewById(R.id.rowMiddle);
         View rowBottom = findViewById(R.id.rowBottom);
+        View menuTenantProfiles = findViewById(R.id.menuTenantProfiles);
         View menuRentalHistory = findViewById(R.id.menuRentalHistory);
         TextView tvCardHouseLabel = findViewById(R.id.tvCardHouseLabel);
         TextView tvCardInvoiceLabel = findViewById(R.id.tvCardInvoiceLabel);
@@ -526,6 +591,9 @@ public class HomeMenuActivity extends AppCompatActivity {
         if (rowBottom != null) {
             rowBottom.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
+        if (menuTenantProfiles != null) {
+            menuTenantProfiles.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        }
         if (menuRentalHistory != null) {
             menuRentalHistory.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
@@ -543,7 +611,7 @@ public class HomeMenuActivity extends AppCompatActivity {
             tvCardReportLabel.setText(isOwner ? getString(R.string.home_owner_report_label) : "");
         }
         if (tvCardTenantLabel != null) {
-            tvCardTenantLabel.setText(isOwner ? getString(R.string.home_owner_tenant_label) : "");
+            tvCardTenantLabel.setText(isOwner ? getString(R.string.home_owner_chat_label) : "");
         }
         if (tvCardContractLabel != null) {
             tvCardContractLabel.setText(isOwner ? getString(R.string.home_owner_contract_label) : "");

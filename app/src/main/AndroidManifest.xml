@@ -38,6 +38,9 @@
         <activity android:name=".features.home.TenantMenuActivity" />
         <activity android:name=".features.home.TenantRoomDetailActivity" />
         <activity android:name=".features.home.ConfirmMeterActivity" />
+        <activity android:name=".features.chat.ChatHubActivity" />
+        <activity android:name=".features.chat.ChatRoomActivity" />
+        <activity android:name=".features.notification.NotificationCenterActivity" />
 
         <!-- Property -->
         <activity android:name=".features.property.house.HouseActivity" />
@@ -52,6 +55,7 @@
 
         <!-- Tenant / Contract -->
         <activity android:name=".features.tenant.TenantActivity" />
+        <activity android:name=".features.tenant.TenantProfilesActivity" />
         <activity android:name=".features.contract.ContractActivity" />
         <activity android:name=".features.contract.ContractListActivity" />
         <activity android:name=".features.contract.ContractDetailsActivity" />
@@ -79,6 +83,14 @@
         <service
             android:name=".core.service.ImageUploadService"
             android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".features.notification.push.AppFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"

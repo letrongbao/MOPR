@@ -2,6 +2,7 @@ package com.example.myapplication.features.invoice;
 
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -28,6 +29,8 @@ public final class InvoiceDialogSubmitHelper {
         public final EditText etPhiRac;
         public final EditText etPhiWifi;
         public final EditText etPhiGuiXe;
+        public final EditText etPhiKhac;
+        public final TextView tvPhiKhacChiTiet;
 
         FormRefs(@NonNull View dialogView) {
             etThangNam = dialogView.findViewById(R.id.etThangNam);
@@ -40,6 +43,8 @@ public final class InvoiceDialogSubmitHelper {
             etPhiRac = dialogView.findViewById(R.id.etPhiRac);
             etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
             etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
+            etPhiKhac = dialogView.findViewById(R.id.etPhiKhac);
+            tvPhiKhacChiTiet = dialogView.findViewById(R.id.tvPhiKhacChiTiet);
         }
 
         public void applyMoneyFormatting() {
@@ -48,6 +53,7 @@ public final class InvoiceDialogSubmitHelper {
             MoneyFormatter.applyTo(etPhiRac);
             MoneyFormatter.applyTo(etPhiWifi);
             MoneyFormatter.applyTo(etPhiGuiXe);
+            MoneyFormatter.applyTo(etPhiKhac);
         }
     }
 
@@ -97,6 +103,7 @@ public final class InvoiceDialogSubmitHelper {
         invoice.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
         invoice.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
         invoice.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
+        invoice.setOtherFee(MoneyFormatter.getValue(form.etPhiKhac));
         invoice.setStatus(InvoiceStatus.UNREPORTED);
         return invoice;
     }
@@ -104,6 +111,8 @@ public final class InvoiceDialogSubmitHelper {
     @NonNull
     public static Invoice buildUpdatedInvoice(@NonNull Invoice original,
             @NonNull Room room,
+            Tenant activeContract,
+            java.util.List<String> otherFeeLines,
             @NonNull FormRefs form,
             @NonNull String endReadingInvalidMessage) throws ValidationException {
         double dienDau = InvoiceFormValueHelper.parseDouble(form.etDienDau);
@@ -120,7 +129,12 @@ public final class InvoiceDialogSubmitHelper {
         updated.setContractId(original.getContractId());
         updated.setRoomId(room.getId());
         updated.setRoomNumber(room.getRoomNumber());
-        updated.setRentAmount(room.getRentAmount());
+        if (activeContract != null && activeContract.getId() != null && !activeContract.getId().trim().isEmpty()) {
+            long contractRent = activeContract.getRentAmount();
+            updated.setRentAmount(contractRent > 0 ? contractRent : room.getRentAmount());
+        } else {
+            updated.setRentAmount(room.getRentAmount());
+        }
         updated.setBillingPeriod(form.etThangNam.getText().toString().trim());
         updated.setElectricStartReading(dienDau);
         updated.setElectricEndReading(dienCuoi);
@@ -131,6 +145,8 @@ public final class InvoiceDialogSubmitHelper {
         updated.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
         updated.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
         updated.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
+        updated.setOtherFee(MoneyFormatter.getValue(form.etPhiKhac));
+        updated.setOtherFeeLines(otherFeeLines);
         updated.setStatus(original.getStatus());
         return updated;
     }

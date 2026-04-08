@@ -317,8 +317,8 @@
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:contentDescription="@string/tenant_management_title"
-                        android:src="@drawable/ic_user_avatar"
+                        android:contentDescription="@string/chat_hub_title"
+                        android:src="@drawable/ic_chat_bubble"
                         app:tint="@color/white" />
 
                     <TextView

@@ -19,8 +19,13 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.features.auth.MainActivity;
+import com.example.myapplication.features.chat.ChatHubActivity;
+import com.example.myapplication.features.notification.NotificationCenterActivity;
+import com.example.myapplication.features.notification.NotificationRealtimeObserver;
+import com.example.myapplication.features.notification.push.AppFirebaseMessagingService;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
+import com.example.myapplication.features.ticket.TicketActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -51,8 +56,11 @@ public class TenantMenuActivity extends AppCompatActivity {
     private TextView drawerUserEmail;
     private LinearLayout menuEditProfile;
     private LinearLayout menuChangePassword;
+    private LinearLayout menuTenantProfiles;
     private LinearLayout menuRentalHistory;
     private LinearLayout menuLogout;
+    private View btnDrawerNotification;
+    private TextView tvDrawerNotificationBadge;
 
     // ===== Data =====
     private String tenantId;
@@ -60,6 +68,7 @@ public class TenantMenuActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private NotificationRealtimeObserver notificationRealtimeObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,8 +103,15 @@ public class TenantMenuActivity extends AppCompatActivity {
         drawerUserEmail     = findViewById(R.id.drawerUserEmail);
         menuEditProfile     = findViewById(R.id.menuEditProfile);
         menuChangePassword  = findViewById(R.id.menuChangePassword);
+        menuTenantProfiles  = findViewById(R.id.menuTenantProfiles);
         menuRentalHistory   = findViewById(R.id.menuRentalHistory);
         menuLogout          = findViewById(R.id.menuLogout);
+        btnDrawerNotification = findViewById(R.id.btnDrawerNotification);
+        tvDrawerNotificationBadge = findViewById(R.id.tvDrawerNotificationBadge);
+
+        if (menuTenantProfiles != null) {
+            menuTenantProfiles.setVisibility(View.GONE);
+        }
 
         // Ẩn mục Rental History (không dùng cho Tenant)
         if (menuRentalHistory != null) {
@@ -117,16 +133,72 @@ public class TenantMenuActivity extends AppCompatActivity {
 
         // ===== Setup click listeners cho drawer items =====
         setupDrawerListeners();
+        setupDrawerNotificationEntry();
 
         // ===== Click 4 thẻ menu =====
         cardMyRoom.setOnClickListener(v -> openRoomDetail());
         cardBill.setOnClickListener(v -> openRoomDetail());   // cùng màn hình, tab billing
 
-        cardReport.setOnClickListener(v ->
-            Toast.makeText(this, getString(R.string.tenant_menu_report_issue), Toast.LENGTH_SHORT).show());
+        cardReport.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
 
         cardNotification.setOnClickListener(v ->
-            Toast.makeText(this, getString(R.string.tenant_menu_notification), Toast.LENGTH_SHORT).show());
+            startActivity(new Intent(this, ChatHubActivity.class)));
+
+        AppFirebaseMessagingService.syncTokenForCurrentUser();
+        observeUnreadNotificationCount();
+    }
+
+    private void setupDrawerNotificationEntry() {
+        if (btnDrawerNotification == null) {
+            return;
+        }
+        btnDrawerNotification.setOnClickListener(v -> {
+            tenantDrawerLayout.closeDrawer(GravityCompat.END);
+            startActivity(new Intent(this, NotificationCenterActivity.class));
+        });
+    }
+
+    private void observeUnreadNotificationCount() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        String activeTenantId = tenantId != null ? tenantId : TenantSession.getActiveTenantId();
+        if (user == null || activeTenantId == null || activeTenantId.trim().isEmpty()) {
+            updateUnreadBadge(0);
+            return;
+        }
+
+        if (notificationRealtimeObserver != null) {
+            notificationRealtimeObserver.stop();
+            notificationRealtimeObserver = null;
+        }
+
+        notificationRealtimeObserver = new NotificationRealtimeObserver(
+                this,
+                db,
+                activeTenantId,
+                user.getUid(),
+                this::updateUnreadBadge);
+        notificationRealtimeObserver.start();
+    }
+
+    private void updateUnreadBadge(int count) {
+        if (tvDrawerNotificationBadge == null) {
+            return;
+        }
+        if (count <= 0) {
+            tvDrawerNotificationBadge.setVisibility(View.GONE);
+            return;
+        }
+        tvDrawerNotificationBadge.setVisibility(View.VISIBLE);
+        tvDrawerNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (notificationRealtimeObserver != null) {
+            notificationRealtimeObserver.stop();
+            notificationRealtimeObserver = null;
+        }
+        super.onDestroy();
     }
 
     // ========== MỞ MÀN HÌNH CHI TIẾT PHÒNG ==========

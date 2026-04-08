@@ -117,21 +117,19 @@ public class InvoiceReminderWorker extends Worker {
     private String resolveTodayTimingKey() {
         Calendar cal = Calendar.getInstance();
         int day = cal.get(Calendar.DAY_OF_MONTH);
-        int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
         if (day == 1)
             return "start_month";
         if (day == 15)
             return "mid_month";
-        if (day == maxDay)
-            return "end_month";
         return null;
     }
 
     private String normalizeTiming(String value) {
-        if ("end_month".equals(value) || "mid_month".equals(value) || "start_month".equals(value)) {
-            return value;
-        }
+        if ("mid_month".equals(value) || "end_month".equals(value))
+            return "mid_month";
+        if ("start_month".equals(value))
+            return "start_month";
         return "start_month";
     }
 

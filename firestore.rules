@@ -9,6 +9,11 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
     }
 
+    function uidIsTenantMember(tenantId, uid) {
+      return uid is string
+        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(uid));
+    }
+
     function memberRole(tenantId) {
       return get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role;
     }
@@ -208,6 +213,94 @@ service cloud.firestore {
         );
 
         allow delete: if isStaffOrOwner(tenantId);
+      }
+
+      match /chat_conversations/{docId} {
+        allow read: if isTenantMember(tenantId)
+          && request.auth.uid in resource.data.participantIds;
+
+        allow create: if isTenantMember(tenantId)
+          && request.auth.uid in request.resource.data.participantIds
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.type in ['HOUSE', 'ROOM', 'PRIVATE']
+          && request.resource.data.participantIds is list
+          && request.resource.data.participantIds.size() >= 2
+          && (
+            (
+              request.resource.data.type == 'PRIVATE'
+              && request.resource.data.roomId == null
+              && request.resource.data.participantIds.size() == 2
+            )
+            || (
+              request.resource.data.type == 'ROOM'
+              && request.resource.data.roomId is string
+              && request.resource.data.roomId.size() > 0
+            )
+            || (
+              request.resource.data.type == 'HOUSE'
+              && request.resource.data.roomId == null
+            )
+          );
+
+        allow update: if isTenantMember(tenantId)
+          && request.auth.uid in resource.data.participantIds
+          && request.auth.uid in request.resource.data.participantIds
+          && request.resource.data.type == resource.data.type
+          && request.resource.data.roomId == resource.data.roomId
+          && request.resource.data.participantIds == resource.data.participantIds
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'displayName',
+            'updatedAt',
+            'lastMessage',
+            'lastSenderId',
+            'lastMessageAt'
+          ]);
+
+        allow delete: if false;
+
+        match /messages/{messageId} {
+          allow read: if isTenantMember(tenantId)
+            && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)/chat_conversations/$(docId)).data.participantIds;
+
+          allow create: if isTenantMember(tenantId)
+            && request.auth.uid == request.resource.data.senderId
+            && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)/chat_conversations/$(docId)).data.participantIds
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 1000;
+
+          allow update, delete: if false;
+        }
+      }
+
+      match /notifications/{docId} {
+        allow read: if isTenantMember(tenantId)
+          && (
+            isStaffOrOwner(tenantId)
+            || resource.data.userId == request.auth.uid
+          );
+
+        allow create: if isTenantMember(tenantId)
+          && request.resource.data.senderId == request.auth.uid
+          && uidIsTenantMember(tenantId, request.resource.data.userId);
+
+        allow update: if isTenantMember(tenantId)
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.senderId == resource.data.senderId
+          && request.resource.data.type == resource.data.type
+          && request.resource.data.conversationId == resource.data.conversationId
+          && request.resource.data.body == resource.data.body
+          && request.resource.data.title == resource.data.title
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'isRead',
+            'readAt'
+          ]);
+
+        allow delete: if false;
       }
 
       // default deny for unknown subcollections (tighten-by-default)

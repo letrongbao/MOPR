@@ -204,6 +204,10 @@ public class InvoiceRepository {
         putIfPositive(payload, "trashFee", invoice.getTrashFee());
         putIfPositive(payload, "wifiFee", invoice.getWifiFee());
         putIfPositive(payload, "parkingFee", invoice.getParkingFee());
+        putIfPositive(payload, "otherFee", invoice.getOtherFee());
+        if (invoice.getOtherFeeLines() != null && !invoice.getOtherFeeLines().isEmpty()) {
+            payload.put("otherFeeLines", new ArrayList<>(invoice.getOtherFeeLines()));
+        }
         putIfPositive(payload, "rentAmount", invoice.getRentAmount());
         payload.put("totalAmount", Math.max(0, invoice.getTotalAmount()));
 
@@ -214,6 +218,7 @@ public class InvoiceRepository {
         }
         putIfNotBlank(payload, "paymentMethod", invoice.getPaymentMethod());
         putIfPositive(payload, "paidAmount", invoice.getPaidAmount());
+        payload.put("ownerNote", invoice.getOwnerNote() == null ? "" : invoice.getOwnerNote().trim());
 
         if (invoice.getCreatedAt() != null) {
             payload.put("createdAt", invoice.getCreatedAt());

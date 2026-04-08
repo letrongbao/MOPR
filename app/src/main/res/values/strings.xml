@@ -161,6 +161,7 @@
     <string name="trash_fee_colon">- Phí rác: </string>
     <string name="wifi_fee_colon">- Phí Wifi: </string>
     <string name="parking_fee_colon">- Phí gửi xe: </string>
+    <string name="other_fee_colon">- Phí khác: </string>
     <string name="loading_payments">(Đang tải thanh toán...)</string>
     <string name="total_amount_colon">TỔNG CỘNG: </string>
     <string name="payment_separator">── Thanh toán ──</string>
@@ -210,12 +211,23 @@
     <string name="room_number">Phòng %1$s</string>
     <string name="please_enter_new_electric">Vui lòng nhập chi số điện mới</string>
     <string name="new_electric_must_gte_old">Chi số điện mới phải &gt;= chi số cũ</string>
+    <string name="please_enter_new_water">Vui lòng nhập chi số nước mới</string>
+    <string name="new_water_must_gte_old">Chi số nước mới phải &gt;= chi số cũ</string>
     <string name="invalid_meter_reading">Chi số không hợp lệ</string>
+    <string name="water_old_reading_required">Chi số nước cũ *</string>
+    <string name="water_new_reading_required">Chi số nước mới *</string>
+    <string name="invoice_mark_reported_and_open">Xác nhận báo phí &amp; mở hóa đơn</string>
     <string name="invoice_statistics">Thống kê báo phí</string>
     <string name="not_reported">Chưa báo</string>
     <string name="reported">Đã báo</string>
     <string name="partially_paid">Đóng một phần</string>
     <string name="paid">Đã đóng</string>
+    <string name="invoice_owner_note_label">Ghi chú thu phí</string>
+    <string name="invoice_owner_note_empty">Chưa có ghi chú.</string>
+    <string name="invoice_owner_note_edit">Cập nhật ghi chú</string>
+    <string name="invoice_owner_note_title">Ghi chú thu phí - Phòng %1$s</string>
+    <string name="invoice_owner_note_hint">Ví dụ: Khách đã đóng 1 phần, hẹn thanh toán phần còn lại vào ngày...</string>
+    <string name="invoice_owner_note_saved">Đã lưu ghi chú thu phí</string>
     <string name="delete_invoice_month">Xóa hóa đơn tháng %1$s</string>
     <string name="cannot_delete_has_payment">Không thể xóa: hoá đơn đã có thanh toán</string>
     <string name="cannot_check_payment">Không thể kiểm tra thanh toán</string>
@@ -457,7 +469,7 @@
 
     <string name="expense_uncategorized">(Chưa phân loại)</string>
     <string name="meter_start_must_gte_previous_end">Chỉ số đầu kỳ phải &gt;= chỉ số cuối kỳ trước</string>
-    <string name="contract_signing_date_invalid">Ngày ký không hợp lệ (định dạng MM/yyyy)</string>
+    <string name="contract_signing_date_invalid">Ngày ký không hợp lệ (định dạng dd/MM/yyyy)</string>
     <string name="contract_end_confirm_title">Xác nhận kết thúc hợp đồng</string>
     <string name="contract_end_confirm_message">Bạn có chắc chắn muốn kết thúc hợp đồng này?\n\n• Phòng sẽ chuyển về trạng thái \'Trống\'\n• Thông tin hợp đồng sẽ được lưu vào lịch sử</string>
     <string name="contract_end_action">Kết thúc</string>
@@ -534,7 +546,6 @@
     <string name="contract_billing_reminder_label">Nhắc báo phí vào</string>
     <string name="remind_start_month">Đầu tháng</string>
     <string name="remind_mid_month">Giữa tháng</string>
-    <string name="remind_end_month">Cuối tháng</string>
     <string name="create_contract">Tạo hợp đồng</string>
     <string name="print_contract">In hợp đồng</string>
     <string name="end_contract">Kết thúc hợp đồng</string>
@@ -621,7 +632,8 @@
     <string name="none_option">(Không chọn)</string>
     <string name="room_edit_title">Chỉnh sửa phòng %1$s</string>
     <string name="add">Thêm</string>
-    <string name="home_owner_tenant_label">Phòng\nđang thuê</string>
+    <string name="home_owner_tenant_label">Trò chuyện\nnhanh</string>
+    <string name="home_owner_chat_label">Trò chuyện\nnhanh</string>
     <string name="home_owner_contract_label">Hợp đồng\nthông minh</string>
     <string name="app_version_label">Phiên bản 2.6.3</string>
     <string name="feedback">Góp ý</string>
@@ -667,6 +679,7 @@
     <string name="fee_garbage">Phí rác (đ)</string>
     <string name="fee_wifi">Phí wifi (đ)</string>
     <string name="fee_parking">Phí gửi xe (đ)</string>
+    <string name="fee_other">Phí khác (đ)</string>
     <string name="invoice_total_estimated">Tổng tạm tính</string>
     <string name="expense_category_hint">Hạng mục (ví dụ: Sửa chữa, Rác, Wifi...)</string>
     <string name="expense_amount_hint">Số tiền</string>
@@ -738,7 +751,8 @@
     <string name="house_scan_code">Quét mã</string>
     <string name="email">Email</string>
     <string name="profile_email_placeholder">email@example.com</string>
-    <string name="contract_date_month_year_hint">MM/yyyy</string>
+    <string name="contract_date_month_year_hint">dd/MM/yyyy</string>
+    <string name="contract_pick_signing_date">Chọn ngày ký hợp đồng</string>
     <string name="contract_placeholder_number">HD001</string>
     <string name="contract_placeholder_phone">0987654321</string>
     <string name="contract_placeholder_created_date">01/01/2024</string>
@@ -807,6 +821,7 @@
     <string name="item_room_type_value">Loại phòng: %1$s</string>
     <string name="item_room_area_value">Diện tích: %1$s m²</string>
     <string name="item_room_max_occupancy_value">Sức chứa: %1$s</string>
+    <string name="item_room_current_occupancy_value">Đang ở: %1$s</string>
     <string name="item_room_view_details_hint">Xem chi tiết →</string>
     <string name="common_more_options">Tùy chọn thêm</string>
     <string name="item_tenant_avatar_desc">Avatar khách thuê</string>
@@ -818,6 +833,25 @@
     <string name="item_tenant_contract_representative">Đại diện hợp đồng</string>
     <string name="item_tenant_temporary_residence_missing">Chưa đăng ký tạm trú</string>
     <string name="item_tenant_documents_incomplete">Chưa đầy đủ giấy tờ</string>
+    <string name="tenant_profiles_title">Hồ sơ người thuê</string>
+    <string name="tenant_profiles_subtitle">Thông tin nhanh phục vụ thủ tục tạm trú/tạm vắng</string>
+    <string name="tenant_profiles_empty">Chưa có hồ sơ người thuê trong hợp đồng hiện tại</string>
+    <string name="tenant_profiles_count_default">0 hồ sơ người thuê</string>
+    <string name="tenant_profiles_count">%1$d hồ sơ người thuê</string>
+    <string name="tenant_profiles_filter_house_all">Tất cả nhà</string>
+    <string name="tenant_profiles_filter_room_all">Tất cả phòng</string>
+    <string name="tenant_profiles_select_house">Chọn nhà</string>
+    <string name="tenant_profiles_select_room">Chọn phòng</string>
+    <string name="tenant_profiles_sort_room">Phòng (tăng dần)</string>
+    <string name="tenant_profiles_sort_representative_first">Ưu tiên đại diện hợp đồng</string>
+    <string name="tenant_profile_unknown_name">Chưa rõ tên</string>
+    <string name="tenant_profile_role_representative">Người đại diện hợp đồng</string>
+    <string name="tenant_profile_role_member">Thành viên thuê</string>
+    <string name="tenant_profile_role_with_room">%1$s • Phòng %2$s</string>
+    <string name="tenant_profile_status_ready">Đủ hồ sơ</string>
+    <string name="tenant_profile_status_missing">Thiếu hồ sơ</string>
+    <string name="tenant_profile_action_call">Gọi</string>
+    <string name="tenant_profile_action_update">Cập nhật hồ sơ</string>
     <string name="item_rental_history_initial_sample">N</string>
     <string name="item_rental_history_tenant_name_sample">Nguyễn Văn A</string>
     <string name="item_rental_history_room_info_sample">Phòng 101 - Nhà A</string>
@@ -916,6 +950,8 @@
     <string name="contract_expense_laundry_line">- Giặt sấy: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_expense_extra_line">- %1$s: %2$s%3$s&lt;br/&gt;</string>
     <string name="contract_expense_trash_line">- Rác: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_extra_fee_options_label">Các chi phí khác</string>
+    <string name="contract_extra_fee_option_text">%1$s: %2$s%3$s</string>
 
     <string name="join_room_welcome">Chào mừng đến MOPR!</string>
     <string name="join_room_instruction">Vui lòng nhập mã nhóm phòng mà chủ nhà đã chia sẻ cho bạn để tiếp tục.</string>
@@ -935,6 +971,7 @@
     <string name="tenant_menu_finalize_bill">Chốt hóa đơn</string>
     <string name="tenant_menu_report_issue">Báo cáo sự cố</string>
     <string name="tenant_menu_notification">Thông báo</string>
+    <string name="tenant_menu_chat">Trò chuyện</string>
     <string name="tenant_menu_room_not_identified">Chưa xác định được phòng</string>
 
     <string name="tenant_room_days_remaining_label">Ngày\ncòn lại</string>
@@ -980,5 +1017,28 @@
     <string name="tenant_room_meter_history">Lịch sử đồng hồ</string>
     <string name="tenant_room_meter_list">Danh sách chốt</string>
     <string name="tenant_room_contract_detail">Chi tiết hợp đồng</string>
+
+    <string name="chat_hub_title">Tin nhắn</string>
+    <string name="chat_hub_hint">Nhắn tin theo nhóm phòng, toàn căn nhà hoặc riêng tư.</string>
+    <string name="chat_hub_hint_owner">Bạn có thể chọn phòng để bắt đầu phòng chat.</string>
+    <string name="chat_house">Cả căn nhà</string>
+    <string name="chat_room">Nhóm phòng</string>
+    <string name="chat_private">Riêng tư</string>
+    <string name="chat_room_with_id">Phòng %1$s</string>
+    <string name="chat_enter_message_hint">Nhập nội dung tin nhắn...</string>
+    <string name="chat_invalid_conversation">Không tìm thấy cuộc trò chuyện</string>
+    <string name="chat_choose_room">Chọn phòng để trò chuyện</string>
+    <string name="chat_no_room_found">Chưa có phòng để mở chat</string>
+    <string name="chat_choose_private_target">Chọn người để nhắn riêng</string>
+    <string name="chat_no_private_target">Không có người nhận phù hợp</string>
+    <string name="chat_member_with_room">%1$s - phòng %2$s</string>
+    <string name="chat_private_with_uid">Chat với %1$s</string>
+    <string name="chat_notification_title">Tin nhắn mới từ %1$s</string>
+    <string name="chat_message_too_long">Tin nhắn quá dài (tối đa %1$d ký tự)</string>
+    <string name="chat_send_not_allowed">Bạn không có quyền gửi vào cuộc trò chuyện này</string>
+
+    <string name="notification_center_title">Trung tâm thông báo</string>
+    <string name="chat_notification_channel_name">Thông báo tin nhắn</string>
+    <string name="chat_notification_channel_description">Thông báo realtime cho tin nhắn và nhắc việc</string>
 </resources>
 

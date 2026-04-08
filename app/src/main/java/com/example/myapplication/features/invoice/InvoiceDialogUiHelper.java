@@ -58,6 +58,7 @@ public final class InvoiceDialogUiHelper {
                 form.etPhiRac,
                 form.etPhiWifi,
                 form.etPhiGuiXe,
+                form.etPhiKhac,
                 tvEstimatedTotal,
                 rentSupplier);
     }
@@ -75,6 +76,7 @@ public final class InvoiceDialogUiHelper {
                 form.etPhiRac,
                 form.etPhiWifi,
                 form.etPhiGuiXe,
+                form.etPhiKhac,
                 tvEstimatedTotal,
                 rentSupplier);
     }
@@ -100,6 +102,18 @@ public final class InvoiceDialogUiHelper {
         form.etPhiRac.setText(InvoiceFormValueHelper.formatDouble(invoice.getTrashFee()));
         form.etPhiWifi.setText(InvoiceFormValueHelper.formatDouble(invoice.getWifiFee()));
         form.etPhiGuiXe.setText(InvoiceFormValueHelper.formatDouble(invoice.getParkingFee()));
+        form.etPhiKhac.setText(InvoiceFormValueHelper.formatDouble(invoice.getOtherFee()));
+
+        if (form.tvPhiKhacChiTiet != null) {
+            List<String> lines = invoice.getOtherFeeLines();
+            if (lines == null || lines.isEmpty()) {
+                form.tvPhiKhacChiTiet.setText("");
+                form.tvPhiKhacChiTiet.setVisibility(android.view.View.GONE);
+            } else {
+                form.tvPhiKhacChiTiet.setText(String.join("\n", lines));
+                form.tvPhiKhacChiTiet.setVisibility(android.view.View.VISIBLE);
+            }
+        }
     }
 
     public static void lockIdentityAndMeterStartFields(@NonNull Spinner spinnerPhong,

@@ -39,6 +39,19 @@ Use these facts as non-negotiable runtime behavior unless the task explicitly ch
 5. If `primaryRole` changes from non-OWNER to OWNER during active Home session, app forces sign-out and requires re-login.
 6. Change password is available only when account has `password` provider; Google-only accounts must not see/use password change flow.
 7. Vietnamese wording convention for UI/docs: use `lí` in management wording, and keep the brand phrase exactly `Quản lí trọ`.
+8. Messaging phase baseline (2026-04-09):
+	- Drawer header supports notification bell + unread badge.
+	- Owner home card `home_owner_tenant_label` now routes to chat entry (Chat Hub).
+	- Chat scopes currently supported in app UI/data: `HOUSE`, `ROOM`, `PRIVATE`.
+	- In-app notification center reads `tenants/{tenantId}/notifications` and supports mark-read + deeplink to chat room.
+	- FCM client integration is active (token sync + receive handler).
+	- Phase 2 backend dispatcher is now in repo at `functions/index.js` (`dispatchTenantNotificationPush`).
+	- Push state lifecycle from dispatcher: `NO_TOKEN`, `SENT`, `PARTIAL`, `FAILED`.
+	- Free-only runtime mode is supported without Cloud Functions deployment:
+		- Foreground Firestore observer emits local notifications while app session is active.
+		- If user is currently inside the same conversation, new notification is auto-marked read and local notify is suppressed.
+		- Chat Hub displays unread badge per conversation and sorts by `lastMessageAt` fallback `updatedAt`.
+		- Chat send flow enforces membership check and max message length (1000 chars).
 
 ## Workflow Guide
 - Working process standard: `docs/WORKFLOW_GUIDE.md`
@@ -81,7 +94,23 @@ Use these facts as non-negotiable runtime behavior unless the task explicitly ch
 1. No `UU` in git status.
 2. Build successful.
 3. No broken references after rename/move.
-4. Docs updated only when workflow/data contract changes.
+4. Docs updated when workflow/data contract/runtime module behavior changes (including chat/notification).
+
+## Validation Snapshot (2026-04-09)
+- Automated checks completed:
+	1. `./gradlew.bat assembleDebug` => PASS.
+	2. Chat send validation present in source:
+		- max length guard (`MAX_MESSAGE_LENGTH = 1000`)
+		- participant permission guard (`chat_send_not_allowed`)
+	3. Active-conversation suppression hooks present:
+		- foreground state set/clear in chat room lifecycle
+		- unread docs are marked read for active conversation path
+	4. Chat Hub unread ordering logic present:
+		- sort by `lastMessageAt` fallback `updatedAt`
+- Manual smoke still required on real devices/accounts (owner + tenant):
+	1. Free-only foreground local notification behavior.
+	2. Active-room suppression no-duplicate-notify behavior.
+	3. End-to-end unread badge update across Hub and Notification Center.
 
 ## Suggested Work Order
 1. Conflict resolution (`UU`).

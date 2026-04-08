@@ -56,6 +56,8 @@ Under `tenants/{tenantId}` (and `users/{uid}` fallback), the app uses:
 8. `expenses`
 9. `tickets`
 10. `rentalHistory`
+11. `chat_conversations`
+12. `notifications`
 
 Additional tenant-root collections:
 
@@ -64,6 +66,10 @@ Additional tenant-root collections:
 3. `tenants/{tenantId}/invites`
 4. `tenants/{tenantId}/auditLogs`
 5. `tenants/{tenantId}/backups` (in-app backups)
+
+Additional user-root collections:
+
+1. `users/{uid}/fcm_tokens` (client device token sync)
 
 ## 3) Core Schema for Room Management + Invoices
 
@@ -111,7 +117,8 @@ Tenant/contract information fields:
 - Flags: `depositCollectionStatus`, `showDepositOnInvoice`, `showNoteOnInvoice`
 - Services: `hasParkingService`, `vehicleCount`, `hasInternetService`, `hasLaundryService`
 - `contractDurationMonths`: Number
-- `billingReminderAt`: String (`start_month` / `mid_month` / `end_month`)
+- `billingReminderAt`: String (`start_month` / `mid_month`)
+   - Legacy `end_month` values are still treated as compatible input and normalized to `mid_month` in current app flow.
 
 Legacy compatibility fields still read by current domain model:
 
@@ -179,6 +186,100 @@ When total payments change, payment history flow updates `invoices.status`:
 - 0 paid -> `REPORTED`
 - 0 < paid < total -> `PARTIAL`
 - paid >= total -> `PAID`
+
+### 3.6 `chat_conversations/{conversationId}`
+
+Primary source: `features/chat/ChatHubActivity.java`, `features/chat/ChatRoomActivity.java`
+
+Canonical fields (current code path):
+
+- `type`: String (`HOUSE` / `ROOM` / `PRIVATE`)
+- `roomId`: String|null (required for room-thread mapping)
+- `participantIds`: Array<String> (contains user UIDs)
+- `displayName`: String
+- `createdAt`: Timestamp
+- `createdBy`: String (uid)
+- `updatedAt`: Timestamp
+- `lastMessage`: String
+- `lastSenderId`: String
+- `lastMessageAt`: Timestamp
+
+Write/update constraints (aligned with current `firestore.rules`):
+
+- Create requires:
+   - `createdBy == request.auth.uid`
+   - `participantIds` includes creator and has at least 2 members
+   - `type` in `HOUSE` / `ROOM` / `PRIVATE`
+   - `PRIVATE`: `roomId == null` and exactly 2 participants
+   - `ROOM`: `roomId` is non-empty string
+   - `HOUSE`: `roomId == null`
+- Update allows only these mutable fields:
+   - `displayName`, `updatedAt`, `lastMessage`, `lastSenderId`, `lastMessageAt`
+- Immutable after create:
+   - `type`, `roomId`, `participantIds`, `createdBy`, `createdAt`
+
+Message subcollection:
+
+- Path: `chat_conversations/{conversationId}/messages/{messageId}`
+- Fields: `senderId`, `senderName`, `text`, `createdAt`
+- Validation constraints:
+   - `senderId == request.auth.uid`
+   - sender must be a participant of parent conversation
+   - `text` is non-empty string with max length 1000
+
+### 3.7 `notifications/{notificationId}`
+
+Primary source: `features/chat/ChatRoomActivity.java`, `features/notification/NotificationCenterActivity.java`
+
+Canonical fields (current code path):
+
+- `userId`: String (receiver uid)
+- `type`: String (currently `CHAT_MESSAGE`)
+- `title`: String
+- `body`: String
+- `conversationId`: String
+- `senderId`: String
+- `isRead`: Boolean
+- `createdAt`: Timestamp
+- `readAt`: Timestamp (optional)
+- `pushState`: String
+   - create flow currently writes `PENDING_SERVER_DISPATCH`
+   - Cloud Function dispatcher updates to one of:
+      - `NO_TOKEN`
+      - `SENT`
+      - `PARTIAL`
+      - `FAILED`
+- `pushUpdatedAt`: Timestamp (set by dispatcher)
+- `pushError`: String (optional error reason, set on failure/no-token)
+
+### 3.8 `users/{uid}/fcm_tokens/{tokenDoc}`
+
+Primary source: `features/notification/push/AppFirebaseMessagingService.java`
+
+Canonical fields (current code path):
+
+- `uid`: String
+- `token`: String
+- `updatedAt`: Timestamp
+
+## 3.9 Cloud Function Dispatcher Contract
+
+Source: `functions/index.js`
+
+Function:
+
+- `dispatchTenantNotificationPush`
+
+Trigger:
+
+- Firestore document create on `tenants/{tenantId}/notifications/{notificationId}`
+
+Behavior:
+
+1. Reads recipient tokens from `users/{userId}/fcm_tokens/*`.
+2. Sends FCM multicast with notification + data payload (`tenantId`, `notificationId`, `type`, `conversationId`).
+3. Updates notification `pushState` and related metadata fields.
+4. Removes invalid registration tokens when Firebase returns token-invalid errors.
 
 ## 4) Cross-Screen Data Relationships
 
@@ -253,7 +354,13 @@ This is why storing `roomId` in `payments`, `tickets`, `invoices`, and similar c
 Rules compatibility note:
 
 - `firestore.rules` is aligned with current English collection names.
-- Active collections in rules: `houses`, `rooms`, `contracts`, `contractMembers`, `invoices`, `payments`, `meterReadings`, `expenses`, `tickets`, `rentalHistory`, `backups`.
+- Active collections in rules: `houses`, `rooms`, `contracts`, `contractMembers`, `invoices`, `payments`, `meterReadings`, `expenses`, `tickets`, `rentalHistory`, `backups`, `chat_conversations/messages`, `notifications`.
+
+Chat/notification rules note:
+
+- App now reads/writes `chat_conversations`, `messages`, and `notifications` under tenant scope.
+- Ensure `firestore.rules` is updated for these collections before production rollout if strict deny-by-default rules are applied.
+- In free-only mode, realtime fallback marks active-conversation notifications as read on client side; docs/rules should keep `isRead` + `readAt` updates available for the recipient.
 
 ## 7) Meaning of "Current Existing Data"
 

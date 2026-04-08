@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class MyApplication extends Application {
 
         public static final String REMINDER_CHANNEL_ID = "mopr_reminders";
+        public static final String CHAT_CHANNEL_ID = "mopr_chat";
         private static final String WORK_INVOICE_REMINDERS = "invoice_reminders";
 
         @Override
@@ -35,6 +36,7 @@ public class MyApplication extends Application {
                 FirebaseApp.initializeApp(this);
                 TenantSession.init(this);
                 ensureReminderChannel();
+                ensureChatChannel();
                 scheduleInvoiceReminders();
         }
 
@@ -47,6 +49,21 @@ public class MyApplication extends Application {
                                 getString(R.string.reminder_channel_name),
                                 NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription(getString(R.string.reminder_channel_description));
+
+                NotificationManager nm = getSystemService(NotificationManager.class);
+                if (nm != null)
+                        nm.createNotificationChannel(channel);
+        }
+
+        private void ensureChatChannel() {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+                        return;
+
+                NotificationChannel channel = new NotificationChannel(
+                                CHAT_CHANNEL_ID,
+                                getString(R.string.chat_notification_channel_name),
+                                NotificationManager.IMPORTANCE_HIGH);
+                channel.setDescription(getString(R.string.chat_notification_channel_description));
 
                 NotificationManager nm = getSystemService(NotificationManager.class);
                 if (nm != null)
