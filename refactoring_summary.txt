@@ -38,7 +38,7 @@
 <string name="electric_fee_colon">- Tiền điện: </string>
 <string name="water_fee_colon">- Tiền nước: </string>
 <string name="trash_fee_colon">- Phí rác: </string>
-<string name="wifi_fee_colon">- Phí Wifi: </string>
+<string name="internet_fee_colon">- Phí Internet: </string>
 <string name="parking_fee_colon">- Phí gửi xe: </string>
 <string name="loading_payments">(Đang tải thanh toán...)</string>
 <string name="total_amount_colon">TỔNG CỘNG: </string>

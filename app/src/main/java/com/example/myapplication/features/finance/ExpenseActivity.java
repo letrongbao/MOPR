@@ -6,9 +6,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
-import android.widget.AdapterView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,21 +16,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
-
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.core.util.ScreenUiHelper;
-import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Expense;
 import com.example.myapplication.viewmodel.ExpenseViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -41,8 +29,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.CollectionReference;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -62,16 +48,14 @@ public class ExpenseActivity extends AppCompatActivity {
 
     private TextView tvEmpty;
     private TextView tvSummary;
+    private TextView tvSummaryCount;
+    private TextView tvSummaryAvg;
+    private TextView tvTopCategory;
     private TextView tvSelectedMonth;
     private TextView btnPickMonth;
     private FloatingActionButton fabAdd;
-    private PieChart pieChart;
 
     private boolean readOnly;
-    
-    private Spinner spinnerHouse;
-    private List<House> allHouses = new ArrayList<>();
-    private String selectedHouseId = null;
     private String selectedMonth;
     private List<Expense> allExpenses = new ArrayList<>();
 
@@ -95,53 +79,12 @@ public class ExpenseActivity extends AppCompatActivity {
 
         tvEmpty = findViewById(R.id.tvEmpty);
         tvSummary = findViewById(R.id.tvSummary);
+        tvSummaryCount = findViewById(R.id.tvSummaryCount);
+        tvSummaryAvg = findViewById(R.id.tvSummaryAvg);
+        tvTopCategory = findViewById(R.id.tvTopCategory);
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
-
-        spinnerHouse = findViewById(R.id.spinnerHouse);
-        scopedCollection("houses").addSnapshotListener((snapshot, e) -> {
-            if (e != null || snapshot == null) return;
-            allHouses.clear();
-            for (QueryDocumentSnapshot doc : snapshot) {
-                House h = doc.toObject(House.class);
-                if (h != null) {
-                    h.setId(doc.getId());
-                    allHouses.add(h);
-                }
-            }
-            List<String> houseNames = new ArrayList<>();
-            houseNames.add("Tất cả nhà");
-            for (House h : allHouses) {
-                houseNames.add(h.getHouseName() != null ? h.getHouseName() : "Nhà " + h.getId());
-            }
-            ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, houseNames);
-            spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerHouse.setAdapter(spinnerAdapter);
-        });
-
-        spinnerHouse.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    selectedHouseId = null;
-                } else {
-                    selectedHouseId = allHouses.get(position - 1).getId();
-                }
-                applyMonthFilterAndSummary();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                selectedHouseId = null;
-                applyMonthFilterAndSummary();
-            }
-        });
-
         btnPickMonth = findViewById(R.id.btnPickMonth);
         fabAdd = findViewById(R.id.fabAdd);
-        pieChart = findViewById(R.id.pieChart);
-
-        if (pieChart != null) {
-            setupPieChart();
-        }
 
         selectedMonth = FinancePeriodUtil
                 .normalizeMonthYear(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
@@ -189,14 +132,6 @@ public class ExpenseActivity extends AppCompatActivity {
         if (btnPickMonth != null) {
             btnPickMonth.setOnClickListener(v -> showMonthPickerDialog());
         }
-    }
-
-    private CollectionReference scopedCollection(String path) {
-        String tenantId = TenantSession.getActiveTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return db.collection("tenants").document(tenantId).collection(path);
-        }
-        return db.collection(path);
     }
 
     private void ensurePermissionsThenLoad() {
@@ -276,11 +211,6 @@ public class ExpenseActivity extends AppCompatActivity {
         for (Expense cp : allExpenses) {
             if (cp == null)
                 continue;
-            
-            if (selectedHouseId != null && !selectedHouseId.equals(cp.getHouseId())) {
-                continue;
-            }
-
             String month = FinancePeriodUtil.normalizeMonthYear(cp.getPaidAt());
             if (selectedMonth.equals(month)) {
                 filtered.add(cp);
@@ -290,35 +220,6 @@ public class ExpenseActivity extends AppCompatActivity {
         adapter.setDataList(filtered);
         tvEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         updateSummary(filtered);
-    }
-
-    private void setupPieChart() {
-        pieChart.setUsePercentValues(true);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setExtraOffsets(5, 5, 5, 5);
-        pieChart.setDragDecelerationFrictionCoef(0.95f);
-        pieChart.setDrawHoleEnabled(true);
-        pieChart.setHoleColor(android.graphics.Color.WHITE);
-        pieChart.setTransparentCircleColor(android.graphics.Color.WHITE);
-        pieChart.setTransparentCircleAlpha(110);
-        pieChart.setHoleRadius(50f);
-        pieChart.setTransparentCircleRadius(55f);
-        pieChart.setDrawCenterText(true);
-        pieChart.setRotationAngle(0f);
-        pieChart.setRotationEnabled(true);
-        pieChart.setHighlightPerTapEnabled(true);
-
-        Legend l = pieChart.getLegend();
-        l.setVerticalAlignment(Legend.LegendVerticalAlignment.CENTER);
-        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
-        l.setOrientation(Legend.LegendOrientation.VERTICAL);
-        l.setDrawInside(false);
-        l.setXEntrySpace(7f);
-        l.setYEntrySpace(0f);
-        l.setYOffset(0f);
-
-        pieChart.setEntryLabelColor(android.graphics.Color.WHITE);
-        pieChart.setEntryLabelTextSize(10f);
     }
 
     private void updateSummary(List<Expense> list) {
@@ -341,41 +242,29 @@ public class ExpenseActivity extends AppCompatActivity {
             }
         }
 
+        double avg = count > 0 ? (total / count) : 0;
+        String topCategory = "-";
+        double topAmount = 0;
+        for (Map.Entry<String, Double> entry : byCategory.entrySet()) {
+            if (entry.getValue() > topAmount) {
+                topAmount = entry.getValue();
+                topCategory = entry.getKey();
+            }
+        }
+
         NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
-        tvSummary.setText(fmt.format(total));
-
-        if (pieChart != null) {
-            if (total == 0) {
-                pieChart.clear();
-                return;
+        tvSummary.setText(getString(R.string.total_expense) + fmt.format(total));
+        if (tvSummaryCount != null)
+            tvSummaryCount.setText(getString(R.string.number_of_items) + count);
+        if (tvSummaryAvg != null)
+            tvSummaryAvg.setText(getString(R.string.avg_per_item) + fmt.format(avg));
+        if (tvTopCategory != null) {
+            if (count == 0) {
+                tvTopCategory.setText(getString(R.string.top_expense_category_none));
+            } else {
+                tvTopCategory.setText(
+                        getString(R.string.top_expense_category) + topCategory + " (" + fmt.format(topAmount) + ")");
             }
-
-            ArrayList<PieEntry> entries = new ArrayList<>();
-            for (Map.Entry<String, Double> entry : byCategory.entrySet()) {
-                entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
-            }
-
-            PieDataSet dataSet = new PieDataSet(entries, "");
-            dataSet.setDrawIcons(false);
-            dataSet.setSliceSpace(3f);
-            dataSet.setSelectionShift(5f);
-
-            ArrayList<Integer> colors = new ArrayList<>();
-            for (int c : ColorTemplate.MATERIAL_COLORS)
-                colors.add(c);
-            for (int c : ColorTemplate.JOYFUL_COLORS)
-                colors.add(c);
-            for (int c : ColorTemplate.COLORFUL_COLORS)
-                colors.add(c);
-            dataSet.setColors(colors);
-
-            PieData data = new PieData(dataSet);
-            data.setValueFormatter(new PercentFormatter(pieChart));
-            data.setValueTextSize(12f);
-            data.setValueTextColor(android.graphics.Color.WHITE);
-            pieChart.setData(data);
-            pieChart.highlightValues(null);
-            pieChart.invalidate();
         }
     }
 

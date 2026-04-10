@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".core.MyApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/logo"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/logo_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyApplication"
+        tools:targetApi="31">
+
+        <!-- Auth -->
+        <activity
+            android:name=".features.auth.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".features.auth.SignUpActivity" />
+        <activity android:name=".features.auth.JoinRoomActivity" />
+
+        <!-- Home -->
+        <activity android:name=".features.home.HomeMenuActivity" />
+        <activity android:name=".features.home.TenantMenuActivity" />
+        <activity android:name=".features.home.TenantRoomDetailActivity" />
+        <activity android:name=".features.home.ConfirmMeterActivity" />
+        <activity android:name=".features.chat.ChatHubActivity" />
+        <activity android:name=".features.chat.ChatRoomActivity" />
+        <activity android:name=".features.notification.NotificationCenterActivity" />
+
+        <!-- Property -->
+        <activity android:name=".features.property.house.HouseActivity" />
+        <activity android:name=".features.property.room.RoomActivity" />
+        <activity android:name=".features.property.room.RoomDetailsActivity" />
+        <activity android:name=".features.property.room.MeterReadingHistoryActivity" />
+
+        <!-- Invoice -->
+        <activity android:name=".features.invoice.InvoiceActivity" />
+        <activity android:name=".features.invoice.PaymentHistoryActivity" />
+        <activity android:name=".features.invoice.TenantPaymentHistoryActivity" />
+
+        <!-- Tenant / Contract -->
+        <activity android:name=".features.tenant.TenantActivity" />
+        <activity android:name=".features.tenant.TenantProfilesActivity" />
+        <activity android:name=".features.contract.ContractActivity" />
+        <activity android:name=".features.contract.ContractListActivity" />
+        <activity android:name=".features.contract.ContractDetailsActivity" />
+        <activity android:name=".features.contract.ContractPdfPreviewActivity" />
+        
+        <!-- History -->
+        <activity android:name=".features.history.RentalHistoryActivity" />
+
+        <!-- Finance -->
+        <activity android:name=".features.finance.ExpenseActivity" />
+        <activity android:name=".features.finance.RevenueActivity" />
+
+        <!-- Settings -->
+        <activity android:name=".features.settings.ProfileActivity" />
+        <activity android:name=".features.settings.EditProfileActivity" />
+        <activity android:name=".features.settings.ChangePasswordActivity" />
+        <activity android:name=".features.settings.BackupRestoreActivity" />
+
+        <!-- Org -->
+        <activity android:name=".features.org.OrgAdminActivity" />
+
+        <!-- Tickets -->
+        <activity android:name=".features.ticket.TicketActivity" />
+
+        <service
+            android:name=".core.service.ImageUploadService"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".features.notification.push.AppFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+
+</manifest>
+

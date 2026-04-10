@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/house"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <Spinner
+            android:id="@+id/spinnerHouse"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/month_year"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etThangNam"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="03/2026"
+            android:inputType="text"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/electric_unit_price"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etDonGiaDien"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="3500"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/water_unit_price"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etDonGiaNuoc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="15000"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fee_garbage"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etPhiRac"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fee_internet"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etPhiInternet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/item_house_fee_laundry"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etPhiGiatUi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fee_parking"
+            android:textStyle="bold"
+            android:textColor="#212121"/>
+        <EditText
+            android:id="@+id/etPhiGuiXe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0"
+            android:inputType="numberDecimal"/>
+
+    </LinearLayout>
+</ScrollView>
+

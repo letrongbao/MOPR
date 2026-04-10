@@ -79,6 +79,33 @@ public final class ContractHtmlBuilder {
                                         context.getString(R.string.contract_unit_room))));
             }
 
+                if (house.getElevatorPrice() > 0) {
+                expense.append(
+                    context.getString(
+                        R.string.contract_expense_elevator_line,
+                        formatVnd(house.getElevatorPrice()),
+                        getUnitLabel(context, house.getElevatorUnit(),
+                            context.getString(R.string.contract_unit_room))));
+                }
+
+                if (house.getCableTvPrice() > 0) {
+                expense.append(
+                    context.getString(
+                        R.string.contract_expense_cable_tv_line,
+                        formatVnd(house.getCableTvPrice()),
+                        getUnitLabel(context, house.getCableTvUnit(),
+                            context.getString(R.string.contract_unit_room))));
+                }
+
+                if (house.getServicePrice() > 0) {
+                expense.append(
+                    context.getString(
+                        R.string.contract_expense_service_line,
+                        formatVnd(house.getServicePrice()),
+                        getUnitLabel(context, house.getServiceUnit(),
+                            context.getString(R.string.contract_unit_room))));
+                }
+
             appendExtraFees(context, house, contract, expense);
         }
 

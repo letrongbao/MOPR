@@ -5,7 +5,6 @@ import com.google.firebase.firestore.PropertyName;
 import java.util.ArrayList;
 import java.util.List;
 
-@com.google.firebase.firestore.IgnoreExtraProperties
 public class Invoice {
     private String id;
     private String roomId;
@@ -18,9 +17,8 @@ public class Invoice {
     private double waterEndReading;
     private double waterUnitPrice;
     private double trashFee;
-    private double internetFee;
+    private double wifiFee;
     private double parkingFee;
-    private double laundryFee;
     private double otherFee;
     private List<String> otherFeeLines;
     private double rentAmount;
@@ -44,7 +42,7 @@ public class Invoice {
     public void calculateTotalAmount() {
         double electricityAmount = (electricEndReading - electricStartReading) * electricUnitPrice;
         double waterAmount = (waterEndReading - waterStartReading) * waterUnitPrice;
-        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + internetFee + parkingFee + laundryFee + otherFee;
+        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + wifiFee + parkingFee + otherFee;
     }
 
     public String getId() {
@@ -139,12 +137,12 @@ public class Invoice {
         this.trashFee = trashFee;
     }
 
-    public double getInternetFee() {
-        return internetFee;
+    public double getWifiFee() {
+        return wifiFee;
     }
 
-    public void setInternetFee(double internetFee) {
-        this.internetFee = internetFee;
+    public void setWifiFee(double wifiFee) {
+        this.wifiFee = wifiFee;
     }
 
     public double getParkingFee() {
@@ -153,14 +151,6 @@ public class Invoice {
 
     public void setParkingFee(double parkingFee) {
         this.parkingFee = parkingFee;
-    }
-
-    public double getLaundryFee() {
-        return laundryFee;
-    }
-
-    public void setLaundryFee(double laundryFee) {
-        this.laundryFee = laundryFee;
     }
 
     public double getOtherFee() {

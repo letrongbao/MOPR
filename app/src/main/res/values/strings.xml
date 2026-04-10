@@ -60,6 +60,7 @@
     <!-- Invoice & Payments -->
     <string name="missing_invoice_id">Thiếu ID hoá đơn</string>
     <string name="tenant_colon">Người thuê: </string>
+    <string name="invoice_representative_colon">Người đại diện thuê: </string>
     <string name="no_rooms_to_settle_period">Chưa có phòng để chốt kỳ</string>
     <string name="no_new_invoices_for_period">Không có hóa đơn mới cần tạo cho kỳ này</string>
     <string name="please_select_room">Vui lòng chọn phòng</string>
@@ -159,7 +160,7 @@
     <string name="electric_fee_colon">- Tiền điện: </string>
     <string name="water_fee_colon">- Tiền nước: </string>
     <string name="trash_fee_colon">- Phí rác: </string>
-    <string name="internet_fee_colon">- Phí Internet: </string>
+    <string name="wifi_fee_colon">- Phí Internet: </string>
     <string name="parking_fee_colon">- Phí gửi xe: </string>
     <string name="other_fee_colon">- Phí khác: </string>
     <string name="loading_payments">(Đang tải thanh toán...)</string>
@@ -217,10 +218,11 @@
     <string name="water_old_reading_required">Chi số nước cũ *</string>
     <string name="water_new_reading_required">Chi số nước mới *</string>
     <string name="invoice_mark_reported_and_open">Xác nhận báo phí &amp; mở hóa đơn</string>
-    <string name="invoice_statistics">Hoá đơn tự động</string>
+    <string name="invoice_reported_notification_title">Thông báo báo phí</string>
+    <string name="invoice_reported_notification_body">Phòng %1$s đã được báo phí kỳ %2$s</string>
+    <string name="invoice_statistics">Hóa đơn tự động</string>
     <string name="not_reported">Chưa báo</string>
     <string name="reported">Đã báo</string>
-    <string name="partially_paid">Đóng một phần</string>
     <string name="paid">Đã đóng</string>
     <string name="invoice_owner_note_label">Ghi chú thu phí</string>
     <string name="invoice_owner_note_empty">Chưa có ghi chú.</string>
@@ -249,7 +251,7 @@
     <string name="failed_check_firebase">Thất bại — kiểm tra Firebase</string>
     <string name="edit_invoice_month">Chỉnh sửa hóa đơn tháng %1$s</string>
     <string name="payment_title_format">Thanh toán • Phòng %1$s • %2$s</string>
-    <string name="expense_management">Quản lí chi</string>
+    <string name="expense_management">Quản lí chi phí</string>
     <string name="other">Khác</string>
     <string name="total_expense">Tổng chi: </string>
     <string name="number_of_items">Số khoản: </string>
@@ -321,6 +323,7 @@
     <string name="house_qr_not_added">(Chưa thêm mã)</string>
     <string name="house_delete_title">Xóa nhà?</string>
     <string name="house_delete_confirm">Bạn có chắc chắn muốn xóa \'%1$s\'?</string>
+    <string name="house_delete_blocked_has_rooms">Không thể xóa nhà vì vẫn còn phòng bên trong. Vui lòng xóa hoặc chuyển hết phòng trước.</string>
     <string name="house_update_title">Cập nhật căn nhà</string>
     <string name="house_create_title">Tạo thông tin căn nhà</string>
     <string name="house_save_info">Lưu thông tin</string>
@@ -385,6 +388,9 @@
     <string name="deposit_amount_label">Cọc: %,.0fđ</string>
     <string name="member_count_label">%1$d người</string>
     <string name="laundry_service_name">Giặt sấy</string>
+    <string name="house_fee_elevator_name">Thang máy</string>
+    <string name="house_fee_cable_tv_name">Truyền hình cáp</string>
+    <string name="house_fee_service_name">Phí dịch vụ</string>
     <string name="revenue_statistics_title">Thống kê doanh thu</string>
     <string name="month_with_value">Tháng %1$s</string>
     <string name="occupancy_rate_label">Tỷ lệ lấp đầy: %1$s</string>
@@ -412,7 +418,7 @@
     <string name="home_tenant_room_label">Phòng\ncủa bạn</string>
     <string name="home_owner_house_label">Quản lí\nnhà phòng</string>
     <string name="home_tenant_invoice_label">Hóa đơn\ncủa bạn</string>
-    <string name="home_owner_invoice_label">Hoá đơn\ntự động</string>
+    <string name="home_owner_invoice_label">Hóa đơn\ntự động</string>
     <string name="home_tenant_payment_history_label">Lịch sử\nthanh toán</string>
     <string name="home_owner_expense_label">Quản lí\nchi phí</string>
     <string name="home_tenant_support_label">Yêu cầu\nhỗ trợ</string>
@@ -543,9 +549,9 @@
     <string name="contract_laundry_price_default">Giặt sấy 0 đ/phòng</string>
     <string name="note_label">Ghi chú</string>
     <string name="contract_show_note_on_invoice">Hiển thị ghi chú trên hóa đơn</string>
-    <string name="contract_billing_reminder_label">Nhắc báo phí vào</string>
-    <string name="remind_start_month">Đầu tháng</string>
-    <string name="remind_mid_month">Giữa tháng</string>
+    <string name="contract_billing_reminder_label">Bắt đầu tính phí từ</string>
+    <string name="remind_start_month">Tháng này</string>
+    <string name="remind_mid_month">Tháng sau</string>
     <string name="create_contract">Tạo hợp đồng</string>
     <string name="print_contract">In hợp đồng</string>
     <string name="end_contract">Kết thúc hợp đồng</string>
@@ -632,8 +638,8 @@
     <string name="none_option">(Không chọn)</string>
     <string name="room_edit_title">Chỉnh sửa phòng %1$s</string>
     <string name="add">Thêm</string>
-    <string name="home_owner_tenant_label">Trò chuyện\nvới khách</string>
-    <string name="home_owner_chat_label">Trò chuyện\nvới khách</string>
+    <string name="home_owner_tenant_label">Trò chuyện với khách</string>
+    <string name="home_owner_chat_label">Trò chuyện với khách</string>
     <string name="home_owner_contract_label">Hợp đồng\nthông minh</string>
     <string name="app_version_label">Phiên bản 2.6.3</string>
     <string name="feedback">Góp ý</string>
@@ -677,11 +683,11 @@
     <string name="water_unit_price">Đơn giá nước (đ/m³)</string>
     <string name="invoice_extra_fee_section">── Phụ phí ──</string>
     <string name="fee_garbage">Phí rác (đ)</string>
-    <string name="fee_internet">Phí Internet (đ)</string>
+    <string name="fee_wifi">Phí Internet (đ)</string>
     <string name="fee_parking">Phí gửi xe (đ)</string>
     <string name="fee_other">Phí khác (đ)</string>
     <string name="invoice_total_estimated">Tổng tạm tính</string>
-    <string name="expense_category_hint">Hạng mục (ví dụ: Sửa chữa, Rác, Internet...)</string>
+    <string name="expense_category_hint">Hạng mục (ví dụ: Sửa chữa, Rác, Wifi...)</string>
     <string name="expense_amount_hint">Số tiền</string>
     <string name="expense_date_hint">Ngày (dd/MM/yyyy)</string>
     <string name="meter_month_year_hint">Tháng/Năm (MM/yyyy)</string>
@@ -704,6 +710,7 @@
     <string name="month_picker_preview_placeholder">Tháng 1/2026</string>
     <string name="current_month">Tháng này</string>
     <string name="previous_month">Tháng trước</string>
+    <string name="invalid_month_selection">Không thể chọn tháng trong tương lai</string>
     <string name="apply">Áp dụng</string>
     <string name="tenant_name_hint">Nguyễn Văn A</string>
     <string name="tenant_id_card_label">CCCD/CMND</string>
@@ -725,9 +732,9 @@
     <string name="house_address_required_label">Địa chỉ căn nhà *</string>
     <string name="house_address_hint">Nhập địa chỉ</string>
     <string name="house_management_info">Thông tin quản lí căn nhà</string>
-    <string name="house_manager_name_required_label">Tên quản lí *</string>
+    <string name="house_manager_name_required_label">Tên quản lí</string>
     <string name="house_manager_name_hint">Nhập tên quản lí</string>
-    <string name="house_manager_phone_required_label">Số điện thoại quản lí *</string>
+    <string name="house_manager_phone_required_label">Số điện thoại quản lí</string>
     <string name="house_manager_phone_hint">Nhập SĐT quản lí</string>
     <string name="house_account_owner_hint">Chủ TK</string>
     <string name="house_bank_hint">Ngân hàng</string>
@@ -812,6 +819,27 @@
     <string name="item_invoice_tenant_info_sample">Người thuê: A Minh - ĐT: 0777888639</string>
     <string name="item_invoice_price_month_sample">Giá: 0 đ/tháng</string>
     <string name="item_invoice_month_sample">Tháng: 0/0000</string>
+    <string name="invoice_meter_summary">Điện %1$s → %2$s | Nước %3$s → %4$s</string>
+    <string name="invoice_meter_summary_electric">Điện %1$s → %2$s</string>
+    <string name="invoice_meter_summary_electric_per_person">Điện theo người: %1$s người</string>
+    <string name="invoice_meter_summary_electric_per_room">Điện theo phòng: %1$s phòng</string>
+    <string name="invoice_meter_summary_water_meter">Nước %1$s → %2$s</string>
+    <string name="invoice_meter_summary_water_per_person">Nước theo người: %1$s người</string>
+    <string name="invoice_meter_summary_water_per_room">Nước theo phòng: %1$s phòng</string>
+    <string name="invoice_meter_summary_placeholder">Điện 0 → 0 | Nước 0 → 0</string>
+    <string name="invoice_total_amount_label">Tổng tạm tính: %1$s</string>
+    <string name="invoice_total_amount_placeholder">Tổng tạm tính: 0 đ</string>
+    <string name="invoice_extra_fee_summary_label">Phí khác: Rác %1$s | Internet %2$s | Giữ xe %3$s | Khác %4$s</string>
+    <string name="invoice_extra_fee_summary_placeholder">Phí khác: Rác 0 đ | Internet 0 đ | Giữ xe 0 đ | Khác 0 đ</string>
+    <string name="invoice_status_unreported">Chưa báo</string>
+    <string name="invoice_status_reported">Đã báo</string>
+    <string name="invoice_status_paid">Đã thu</string>
+    <string name="invoice_flow_hint_unreported">Bước 1: Nhập chỉ số cuối và bấm Báo phí.</string>
+    <string name="invoice_flow_hint_reported">Bước 2: Đã báo phí, chờ tenant thanh toán hoặc xác nhận thu tiền.</string>
+    <string name="invoice_flow_hint_paid">Hoàn tất: hóa đơn đã thanh toán đầy đủ.</string>
+    <string name="invoice_action_enter_report">Nhập chỉ số và báo phí</string>
+    <string name="invoice_action_collect_payment">Xác nhận đã thu tiền</string>
+    <string name="invoice_action_view_payment_history">Xem lịch sử thanh toán</string>
     <string name="item_invoice_action_report_fee">Báo phí tháng 3 cho khách</string>
     <string name="item_room_number_sample">P.101</string>
     <string name="item_room_status_vacant">Đang trống</string>
@@ -948,6 +976,9 @@
     <string name="contract_expense_parking_line">- Phí gửi xe: %1$s/%2$s (SL: %3$d)&lt;br/&gt;</string>
     <string name="contract_expense_internet_line">- Internet: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_expense_laundry_line">- Giặt sấy: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_expense_elevator_line">- Thang máy: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_expense_cable_tv_line">- Truyền hình cáp: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_expense_service_line">- Dịch vụ: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_expense_extra_line">- %1$s: %2$s%3$s&lt;br/&gt;</string>
     <string name="contract_expense_trash_line">- Rác: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_extra_fee_options_label">Các chi phí khác</string>
@@ -998,7 +1029,7 @@
     <string name="tenant_room_water_label">Tiền nước</string>
     <string name="tenant_room_electric_label">Tiền điện</string>
     <string name="tenant_room_trash_label">Tiền rác (người)</string>
-    <string name="tenant_room_Internet_label">Tiền Internet (người)</string>
+    <string name="tenant_room_wifi_label">Tiền Internet (người)</string>
     <string name="tenant_room_meter_based">Tính theo đồng hồ</string>
     <string name="tenant_room_water_rate_placeholder">-- đ / Khối</string>
     <string name="tenant_room_electric_rate_placeholder">-- đ / KWh</string>
@@ -1041,8 +1072,4 @@
     <string name="chat_notification_channel_name">Thông báo tin nhắn</string>
     <string name="chat_notification_channel_description">Thông báo realtime cho tin nhắn và nhắc việc</string>
 </resources>
-
-
-
-
 

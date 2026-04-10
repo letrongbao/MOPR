@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@android:color/white">
+
+    <!-- Close button -->
+    <ImageView
+        android:id="@+id/btnClose"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="end"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:clickable="true"
+        android:focusable="true"
+        app:tint="#333333"/>
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/fee_notification_title"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Info row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/room_colon"
+            android:textSize="14sp"
+            android:textColor="#333333"/>
+
+        <TextView
+            android:id="@+id/tvPhong"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/room_number_sample"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tenant_colon"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:layout_marginStart="16dp"/>
+
+        <TextView
+            android:id="@+id/tvTenant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tenant_name_sample"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- UI section note -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowElectricOld"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/electric_old_reading_required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="12dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoDienCu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="500"
+            android:enabled="false"
+            android:inputType="number"
+            android:textColor="#888888"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- UI section note -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowElectricNew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/electric_new_reading_required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="20dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoDienMoi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowWaterOld"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/water_old_reading_required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoNuocCu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:enabled="false"
+            android:inputType="number"
+            android:textColor="#888888"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/rowWaterNew"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/water_new_reading_required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_marginBottom="20dp"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etChiSoNuocMoi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- UI section note -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnXemInvoice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/invoice_mark_reported_and_open"
+        android:textAllCaps="false"
+        android:textSize="14sp"
+        app:cornerRadius="6dp"
+        app:backgroundTint="@color/btn_blue_action"
+        android:paddingVertical="12dp"/>
+
+</LinearLayout>
+
+

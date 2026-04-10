@@ -3,6 +3,9 @@ package com.example.myapplication.features.home;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
 import android.view.Window;
 import android.widget.LinearLayout;
@@ -598,24 +601,63 @@ public class HomeMenuActivity extends AppCompatActivity {
             menuRentalHistory.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
 
-        if (tvCardHouseLabel != null) {
-            tvCardHouseLabel.setText(isOwner ? getString(R.string.home_owner_house_label) : "");
+        setStylizedHomeCardLabel(tvCardHouseLabel, getString(R.string.home_owner_house_label), isOwner);
+        setStylizedHomeCardLabel(tvCardInvoiceLabel, getString(R.string.home_owner_invoice_label), isOwner);
+        setStylizedHomeCardLabel(tvCardExpenseLabel, getString(R.string.home_owner_expense_label), isOwner);
+        setStylizedHomeCardLabel(tvCardReportLabel, getString(R.string.home_owner_report_label), isOwner);
+        setStylizedHomeCardLabel(tvCardTenantLabel, getString(R.string.home_owner_chat_label), isOwner);
+        setStylizedHomeCardLabel(tvCardContractLabel, getString(R.string.home_owner_contract_label), isOwner);
+    }
+
+    private void setStylizedHomeCardLabel(TextView target, String label, boolean isOwner) {
+        if (target == null) {
+            return;
         }
-        if (tvCardInvoiceLabel != null) {
-            tvCardInvoiceLabel.setText(isOwner ? getString(R.string.home_owner_invoice_label) : "");
+        if (!isOwner) {
+            target.setText("");
+            return;
         }
-        if (tvCardExpenseLabel != null) {
-            tvCardExpenseLabel.setText(isOwner ? getString(R.string.home_owner_expense_label) : "");
+        target.setText(buildStylizedCardLabel(label));
+    }
+
+    private CharSequence buildStylizedCardLabel(String rawLabel) {
+        if (rawLabel == null) {
+            return "";
         }
-        if (tvCardReportLabel != null) {
-            tvCardReportLabel.setText(isOwner ? getString(R.string.home_owner_report_label) : "");
+
+        String normalized = rawLabel.replace('\n', ' ').trim().replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return "";
         }
-        if (tvCardTenantLabel != null) {
-            tvCardTenantLabel.setText(isOwner ? getString(R.string.home_owner_chat_label) : "");
+
+        String[] words = normalized.split(" ");
+        String topLine;
+        String bottomLine;
+
+        if (words.length >= 4) {
+            topLine = words[0] + " " + words[1];
+            bottomLine = words[words.length - 2] + " " + words[words.length - 1];
+        } else if (words.length == 3) {
+            topLine = words[0] + " " + words[1];
+            bottomLine = words[2];
+        } else if (words.length == 2) {
+            topLine = words[0];
+            bottomLine = words[1];
+        } else {
+            topLine = words[0];
+            bottomLine = "";
         }
-        if (tvCardContractLabel != null) {
-            tvCardContractLabel.setText(isOwner ? getString(R.string.home_owner_contract_label) : "");
+
+        String styled = bottomLine.isEmpty() ? topLine : topLine + "\n" + bottomLine;
+        SpannableString span = new SpannableString(styled);
+        span.setSpan(new RelativeSizeSpan(1.14f), 0, topLine.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        if (!bottomLine.isEmpty()) {
+            int start = topLine.length() + 1;
+            span.setSpan(new RelativeSizeSpan(0.92f), start, styled.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+
+        return span;
     }
 
     private void setupLanguageSwitcher() {

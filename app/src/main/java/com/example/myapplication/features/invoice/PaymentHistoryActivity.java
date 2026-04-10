@@ -269,10 +269,8 @@ public class PaymentHistoryActivity extends AppCompatActivity {
         String st;
         if (paid <= 0) {
             st = InvoiceStatus.REPORTED;
-        } else if (paid + 0.01 < invoiceTotal) {
-            st = InvoiceStatus.PARTIAL;
         } else {
-            st = InvoiceStatus.PAID;
+            st = paid + 0.01 < invoiceTotal ? InvoiceStatus.REPORTED : InvoiceStatus.PAID;
         }
 
         if (st.equals(lastComputedStatus))

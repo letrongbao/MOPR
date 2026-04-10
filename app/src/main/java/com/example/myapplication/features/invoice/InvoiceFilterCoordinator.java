@@ -84,16 +84,13 @@ public final class InvoiceFilterCoordinator {
     }
 
     private static boolean matchesTab(@NonNull Invoice invoice, int tabIndex) {
-        String status = invoice.getStatus();
-        if (status == null || status.trim().isEmpty()) {
-            status = InvoiceStatus.UNREPORTED;
-        }
+        String status = normalizeStatus(invoice.getStatus());
 
         if (tabIndex == 0) {
             return InvoiceStatus.UNREPORTED.equals(status);
         }
         if (tabIndex == 1) {
-            return InvoiceStatus.REPORTED.equals(status) || InvoiceStatus.PARTIAL.equals(status);
+            return InvoiceStatus.REPORTED.equals(status);
         }
         return InvoiceStatus.PAID.equals(status);
     }
@@ -107,11 +104,9 @@ public final class InvoiceFilterCoordinator {
                 continue;
             }
             total += invoice.getTotalAmount();
-            String status = invoice.getStatus();
-            if (status == null || status.trim().isEmpty()
-                    || InvoiceStatus.UNREPORTED.equals(status)
-                    || InvoiceStatus.REPORTED.equals(status)
-                    || InvoiceStatus.PARTIAL.equals(status)) {
+            String status = normalizeStatus(invoice.getStatus());
+            if (InvoiceStatus.UNREPORTED.equals(status)
+                    || InvoiceStatus.REPORTED.equals(status)) {
                 unpaidCount++;
             }
         }
@@ -121,5 +116,16 @@ public final class InvoiceFilterCoordinator {
                 visibleInvoices.size(),
                 MoneyFormatter.format(total),
                 unpaidCount);
+    }
+
+    @NonNull
+    private static String normalizeStatus(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            return InvoiceStatus.UNREPORTED;
+        }
+        if ("PARTIAL".equalsIgnoreCase(status.trim())) {
+            return InvoiceStatus.REPORTED;
+        }
+        return status;
     }
 }

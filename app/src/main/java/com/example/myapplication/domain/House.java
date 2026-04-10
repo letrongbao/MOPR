@@ -4,7 +4,6 @@ import com.google.firebase.firestore.PropertyName;
 
 import java.util.List;
 
-@com.google.firebase.firestore.IgnoreExtraProperties
 public class House {
     private String id;
 
@@ -44,6 +43,29 @@ public class House {
     private String trashUnit; // "room" | "person"
     private double servicePrice;
     private String serviceUnit; // "room" | "person"
+
+    // Clean helper: only keep unit if price > 0
+    public String getParkingUnitSafe() {
+        return parkingPrice > 0 ? parkingUnit : null;
+    }
+    public String getInternetUnitSafe() {
+        return internetPrice > 0 ? internetUnit : null;
+    }
+    public String getLaundryUnitSafe() {
+        return laundryPrice > 0 ? laundryUnit : null;
+    }
+    public String getElevatorUnitSafe() {
+        return elevatorPrice > 0 ? elevatorUnit : null;
+    }
+    public String getCableTvUnitSafe() {
+        return cableTvPrice > 0 ? cableTvUnit : null;
+    }
+    public String getTrashUnitSafe() {
+        return trashPrice > 0 ? trashUnit : null;
+    }
+    public String getServiceUnitSafe() {
+        return servicePrice > 0 ? serviceUnit : null;
+    }
 
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;

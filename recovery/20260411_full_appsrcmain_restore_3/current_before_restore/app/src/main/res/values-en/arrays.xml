@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="extra_fee_units">
+        <item>Person</item>
+        <item>Room</item>
+        <item>Vehicle</item>
+        <item>KWH</item>
+        <item>m³</item>
+        <item>Times</item>
+    </string-array>
+
+    <string-array name="room_type_options">
+        <item>Studio</item>
+        <item>Duplex</item>
+        <item>1 bedroom</item>
+        <item>2 bedrooms</item>
+        <item>3 bedrooms</item>
+    </string-array>
+</resources>

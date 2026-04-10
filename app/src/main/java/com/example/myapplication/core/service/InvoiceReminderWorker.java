@@ -22,7 +22,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
@@ -84,7 +83,7 @@ public class InvoiceReminderWorker extends Worker {
             com.google.firebase.firestore.QuerySnapshot qs = Tasks.await(
                     db.collection("tenants").document(tenantId)
                             .collection("invoices")
-                            .whereIn("status", Arrays.asList(InvoiceStatus.REPORTED, InvoiceStatus.PARTIAL))
+                        .whereEqualTo("status", InvoiceStatus.REPORTED)
                             .get());
 
             int count = 0;

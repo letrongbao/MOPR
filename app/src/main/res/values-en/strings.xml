@@ -96,6 +96,7 @@
     <string name="house_add_failed">Add failed</string>
     <string name="house_delete_title">Delete house?</string>
     <string name="house_delete_confirm">Are you sure you want to delete %1$s?</string>
+    <string name="house_delete_blocked_has_rooms">Cannot delete this house because it still contains rooms. Please remove or move all rooms first.</string>
     <string name="house_qr_not_added">(No code added)</string>
     <string name="none_option">(None)</string>
 
@@ -152,6 +153,7 @@
     <string name="tenant_empty_state">No tenant yet\nTap + to add</string>
     <string name="tenant_info">Tenant information</string>
     <string name="tenant_colon">Tenant: </string>
+    <string name="invoice_representative_colon">Representative tenant: </string>
     <string name="add_tenant">Add tenant</string>
     <string name="delete_tenant_confirm">Delete %1$s?</string>
     <string name="edit_tenant_info">Edit tenant info</string>
@@ -178,7 +180,7 @@
     <string name="contract_end_action">End</string>
     <string name="contract_end_success">Contract ended and moved to history</string>
 
-    <string name="invoice_statistics">Invoice statistics</string>
+    <string name="invoice_statistics">Automatic invoices</string>
     <string name="invoice_search_hint">Search room, tenant, or phone</string>
     <string name="invoice_count_default">0 invoices</string>
     <string name="invoice_empty_data">No invoice data</string>
@@ -203,7 +205,7 @@
     <string name="add_expense">Add expense</string>
     <string name="update_expense">Update expense</string>
     <string name="expense_empty_message">No expense yet\nTap + to add</string>
-    <string name="expense_category_hint">Category (e.g. Repair, Trash, Internet...)</string>
+    <string name="expense_category_hint">Category (e.g. Repair, Trash, Wifi...)</string>
     <string name="expense_amount_hint">Amount</string>
     <string name="expense_date_hint">Date (dd/MM/yyyy)</string>
     <string name="note_label">Note</string>
@@ -238,7 +240,7 @@
     <string name="water_end_reading">Water end reading</string>
     <string name="water_unit_price">Water unit price (VND/m³)</string>
     <string name="fee_garbage">Trash fee (VND)</string>
-    <string name="fee_internet">Internet fee (VND)</string>
+    <string name="fee_wifi">Wifi fee (VND)</string>
     <string name="fee_parking">Parking fee (VND)</string>
     <string name="fee_other">Other fee (VND)</string>
     <string name="invoice_total_estimated">Estimated total</string>
@@ -257,6 +259,8 @@
         <string name="water_new_reading_required">New water reading *</string>
     <string name="view_invoice">View invoice</string>
         <string name="invoice_mark_reported_and_open">Mark reported &amp; open invoice</string>
+    <string name="invoice_reported_notification_title">Billing notice</string>
+    <string name="invoice_reported_notification_body">Room %1$s has been billed for period %2$s</string>
     <string name="deposit_collect_title">Collect deposit</string>
     <string name="deposit_tenant_info_placeholder">Tenant: John Doe - 0123456789</string>
         <string name="please_enter_new_water">Please enter new water reading</string>
@@ -275,6 +279,7 @@
     <string name="month_picker_preview_placeholder">Month 1/2026</string>
     <string name="current_month">Current month</string>
     <string name="previous_month">Previous month</string>
+    <string name="invalid_month_selection">Cannot select a future month</string>
     <string name="apply">Apply</string>
     <string name="tenant_name_hint">John Doe</string>
     <string name="tenant_id_card_label">National ID</string>
@@ -298,9 +303,9 @@
     <string name="house_address_required_label">House address *</string>
     <string name="house_address_hint">Enter address</string>
     <string name="house_management_info">House management info</string>
-    <string name="house_manager_name_required_label">Manager name *</string>
+    <string name="house_manager_name_required_label">Manager name</string>
     <string name="house_manager_name_hint">Enter manager name</string>
-    <string name="house_manager_phone_required_label">Manager phone *</string>
+    <string name="house_manager_phone_required_label">Manager phone</string>
     <string name="house_manager_phone_hint">Enter manager phone</string>
     <string name="house_account_owner_hint">Account owner</string>
     <string name="house_bank_hint">Bank</string>
@@ -316,6 +321,9 @@
     <string name="unit_per_vehicle"> / vehicle</string>
     <string name="house_internet_price_hint">Internet price</string>
     <string name="house_laundry_price_hint">Laundry price</string>
+    <string name="house_fee_elevator_name">Elevator</string>
+    <string name="house_fee_cable_tv_name">Cable TV</string>
+    <string name="house_fee_service_name">Service fee</string>
     <string name="house_garbage_price_hint">Garbage price</string>
     <string name="house_add_other_fees">Add other fees</string>
     <string name="house_add_fee">Add fee</string>
@@ -380,6 +388,27 @@
     <string name="item_invoice_tenant_info_sample">Tenant: A Minh - Phone: 0777888639</string>
     <string name="item_invoice_price_month_sample">Price: 0 VND/month</string>
     <string name="item_invoice_month_sample">Month: 0/0000</string>
+    <string name="invoice_meter_summary">Electric %1$s → %2$s | Water %3$s → %4$s</string>
+    <string name="invoice_meter_summary_electric">Electric %1$s → %2$s</string>
+    <string name="invoice_meter_summary_electric_per_person">Electric by people: %1$s people</string>
+    <string name="invoice_meter_summary_electric_per_room">Electric by room: %1$s room</string>
+    <string name="invoice_meter_summary_water_meter">Water %1$s → %2$s</string>
+    <string name="invoice_meter_summary_water_per_person">Water by people: %1$s people</string>
+    <string name="invoice_meter_summary_water_per_room">Water by room: %1$s room</string>
+    <string name="invoice_meter_summary_placeholder">Electric 0 → 0 | Water 0 → 0</string>
+    <string name="invoice_total_amount_label">Estimated total: %1$s</string>
+    <string name="invoice_total_amount_placeholder">Estimated total: 0 VND</string>
+    <string name="invoice_extra_fee_summary_label">Other fees: Trash %1$s | Wifi %2$s | Parking %3$s | Other %4$s</string>
+    <string name="invoice_extra_fee_summary_placeholder">Other fees: Trash 0 VND | Wifi 0 VND | Parking 0 VND | Other 0 VND</string>
+    <string name="invoice_status_unreported">Not reported</string>
+    <string name="invoice_status_reported">Reported</string>
+    <string name="invoice_status_paid">Paid</string>
+    <string name="invoice_flow_hint_unreported">Step 1: Enter final meter readings and report billing.</string>
+    <string name="invoice_flow_hint_reported">Step 2: Billing reported, wait for payment or collect payment.</string>
+    <string name="invoice_flow_hint_paid">Done: invoice has been fully paid.</string>
+    <string name="invoice_action_enter_report">Enter readings and report billing</string>
+    <string name="invoice_action_collect_payment">Confirm payment collected</string>
+    <string name="invoice_action_view_payment_history">View payment history</string>
     <string name="item_invoice_action_report_fee">Report monthly fee to tenant</string>
     <string name="item_room_number_sample">R.101</string>
     <string name="item_room_status_vacant">Vacant</string>
@@ -517,6 +546,9 @@
     <string name="contract_expense_parking_line">- Parking: %1$s/%2$s (Qty: %3$d)&lt;br/&gt;</string>
     <string name="contract_expense_internet_line">- Internet: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_expense_laundry_line">- Laundry: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_expense_elevator_line">- Elevator: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_expense_cable_tv_line">- Cable TV: %1$s/%2$s&lt;br/&gt;</string>
+    <string name="contract_expense_service_line">- Service: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_expense_extra_line">- %1$s: %2$s%3$s&lt;br/&gt;</string>
     <string name="contract_expense_trash_line">- Garbage: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_extra_fee_options_label">Other fees</string>
@@ -540,7 +572,7 @@
     <string name="meter_empty_data">No meter data</string>
 
     <string name="home_owner_house_label">Manage\nrooms</string>
-    <string name="home_owner_invoice_label">Billing\ninvoices</string>
+    <string name="home_owner_invoice_label">Automatic\ninvoices</string>
     <string name="home_owner_expense_label">Manage\nexpenses</string>
     <string name="home_owner_report_label">Statistics\nreports</string>
     <string name="home_owner_contract_label">Smart\ncontracts</string>
@@ -590,7 +622,7 @@
     <string name="tenant_room_water_label">Water fee</string>
     <string name="tenant_room_electric_label">Electricity fee</string>
     <string name="tenant_room_trash_label">Garbage fee (person)</string>
-    <string name="tenant_room_Internet_label">Internet fee (person)</string>
+    <string name="tenant_room_wifi_label">Wifi fee (person)</string>
     <string name="tenant_room_meter_based">Meter-based</string>
     <string name="tenant_room_water_rate_placeholder">-- VND / m³</string>
     <string name="tenant_room_electric_rate_placeholder">-- VND / KWh</string>
@@ -637,8 +669,4 @@
     <string name="english_language">English</string>
     <string name="vietnamese_language">Vietnamese</string>
 </resources>
-
-
-
-
 

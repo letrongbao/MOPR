@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- UI section note -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- UI section note -->
+            <ImageView
+                android:id="@+id/imgAvatar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_user_avatar"
+                android:background="@drawable/bg_icon_circle"
+                android:padding="6dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="@string/item_tenant_avatar_desc"/>
+
+            <!-- UI section note -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="10dp">
+
+                <TextView
+                    android:id="@+id/tvHoTen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/item_tenant_name_sample"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A1A"/>
+
+                <TextView
+                    android:id="@+id/tvSdt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0912-345-678"
+                    android:textSize="13sp"
+                    android:textColor="#666666"
+                    android:layout_marginTop="2dp"/>
+
+            </LinearLayout>
+
+            <!-- UI section note -->
+            <ImageButton
+                android:id="@+id/btnGoi"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_icon_circle_green"
+                android:src="@drawable/ic_phone"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/item_tenant_call_desc"
+                android:layout_marginEnd="8dp"/>
+
+            <!-- UI section note -->
+            <ImageButton
+                android:id="@+id/btnMenu"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                android:contentDescription="@string/item_tenant_more_options_desc"/>
+
+        </LinearLayout>
+
+        <!-- UI section note -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F0F0F0"
+            android:layout_marginVertical="8dp"/>
+
+        <!-- UI section note -->
+        <LinearLayout
+            android:id="@+id/rowBadgeVaiTro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_user_avatar"
+                android:layout_marginEnd="4dp"
+                android:contentDescription="@string/item_tenant_role_desc"/>
+
+            <!-- UI section note -->
+            <TextView
+                android:id="@+id/badgePrimaryContact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/item_tenant_primary_contact"
+                android:textSize="11sp"
+                android:textColor="#444444"
+                android:layout_marginEnd="8dp"/>
+
+            <!-- UI section note -->
+            <TextView
+                android:id="@+id/badgeDaiDienHD"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/item_tenant_contract_representative"
+                android:textSize="11sp"
+                android:textColor="#444444"/>
+
+        </LinearLayout>
+
+        <!-- UI section note -->
+        <LinearLayout
+            android:id="@+id/rowBadgeTrangThai"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical">
+
+            <!-- UI section note -->
+            <View
+                android:id="@+id/dotTamTru"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_icon_circle_orange"
+                android:layout_marginEnd="4dp"/>
+
+            <!-- UI section note -->
+            <TextView
+                android:id="@+id/badgeTamTru"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/item_tenant_temporary_residence_missing"
+                android:textSize="11sp"
+                android:textColor="#FF6D00"
+                android:layout_marginEnd="12dp"/>
+
+            <!-- UI section note -->
+            <View
+                android:id="@+id/dotGiayTo"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_icon_circle_orange"
+                android:layout_marginEnd="4dp"/>
+
+            <!-- UI section note -->
+            <TextView
+                android:id="@+id/badgeGiayTo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/item_tenant_documents_incomplete"
+                android:textSize="11sp"
+                android:textColor="#FF6D00"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
+

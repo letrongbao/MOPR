@@ -63,11 +63,11 @@ public class GridAdapter extends BaseAdapter {
         if (isLocked) {
             tileContainer.setBackgroundResource(R.drawable.bg_home_icon_box);
             tileContainer.setAlpha(0.3f);
-            textView.setTextColor(ContextCompat.getColor(context, R.color.locked_text));
+            textView.setTextColor(0xFFBBBBBB);
         } else {
             tileContainer.setBackgroundResource(R.drawable.bg_home_icon_box);
             tileContainer.setAlpha(1.0f);
-            textView.setTextColor(ContextCompat.getColor(context, R.color.text_main));
+            textView.setTextColor(0xFF444444);
         }
 
         return convertView;

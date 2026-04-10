@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_xac_nhan_thu_coc"
+        android:title="@string/menu_contract_confirm_deposit_collection"/>
+    <item
+        android:id="@+id/menu_thu_coc"
+        android:title="@string/menu_contract_collect_deposit_detail"/>
+    <item
+        android:id="@+id/menu_nhac_tai_ky"
+        android:title="@string/menu_contract_send_renewal_reminder"/>
+    <item
+        android:id="@+id/menu_xem_chi_tiet"
+        android:title="@string/menu_contract_view_details"/>
+    <item
+        android:id="@+id/menu_chinh_sua"
+        android:title="@string/menu_contract_edit"/>
+    <item
+        android:id="@+id/menu_xoa_hop_dong"
+        android:title="@string/menu_contract_delete"/>
+</menu>

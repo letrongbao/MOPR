@@ -5,7 +5,6 @@ import com.google.firebase.firestore.PropertyName;
 import java.util.ArrayList;
 import java.util.List;
 
-@com.google.firebase.firestore.IgnoreExtraProperties
 public class Tenant {
     private String id;
     private String fullName;
@@ -46,6 +45,8 @@ public class Tenant {
 
     private int contractDurationMonths;
     private boolean remindOneMonthBefore = true;
+    private String billingStartPolicy = "current_month";
+    private String billingStartPeriod;
     private String billingReminderAt = "start_month";
     private int electricStartReading;
     private int waterStartReading;
@@ -57,12 +58,6 @@ public class Tenant {
     private List<String> selectedExtraFeeNames;
 
     private String note;
-    
-    // Legal & Lifecycle Tracking
-    private boolean locked;
-    private Long lockedAt;
-    private long refundedDepositAmount;
-    private long penaltyAmount;
 
     // Deposit collection status
     private boolean depositCollectionStatus;
@@ -306,6 +301,26 @@ public class Tenant {
         this.remindOneMonthBefore = remindOneMonthBefore;
     }
 
+    @PropertyName("billingStartPolicy")
+    public String getBillingStartPolicy() {
+        return billingStartPolicy;
+    }
+
+    @PropertyName("billingStartPolicy")
+    public void setBillingStartPolicy(String billingStartPolicy) {
+        this.billingStartPolicy = billingStartPolicy;
+    }
+
+    @PropertyName("billingStartPeriod")
+    public String getBillingStartPeriod() {
+        return billingStartPeriod;
+    }
+
+    @PropertyName("billingStartPeriod")
+    public void setBillingStartPeriod(String billingStartPeriod) {
+        this.billingStartPeriod = billingStartPeriod;
+    }
+
     public String getBillingReminderAt() {
         return billingReminderAt;
     }
@@ -330,7 +345,6 @@ public class Tenant {
         this.waterStartReading = waterStartReading;
     }
 
-    @PropertyName("hasParkingService")
     public boolean hasParkingService() {
         return hasParkingService;
     }
@@ -348,7 +362,6 @@ public class Tenant {
         this.vehicleCount = vehicleCount;
     }
 
-    @PropertyName("hasInternetService")
     public boolean hasInternetService() {
         return hasInternetService;
     }
@@ -358,7 +371,6 @@ public class Tenant {
         this.hasInternetService = hasInternetService;
     }
 
-    @PropertyName("hasLaundryService")
     public boolean hasLaundryService() {
         return hasLaundryService;
     }
@@ -388,38 +400,6 @@ public class Tenant {
 
     public void setNote(String note) {
         this.note = note;
-    }
-
-    public boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(boolean locked) {
-        this.locked = locked;
-    }
-
-    public Long getLockedAt() {
-        return lockedAt;
-    }
-
-    public void setLockedAt(Long lockedAt) {
-        this.lockedAt = lockedAt;
-    }
-
-    public long getRefundedDepositAmount() {
-        return refundedDepositAmount;
-    }
-
-    public void setRefundedDepositAmount(long refundedDepositAmount) {
-        this.refundedDepositAmount = refundedDepositAmount;
-    }
-
-    public long getPenaltyAmount() {
-        return penaltyAmount;
-    }
-
-    public void setPenaltyAmount(long penaltyAmount) {
-        this.penaltyAmount = penaltyAmount;
     }
 
     @PropertyName("showNoteOnInvoice")
@@ -514,4 +494,12 @@ public class Tenant {
         this.fullyDocumented = fullyDocumented;
     }
 
+    @PropertyName("hasInternetService")
+    public boolean isHasInternetService() { return hasInternetService; }
+    
+    @PropertyName("hasParkingService")
+    public boolean isHasParkingService() { return hasParkingService; }
+    
+    @PropertyName("hasLaundryService")
+    public boolean isHasLaundryService() { return hasLaundryService; }
 }

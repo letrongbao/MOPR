@@ -4,6 +4,9 @@ import androidx.annotation.NonNull;
 
 import com.example.myapplication.domain.Tenant;
 
+import java.util.Calendar;
+import java.util.Locale;
+
 public final class ContractFormDataHelper {
 
     public interface MonthYearNormalizer {
@@ -200,7 +203,10 @@ public final class ContractFormDataHelper {
         contract.setRentalStartDate(data.signingDate);
         contract.setContractDurationMonths(data.contractMonths);
         contract.setRemindOneMonthBefore(data.remindOneMonthBefore);
-        contract.setBillingReminderAt(data.billingReminderAt);
+        String billingStartPolicy = normalizeBillingStartPolicy(data.billingReminderAt);
+        contract.setBillingStartPolicy(billingStartPolicy);
+        contract.setBillingStartPeriod(computeBillingStartPeriod(data.signingDate, billingStartPolicy));
+        contract.setBillingReminderAt(toLegacyBillingReminder(billingStartPolicy));
 
         // Persist canonical monetary fields.
         contract.setRentAmount((long) data.roomPrice);
@@ -216,5 +222,36 @@ public final class ContractFormDataHelper {
         contract.setShowNoteOnInvoice(data.showNoteOnInvoice);
         contract.setContractStatus("ACTIVE");
         contract.setContractEndDate(endDateComputer.compute(data.signingDate, data.contractMonths));
+    }
+
+    @NonNull
+    private static String normalizeBillingStartPolicy(String value) {
+        if (value == null) {
+            return "current_month";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if ("next_month".equals(normalized) || "mid_month".equals(normalized) || "end_month".equals(normalized)) {
+            return "next_month";
+        }
+        return "current_month";
+    }
+
+    @NonNull
+    private static String computeBillingStartPeriod(String signingDate, String billingStartPolicy) {
+        Calendar calendar = ContractDateHelper.parseContractDate(signingDate);
+        if (calendar == null) {
+            return "";
+        }
+        if ("next_month".equals(billingStartPolicy)) {
+            calendar.add(Calendar.MONTH, 1);
+        }
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int year = calendar.get(Calendar.YEAR);
+        return String.format(Locale.US, "%02d/%04d", month, year);
+    }
+
+    @NonNull
+    private static String toLegacyBillingReminder(String billingStartPolicy) {
+        return "next_month".equals(billingStartPolicy) ? "mid_month" : "start_month";
     }
 }

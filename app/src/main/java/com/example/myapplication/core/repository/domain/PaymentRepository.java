@@ -21,11 +21,12 @@ public class PaymentRepository {
     public MutableLiveData<List<Payment>> getPaymentList() {
         MutableLiveData<List<Payment>> data = new MutableLiveData<>(new ArrayList<>());
         CollectionReference ref = getScopedCollection();
-        if (ref == null) return data;
+        if (ref == null) {
+            return data;
+        }
 
         ref.addSnapshotListener((value, error) -> {
             if (error != null) {
-                // handle error silently
                 return;
             }
             if (value != null) {

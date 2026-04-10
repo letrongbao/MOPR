@@ -235,9 +235,6 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
             } else if (itemId == R.id.menu_xem_chi_tiet) {
                 openContractDetail(anchor.getContext(), contract);
                 return true;
-            } else if (itemId == R.id.menu_chinh_sua) {
-                openEditContract(anchor.getContext(), contract);
-                return true;
             } else if (itemId == R.id.menu_xoa_hop_dong) {
                 showDeleteConfirmDialog(anchor.getContext(), contract, position);
                 return true;
@@ -310,48 +307,6 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
         Intent intent = new Intent(context, ContractDetailsActivity.class);
         intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, contract.getId());
-        context.startActivity(intent);
-    }
-
-    /**
-     * Internal note.
-     */
-    private void openEditContract(Context context, Tenant contract) {
-        if (contract == null || contract.getId() == null) {
-            Toast.makeText(context, context.getString(R.string.error_contract_not_found), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent intent = new Intent(context, ContractActivity.class);
-
-        // Internal note.
-        intent.putExtra(ContractIntentKeys.MODE, "EDIT");
-
-        // Internal note.
-        intent.putExtra(ContractIntentKeys.CONTRACT_ID, contract.getId());
-        intent.putExtra(ContractIntentKeys.ROOM_ID, contract.getRoomId());
-        intent.putExtra(ContractIntentKeys.CONTRACT_NUMBER, contract.getContractNumber());
-        intent.putExtra(ContractIntentKeys.FULL_NAME, contract.getFullName());
-        intent.putExtra(ContractIntentKeys.PHONE_NUMBER, contract.getPhoneNumber());
-        intent.putExtra(ContractIntentKeys.PERSONAL_ID, contract.getPersonalId());
-        intent.putExtra(ContractIntentKeys.MEMBER_COUNT, contract.getMemberCount());
-        intent.putExtra(ContractIntentKeys.RENTAL_START_DATE, contract.getRentalStartDate());
-        intent.putExtra(ContractIntentKeys.CONTRACT_DURATION_MONTHS, contract.getContractDurationMonths());
-        intent.putExtra(ContractIntentKeys.RENT_AMOUNT, contract.getRentAmount());
-        intent.putExtra(ContractIntentKeys.DEPOSIT_AMOUNT, contract.getDepositAmount());
-        intent.putExtra(ContractIntentKeys.ELECTRIC_START_READING, contract.getElectricStartReading());
-        intent.putExtra(ContractIntentKeys.WATER_START_READING, contract.getWaterStartReading());
-        intent.putExtra(ContractIntentKeys.HAS_PARKING_SERVICE, contract.hasParkingService());
-        intent.putExtra(ContractIntentKeys.VEHICLE_COUNT, contract.getVehicleCount());
-        intent.putExtra(ContractIntentKeys.HAS_INTERNET_SERVICE, contract.hasInternetService());
-        intent.putExtra(ContractIntentKeys.HAS_LAUNDRY_SERVICE, contract.hasLaundryService());
-        intent.putExtra(ContractIntentKeys.NOTE, contract.getNote());
-        intent.putExtra(ContractIntentKeys.SHOW_DEPOSIT_ON_INVOICE, contract.isShowDepositOnInvoice());
-        intent.putExtra(ContractIntentKeys.SHOW_NOTE_ON_INVOICE, contract.isShowNoteOnInvoice());
-        intent.putExtra(ContractIntentKeys.REMIND_ONE_MONTH_BEFORE, contract.isRemindOneMonthBefore());
-        intent.putExtra(ContractIntentKeys.PERSONAL_ID_FRONT_URL, contract.getPersonalIdFrontUrl());
-        intent.putExtra(ContractIntentKeys.PERSONAL_ID_BACK_URL, contract.getPersonalIdBackUrl());
-
         context.startActivity(intent);
     }
 

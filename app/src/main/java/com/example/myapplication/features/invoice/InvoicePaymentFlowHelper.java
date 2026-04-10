@@ -60,10 +60,10 @@ public final class InvoicePaymentFlowHelper {
                     String newStatus;
                     if (paid <= 0) {
                         newStatus = InvoiceStatus.REPORTED;
-                    } else if (paid + 0.01 < invoice.getTotalAmount()) {
-                        newStatus = InvoiceStatus.PARTIAL;
                     } else {
-                        newStatus = InvoiceStatus.PAID;
+                        newStatus = paid + 0.01 < invoice.getTotalAmount()
+                                ? InvoiceStatus.REPORTED
+                                : InvoiceStatus.PAID;
                     }
 
                     viewModel.updateStatus(invoiceId, newStatus,

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/full_name" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etHoTen"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/tenant_name_hint" android:inputType="textPersonName"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- CCCD -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tenant_id_card_label" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etCccd"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/tenant_id_card_hint" android:inputType="number"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/phone_number" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etSdt"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/tenant_phone_hint" android:inputType="phone"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tenant_rented_room_label" android:textStyle="bold" android:textColor="#212121"/>
+        <Spinner android:id="@+id/spinnerPhong"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tenant_member_count_label" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etSoThanhVien"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/tenant_member_count_hint" android:inputType="number"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tenant_rental_start_date" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etNgayBatDau"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/date_ddmmyyyy_hint" android:inputType="text"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tenant_contract_end_date" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etNgayKetThuc"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/date_ddmmyyyy_hint" android:inputType="text"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- UI section note -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/tenant_deposit_vnd_label" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etTienCoc"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/tenant_deposit_hint" android:inputType="numberDecimal"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- UI section note -->
+        <!-- UI section note -->
+        <!-- UI section note -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tenant_status_role"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:textColor="#555555"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- UI section note -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbPrimaryContact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/tenant_primary_contact"
+                android:textSize="13sp"
+                app:buttonTint="#2E7D32"/>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbDaiDienHopDong"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/tenant_contract_representative_short"
+                android:textSize="13sp"
+                app:buttonTint="#1565C0"/>
+
+        </LinearLayout>
+
+        <!-- UI section note -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbTamTru"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/temporary_residence_registered"
+                android:textSize="13sp"
+                app:buttonTint="#E65100"/>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbDayDuGiayTo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/documents_complete"
+                android:textSize="13sp"
+                app:buttonTint="#E65100"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
+

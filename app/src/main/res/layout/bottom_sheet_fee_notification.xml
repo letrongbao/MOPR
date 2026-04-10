@@ -34,42 +34,26 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_marginBottom="16dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/tvPhong"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/room_colon"
             android:textSize="14sp"
-            android:textColor="#333333"/>
-
-        <TextView
-            android:id="@+id/tvPhong"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/room_number_sample"
-            android:textSize="14sp"
             android:textColor="#333333"
             android:textStyle="bold"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tenant_colon"
-            android:textSize="14sp"
-            android:textColor="#333333"
-            android:layout_marginStart="16dp"/>
 
         <TextView
             android:id="@+id/tvTenant"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/tenant_name_sample"
+            android:layout_marginTop="4dp"
+            android:text="@string/invoice_representative_colon"
             android:textSize="14sp"
-            android:textColor="#333333"
-            android:textStyle="bold"/>
+            android:textColor="#333333"/>
     </LinearLayout>
 
     <!-- UI section note -->

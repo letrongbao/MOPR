@@ -77,7 +77,7 @@ public class InvoiceWidgetProvider extends AppWidgetProvider {
                 int unpaidCount = 0;
                 for (QueryDocumentSnapshot doc : invoiceSnapshot) {
                     String status = doc.getString("status");
-                    if (InvoiceStatus.REPORTED.equals(status) || InvoiceStatus.PARTIAL.equals(status)) {
+                    if (InvoiceStatus.REPORTED.equals(status) || "PARTIAL".equalsIgnoreCase(status)) {
                         unpaidCount++;
                     }
                 }

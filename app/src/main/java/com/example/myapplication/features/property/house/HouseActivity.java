@@ -31,6 +31,7 @@ import com.example.myapplication.core.repository.domain.HouseRepository;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class HouseActivity extends AppCompatActivity {
@@ -133,6 +134,28 @@ public class HouseActivity extends AppCompatActivity {
     }
 
     private void confirmDelete(House k) {
+        if (k.getId() == null || k.getId().trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        scopedCollection("rooms")
+                .whereEqualTo("houseId", k.getId())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot != null && !snapshot.isEmpty()) {
+                        Toast.makeText(this, getString(R.string.house_delete_blocked_has_rooms), Toast.LENGTH_LONG)
+                                .show();
+                        return;
+                    }
+                    showDeleteConfirmDialog(k);
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT)
+                        .show());
+    }
+
+    private void showDeleteConfirmDialog(@NonNull House k) {
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.house_delete_title))
                 .setMessage(getString(R.string.house_delete_confirm, k.getHouseName()))
@@ -143,6 +166,19 @@ public class HouseActivity extends AppCompatActivity {
                                 .makeText(this, getString(R.string.delete_failed), Toast.LENGTH_SHORT).show())))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();
+    }
+
+    private CollectionReference scopedCollection(@NonNull String collection) {
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            return db.collection("tenants").document(tenantId).collection(collection);
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            throw new IllegalStateException("User not logged in");
+        }
+        return db.collection("users").document(user.getUid()).collection(collection);
     }
 
     private void showCreateDialog(House existing) {
@@ -252,15 +288,7 @@ public class HouseActivity extends AppCompatActivity {
                 }
 
                 String name = etName.getText().toString().trim();
-                if (name.isEmpty()) {
-                    Toast.makeText(this, getString(R.string.please_enter_manager_name), Toast.LENGTH_SHORT).show();
-                    return;
-                }
                 String phone = etPhone.getText().toString().trim();
-                if (phone.isEmpty()) {
-                    Toast.makeText(this, getString(R.string.please_enter_manager_phone), Toast.LENGTH_SHORT).show();
-                    return;
-                }
 
                 String note = etNote.getText().toString().trim();
 

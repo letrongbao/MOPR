@@ -52,23 +52,30 @@ public final class InvoiceFilterDialogHelper {
         MaterialButton btnCancel = content.findViewById(R.id.btnCancelMonthPicker);
         MaterialButton btnApply = content.findViewById(R.id.btnApplyMonthPicker);
 
-        Calendar now = Calendar.getInstance();
+        btnCurrentMonth.setVisibility(View.GONE);
+
+        Calendar latestAllowed = Calendar.getInstance();
+        latestAllowed.add(Calendar.MONTH, -1);
         String normalizedSelected = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
 
-        int selectedM = now.get(Calendar.MONTH) + 1;
-        int selectedY = now.get(Calendar.YEAR);
+        int selectedM = latestAllowed.get(Calendar.MONTH) + 1;
+        int selectedY = latestAllowed.get(Calendar.YEAR);
         if (normalizedSelected.matches("\\d{2}/\\d{4}")) {
             String[] parts = normalizedSelected.split("/");
             selectedM = Integer.parseInt(parts[0]);
             selectedY = Integer.parseInt(parts[1]);
         }
 
-        int minYear = Math.max(2000, now.get(Calendar.YEAR) - 8);
-        int maxYear = now.get(Calendar.YEAR) + 1;
+        int minYear = Math.max(2000, latestAllowed.get(Calendar.YEAR) - 8);
+        int maxYear = latestAllowed.get(Calendar.YEAR);
         if (selectedY < minYear)
             selectedY = minYear;
         if (selectedY > maxYear)
             selectedY = maxYear;
+        if (selectedY == latestAllowed.get(Calendar.YEAR)
+                && selectedM > (latestAllowed.get(Calendar.MONTH) + 1)) {
+            selectedM = latestAllowed.get(Calendar.MONTH) + 1;
+        }
 
         npMonth.setMinValue(1);
         npMonth.setMaxValue(12);
@@ -87,12 +94,26 @@ public final class InvoiceFilterDialogHelper {
         };
         updatePreview.run();
 
-        npMonth.setOnValueChangedListener((picker, oldVal, newVal) -> updatePreview.run());
-        npYear.setOnValueChangedListener((picker, oldVal, newVal) -> updatePreview.run());
+        npMonth.setOnValueChangedListener((picker, oldVal, newVal) -> {
+            int allowedYear = latestAllowed.get(Calendar.YEAR);
+            int allowedMonth = latestAllowed.get(Calendar.MONTH) + 1;
+            if (npYear.getValue() == allowedYear && newVal > allowedMonth) {
+                npMonth.setValue(allowedMonth);
+            }
+            updatePreview.run();
+        });
+        npYear.setOnValueChangedListener((picker, oldVal, newVal) -> {
+            int allowedYear = latestAllowed.get(Calendar.YEAR);
+            int allowedMonth = latestAllowed.get(Calendar.MONTH) + 1;
+            if (newVal == allowedYear && npMonth.getValue() > allowedMonth) {
+                npMonth.setValue(allowedMonth);
+            }
+            updatePreview.run();
+        });
 
         btnCurrentMonth.setOnClickListener(v -> {
-            npMonth.setValue(now.get(Calendar.MONTH) + 1);
-            npYear.setValue(now.get(Calendar.YEAR));
+            npMonth.setValue(latestAllowed.get(Calendar.MONTH) + 1);
+            npYear.setValue(latestAllowed.get(Calendar.YEAR));
             updatePreview.run();
         });
 
@@ -107,6 +128,17 @@ public final class InvoiceFilterDialogHelper {
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         btnApply.setOnClickListener(v -> {
+            int pickedMonth = npMonth.getValue();
+            int pickedYear = npYear.getValue();
+            int allowedYear = latestAllowed.get(Calendar.YEAR);
+            int allowedMonth = latestAllowed.get(Calendar.MONTH) + 1;
+            if (pickedYear > allowedYear || (pickedYear == allowedYear && pickedMonth > allowedMonth)) {
+                Toast.makeText(activity, activity.getString(R.string.invalid_month_selection), Toast.LENGTH_SHORT).show();
+                npYear.setValue(allowedYear);
+                npMonth.setValue(allowedMonth);
+                updatePreview.run();
+                return;
+            }
             String picked = String.format(Locale.US, "%02d/%04d", npMonth.getValue(), npYear.getValue());
             callback.onPicked(picked, npMonth.getValue(), npYear.getValue());
             dialog.dismiss();

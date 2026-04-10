@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary Blue (ActionBar & Top) -->
+    <color name="primary">#1E88E5</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="on_primary">#FFFFFFFF</color>
+
+    <color name="secondary">#2196F3</color>
+    <color name="on_secondary">#FFFFFFFF</color>
+
+    <!-- Restore purple for legacy layouts -->
+    <color name="purple">#8692F7</color>
+    <color name="purple_500">#7B1FA2</color>
+    <color name="purple_700">#6200EE</color>
+
+    <!-- Semantic colors -->
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="warning">#FFC107</color>
+
+    <!-- Menu Icon Gradient (Light to Dark Blue) -->
+    <color name="menu_blue_light">#64B5F6</color>
+    <color name="menu_blue_dark">#1E88E5</color>
+
+    <!-- Button Colors from Screenshots -->
+    <color name="btn_green">#28A745</color>
+    <color name="btn_orange">#FF5722</color>
+    <color name="btn_blue_action">#2196F3</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_light">#F8F9FA</color>
+    <color name="surface">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <color name="text_main">#333333</color>
+    <color name="text_sub">#757575</color>
+
+    <!-- Status colors -->
+    <color name="status_empty">#F44336</color>
+    <color name="status_rented">#2196F3</color>
+
+    <!-- Locked/Disabled state -->
+    <color name="locked_overlay">#4DFFFFFF</color>
+    <color name="locked_text">#BDBDBD</color>
+    <color name="lock_icon">#FFD54F</color>
+
+    <color name="outline">#E0E0E0</color>
+
+    <!-- Language Switcher -->
+    <color name="language_switcher_bg">#F5F5F5</color>
+    <color name="language_switcher_border">#E8E8E8</color>
+    <color name="language_switcher_divider">#D0D0D0</color>
+    <color name="primary_alpha">#1E88E512</color>
+</resources>

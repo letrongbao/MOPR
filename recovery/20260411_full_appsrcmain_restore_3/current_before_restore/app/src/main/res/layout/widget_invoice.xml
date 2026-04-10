@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card_rounded"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvWidgetTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_invoice_title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/purple"/>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:contentDescription="@null"/>
+
+    <TextView
+        android:id="@+id/tvWidgetInvoice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_invoice_unpaid_placeholder"
+        android:textSize="13sp"
+        android:textColor="#333333"/>
+
+    <TextView
+        android:id="@+id/tvWidgetPhong"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_invoice_total_rooms_placeholder"
+        android:textSize="13sp"
+        android:textColor="#333333"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/tvWidgetUpdate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_invoice_updated_placeholder"
+        android:textSize="11sp"
+        android:textColor="#999999"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>
+

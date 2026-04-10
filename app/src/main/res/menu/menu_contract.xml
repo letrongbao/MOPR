@@ -13,9 +13,6 @@
         android:id="@+id/menu_xem_chi_tiet"
         android:title="@string/menu_contract_view_details"/>
     <item
-        android:id="@+id/menu_chinh_sua"
-        android:title="@string/menu_contract_edit"/>
-    <item
         android:id="@+id/menu_xoa_hop_dong"
         android:title="@string/menu_contract_delete"/>
 </menu>

@@ -1,0 +1,647 @@
+commit 1dbc28a5945453e8c7394bc394f510d7a9c0318d
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Thu Apr 9 04:16:05 2026 +0700
+
+    feat: finalize chat-notification flow, rules hardening, and related docs
+
+diff --git a/app/src/main/res/layout/home_menu_scroll_content.xml b/app/src/main/res/layout/home_menu_scroll_content.xml
+index ba8e06f..ff2163b 100644
+--- a/app/src/main/res/layout/home_menu_scroll_content.xml
++++ b/app/src/main/res/layout/home_menu_scroll_content.xml
+@@ -317,8 +317,8 @@
+                     <ImageView
+                         android:layout_width="40dp"
+                         android:layout_height="40dp"
+-                        android:contentDescription="@string/tenant_management_title"
+-                        android:src="@drawable/ic_user_avatar"
++                        android:contentDescription="@string/chat_hub_title"
++                        android:src="@drawable/ic_chat_bubble"
+                         app:tint="@color/white" />
+ 
+                     <TextView
+
+commit abd79c685f112524d50adb9e145b18efc06cefc5
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Wed Apr 8 07:46:29 2026 +0700
+
+    Use payload maps for Firestore writes
+    
+    Convert domain write operations to build sanitized Map payloads and avoid writing entire objects. Added toPayload helpers in Expense, House, Invoice, Payment, Room and Tenant repositories to trim strings, omit empty/zero fields, and include timestamps only when present. Refactored InviteRepository to use a Firestore transaction to atomically consume invite codes and update member/user documents. UI/feature updates: add water start reading support and meter-mode handling in contract flow, show/hide parking/internet/laundry fields based on house fees, localize join-room to use string resources, and improved contract HTML generation to include unit labels and extra fees. Also added new house unit/calculation fields and accessors in House, added waterStartReading to Tenant, plus small auth util and resource additions.
+
+diff --git a/app/src/main/res/layout/home_menu_scroll_content.xml b/app/src/main/res/layout/home_menu_scroll_content.xml
+index 8b50c3d..ba8e06f 100644
+--- a/app/src/main/res/layout/home_menu_scroll_content.xml
++++ b/app/src/main/res/layout/home_menu_scroll_content.xml
+@@ -163,7 +163,7 @@
+                         android:layout_alignParentBottom="true"
+                         android:text="@string/home_owner_house_label"
+                         android:textColor="@color/white"
+-                        android:textSize="15sp"
++                        android:textSize="17sp"
+                         android:textStyle="bold" />
+                 </RelativeLayout>
+             </com.google.android.material.card.MaterialCardView>
+@@ -200,7 +200,7 @@
+                         android:layout_alignParentBottom="true"
+                         android:text="@string/home_owner_invoice_label"
+                         android:textColor="@color/white"
+-                        android:textSize="15sp"
++                        android:textSize="17sp"
+                         android:textStyle="bold" />
+                 </RelativeLayout>
+             </com.google.android.material.card.MaterialCardView>
+@@ -245,7 +245,7 @@
+                         android:layout_alignParentBottom="true"
+                         android:text="@string/home_owner_expense_label"
+                         android:textColor="@color/white"
+-                        android:textSize="15sp"
++                        android:textSize="17sp"
+                         android:textStyle="bold" />
+                 </RelativeLayout>
+             </com.google.android.material.card.MaterialCardView>
+@@ -282,7 +282,7 @@
+                         android:layout_alignParentBottom="true"
+                         android:text="@string/home_owner_report_label"
+                         android:textColor="@color/white"
+-                        android:textSize="15sp"
++                        android:textSize="17sp"
+                         android:textStyle="bold" />
+                 </RelativeLayout>
+             </com.google.android.material.card.MaterialCardView>
+@@ -328,7 +328,7 @@
+                         android:layout_alignParentBottom="true"
+                         android:text="@string/home_owner_tenant_label"
+                         android:textColor="@color/white"
+-                        android:textSize="15sp"
++                        android:textSize="17sp"
+                         android:textStyle="bold" />
+                 </RelativeLayout>
+             </com.google.android.material.card.MaterialCardView>
+@@ -366,7 +366,7 @@
+                         android:layout_alignParentBottom="true"
+                         android:text="@string/home_owner_contract_label"
+                         android:textColor="@color/white"
+-                        android:textSize="15sp"
++                        android:textSize="17sp"
+                         android:textStyle="bold" />
+                 </RelativeLayout>
+             </com.google.android.material.card.MaterialCardView>
+
+commit 27f1e6f2cb51064e6c5c03b91ebe6d6d3a80d68d
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Mon Apr 6 23:38:18 2026 +0700
+
+    Add auth util, language UI tweaks, role handling
+    
+    Introduce AuthProviderUtil to detect auth providers and resolve sign-in labels; wire it into ChangePasswordActivity and EditProfileActivity to conditionally show/change password and display auth method. In MainActivity, ensure users/{uid} profile document is created/merged on sign-in and app start. Revamp HomeMenuActivity role logic to default to guest UI, observe users/{uid}.primaryRole via snapshot listener, apply owner/tenant UI appropriately, and force logout when promoted to OWNER during an active session; simplify/centralize card enable/disable logic and conditionally show Change Password menu. Improve language switcher visuals and behavior: new drawables, size/spacing adjustments, disabled state while switching, and consistent selected/unselected styling. Add layout and string resources for auth method, language labels, and app subtitle casing, plus a small background drawable. Update Firebase docs (FIREBASE_DATA_MANAGEMENT_GUIDE.md and FIRESTORE_DATA_CONTRACT.md) to reflect runtime auth flows, role handling, data contracts, and migration/backup notes.
+
+diff --git a/app/src/main/res/layout/home_menu_scroll_content.xml b/app/src/main/res/layout/home_menu_scroll_content.xml
+index 5e528ea..8b50c3d 100644
+--- a/app/src/main/res/layout/home_menu_scroll_content.xml
++++ b/app/src/main/res/layout/home_menu_scroll_content.xml
+@@ -322,6 +322,7 @@
+                         app:tint="@color/white" />
+ 
+                     <TextView
++                        android:id="@+id/tvCardTenantLabel"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+@@ -359,6 +360,7 @@
+                         app:tint="@color/white" />
+ 
+                     <TextView
++                        android:id="@+id/tvCardContractLabel"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+@@ -371,13 +373,5 @@
+         </LinearLayout>
+     </LinearLayout>
+ 
+-    <TextView
+-        android:id="@+id/tvVersion"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:gravity="center"
+-        android:paddingVertical="16dp"
+-        android:text="@string/app_version_label"
+-        android:textColor="#999999"
+-        android:textSize="12sp" />
++    
+ </LinearLayout>
+
+commit e5e348e99e84a767d90bb8f92f084d75a21c19a1
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Sat Apr 4 09:28:46 2026 +0700
+
+    chore(i18n): complete VN/EN localization cleanup
+
+diff --git a/app/src/main/res/layout/home_menu_scroll_content.xml b/app/src/main/res/layout/home_menu_scroll_content.xml
+index e84f3a9..5e528ea 100644
+--- a/app/src/main/res/layout/home_menu_scroll_content.xml
++++ b/app/src/main/res/layout/home_menu_scroll_content.xml
+@@ -46,7 +46,7 @@
+                 <TextView
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+-                    android:text="Căn nhà"
++                    android:text="@string/house"
+                     android:textColor="#4A6582"
+                     android:textSize="13sp"
+                     android:textStyle="bold" />
+@@ -77,7 +77,7 @@
+                 <TextView
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+-                    android:text="Phòng trống"
++                    android:text="@string/room_status_vacant"
+                     android:textColor="#4A6582"
+                     android:textSize="13sp"
+                     android:textStyle="bold" />
+@@ -108,7 +108,7 @@
+                 <TextView
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+-                    android:text="Đang thuê"
++                    android:text="@string/room_status_rented"
+                     android:textColor="#4A6582"
+                     android:textSize="13sp"
+                     android:textStyle="bold" />
+@@ -161,7 +161,7 @@
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+-                        android:text="Quản lí\nnhà phòng"
++                        android:text="@string/home_owner_house_label"
+                         android:textColor="@color/white"
+                         android:textSize="15sp"
+                         android:textStyle="bold" />
+@@ -198,7 +198,7 @@
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+-                        android:text="Báo phí\nhóa đơn"
++                        android:text="@string/home_owner_invoice_label"
+                         android:textColor="@color/white"
+                         android:textSize="15sp"
+                         android:textStyle="bold" />
+@@ -243,7 +243,7 @@
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+-                        android:text="Quản lí\nchi phí"
++                        android:text="@string/home_owner_expense_label"
+                         android:textColor="@color/white"
+                         android:textSize="15sp"
+                         android:textStyle="bold" />
+@@ -280,7 +280,7 @@
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+-                        android:text="Thống kê\nbáo cáo"
++                        android:text="@string/home_owner_report_label"
+                         android:textColor="@color/white"
+                         android:textSize="15sp"
+                         android:textStyle="bold" />
+@@ -317,7 +317,7 @@
+                     <ImageView
+                         android:layout_width="40dp"
+                         android:layout_height="40dp"
+-                        android:contentDescription="Khách thuê"
++                        android:contentDescription="@string/tenant_management_title"
+                         android:src="@drawable/ic_user_avatar"
+                         app:tint="@color/white" />
+ 
+@@ -325,7 +325,7 @@
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+-                        android:text="Quản lý\nkhách thuê"
++                        android:text="@string/home_owner_tenant_label"
+                         android:textColor="@color/white"
+                         android:textSize="15sp"
+                         android:textStyle="bold" />
+@@ -354,7 +354,7 @@
+                     <ImageView
+                         android:layout_width="40dp"
+                         android:layout_height="40dp"
+-                        android:contentDescription="Hợp đồng"
++                        android:contentDescription="@string/contract_header_title"
+                         android:src="@drawable/ic_contract"
+                         app:tint="@color/white" />
+ 
+@@ -362,7 +362,7 @@
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentBottom="true"
+-                        android:text="Hợp đồng\nthông minh"
++                        android:text="@string/home_owner_contract_label"
+                         android:textColor="@color/white"
+                         android:textSize="15sp"
+                         android:textStyle="bold" />
+@@ -377,7 +377,7 @@
+         android:layout_height="wrap_content"
+         android:gravity="center"
+         android:paddingVertical="16dp"
+-        android:text="Phiên bản 2.6.3"
++        android:text="@string/app_version_label"
+         android:textColor="#999999"
+         android:textSize="12sp" />
+ </LinearLayout>
+
+commit a198b1fa04412512a9cc3bf94d51937311fe623f
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Sat Apr 4 05:03:24 2026 +0700
+
+    Refactor Firestore roles and shared UI scaffold
+
+diff --git a/app/src/main/res/layout/home_menu_scroll_content.xml b/app/src/main/res/layout/home_menu_scroll_content.xml
+new file mode 100644
+index 0000000..e84f3a9
+--- /dev/null
++++ b/app/src/main/res/layout/home_menu_scroll_content.xml
+@@ -0,0 +1,383 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:orientation="vertical">
++
++    <!-- Dashboard Stats -->
++    <com.google.android.material.card.MaterialCardView
++        android:id="@+id/cardStats"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginHorizontal="14dp"
++        android:layout_marginTop="14dp"
++        android:layout_marginBottom="10dp"
++        app:cardBackgroundColor="#F5FAFF"
++        app:cardCornerRadius="18dp"
++        app:cardElevation="0dp"
++        app:strokeColor="#D7E7F7"
++        app:strokeWidth="1dp">
++
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:minHeight="108dp"
++            android:orientation="horizontal"
++            android:paddingHorizontal="12dp"
++            android:paddingVertical="16dp">
++
++            <LinearLayout
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_weight="1"
++                android:gravity="center"
++                android:orientation="vertical">
++
++                <TextView
++                    android:id="@+id/tvTotalHouses"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="0"
++                    android:textColor="@color/primary"
++                    android:textSize="28sp"
++                    android:textStyle="bold" />
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Căn nhà"
++                    android:textColor="#4A6582"
++                    android:textSize="13sp"
++                    android:textStyle="bold" />
++            </LinearLayout>
++
++            <View
++                android:layout_width="1dp"
++                android:layout_height="38dp"
++                android:layout_gravity="center"
++                android:background="#D7E7F7" />
++
++            <LinearLayout
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_weight="1"
++                android:gravity="center"
++                android:orientation="vertical">
++
++                <TextView
++                    android:id="@+id/tvVacantRooms"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="0"
++                    android:textColor="@color/status_empty"
++                    android:textSize="28sp"
++                    android:textStyle="bold" />
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Phòng trống"
++                    android:textColor="#4A6582"
++                    android:textSize="13sp"
++                    android:textStyle="bold" />
++            </LinearLayout>
++
++            <View
++                android:layout_width="1dp"
++                android:layout_height="38dp"
++                android:layout_gravity="center"
++                android:background="#D7E7F7" />
++
++            <LinearLayout
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_weight="1"
++                android:gravity="center"
++                android:orientation="vertical">
++
++                <TextView
++                    android:id="@+id/tvRentedRooms"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="0"
++                    android:textColor="@color/status_rented"
++                    android:textSize="28sp"
++                    android:textStyle="bold" />
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Đang thuê"
++                    android:textColor="#4A6582"
++                    android:textSize="13sp"
++                    android:textStyle="bold" />
++            </LinearLayout>
++        </LinearLayout>
++    </com.google.android.material.card.MaterialCardView>
++
++    <!-- Menu Grid -->
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:paddingHorizontal="16dp"
++        android:paddingBottom="16dp">
++
++        <LinearLayout
++            android:id="@+id/rowTop"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:orientation="horizontal">
++
++            <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardHouse"
++                android:layout_width="0dp"
++                android:layout_height="140dp"
++                android:layout_weight="1"
++                android:layout_marginEnd="8dp"
++                android:clickable="true"
++                android:focusable="true"
++                android:foreground="?attr/selectableItemBackground"
++                app:cardCornerRadius="20dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp">
++
++                <RelativeLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:background="@drawable/bg_card_gradient_purple"
++                    android:padding="16dp">
++
++                    <ImageView
++                        android:id="@+id/iconHouse"
++                        android:layout_width="40dp"
++                        android:layout_height="40dp"
++                        android:src="@drawable/ic_house"
++                        app:tint="@color/white" />
++
++                    <TextView
++                        android:id="@+id/tvCardHouseLabel"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_alignParentBottom="true"
++                        android:text="Quản lí\nnhà phòng"
++                        android:textColor="@color/white"
++                        android:textSize="15sp"
++                        android:textStyle="bold" />
++                </RelativeLayout>
++            </com.google.android.material.card.MaterialCardView>
++
++            <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardInvoice"
++                android:layout_width="0dp"
++                android:layout_height="140dp"
++                android:layout_weight="1"
++                android:layout_marginStart="8dp"
++                android:clickable="true"
++                android:focusable="true"
++                android:foreground="?attr/selectableItemBackground"
++                app:cardCornerRadius="20dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp">
++
++                <RelativeLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:background="@drawable/bg_card_gradient_pink"
++                    android:padding="16dp">
++
++                    <ImageView
++                        android:layout_width="40dp"
++                        android:layout_height="40dp"
++                        android:src="@drawable/ic_invoice"
++                        app:tint="@color/white" />
++
++                    <TextView
++                        android:id="@+id/tvCardInvoiceLabel"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_alignParentBottom="true"
++                        android:text="Báo phí\nhóa đơn"
++                        android:textColor="@color/white"
++                        android:textSize="15sp"
++                        android:textStyle="bold" />
++                </RelativeLayout>
++            </com.google.android.material.card.MaterialCardView>
++        </LinearLayout>
++
++        <LinearLayout
++            android:id="@+id/rowMiddle"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:orientation="horizontal">
++
++            <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardExpense"
++                android:layout_width="0dp"
++                android:layout_height="140dp"
++                android:layout_weight="1"
++                android:layout_marginEnd="8dp"
++                android:clickable="true"
++                android:focusable="true"
++                android:foreground="?attr/selectableItemBackground"
++                app:cardCornerRadius="20dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp">
++
++                <RelativeLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:background="@drawable/bg_card_gradient_blue"
++                    android:padding="16dp">
++
++                    <ImageView
++                        android:layout_width="40dp"
++                        android:layout_height="40dp"
++                        android:src="@drawable/ic_expense"
++                        app:tint="@color/white" />
++
++                    <TextView
++                        android:id="@+id/tvCardExpenseLabel"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_alignParentBottom="true"
++                        android:text="Quản lí\nchi phí"
++                        android:textColor="@color/white"
++                        android:textSize="15sp"
++                        android:textStyle="bold" />
++                </RelativeLayout>
++            </com.google.android.material.card.MaterialCardView>
++
++            <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardReport"
++                android:layout_width="0dp"
++                android:layout_height="140dp"
++                android:layout_weight="1"
++                android:layout_marginStart="8dp"
++                android:clickable="true"
++                android:focusable="true"
++                android:foreground="?attr/selectableItemBackground"
++                app:cardCornerRadius="20dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp">
++
++                <RelativeLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:background="@drawable/bg_card_gradient_green"
++                    android:padding="16dp">
++
++                    <ImageView
++                        android:layout_width="40dp"
++                        android:layout_height="40dp"
++                        android:src="@drawable/ic_report"
++                        app:tint="@color/white" />
++
++                    <TextView
++                        android:id="@+id/tvCardReportLabel"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_alignParentBottom="true"
++                        android:text="Thống kê\nbáo cáo"
++                        android:textColor="@color/white"
++                        android:textSize="15sp"
++                        android:textStyle="bold" />
++                </RelativeLayout>
++            </com.google.android.material.card.MaterialCardView>
++        </LinearLayout>
++
++        <LinearLayout
++            android:id="@+id/rowBottom"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:orientation="horizontal">
++
++            <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardKhachThue"
++                android:layout_width="0dp"
++                android:layout_height="140dp"
++                android:layout_weight="1"
++                android:layout_marginEnd="8dp"
++                android:clickable="true"
++                android:focusable="true"
++                android:foreground="?attr/selectableItemBackground"
++                app:cardCornerRadius="20dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp">
++
++                <RelativeLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:background="@drawable/bg_card_gradient_teal"
++                    android:padding="16dp">
++
++                    <ImageView
++                        android:layout_width="40dp"
++                        android:layout_height="40dp"
++                        android:contentDescription="Khách thuê"
++                        android:src="@drawable/ic_user_avatar"
++                        app:tint="@color/white" />
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_alignParentBottom="true"
++                        android:text="Quản lý\nkhách thuê"
++                        android:textColor="@color/white"
++                        android:textSize="15sp"
++                        android:textStyle="bold" />
++                </RelativeLayout>
++            </com.google.android.material.card.MaterialCardView>
++
++            <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardHopDong"
++                android:layout_width="0dp"
++                android:layout_height="140dp"
++                android:layout_weight="1"
++                android:layout_marginStart="8dp"
++                android:clickable="true"
++                android:focusable="true"
++                android:foreground="?attr/selectableItemBackground"
++                app:cardCornerRadius="20dp"
++                app:cardElevation="0dp"
++                app:strokeWidth="0dp">
++
++                <RelativeLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="match_parent"
++                    android:background="@drawable/bg_card_gradient_orange"
++                    android:padding="16dp">
++
++                    <ImageView
++                        android:layout_width="40dp"
++                        android:layout_height="40dp"
++                        android:contentDescription="Hợp đồng"
++                        android:src="@drawable/ic_contract"
++                        app:tint="@color/white" />
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_alignParentBottom="true"
++                        android:text="Hợp đồng\nthông minh"
++                        android:textColor="@color/white"
++                        android:textSize="15sp"
++                        android:textStyle="bold" />
++                </RelativeLayout>
++            </com.google.android.material.card.MaterialCardView>
++        </LinearLayout>
++    </LinearLayout>
++
++    <TextView
++        android:id="@+id/tvVersion"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:gravity="center"
++        android:paddingVertical="16dp"
++        android:text="Phiên bản 2.6.3"
++        android:textColor="#999999"
++        android:textSize="12sp" />
++</LinearLayout>
