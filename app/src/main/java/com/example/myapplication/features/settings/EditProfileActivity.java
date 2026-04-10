@@ -20,6 +20,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.InviteRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.service.ImageUploadService;
@@ -34,6 +35,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
+import android.view.View;
 import java.util.Map;
 
 public class EditProfileActivity extends AppCompatActivity {
@@ -43,6 +45,8 @@ public class EditProfileActivity extends AppCompatActivity {
     private TextView tvAuthMethod;
     private Button btnSaveProfile;
     private Button btnApplyInvite;
+    private View layoutInviteSection;
+    private boolean isOwnerPrimaryRole;
     private ShapeableImageView imgAvatar;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -101,6 +105,7 @@ public class EditProfileActivity extends AppCompatActivity {
         edtInviteCode = findViewById(R.id.edtInviteCode);
         btnSaveProfile = findViewById(R.id.btnSaveProfile);
         btnApplyInvite = findViewById(R.id.btnApplyInvite);
+        layoutInviteSection = findViewById(R.id.layoutInviteSection);
 
         imgAvatar.setOnClickListener(v -> avatarPickerLauncher.launch("image/*"));
 
@@ -146,6 +151,8 @@ public class EditProfileActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
+                        updateInviteSectionVisibility(doc.getString("primaryRole"));
+
                         String fullName = doc.getString("fullName");
                         String phoneNumber = doc.getString("phoneNumber");
                         String avatarUrl = doc.getString("avatarUrl");
@@ -161,6 +168,14 @@ public class EditProfileActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    private void updateInviteSectionVisibility(String primaryRole) {
+        if (layoutInviteSection == null) {
+            return;
+        }
+        isOwnerPrimaryRole = primaryRole != null && TenantRoles.OWNER.equalsIgnoreCase(primaryRole.trim());
+        layoutInviteSection.setVisibility(isOwnerPrimaryRole ? View.GONE : View.VISIBLE);
     }
 
     private void startSaveProcess() {
@@ -248,6 +263,10 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private void applyInviteCode() {
         if (edtInviteCode == null || btnApplyInvite == null) {
+            return;
+        }
+
+        if (isOwnerPrimaryRole) {
             return;
         }
 
