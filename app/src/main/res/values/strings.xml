@@ -1028,6 +1028,23 @@
     <string name="contract_expense_trash_line">- Rác: %1$s/%2$s&lt;br/&gt;</string>
     <string name="contract_extra_fee_options_label">Các chi phí khác</string>
     <string name="contract_extra_fee_option_text">%1$s: %2$s%3$s</string>
+    <string name="contract_legal_dashboard_title">Bảng điều phối pháp lí hợp đồng</string>
+    <string name="contract_legal_readonly_notice">Trang này chỉ theo dõi hồ sơ pháp lí từ hợp đồng đã tạo, không cho phép thêm/sửa/xóa hợp đồng.</string>
+    <string name="contract_filter_all">Tất cả</string>
+    <string name="contract_filter_active">Đang hiệu lực</string>
+    <string name="contract_filter_expiring">Sắp hết hạn</string>
+    <string name="contract_filter_ended">Đã kết thúc</string>
+    <string name="contract_due_7_days">7 ngày: %1$d</string>
+    <string name="contract_due_30_days">30 ngày: %1$d</string>
+    <string name="contract_expired_need_action">Quá hạn: %1$d</string>
+    <string name="contract_days_remaining_label">Còn %1$d ngày</string>
+    <string name="contract_days_remaining_today">Hết hạn hôm nay</string>
+    <string name="contract_days_remaining_overdue">Quá hạn %1$d ngày</string>
+    <string name="contract_days_remaining_unknown">Không rõ ngày hết hạn</string>
+    <string name="contract_urgency_normal">Bình thường</string>
+    <string name="contract_urgency_watch">Cần theo dõi</string>
+    <string name="contract_urgency_critical">Khẩn</string>
+    <string name="contract_urgency_expired">Đã quá hạn</string>
 
     <string name="join_room_welcome">Chào mừng đến MOPR!</string>
     <string name="join_room_instruction">Vui lòng nhập mã nhóm phòng mà chủ nhà đã chia sẻ cho bạn để tiếp tục.</string>
