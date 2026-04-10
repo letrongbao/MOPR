@@ -17,6 +17,7 @@ public class Invoice {
     private double waterEndReading;
     private double waterUnitPrice;
     private double trashFee;
+    private double internetFee;
     private double wifiFee;
     private double parkingFee;
     private double otherFee;
@@ -42,7 +43,7 @@ public class Invoice {
     public void calculateTotalAmount() {
         double electricityAmount = (electricEndReading - electricStartReading) * electricUnitPrice;
         double waterAmount = (waterEndReading - waterStartReading) * waterUnitPrice;
-        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + wifiFee + parkingFee + otherFee;
+        this.totalAmount = rentAmount + electricityAmount + waterAmount + trashFee + getInternetFee() + parkingFee + otherFee;
     }
 
     public String getId() {
@@ -137,12 +138,24 @@ public class Invoice {
         this.trashFee = trashFee;
     }
 
+    public double getInternetFee() {
+        return internetFee > 0 ? internetFee : wifiFee;
+    }
+
+    public void setInternetFee(double internetFee) {
+        this.internetFee = internetFee;
+        this.wifiFee = internetFee;
+    }
+
     public double getWifiFee() {
-        return wifiFee;
+        return wifiFee > 0 ? wifiFee : internetFee;
     }
 
     public void setWifiFee(double wifiFee) {
         this.wifiFee = wifiFee;
+        if (this.internetFee <= 0) {
+            this.internetFee = wifiFee;
+        }
     }
 
     public double getParkingFee() {
@@ -258,3 +271,4 @@ public class Invoice {
         this.updatedAt = updatedAt;
     }
 }
+

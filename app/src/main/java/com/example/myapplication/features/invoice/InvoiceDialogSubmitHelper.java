@@ -101,7 +101,7 @@ public final class InvoiceDialogSubmitHelper {
         invoice.setWaterEndReading(nuocCuoi);
         invoice.setWaterUnitPrice(MoneyFormatter.getValue(form.etDonGiaNuoc));
         invoice.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
-        invoice.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
+        invoice.setInternetFee(MoneyFormatter.getValue(form.etPhiWifi));
         invoice.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
         invoice.setOtherFee(MoneyFormatter.getValue(form.etPhiKhac));
         invoice.setStatus(InvoiceStatus.UNREPORTED);
@@ -143,7 +143,7 @@ public final class InvoiceDialogSubmitHelper {
         updated.setWaterEndReading(nuocCuoi);
         updated.setWaterUnitPrice(MoneyFormatter.getValue(form.etDonGiaNuoc));
         updated.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
-        updated.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
+        updated.setInternetFee(MoneyFormatter.getValue(form.etPhiWifi));
         updated.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
         updated.setOtherFee(MoneyFormatter.getValue(form.etPhiKhac));
         updated.setOtherFeeLines(otherFeeLines);
@@ -157,3 +157,4 @@ public final class InvoiceDialogSubmitHelper {
         }
     }
 }
+

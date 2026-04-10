@@ -202,7 +202,8 @@ public class InvoiceRepository {
         putIfPositive(payload, "waterUnitPrice", invoice.getWaterUnitPrice());
 
         payload.put("trashFee", invoice.getTrashFee());
-        payload.put("wifiFee", invoice.getWifiFee());
+        payload.put("internetFee", invoice.getInternetFee());
+        payload.put("wifiFee", invoice.getInternetFee());
         payload.put("parkingFee", invoice.getParkingFee());
         payload.put("otherFee", invoice.getOtherFee());
         if (invoice.getOtherFeeLines() != null && !invoice.getOtherFeeLines().isEmpty()) {
@@ -242,3 +243,4 @@ public class InvoiceRepository {
         }
     }
 }
+

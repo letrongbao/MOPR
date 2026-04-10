@@ -303,9 +303,9 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
                     formatMoneyShort(((Number) garbage).doubleValue())));
         }
 
-        // Tiền wifi (wifiFee hoặc internetFee)
-        Object wifi = doc.get("wifiFee");
-        if (!(wifi instanceof Number)) wifi = doc.get("internetFee");
+        // Tiền wifi/internet (ưu tiên internetFee, fallback wifiFee)
+        Object wifi = doc.get("internetFee");
+        if (!(wifi instanceof Number)) wifi = doc.get("wifiFee");
         if (wifi instanceof Number) {
             tvWifiFee.setText(getString(R.string.tenant_room_rate_per_person,
                     formatMoneyShort(((Number) wifi).doubleValue())));

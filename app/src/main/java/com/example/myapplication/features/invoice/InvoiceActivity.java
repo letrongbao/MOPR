@@ -635,8 +635,8 @@ public class InvoiceActivity extends AppCompatActivity {
                 invoice.setTrashFee(preset.trashFee);
                 changed = true;
             }
-            if (invoice.getWifiFee() <= 0 && preset.wifiFee > 0) {
-                invoice.setWifiFee(preset.wifiFee);
+            if (invoice.getInternetFee() <= 0 && preset.wifiFee > 0) {
+                invoice.setInternetFee(preset.wifiFee);
                 changed = true;
             }
             if (invoice.getParkingFee() <= 0 && preset.parkingFee > 0) {
@@ -730,7 +730,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
             String invoiceId = invoice.getId();
             double oldTrashFee = invoice.getTrashFee();
-            double oldWifiFee = invoice.getWifiFee();
+            double oldWifiFee = invoice.getInternetFee();
             double oldParkingFee = invoice.getParkingFee();
             double oldOtherFee = invoice.getOtherFee();
             int oldOtherFeeLineSize = invoice.getOtherFeeLines() != null ? invoice.getOtherFeeLines().size() : 0;
@@ -739,7 +739,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
             int newOtherFeeLineSize = invoice.getOtherFeeLines() != null ? invoice.getOtherFeeLines().size() : 0;
             boolean changed = Math.abs(invoice.getTrashFee() - oldTrashFee) > 0.001
-                    || Math.abs(invoice.getWifiFee() - oldWifiFee) > 0.001
+                    || Math.abs(invoice.getInternetFee() - oldWifiFee) > 0.001
                     || Math.abs(invoice.getParkingFee() - oldParkingFee) > 0.001
                     || Math.abs(invoice.getOtherFee() - oldOtherFee) > 0.001
                     || newOtherFeeLineSize != oldOtherFeeLineSize;
@@ -1026,7 +1026,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                         hd.setWaterUnitPrice(fee.waterUnitPrice);
                         hd.setTrashFee(fee.trashFee);
-                        hd.setWifiFee(fee.wifiFee);
+                        hd.setInternetFee(fee.wifiFee);
                         hd.setParkingFee(fee.parkingFee);
                         hd.setOtherFee(fee.otherFee);
                         hd.setOtherFeeLines(resolveSelectedExtraFeeLines(room, contract));
@@ -1120,7 +1120,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                         hd.setWaterUnitPrice(fee.waterUnitPrice);
                         hd.setTrashFee(fee.trashFee);
-                        hd.setWifiFee(fee.wifiFee);
+                        hd.setInternetFee(fee.wifiFee);
                         hd.setParkingFee(fee.parkingFee);
                         hd.setOtherFee(fee.otherFee);
                         hd.setOtherFeeLines(resolveSelectedExtraFeeLines(room, contract));
@@ -1360,7 +1360,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         House house = resolveHouseForRoom(room);
                         hd.setTrashFee(calculateFeeWithUnit(trashFee, house != null ? house.getTrashUnitSafe() : null, contract));
                         double calculatedWifi = calculateFeeWithUnit(wifiFee, house != null ? house.getInternetUnitSafe() : null, contract);
-                        hd.setWifiFee(contract != null && contract.hasInternetService() ? calculatedWifi : 0);
+                        hd.setInternetFee(contract != null && contract.hasInternetService() ? calculatedWifi : 0);
                         double calculatedParking = calculateFeeWithUnit(parkingFee, house != null ? house.getParkingUnitSafe() : null, contract);
                         hd.setParkingFee(contract != null && contract.hasParkingService() ? calculatedParking : 0);
                         
@@ -2185,8 +2185,8 @@ public class InvoiceActivity extends AppCompatActivity {
         if (invoice.getTrashFee() <= 0 && preset.trashFee > 0) {
             invoice.setTrashFee(preset.trashFee);
         }
-        if (invoice.getWifiFee() <= 0 && preset.wifiFee > 0) {
-            invoice.setWifiFee(preset.wifiFee);
+        if (invoice.getInternetFee() <= 0 && preset.wifiFee > 0) {
+            invoice.setInternetFee(preset.wifiFee);
         }
         if (invoice.getParkingFee() <= 0 && preset.parkingFee > 0) {
             invoice.setParkingFee(preset.parkingFee);
@@ -2661,3 +2661,4 @@ public class InvoiceActivity extends AppCompatActivity {
         return true;
     }
 }
+

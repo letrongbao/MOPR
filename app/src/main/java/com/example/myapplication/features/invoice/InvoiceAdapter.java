@@ -309,7 +309,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
                 + electricUsage * invoice.getElectricUnitPrice()
                 + waterUsage * invoice.getWaterUnitPrice()
                 + invoice.getTrashFee()
-                + invoice.getWifiFee()
+                + invoice.getInternetFee()
                 + invoice.getParkingFee()
                 + invoice.getOtherFee();
     }
@@ -354,7 +354,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
     private String buildExtraFeeSummary(@NonNull android.content.Context context, @NonNull Invoice invoice) {
         double trashFee = Math.max(0, invoice.getTrashFee());
-        double wifiFee = Math.max(0, invoice.getWifiFee());
+        double wifiFee = Math.max(0, invoice.getInternetFee());
         double parkingFee = Math.max(0, invoice.getParkingFee());
         double otherFee = Math.max(0, invoice.getOtherFee());
 
@@ -390,5 +390,6 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         }
     }
 }
+
 
 

@@ -110,11 +110,11 @@ public final class InvoiceExportDialogHelper {
                 sb.append("   → SL: ").append(InvoiceFormValueHelper.formatDouble(qty)).append(" ").append(unit).append(" x ").append(fmt.format(price)).append("\n");
             }
         }
-        if (invoice.getWifiFee() > 0) {
-            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getWifiFee())).append("\n");
+        if (invoice.getInternetFee() > 0) {
+            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getInternetFee())).append("\n");
             double price = house.getInternetPrice();
-            if (price > 0 && Math.abs((invoice.getWifiFee() / price) - Math.round(invoice.getWifiFee() / price)) < 0.001) {
-                double qty = Math.round(invoice.getWifiFee() / price);
+            if (price > 0 && Math.abs((invoice.getInternetFee() / price) - Math.round(invoice.getInternetFee() / price)) < 0.001) {
+                double qty = Math.round(invoice.getInternetFee() / price);
                 String unit = formatUnitName(house.getInternetUnitSafe());
                 sb.append("   → SL: ").append(InvoiceFormValueHelper.formatDouble(qty)).append(" ").append(unit).append(" x ").append(fmt.format(price)).append("\n");
             }
@@ -255,3 +255,4 @@ public final class InvoiceExportDialogHelper {
         }
     }
 }
+
