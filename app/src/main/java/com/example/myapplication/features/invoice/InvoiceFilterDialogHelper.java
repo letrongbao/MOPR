@@ -39,6 +39,14 @@ public final class InvoiceFilterDialogHelper {
     public static void showMonthFilterDialog(@NonNull AppCompatActivity activity,
             String selectedMonth,
             @NonNull MonthPickedCallback callback) {
+        showMonthFilterDialog(activity, selectedMonth, false, R.string.month_picker_report_title, callback);
+    }
+
+    public static void showMonthFilterDialog(@NonNull AppCompatActivity activity,
+            String selectedMonth,
+            boolean allowCurrentMonth,
+            int titleResId,
+            @NonNull MonthPickedCallback callback) {
         ViewGroup root = activity.findViewById(android.R.id.content);
         View content = LayoutInflater.from(activity).inflate(R.layout.dialog_month_year_picker, root, false);
         BottomSheetDialog dialog = new BottomSheetDialog(activity);
@@ -46,16 +54,23 @@ public final class InvoiceFilterDialogHelper {
 
         NumberPicker npMonth = content.findViewById(R.id.npMonth);
         NumberPicker npYear = content.findViewById(R.id.npYear);
+        TextView tvMonthPickerTitle = content.findViewById(R.id.tvMonthPickerTitle);
         TextView tvPreviewMonth = content.findViewById(R.id.tvPreviewMonth);
         MaterialButton btnCurrentMonth = content.findViewById(R.id.btnCurrentMonth);
         MaterialButton btnPreviousMonth = content.findViewById(R.id.btnPreviousMonth);
         MaterialButton btnCancel = content.findViewById(R.id.btnCancelMonthPicker);
         MaterialButton btnApply = content.findViewById(R.id.btnApplyMonthPicker);
 
-        btnCurrentMonth.setVisibility(View.GONE);
+        if (tvMonthPickerTitle != null) {
+            tvMonthPickerTitle.setText(titleResId);
+        }
+
+        btnCurrentMonth.setVisibility(allowCurrentMonth ? View.VISIBLE : View.GONE);
 
         Calendar latestAllowed = Calendar.getInstance();
-        latestAllowed.add(Calendar.MONTH, -1);
+        if (!allowCurrentMonth) {
+            latestAllowed.add(Calendar.MONTH, -1);
+        }
         String normalizedSelected = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
 
         int selectedM = latestAllowed.get(Calendar.MONTH) + 1;

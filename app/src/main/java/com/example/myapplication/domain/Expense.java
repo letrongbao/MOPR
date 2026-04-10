@@ -1,5 +1,6 @@
 package com.example.myapplication.domain;
 
+import com.example.myapplication.core.constants.ExpenseStatus;
 import com.google.firebase.Timestamp;
 
 @com.google.firebase.firestore.IgnoreExtraProperties
@@ -8,6 +9,8 @@ public class Expense {
     private String category;
     private double amount;
     private String paidAt; // dd/MM/yyyy
+    private String periodMonth; // MM/yyyy for month-based reporting/filtering
+    private String status; // PENDING | PAID
     private String note;
     private Timestamp createdAt;
 
@@ -29,6 +32,18 @@ public class Expense {
 
     public String getPaidAt() { return paidAt; }
     public void setPaidAt(String paidAt) { this.paidAt = paidAt; }
+
+    public String getPeriodMonth() { return periodMonth; }
+    public void setPeriodMonth(String periodMonth) { this.periodMonth = periodMonth; }
+
+    public String getStatus() {
+        if (status == null || status.trim().isEmpty()) {
+            return ExpenseStatus.PAID;
+        }
+        return status;
+    }
+
+    public void setStatus(String status) { this.status = status; }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }

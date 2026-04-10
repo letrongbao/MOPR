@@ -25,122 +25,169 @@
             app:titleTextColor="@color/white"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationIconTint="@color/white"/>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayoutExpense"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary"
+            app:tabIndicatorColor="@color/white"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="fixed"
+            app:tabRippleColor="@null"
+            app:tabSelectedTextColor="@color/white"
+            app:tabTextColor="#CCFFFFFF" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:elevation="2dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
 
-            <TextView
-                android:id="@+id/tvSelectedMonth"
+            <RelativeLayout
+                android:id="@+id/btnSelectKhu"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="44dp"
                 android:layout_weight="1"
-                android:text="@string/expense_month_default"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="16sp"/>
+                android:background="@drawable/bg_input_rounded"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingHorizontal="12dp">
 
-            <TextView
-                android:id="@+id/btnPickMonth"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/change_month"
-                android:textStyle="bold"
-                android:textColor="@color/primary"
-                android:padding="8dp"/>
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/tvSelectedKhu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="@string/all_houses"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="?attr/colorOutline"
-            app:strokeWidth="1dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:rotation="90"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="#888888" />
+            </RelativeLayout>
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="14dp">
+                android:id="@+id/btnDatePicker"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_month_filter_chip"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/primary_dark" />
 
                 <TextView
-                    android:id="@+id/tvSummary"
-                    android:layout_width="match_parent"
+                    android:id="@+id/tvSelectedMonth"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/expense_total_default"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textColor="?attr/colorOnSurface"/>
+                    android:layout_marginStart="8dp"
+                    android:text="3/2026"
+                    android:textColor="#0D47A1"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <TextView
-                        android:id="@+id/tvSummaryCount"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/expense_count_default"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"/>
-
-                    <TextView
-                        android:id="@+id/tvSummaryAvg"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/expense_avg_default"
-                        android:gravity="end"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="13sp"/>
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvTopCategory"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="@string/top_expense_category_none"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="13sp"/>
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="6dp"
+                    android:rotation="90"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="#0D47A1" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvEmpty"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/expense_empty_message"
-            android:textAlignment="center"
-            android:textSize="16sp"
-            android:textColor="#999999"
-            android:padding="16dp"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"/>
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:paddingBottom="8dp"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="10dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+            <EditText
+                android:id="@+id/etSearchExpense"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_input_rounded"
+                android:hint="@string/expense_search_hint"
+                android:inputType="text"
+                android:paddingHorizontal="12dp"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E" />
+
+            <TextView
+                android:id="@+id/tvFilterSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="0 khoản | Dự kiến: 0 đ | Đã chi: 0 đ"
+                android:textColor="#6D6D6D"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="8dp"
-            android:clipToPadding="false"/>
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="8dp" />
+
+            <LinearLayout
+                android:id="@+id/llEmpty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@drawable/baseline_receipt_24"
+                    app:tint="#CCCCCC" />
+
+                <TextView
+                    android:id="@+id/tvEmpty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/expense_empty_pending"
+                    android:textColor="#AAAAAA"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </FrameLayout>
 
     </LinearLayout>
 
@@ -149,9 +196,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_margin="20dp"
         android:contentDescription="@string/add_expense"
         app:srcCompat="@drawable/ic_add"
-        app:backgroundTint="@color/purple"/>
+        app:backgroundTint="@color/primary"
+        app:elevation="0dp"
+        app:pressedTranslationZ="0dp"
+        app:rippleColor="#33000000"
+        app:tint="@color/white"
+        app:useCompatPadding="false"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

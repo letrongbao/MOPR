@@ -86,6 +86,9 @@ public class ExpenseRepository {
             payload.put("amount", expense.getAmount());
         }
         putIfNotBlank(payload, "paidAt", expense.getPaidAt());
+        putIfNotBlank(payload, "periodMonth", expense.getPeriodMonth());
+        putIfNotBlank(payload, "status", expense.getStatus());
+        putIfNotBlank(payload, "houseId", expense.getHouseId());
         putIfNotBlank(payload, "note", expense.getNote());
         if (expense.getCreatedAt() != null) {
             payload.put("createdAt", expense.getCreatedAt());
