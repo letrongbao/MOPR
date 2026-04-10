@@ -56,7 +56,8 @@ public final class InvoiceDialogUiHelper {
                 form.etNuocCuoi,
                 form.etDonGiaNuoc,
                 form.etPhiRac,
-                form.etPhiWifi,
+                form.etPhiInternet,
+                form.etPhiGiatUi,
                 form.etPhiGuiXe,
                 form.etPhiKhac,
                 tvEstimatedTotal,
@@ -74,7 +75,8 @@ public final class InvoiceDialogUiHelper {
                 form.etNuocCuoi,
                 form.etDonGiaNuoc,
                 form.etPhiRac,
-                form.etPhiWifi,
+                form.etPhiInternet,
+                form.etPhiGiatUi,
                 form.etPhiGuiXe,
                 form.etPhiKhac,
                 tvEstimatedTotal,
@@ -100,7 +102,8 @@ public final class InvoiceDialogUiHelper {
         form.etNuocCuoi.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterEndReading()));
         form.etDonGiaNuoc.setText(InvoiceFormValueHelper.formatDouble(invoice.getWaterUnitPrice()));
         form.etPhiRac.setText(InvoiceFormValueHelper.formatDouble(invoice.getTrashFee()));
-        form.etPhiWifi.setText(InvoiceFormValueHelper.formatDouble(invoice.getWifiFee()));
+        form.etPhiInternet.setText(InvoiceFormValueHelper.formatDouble(invoice.getInternetFee()));
+        form.etPhiGiatUi.setText(InvoiceFormValueHelper.formatDouble(invoice.getLaundryFee()));
         form.etPhiGuiXe.setText(InvoiceFormValueHelper.formatDouble(invoice.getParkingFee()));
         form.etPhiKhac.setText(InvoiceFormValueHelper.formatDouble(invoice.getOtherFee()));
 

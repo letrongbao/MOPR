@@ -202,8 +202,9 @@ public class InvoiceRepository {
         putIfPositive(payload, "waterUnitPrice", invoice.getWaterUnitPrice());
 
         putIfPositive(payload, "trashFee", invoice.getTrashFee());
-        putIfPositive(payload, "wifiFee", invoice.getWifiFee());
+        putIfPositive(payload, "internetFee", invoice.getInternetFee());
         putIfPositive(payload, "parkingFee", invoice.getParkingFee());
+        putIfPositive(payload, "laundryFee", invoice.getLaundryFee());
         putIfPositive(payload, "otherFee", invoice.getOtherFee());
         if (invoice.getOtherFeeLines() != null && !invoice.getOtherFeeLines().isEmpty()) {
             payload.put("otherFeeLines", new ArrayList<>(invoice.getOtherFeeLines()));

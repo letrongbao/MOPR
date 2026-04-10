@@ -2,6 +2,7 @@ package com.example.myapplication.domain;
 
 import com.google.firebase.Timestamp;
 
+@com.google.firebase.firestore.IgnoreExtraProperties
 public class Expense {
     private String id;
     private String category;
@@ -10,10 +11,15 @@ public class Expense {
     private String note;
     private Timestamp createdAt;
 
+    private String houseId;
+
     public Expense() {}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public String getHouseId() { return houseId; }
+    public void setHouseId(String houseId) { this.houseId = houseId; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }

@@ -2,6 +2,7 @@ package com.example.myapplication.domain;
 
 import com.google.firebase.firestore.PropertyName;
 
+@com.google.firebase.firestore.IgnoreExtraProperties
 public class Room {
     private String id;
     private String roomNumber;

@@ -18,6 +18,29 @@ public class PaymentRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final String COLLECTION = "payments";
 
+    public MutableLiveData<List<Payment>> getPaymentList() {
+        MutableLiveData<List<Payment>> data = new MutableLiveData<>(new ArrayList<>());
+        CollectionReference ref = getScopedCollection();
+        if (ref == null) return data;
+
+        ref.addSnapshotListener((value, error) -> {
+            if (error != null) {
+                // handle error silently
+                return;
+            }
+            if (value != null) {
+                List<Payment> list = new ArrayList<>();
+                value.forEach(doc -> {
+                    Payment item = doc.toObject(Payment.class);
+                    item.setId(doc.getId());
+                    list.add(item);
+                });
+                data.postValue(list);
+            }
+        });
+        return data;
+    }
+
     private CollectionReference getScopedCollection() {
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId != null && !tenantId.isEmpty()) {

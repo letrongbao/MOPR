@@ -10,6 +10,18 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
@@ -18,6 +30,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Expense;
+import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.viewmodel.ExpenseViewModel;
@@ -53,6 +66,11 @@ public class RevenueActivity extends AppCompatActivity {
     private List<Invoice> lastInvoices;
     private final List<PaymentEntry> lastPayments = new ArrayList<>();
     private List<Expense> lastExpenses;
+    
+    private Spinner spinnerHouse;
+    private List<House> allHouses = new ArrayList<>();
+    private List<Room> allRooms = new ArrayList<>();
+    private String selectedHouseId = null;
     private String selectedMonth;
     private int totalRooms;
     private int rentedRooms;
@@ -64,6 +82,7 @@ public class RevenueActivity extends AppCompatActivity {
     private TextView tvSoTenant;
     private TextView tvTongCanThuThang;
     private TextView tvCongNoThang;
+    private BarChart barChart;
     private TextView tvTiLeThuTien;
     private TextView tvTongChiThang;
     private TextView tvLoiNhuanThang;
@@ -119,22 +138,61 @@ public class RevenueActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.revenue_statistics_title));
 
-        tvTongPhong = findViewById(R.id.tvTongPhong);
-        tvPhongDaThua = findViewById(R.id.tvPhongDaThua);
+
+
         tvDoanhThuThang = findViewById(R.id.tvDoanhThuThang);
-        tvSoHDChuaTT = findViewById(R.id.tvSoHDChuaTT);
-        tvSoTenant = findViewById(R.id.tvSoTenant);
-        tvTongCanThuThang = findViewById(R.id.tvTongCanThuThang);
+
+
+
         tvCongNoThang = findViewById(R.id.tvCongNoThang);
-        tvTiLeThuTien = findViewById(R.id.tvTiLeThuTien);
-        tvTongChiThang = findViewById(R.id.tvTongChiThang);
-        tvLoiNhuanThang = findViewById(R.id.tvLoiNhuanThang);
-        tvTongThuLuyKe = findViewById(R.id.tvTongThuLuyKe);
-        tvTongChiLuyKe = findViewById(R.id.tvTongChiLuyKe);
-        tvTyLeLapDay = findViewById(R.id.tvTyLeLapDay);
+
+
+
+
+
+
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
-        llTrendContainer = findViewById(R.id.llTrendContainer);
-        llTopCategoryContainer = findViewById(R.id.llTopCategoryContainer);
+
+        spinnerHouse = findViewById(R.id.spinnerHouse);
+        scopedCollection("houses").addSnapshotListener((snapshot, e) -> {
+            if (e != null || snapshot == null) return;
+            allHouses.clear();
+            for (QueryDocumentSnapshot doc : snapshot) {
+                House h = doc.toObject(House.class);
+                if (h != null) {
+                    h.setId(doc.getId());
+                    allHouses.add(h);
+                }
+            }
+            List<String> houseNames = new ArrayList<>();
+            houseNames.add("Tất cả nhà");
+            for (House h : allHouses) {
+                houseNames.add(h.getHouseName() != null ? h.getHouseName() : "Nhà " + h.getId());
+            }
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, houseNames);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerHouse.setAdapter(adapter);
+        });
+
+        spinnerHouse.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    selectedHouseId = null;
+                } else {
+                    selectedHouseId = allHouses.get(position - 1).getId();
+                }
+                updateReportStats(NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")));
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedHouseId = null;
+                updateReportStats(NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")));
+            }
+        });
+
+
+        barChart = findViewById(R.id.barChart);
 
         TextView btnPickMonth = findViewById(R.id.btnPickMonth);
         View btnExportPdf = findViewById(R.id.btnExportPdf);
@@ -199,46 +257,19 @@ public class RevenueActivity extends AppCompatActivity {
                                 amt != null ? amt : 0.0,
                                 doc.getString("paidAt")));
                     }
-                    updateReportStats(fmt,
-                            tvDoanhThuThang,
-                            tvSoHDChuaTT,
-                            tvTongCanThuThang,
-                            tvCongNoThang,
-                            tvTiLeThuTien,
-                            tvTongChiThang,
-                            tvLoiNhuanThang,
-                            tvTongThuLuyKe,
-                            tvTongChiLuyKe);
+                    updateReportStats(NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")));
                 });
 
         viewModelProvider.get(InvoiceViewModel.class)
                 .getInvoiceList().observe(this, list -> {
                     lastInvoices = list;
-                    updateReportStats(fmt,
-                            tvDoanhThuThang,
-                            tvSoHDChuaTT,
-                            tvTongCanThuThang,
-                            tvCongNoThang,
-                            tvTiLeThuTien,
-                            tvTongChiThang,
-                            tvLoiNhuanThang,
-                            tvTongThuLuyKe,
-                            tvTongChiLuyKe);
+                    updateReportStats(NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")));
                 });
 
         viewModelProvider.get(ExpenseViewModel.class)
                 .getExpenseList().observe(this, list -> {
                     lastExpenses = list;
-                    updateReportStats(fmt,
-                            tvDoanhThuThang,
-                            tvSoHDChuaTT,
-                            tvTongCanThuThang,
-                            tvCongNoThang,
-                            tvTiLeThuTien,
-                            tvTongChiThang,
-                            tvLoiNhuanThang,
-                            tvTongThuLuyKe,
-                            tvTongChiLuyKe);
+                    updateReportStats(NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")));
                 });
     }
 
@@ -263,34 +294,39 @@ public class RevenueActivity extends AppCompatActivity {
                     if (tvSelectedMonth != null) {
                         tvSelectedMonth.setText(getString(R.string.month_with_value, selectedMonth));
                     }
-                    updateReportStats(fmt,
-                            findViewById(R.id.tvDoanhThuThang),
-                            findViewById(R.id.tvSoHDChuaTT),
-                            findViewById(R.id.tvTongCanThuThang),
-                            findViewById(R.id.tvCongNoThang),
-                            findViewById(R.id.tvTiLeThuTien),
-                            findViewById(R.id.tvTongChiThang),
-                            findViewById(R.id.tvLoiNhuanThang),
-                            findViewById(R.id.tvTongThuLuyKe),
-                            findViewById(R.id.tvTongChiLuyKe));
+                    updateReportStats(NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN")));
                     dialog.dismiss();
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
-    private void updateReportStats(@androidx.annotation.NonNull NumberFormat fmt,
-            TextView tvDoanhThuThang,
-            TextView tvSoHDChuaTT,
-            TextView tvTongCanThuThang,
-            TextView tvCongNoThang,
-            TextView tvTiLeThuTien,
-            TextView tvTongChiThang,
-            TextView tvLoiNhuanThang,
-            TextView tvTongThuLuyKe,
-            TextView tvTongChiLuyKe) {
+    private void updateReportStats(@androidx.annotation.NonNull NumberFormat fmt) {
         if (lastInvoices == null)
             return;
+
+        int totalRoomCount = 0;
+        int rentedRoomCount = 0;
+        Map<String, String> roomToHouseMap = new HashMap<>();
+        for (Room r : allRooms) {
+            if (r != null && r.getId() != null) {
+                roomToHouseMap.put(r.getId(), r.getHouseId());
+                if (selectedHouseId == null || selectedHouseId.equals(r.getHouseId())) {
+                    totalRoomCount++;
+                    if (RoomStatus.RENTED.equals(r.getStatus())) {
+                        rentedRoomCount++;
+                    }
+                }
+            }
+        }
+        
+        if (tvTongPhong != null) tvTongPhong.setText(String.valueOf(totalRoomCount));
+        if (tvPhongDaThua != null) tvPhongDaThua.setText(String.valueOf(rentedRoomCount));
+        if (tvTyLeLapDay != null) {
+            double rate = totalRoomCount > 0 ? (100.0 * rentedRoomCount / totalRoomCount) : 0;
+            tvTyLeLapDay.setText(getString(R.string.occupancy_rate_label,
+                    String.format(Locale.getDefault(), "%.1f%%", rate)));
+        }
 
         int chuaThu = 0;
         double daThuThang = 0;
@@ -308,6 +344,13 @@ public class RevenueActivity extends AppCompatActivity {
             if (h == null)
                 continue;
 
+            String roomId = h.getRoomId();
+            if (roomId != null) {
+                String hId = roomToHouseMap.get(roomId);
+                if (selectedHouseId != null && !selectedHouseId.equals(hId)) {
+                    continue;
+                }
+            }
             String invoiceId = h.getId();
             String month = FinancePeriodUtil.normalizeMonthYear(h.getBillingPeriod());
             if (invoiceId != null && !invoiceId.trim().isEmpty()) {
@@ -381,18 +424,59 @@ public class RevenueActivity extends AppCompatActivity {
         double tiLeThuTien = tongCanThuThang > 0 ? (100.0 * daThuTheoInvoiceThang / tongCanThuThang) : 0;
         double loiNhuanThang = daThuThang - tongChiThang;
 
-        tvSoHDChuaTT.setText(String.valueOf(chuaThu));
-        tvDoanhThuThang.setText(fmt.format(daThuThang));
-        tvTongCanThuThang.setText(fmt.format(tongCanThuThang));
-        tvCongNoThang.setText(fmt.format(congNoThang));
-        tvTiLeThuTien.setText(String.format(Locale.getDefault(), "%.1f%%", tiLeThuTien));
-        tvTongChiThang.setText(fmt.format(tongChiThang));
-        tvLoiNhuanThang.setText(fmt.format(loiNhuanThang));
-        tvTongThuLuyKe.setText(getString(R.string.total_collected_label, fmt.format(tongThuLuyKe)));
-        tvTongChiLuyKe.setText(getString(R.string.total_expense_label, fmt.format(tongChiLuyKe)));
+        if (tvDoanhThuThang != null) tvDoanhThuThang.setText(fmt.format(daThuThang));
+        if (tvCongNoThang != null) tvCongNoThang.setText(fmt.format(congNoThang));
 
-        renderTopCategories(expenseByCategoryInMonth, fmt);
-        renderTrend6Months(fmt);
+        renderBarChart(daThuThang, congNoThang);
+    }
+
+    private void renderBarChart(double paidAmount, double unpaidAmount) {
+        if (barChart == null) return;
+
+        List<BarEntry> entries = new ArrayList<>();
+        entries.add(new BarEntry(0f, (float) paidAmount));
+        entries.add(new BarEntry(1f, (float) unpaidAmount));
+
+        BarDataSet dataSet = new BarDataSet(entries, "Revenue Status");
+        dataSet.setColors(new int[]{Color.parseColor("#1565C0"), Color.parseColor("#F44336")});
+        dataSet.setValueTextSize(12f);
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value == 0) return "";
+                NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
+                return fmt.format(value);
+            }
+        });
+
+        BarData barData = new BarData(dataSet);
+        barData.setBarWidth(0.5f);
+
+        barChart.setData(barData);
+        
+        Description desc = new Description();
+        desc.setText("");
+        barChart.setDescription(desc);
+        barChart.getLegend().setEnabled(false);
+        barChart.setDrawGridBackground(false);
+
+        XAxis xAxis = barChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setGranularity(1f);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(new String[]{getString(R.string.revenue_monthly_collected_label), getString(R.string.revenue_unpaid_invoices_short)}));
+
+        YAxis leftAxis = barChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setAxisMinimum(0f);
+        
+        YAxis rightAxis = barChart.getAxisRight();
+        rightAxis.setEnabled(false);
+
+        barChart.setExtraBottomOffset(10f);
+        barChart.animateY(1000);
+        barChart.invalidate();
     }
 
     private void renderTopCategories(Map<String, Double> expenseByCategoryInMonth, NumberFormat fmt) {
@@ -601,3 +685,7 @@ public class RevenueActivity extends AppCompatActivity {
         return true;
     }
 }
+
+
+
+

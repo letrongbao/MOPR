@@ -159,7 +159,7 @@
     <string name="electric_fee_colon">- Tiền điện: </string>
     <string name="water_fee_colon">- Tiền nước: </string>
     <string name="trash_fee_colon">- Phí rác: </string>
-    <string name="wifi_fee_colon">- Phí Wifi: </string>
+    <string name="internet_fee_colon">- Phí Internet: </string>
     <string name="parking_fee_colon">- Phí gửi xe: </string>
     <string name="other_fee_colon">- Phí khác: </string>
     <string name="loading_payments">(Đang tải thanh toán...)</string>
@@ -217,7 +217,7 @@
     <string name="water_old_reading_required">Chi số nước cũ *</string>
     <string name="water_new_reading_required">Chi số nước mới *</string>
     <string name="invoice_mark_reported_and_open">Xác nhận báo phí &amp; mở hóa đơn</string>
-    <string name="invoice_statistics">Thống kê báo phí</string>
+    <string name="invoice_statistics">Hoá đơn tự động</string>
     <string name="not_reported">Chưa báo</string>
     <string name="reported">Đã báo</string>
     <string name="partially_paid">Đóng một phần</string>
@@ -412,11 +412,11 @@
     <string name="home_tenant_room_label">Phòng\ncủa bạn</string>
     <string name="home_owner_house_label">Quản lí\nnhà phòng</string>
     <string name="home_tenant_invoice_label">Hóa đơn\ncủa bạn</string>
-    <string name="home_owner_invoice_label">Báo phí\nhóa đơn</string>
+    <string name="home_owner_invoice_label">Hoá đơn\ntự động</string>
     <string name="home_tenant_payment_history_label">Lịch sử\nthanh toán</string>
     <string name="home_owner_expense_label">Quản lí\nchi phí</string>
     <string name="home_tenant_support_label">Yêu cầu\nhỗ trợ</string>
-    <string name="home_owner_report_label">Thống kê\nbáo cáo</string>
+    <string name="home_owner_report_label">Thống kê\ndoanh thu</string>
     <string name="contract_not_found">Không tìm thấy hợp đồng</string>
     <string name="contract_status_expiring_soon">⚠ Sắp hết hạn</string>
     <string name="contract_status_days_left">⚠ Còn %1$d ngày</string>
@@ -632,8 +632,8 @@
     <string name="none_option">(Không chọn)</string>
     <string name="room_edit_title">Chỉnh sửa phòng %1$s</string>
     <string name="add">Thêm</string>
-    <string name="home_owner_tenant_label">Trò chuyện\nnhanh</string>
-    <string name="home_owner_chat_label">Trò chuyện\nnhanh</string>
+    <string name="home_owner_tenant_label">Trò chuyện\nvới khách</string>
+    <string name="home_owner_chat_label">Trò chuyện\nvới khách</string>
     <string name="home_owner_contract_label">Hợp đồng\nthông minh</string>
     <string name="app_version_label">Phiên bản 2.6.3</string>
     <string name="feedback">Góp ý</string>
@@ -677,11 +677,11 @@
     <string name="water_unit_price">Đơn giá nước (đ/m³)</string>
     <string name="invoice_extra_fee_section">── Phụ phí ──</string>
     <string name="fee_garbage">Phí rác (đ)</string>
-    <string name="fee_wifi">Phí wifi (đ)</string>
+    <string name="fee_internet">Phí Internet (đ)</string>
     <string name="fee_parking">Phí gửi xe (đ)</string>
     <string name="fee_other">Phí khác (đ)</string>
     <string name="invoice_total_estimated">Tổng tạm tính</string>
-    <string name="expense_category_hint">Hạng mục (ví dụ: Sửa chữa, Rác, Wifi...)</string>
+    <string name="expense_category_hint">Hạng mục (ví dụ: Sửa chữa, Rác, Internet...)</string>
     <string name="expense_amount_hint">Số tiền</string>
     <string name="expense_date_hint">Ngày (dd/MM/yyyy)</string>
     <string name="meter_month_year_hint">Tháng/Năm (MM/yyyy)</string>
@@ -998,7 +998,7 @@
     <string name="tenant_room_water_label">Tiền nước</string>
     <string name="tenant_room_electric_label">Tiền điện</string>
     <string name="tenant_room_trash_label">Tiền rác (người)</string>
-    <string name="tenant_room_wifi_label">Tiền wifi (người)</string>
+    <string name="tenant_room_Internet_label">Tiền Internet (người)</string>
     <string name="tenant_room_meter_based">Tính theo đồng hồ</string>
     <string name="tenant_room_water_rate_placeholder">-- đ / Khối</string>
     <string name="tenant_room_electric_rate_placeholder">-- đ / KWh</string>
@@ -1041,4 +1041,8 @@
     <string name="chat_notification_channel_name">Thông báo tin nhắn</string>
     <string name="chat_notification_channel_description">Thông báo realtime cho tin nhắn và nhắc việc</string>
 </resources>
+
+
+
+
 

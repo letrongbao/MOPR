@@ -66,6 +66,11 @@ This document defines the standard execution flow so any agent in the team can w
 
 1. Use `lí` for management wording in Vietnamese UI/docs.
 2. Brand phrase must be exactly `Quản lí trọ`.
+3. **DO NOT REVERT OR CHANGE THESE APPROVED STRINGS:**
+    - `home_owner_tenant_label` and `home_owner_chat_label`: **"Trò chuyện\nvới khách"** (NOT "Trò chuyện nhanh")
+    - `home_owner_invoice_label`: **"Hoá đơn\ntự động"** (NOT "Báo phí hóa đơn")
+    - `home_owner_report_label`: **"Thống kê\ndoanh thu"** (NOT "Thống kê báo cáo")
+    - Any changes mapping `wifi` to `internet` must remain intact.
 
 ## Definition Of Done (DoD)
 

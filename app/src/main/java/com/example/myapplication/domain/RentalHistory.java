@@ -7,6 +7,7 @@ import com.google.firebase.firestore.PropertyName;
  * Internal note.
  * Internal note.
  */
+@com.google.firebase.firestore.IgnoreExtraProperties
 public class RentalHistory {
     private String id;
     private String contractId;
@@ -34,6 +35,8 @@ public class RentalHistory {
     // Financial information
     private double roomPrice;
     private double depositAmount; // Deposit amount
+    private double refundedDepositAmount; // Thêm tiền hoàn cọc
+    private double penaltyAmount; // Thêm tiền phạt vi phạm hợp đồng
     private double totalPaidAmount;
     private int paidInvoiceCount; // Number of paid invoices
     private int unpaidInvoiceCount;
@@ -225,6 +228,22 @@ public class RentalHistory {
 
     public void setDepositAmount(double depositAmount) {
         this.depositAmount = depositAmount;
+    }
+
+    public double getRefundedDepositAmount() {
+        return refundedDepositAmount;
+    }
+
+    public void setRefundedDepositAmount(double refundedDepositAmount) {
+        this.refundedDepositAmount = refundedDepositAmount;
+    }
+
+    public double getPenaltyAmount() {
+        return penaltyAmount;
+    }
+
+    public void setPenaltyAmount(double penaltyAmount) {
+        this.penaltyAmount = penaltyAmount;
     }
 
     public double getTotalPaidAmount() {

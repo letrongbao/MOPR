@@ -54,7 +54,7 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private TextView tvWaterRate;
     private TextView tvElecRate;
     private TextView tvGarbageFee;
-    private TextView tvWifiFee;
+    private TextView tvInternetFee;
     private TextView tvWaterStatus;
     private TextView tvWaterLastIndex;
     private TextView tvElecStatus;
@@ -111,7 +111,7 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         tvWaterRate             = findViewById(R.id.tvWaterRate);
         tvElecRate              = findViewById(R.id.tvElecRate);
         tvGarbageFee            = findViewById(R.id.tvGarbageFee);
-        tvWifiFee               = findViewById(R.id.tvWifiFee);
+        tvInternetFee               = findViewById(R.id.tvInternetFee);
         tvWaterStatus           = findViewById(R.id.tvWaterStatus);
         tvWaterLastIndex        = findViewById(R.id.tvWaterLastIndex);
         tvElecStatus            = findViewById(R.id.tvElecStatus);
@@ -303,11 +303,11 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
                     formatMoneyShort(((Number) garbage).doubleValue())));
         }
 
-        // Tiền wifi (wifiFee hoặc internetFee)
-        Object wifi = doc.get("wifiFee");
+        // Tiền wifi (internetFee hoặc internetFee)
+        Object wifi = doc.get("internetFee");
         if (!(wifi instanceof Number)) wifi = doc.get("internetFee");
         if (wifi instanceof Number) {
-            tvWifiFee.setText(getString(R.string.tenant_room_rate_per_person,
+            tvInternetFee.setText(getString(R.string.tenant_room_rate_per_person,
                     formatMoneyShort(((Number) wifi).doubleValue())));
         }
 

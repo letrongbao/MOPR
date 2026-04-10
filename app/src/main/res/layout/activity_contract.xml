@@ -62,6 +62,45 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Pháp lý (Legal Status) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cvStatusRule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#E8F5E9"
+                app:strokeWidth="1dp"
+                app:strokeColor="#81C784">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        app:tint="#388E3C" />
+
+                    <TextView
+                        android:id="@+id/tvStatusRuleText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:text="Hợp đồng đã được ký kết và khóa lại thành công. Khách thuê và chủ nhà đã xác nhận."
+                        android:textColor="#2E7D32"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- UI section note -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -654,6 +693,19 @@
                 android:visibility="gone"
                 app:cornerRadius="10dp"
                 app:backgroundTint="#1976D2"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLock"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:text="Khóa hợp đồng (Ký kết)"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:visibility="gone"
+                app:cornerRadius="10dp"
+                app:backgroundTint="#4CAF50"/>
         </LinearLayout>
     </ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

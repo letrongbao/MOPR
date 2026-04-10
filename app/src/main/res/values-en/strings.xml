@@ -203,7 +203,7 @@
     <string name="add_expense">Add expense</string>
     <string name="update_expense">Update expense</string>
     <string name="expense_empty_message">No expense yet\nTap + to add</string>
-    <string name="expense_category_hint">Category (e.g. Repair, Trash, Wifi...)</string>
+    <string name="expense_category_hint">Category (e.g. Repair, Trash, Internet...)</string>
     <string name="expense_amount_hint">Amount</string>
     <string name="expense_date_hint">Date (dd/MM/yyyy)</string>
     <string name="note_label">Note</string>
@@ -238,7 +238,7 @@
     <string name="water_end_reading">Water end reading</string>
     <string name="water_unit_price">Water unit price (VND/m³)</string>
     <string name="fee_garbage">Trash fee (VND)</string>
-    <string name="fee_wifi">Wifi fee (VND)</string>
+    <string name="fee_internet">Internet fee (VND)</string>
     <string name="fee_parking">Parking fee (VND)</string>
     <string name="fee_other">Other fee (VND)</string>
     <string name="invoice_total_estimated">Estimated total</string>
@@ -590,7 +590,7 @@
     <string name="tenant_room_water_label">Water fee</string>
     <string name="tenant_room_electric_label">Electricity fee</string>
     <string name="tenant_room_trash_label">Garbage fee (person)</string>
-    <string name="tenant_room_wifi_label">Wifi fee (person)</string>
+    <string name="tenant_room_Internet_label">Internet fee (person)</string>
     <string name="tenant_room_meter_based">Meter-based</string>
     <string name="tenant_room_water_rate_placeholder">-- VND / m³</string>
     <string name="tenant_room_electric_rate_placeholder">-- VND / KWh</string>
@@ -637,4 +637,8 @@
     <string name="english_language">English</string>
     <string name="vietnamese_language">Vietnamese</string>
 </resources>
+
+
+
+
 

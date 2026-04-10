@@ -4,6 +4,7 @@ import com.google.firebase.firestore.PropertyName;
 
 import java.util.List;
 
+@com.google.firebase.firestore.IgnoreExtraProperties
 public class House {
     private String id;
 

@@ -6,9 +6,9 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="@drawable/language_switcher_bg"
+    android:background="@android:color/transparent"
     android:gravity="center"
-    android:elevation="8dp"
+    android:elevation="0dp"
     android:paddingHorizontal="4dp"
     android:paddingVertical="4dp">
 
@@ -20,7 +20,6 @@
         android:minHeight="0dp"
         android:minWidth="0dp"
         android:padding="0dp"
-        android:background="@drawable/language_option_unselected"
         android:text="🇬🇧"
         android:textSize="19sp"
         android:insetTop="0dp"
@@ -44,7 +43,6 @@
         android:minHeight="0dp"
         android:minWidth="0dp"
         android:padding="0dp"
-        android:background="@drawable/language_option_unselected"
         android:text="🇻🇳"
         android:textSize="19sp"
         android:insetTop="0dp"

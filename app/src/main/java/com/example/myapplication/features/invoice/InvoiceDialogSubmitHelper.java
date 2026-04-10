@@ -27,7 +27,8 @@ public final class InvoiceDialogSubmitHelper {
         public final EditText etNuocCuoi;
         public final EditText etDonGiaNuoc;
         public final EditText etPhiRac;
-        public final EditText etPhiWifi;
+        public final EditText etPhiInternet;
+        public final EditText etPhiGiatUi;
         public final EditText etPhiGuiXe;
         public final EditText etPhiKhac;
         public final TextView tvPhiKhacChiTiet;
@@ -41,7 +42,8 @@ public final class InvoiceDialogSubmitHelper {
             etNuocCuoi = dialogView.findViewById(R.id.etNuocCuoi);
             etDonGiaNuoc = dialogView.findViewById(R.id.etDonGiaNuoc);
             etPhiRac = dialogView.findViewById(R.id.etPhiRac);
-            etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
+            etPhiInternet = dialogView.findViewById(R.id.etPhiInternet);
+            etPhiGiatUi = dialogView.findViewById(R.id.etPhiGiatUi);
             etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
             etPhiKhac = dialogView.findViewById(R.id.etPhiKhac);
             tvPhiKhacChiTiet = dialogView.findViewById(R.id.tvPhiKhacChiTiet);
@@ -51,7 +53,8 @@ public final class InvoiceDialogSubmitHelper {
             MoneyFormatter.applyTo(etDonGiaDien);
             MoneyFormatter.applyTo(etDonGiaNuoc);
             MoneyFormatter.applyTo(etPhiRac);
-            MoneyFormatter.applyTo(etPhiWifi);
+            MoneyFormatter.applyTo(etPhiInternet);
+            MoneyFormatter.applyTo(etPhiGiatUi);
             MoneyFormatter.applyTo(etPhiGuiXe);
             MoneyFormatter.applyTo(etPhiKhac);
         }
@@ -101,7 +104,8 @@ public final class InvoiceDialogSubmitHelper {
         invoice.setWaterEndReading(nuocCuoi);
         invoice.setWaterUnitPrice(MoneyFormatter.getValue(form.etDonGiaNuoc));
         invoice.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
-        invoice.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
+        invoice.setInternetFee(MoneyFormatter.getValue(form.etPhiInternet));
+        invoice.setLaundryFee(MoneyFormatter.getValue(form.etPhiGiatUi));
         invoice.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
         invoice.setOtherFee(MoneyFormatter.getValue(form.etPhiKhac));
         invoice.setStatus(InvoiceStatus.UNREPORTED);
@@ -143,7 +147,8 @@ public final class InvoiceDialogSubmitHelper {
         updated.setWaterEndReading(nuocCuoi);
         updated.setWaterUnitPrice(MoneyFormatter.getValue(form.etDonGiaNuoc));
         updated.setTrashFee(MoneyFormatter.getValue(form.etPhiRac));
-        updated.setWifiFee(MoneyFormatter.getValue(form.etPhiWifi));
+        updated.setInternetFee(MoneyFormatter.getValue(form.etPhiInternet));
+        updated.setLaundryFee(MoneyFormatter.getValue(form.etPhiGiatUi));
         updated.setParkingFee(MoneyFormatter.getValue(form.etPhiGuiXe));
         updated.setOtherFee(MoneyFormatter.getValue(form.etPhiKhac));
         updated.setOtherFeeLines(otherFeeLines);

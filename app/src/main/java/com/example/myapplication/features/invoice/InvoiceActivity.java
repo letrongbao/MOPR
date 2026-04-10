@@ -79,7 +79,8 @@ public class InvoiceActivity extends AppCompatActivity {
         final double electricUnitPrice;
         final double waterUnitPrice;
         final double trashFee;
-        final double wifiFee;
+        final double internetFee;
+        final double laundryFee;
         final double parkingFee;
         final double otherFee;
         final String waterMode;
@@ -87,14 +88,16 @@ public class InvoiceActivity extends AppCompatActivity {
         FeePreset(double electricUnitPrice,
                 double waterUnitPrice,
                 double trashFee,
-                double wifiFee,
+                double internetFee,
+                double laundryFee,
                 double parkingFee,
                 double otherFee,
                 String waterMode) {
             this.electricUnitPrice = electricUnitPrice;
             this.waterUnitPrice = waterUnitPrice;
             this.trashFee = trashFee;
-            this.wifiFee = wifiFee;
+            this.internetFee = internetFee;
+            this.laundryFee = laundryFee;
             this.parkingFee = parkingFee;
             this.otherFee = otherFee;
             this.waterMode = waterMode;
@@ -495,7 +498,8 @@ public class InvoiceActivity extends AppCompatActivity {
         EditText etDonGiaDien = dialogView.findViewById(R.id.etDonGiaDien);
         EditText etDonGiaNuoc = dialogView.findViewById(R.id.etDonGiaNuoc);
         EditText etPhiRac = dialogView.findViewById(R.id.etPhiRac);
-        EditText etPhiWifi = dialogView.findViewById(R.id.etPhiWifi);
+        EditText etPhiInternet = dialogView.findViewById(R.id.etPhiInternet);
+        EditText etPhiGiatUi = dialogView.findViewById(R.id.etPhiGiatUi);
         EditText etPhiGuiXe = dialogView.findViewById(R.id.etPhiGuiXe);
         Spinner spinnerHouse = dialogView.findViewById(R.id.spinnerHouse);
 
@@ -503,7 +507,8 @@ public class InvoiceActivity extends AppCompatActivity {
         MoneyFormatter.applyTo(etDonGiaDien);
         MoneyFormatter.applyTo(etDonGiaNuoc);
         MoneyFormatter.applyTo(etPhiRac);
-        MoneyFormatter.applyTo(etPhiWifi);
+        MoneyFormatter.applyTo(etPhiInternet);
+        MoneyFormatter.applyTo(etPhiGiatUi);
         MoneyFormatter.applyTo(etPhiGuiXe);
 
         etThangNam.setText(new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
@@ -548,7 +553,9 @@ public class InvoiceActivity extends AppCompatActivity {
                 if (house.getTrashPrice() > 0)
                     MoneyFormatter.setValue(etPhiRac, house.getTrashPrice());
                 if (house.getInternetPrice() > 0)
-                    MoneyFormatter.setValue(etPhiWifi, house.getInternetPrice());
+                    MoneyFormatter.setValue(etPhiInternet, house.getInternetPrice());
+                if (house.getLaundryPrice() > 0)
+                    MoneyFormatter.setValue(etPhiGiatUi, house.getLaundryPrice());
                 if (house.getParkingPrice() > 0)
                     MoneyFormatter.setValue(etPhiGuiXe, house.getParkingPrice());
             }
@@ -571,7 +578,8 @@ public class InvoiceActivity extends AppCompatActivity {
                     double electricUnitPrice = MoneyFormatter.getValue(etDonGiaDien);
                     double waterUnitPrice = MoneyFormatter.getValue(etDonGiaNuoc);
                     double trashFee = MoneyFormatter.getValue(etPhiRac);
-                    double wifiFee = MoneyFormatter.getValue(etPhiWifi);
+                    double internetFee = MoneyFormatter.getValue(etPhiInternet);
+                    double laundryFee = MoneyFormatter.getValue(etPhiGiatUi);
                     double parkingFee = MoneyFormatter.getValue(etPhiGuiXe);
                     String selectedHouseId = houseIds.get(spinnerHouse.getSelectedItemPosition());
 
@@ -603,7 +611,8 @@ public class InvoiceActivity extends AppCompatActivity {
                                         electricUnitPrice,
                                         waterUnitPrice,
                                         trashFee,
-                                        wifiFee,
+                                        internetFee,
+                                        laundryFee,
                                         parkingFee,
                                         finalTargets));
                             }));
@@ -697,7 +706,8 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                         hd.setWaterUnitPrice(fee.waterUnitPrice);
                         hd.setTrashFee(fee.trashFee);
-                        hd.setWifiFee(fee.wifiFee);
+                        hd.setInternetFee(fee.internetFee);
+                        hd.setLaundryFee(fee.laundryFee);
                         hd.setParkingFee(fee.parkingFee);
                         hd.setOtherFee(fee.otherFee);
                         hd.setOtherFeeLines(resolveSelectedExtraFeeLines(room, contract));
@@ -811,7 +821,8 @@ public class InvoiceActivity extends AppCompatActivity {
             double electricUnitPrice,
             double waterUnitPrice,
             double trashFee,
-            double wifiFee,
+            double internetFee,
+            double laundryFee,
             double parkingFee,
             @NonNull List<AutoCreateTarget> targets) {
         Toast.makeText(this, getString(R.string.creating_draft_invoices_short), Toast.LENGTH_SHORT).show();
@@ -858,7 +869,8 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                         hd.setWaterUnitPrice(waterUnitPrice);
                         hd.setTrashFee(trashFee);
-                        hd.setWifiFee(contract != null && contract.hasInternetService() ? wifiFee : 0);
+                        hd.setInternetFee(contract != null && contract.hasInternetService() ? internetFee : 0);
+                        hd.setLaundryFee(contract != null && contract.hasLaundryService() ? laundryFee : 0);
                         hd.setParkingFee(contract != null && contract.hasParkingService() ? parkingFee : 0);
                         hd.setOtherFee(resolveSelectedExtraFeeTotal(room, contract));
                         hd.setOtherFeeLines(resolveSelectedExtraFeeLines(room, contract));
@@ -1149,7 +1161,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         form.etDonGiaDien,
                         form.etDonGiaNuoc,
                         form.etPhiRac,
-                        form.etPhiWifi,
+                        form.etPhiInternet,
                         form.etPhiGuiXe,
                         form.etPhiKhac,
                         form.tvPhiKhacChiTiet);
@@ -1305,7 +1317,7 @@ public class InvoiceActivity extends AppCompatActivity {
             @NonNull EditText etDonGiaDien,
             @NonNull EditText etDonGiaNuoc,
             @NonNull EditText etPhiRac,
-            @NonNull EditText etPhiWifi,
+            @NonNull EditText etPhiInternet,
             @NonNull EditText etPhiGuiXe,
             @NonNull EditText etPhiKhac,
             TextView tvPhiKhacChiTiet) {
@@ -1335,11 +1347,11 @@ public class InvoiceActivity extends AppCompatActivity {
             lockFeeField(etPhiRac, false);
         }
         if (house.getInternetPrice() > 0) {
-            MoneyFormatter.setValue(etPhiWifi,
+            MoneyFormatter.setValue(etPhiInternet,
                     activeContract != null && activeContract.hasInternetService() ? house.getInternetPrice() : 0);
-            lockFeeField(etPhiWifi, true);
+            lockFeeField(etPhiInternet, true);
         } else {
-            lockFeeField(etPhiWifi, false);
+            lockFeeField(etPhiInternet, false);
         }
         if (house.getParkingPrice() > 0) {
             MoneyFormatter.setValue(etPhiGuiXe,
@@ -1366,17 +1378,18 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private FeePreset resolveDefaultFeePreset(@NonNull Room room, Tenant activeContract) {
         if (room.getHouseId() == null || room.getHouseId().trim().isEmpty()) {
-            return new FeePreset(0, 0, 0, 0, 0, 0, WaterCalculationMode.METER);
+            return new FeePreset(0, 0, 0, 0, 0, 0, 0, WaterCalculationMode.METER);
         }
         House house = housesById.get(room.getHouseId());
         if (house == null) {
-            return new FeePreset(0, 0, 0, 0, 0, 0, WaterCalculationMode.METER);
+            return new FeePreset(0, 0, 0, 0, 0, 0, 0, WaterCalculationMode.METER);
         }
         return new FeePreset(
                 Math.max(0, house.getElectricityPrice()),
                 Math.max(0, house.getWaterPrice()),
                 Math.max(0, house.getTrashPrice()),
                 activeContract != null && activeContract.hasInternetService() ? Math.max(0, house.getInternetPrice()) : 0,
+                activeContract != null && activeContract.hasLaundryService() ? Math.max(0, house.getLaundryPrice()) : 0,
                 activeContract != null && activeContract.hasParkingService() ? Math.max(0, house.getParkingPrice()) : 0,
                 resolveSelectedExtraFeeTotal(room, activeContract),
                 house.getWaterCalculationMethod());

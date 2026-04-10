@@ -136,7 +136,7 @@ Canonical fields (current code path):
 - `roomNumber`: String (denormalized for display)
 - `billingPeriod`: String (`MM/yyyy`, example `03/2026`)
 - Electricity/water: `electricStartReading`, `electricEndReading`, `electricUnitPrice`, `waterStartReading`, `waterEndReading`, `waterUnitPrice`
-- Fees: `trashFee`, `wifiFee`, `parkingFee`
+- Fees: `trashFee`, `internetFee`, `parkingFee`
 - `rentAmount`, `totalAmount`: Number
 - `status`: String
    - `UNREPORTED`

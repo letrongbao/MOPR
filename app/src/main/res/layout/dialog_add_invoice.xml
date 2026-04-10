@@ -84,8 +84,15 @@
             android:layout_marginBottom="8dp"/>
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="@string/fee_wifi" android:textStyle="bold" android:textColor="#212121"/>
-        <EditText android:id="@+id/etPhiWifi"
+            android:text="@string/fee_internet" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etPhiInternet"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="0" android:inputType="numberDecimal"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/item_house_fee_laundry" android:textStyle="bold" android:textColor="#212121"/>
+        <EditText android:id="@+id/etPhiGiatUi"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:hint="0" android:inputType="numberDecimal"
             android:layout_marginBottom="8dp"/>

@@ -33,7 +33,8 @@ public final class InvoiceFormValueHelper {
             @NonNull EditText etNuocCuoi,
             @NonNull EditText etDonGiaNuoc,
             @NonNull EditText etPhiRac,
-            @NonNull EditText etPhiWifi,
+            @NonNull EditText etPhiInternet,
+            @NonNull EditText etPhiGiatUi,
             @NonNull EditText etPhiGuiXe,
             @NonNull EditText etPhiKhac,
             @NonNull TextView tvEstimatedTotal,
@@ -46,7 +47,7 @@ public final class InvoiceFormValueHelper {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updateEstimatedTotal(etDienDau, etDienCuoi, etDonGiaDien, etNuocDau, etNuocCuoi, etDonGiaNuoc,
-                    etPhiRac, etPhiWifi, etPhiGuiXe, etPhiKhac, tvEstimatedTotal, rentSupplier);
+                    etPhiRac, etPhiInternet, etPhiGiatUi, etPhiGuiXe, etPhiKhac, tvEstimatedTotal, rentSupplier);
             }
 
             @Override
@@ -61,7 +62,8 @@ public final class InvoiceFormValueHelper {
         etDonGiaDien.addTextChangedListener(watcher);
         etDonGiaNuoc.addTextChangedListener(watcher);
         etPhiRac.addTextChangedListener(watcher);
-        etPhiWifi.addTextChangedListener(watcher);
+        etPhiInternet.addTextChangedListener(watcher);
+        etPhiGiatUi.addTextChangedListener(watcher);
         etPhiGuiXe.addTextChangedListener(watcher);
         etPhiKhac.addTextChangedListener(watcher);
     }
@@ -73,7 +75,8 @@ public final class InvoiceFormValueHelper {
             @NonNull EditText etNuocCuoi,
             @NonNull EditText etDonGiaNuoc,
             @NonNull EditText etPhiRac,
-            @NonNull EditText etPhiWifi,
+            @NonNull EditText etPhiInternet,
+            @NonNull EditText etPhiGiatUi,
             @NonNull EditText etPhiGuiXe,
             @NonNull EditText etPhiKhac,
             @NonNull TextView tvEstimatedTotal,
@@ -85,7 +88,8 @@ public final class InvoiceFormValueHelper {
         double electricUnitPrice = MoneyFormatter.getValue(etDonGiaDien);
         double waterUnitPrice = MoneyFormatter.getValue(etDonGiaNuoc);
         double trashFee = MoneyFormatter.getValue(etPhiRac);
-        double wifiFee = MoneyFormatter.getValue(etPhiWifi);
+        double internetFee = MoneyFormatter.getValue(etPhiInternet);
+        double laundryFee = MoneyFormatter.getValue(etPhiGiatUi);
         double parkingFee = MoneyFormatter.getValue(etPhiGuiXe);
         double otherFee = MoneyFormatter.getValue(etPhiKhac);
         Double rent = rentSupplier.get();
@@ -93,8 +97,8 @@ public final class InvoiceFormValueHelper {
 
         double soDien = Math.max(0, dienCuoi - dienDau);
         double soNuoc = Math.max(0, nuocCuoi - nuocDau);
-        double total = rentAmount + soDien * electricUnitPrice + soNuoc * waterUnitPrice + trashFee + wifiFee
-            + parkingFee + otherFee;
+        double total = rentAmount + soDien * electricUnitPrice + soNuoc * waterUnitPrice + trashFee + internetFee
+            + laundryFee + parkingFee + otherFee;
         tvEstimatedTotal.setText(MoneyFormatter.format(total));
     }
 

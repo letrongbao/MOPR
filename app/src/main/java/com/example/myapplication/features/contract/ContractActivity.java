@@ -99,7 +99,9 @@ public class ContractActivity extends AppCompatActivity {
     private CheckBox cbShowNote;
     private final List<CheckBox> extraFeeOptionBoxes = new ArrayList<>();
 
-    private MaterialButton btnSave, btnPrint, btnEnd, btnUpdate;
+    private MaterialButton btnSave, btnPrint, btnEnd, btnUpdate, btnLock;
+    private com.google.android.material.card.MaterialCardView cvStatusRule;
+    private TextView tvStatusRuleText;
 
     private ActivityResultLauncher<String> imagePicker;
     private Uri selectedImageUri;
@@ -254,6 +256,9 @@ public class ContractActivity extends AppCompatActivity {
         btnPrint = findViewById(R.id.btnPrint);
         btnEnd = findViewById(R.id.btnEnd);
         btnUpdate = findViewById(R.id.btnUpdate);
+        btnLock = findViewById(R.id.btnLock);
+        cvStatusRule = findViewById(R.id.cvStatusRule);
+        tvStatusRuleText = findViewById(R.id.tvStatusRuleText);
     }
 
     private void wireUI() {
@@ -279,6 +284,7 @@ public class ContractActivity extends AppCompatActivity {
         btnUpdate.setOnClickListener(v -> saveOrUpdate(false));
         btnEnd.setOnClickListener(v -> confirmEndContract());
         btnPrint.setOnClickListener(v -> printContract());
+        btnLock.setOnClickListener(v -> handleLockContract());
     }
 
     private void setUploadEnabled(boolean enabled) {
@@ -630,10 +636,25 @@ public class ContractActivity extends AppCompatActivity {
         btnSave.setVisibility(View.GONE);
         btnPrint.setVisibility(View.VISIBLE);
         btnEnd.setVisibility(View.VISIBLE);
-        btnUpdate.setVisibility(View.VISIBLE);
+        
         bindContractToUI(currentContract);
         applyUtilityStartInputRules();
-        setUploadEnabled(true);
+
+        if (currentContract != null && currentContract.isLocked()) {
+            btnUpdate.setVisibility(View.GONE);
+            btnLock.setVisibility(View.GONE);
+            cvStatusRule.setVisibility(View.VISIBLE);
+            tvStatusRuleText.setText("Hợp đồng đã ký kết điện tử và chốt hiệu lực.");
+            disableAllInputs();
+        } else {
+            btnUpdate.setVisibility(View.VISIBLE);
+            btnLock.setVisibility(View.VISIBLE);
+            cvStatusRule.setVisibility(View.VISIBLE);
+            cvStatusRule.setCardBackgroundColor(android.graphics.Color.parseColor("#FFF3E0"));
+            tvStatusRuleText.setText("Hợp đồng nháp (Chưa khóa). Hãy lưu ý ký kết khi đã đồng thuận.");
+            tvStatusRuleText.setTextColor(android.graphics.Color.parseColor("#E65100"));
+            setUploadEnabled(true);
+        }
     }
 
     /**
@@ -920,11 +941,43 @@ public class ContractActivity extends AppCompatActivity {
     private void confirmEndContract() {
         if (currentContract == null || currentContract.getId() == null)
             return;
+            
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+        
+        TextView tvInfo = new TextView(this);
+        tvInfo.setText("Tiền cọc ban đầu: " + NumberFormat.getInstance().format(currentContract.getDepositAmount()) + " đ");
+        tvInfo.setTextSize(16);
+        tvInfo.setPadding(0, 0, 0, 20);
+        layout.addView(tvInfo);
+
+        final EditText etRefund = new EditText(this);
+        etRefund.setHint("Nhập số tiền hoàn cọc");
+        etRefund.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        layout.addView(etRefund);
+        
+        final EditText etPenalty = new EditText(this);
+        etPenalty.setHint("Nhập số tiền phạt (nếu có)");
+        etPenalty.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        layout.addView(etPenalty);
+
         new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.contract_end_confirm_title))
-                .setMessage(getString(R.string.contract_end_confirm_message))
-                .setPositiveButton(getString(R.string.contract_end_action), (d, w) -> endContract())
-                .setNegativeButton(getString(R.string.cancel), null).setCancelable(false).show();
+                .setTitle("Thanh lý hợp đồng")
+                .setMessage("Bạn có chắc chắn muốn kết thúc hợp đồng này? Hãy nhập thông tin hoàn cọc hoặc phạt bên dưới (không bắt buộc):")
+                .setView(layout)
+                .setPositiveButton("Xác nhận & Kết thúc", (d, w) -> {
+                    String refundStr = etRefund.getText().toString();
+                    String penaltyStr = etPenalty.getText().toString();
+                    long refund = refundStr.isEmpty() ? 0 : Long.parseLong(refundStr);
+                    long penalty = penaltyStr.isEmpty() ? 0 : Long.parseLong(penaltyStr);
+                    
+                    currentContract.setRefundedDepositAmount(refund);
+                    currentContract.setPenaltyAmount(penalty);
+                    endContract();
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setCancelable(false).show();
     }
 
     private void endContract() {
@@ -985,6 +1038,9 @@ public class ContractActivity extends AppCompatActivity {
         history.setRentalStartDate(contract.getRentalStartDate());
         history.setContractEndDate(contract.getContractEndDate());
         history.setContractMonths(contract.getContractDurationMonths());
+        history.setDepositAmount(contract.getDepositAmount());
+        history.setRefundedDepositAmount(contract.getRefundedDepositAmount());
+        history.setPenaltyAmount(contract.getPenaltyAmount());
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         history.setActualEndDate(sdf.format(new Date(endTime)));
         if (contract.getRentalStartDate() != null && !contract.getRentalStartDate().isEmpty()) {
@@ -1201,5 +1257,56 @@ public class ContractActivity extends AppCompatActivity {
         if (currentHouse == null)
             return true;
         return WaterCalculationMode.isMeter(currentHouse.getWaterCalculationMethod());
+    }
+
+    private void handleLockContract() {
+        if (currentContract == null || currentContract.getId() == null) return;
+        new AlertDialog.Builder(this)
+            .setTitle("Ký kết / Khóa hợp đồng")
+            .setMessage("Sau khi khóa, bạn sẽ không thể chỉnh sửa các thông tin của khách thuê để đảm bảo tính minh bạch. Bạn có chắc chắn?")
+            .setPositiveButton("Khóa hợp đồng", (d, w) -> {
+                long now = System.currentTimeMillis();
+                currentContract.setLocked(true);
+                currentContract.setLockedAt(now);
+                scopedCollection("contracts").document(currentContract.getId())
+                        .update("locked", true, "lockedAt", now)
+                        .addOnSuccessListener(v -> {
+                            Toast.makeText(this, "Đã khóa hợp đồng thành công", Toast.LENGTH_SHORT).show();
+                            applyModeView();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(this, "Lỗi khóa HĐ", Toast.LENGTH_SHORT).show());
+            })
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show();
+    }
+
+    private void disableAllInputs() {
+        setUploadEnabled(false);
+        if (etCustomerName != null) etCustomerName.setEnabled(false);
+        if (etPhoneInput != null) etPhoneInput.setEnabled(false);
+        if (etPersonalId != null) etPersonalId.setEnabled(false);
+        if (etMemberCount != null) etMemberCount.setEnabled(false);
+        if (etRentAmountInput != null) etRentAmountInput.setEnabled(false);
+        if (etDepositAmount != null) etDepositAmount.setEnabled(false);
+        if (etContractDate != null) etContractDate.setEnabled(false);
+        if (etContractMonths != null) etContractMonths.setEnabled(false);
+        if (etElectricStartReading != null) etElectricStartReading.setEnabled(false);
+        if (etWaterStartReading != null) etWaterStartReading.setEnabled(false);
+        if (cbParkingService != null) cbParkingService.setEnabled(false);
+        if (etVehicleCount != null) etVehicleCount.setEnabled(false);
+        if (cbInternet != null) cbInternet.setEnabled(false);
+        if (cbLaundryService != null) cbLaundryService.setEnabled(false);
+        if (etNote != null) etNote.setEnabled(false);
+        if (cbShowNote != null) cbShowNote.setEnabled(false);
+
+        RadioGroup rgBillingReminder = findViewById(R.id.rgBillingReminder);
+        if (rgBillingReminder != null) {
+            for (int i = 0; i < rgBillingReminder.getChildCount(); i++) {
+                rgBillingReminder.getChildAt(i).setEnabled(false);
+            }
+        }
+        for (CheckBox cb : extraFeeOptionBoxes) {
+            cb.setEnabled(false);
+        }
     }
 }

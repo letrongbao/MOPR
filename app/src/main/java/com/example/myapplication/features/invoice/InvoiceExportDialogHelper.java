@@ -69,8 +69,8 @@ public final class InvoiceExportDialogHelper {
         if (invoice.getTrashFee() > 0)
             sb.append(activity.getString(R.string.trash_fee_colon)).append(fmt.format(invoice.getTrashFee()))
                     .append("\n");
-        if (invoice.getWifiFee() > 0)
-            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getWifiFee()))
+        if (invoice.getInternetFee() > 0)
+            sb.append(activity.getString(R.string.internet_fee_colon)).append(fmt.format(invoice.getInternetFee()))
                     .append("\n");
         if (invoice.getParkingFee() > 0)
             sb.append(activity.getString(R.string.parking_fee_colon)).append(fmt.format(invoice.getParkingFee()))

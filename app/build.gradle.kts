@@ -44,6 +44,9 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
 
+    // Charting
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

@@ -1,5 +1,6 @@
 package com.example.myapplication.domain;
 
+@com.google.firebase.firestore.IgnoreExtraProperties
 public class Payment {
     private String id;
     private String invoiceId;
