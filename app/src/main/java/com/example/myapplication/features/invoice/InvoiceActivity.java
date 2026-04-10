@@ -120,6 +120,7 @@ public class InvoiceActivity extends AppCompatActivity {
     private TextView tvSelectedMonth;
     private TextView tvSelectedKhu;
     private TextView tvFilterSummary;
+    private TabLayout tabLayout;
     private EditText etSearchInvoice;
     private View btnSelectKhu;
     private View btnDatePicker;
@@ -190,7 +191,7 @@ public class InvoiceActivity extends AppCompatActivity {
             tvSelectedKhu.setText(getString(R.string.all_houses));
         }
 
-        TabLayout tabLayout = findViewById(R.id.tabLayout);
+        tabLayout = findViewById(R.id.tabLayout);
         final java.util.concurrent.atomic.AtomicInteger tabIdx = new java.util.concurrent.atomic.AtomicInteger(0);
         if (tabLayout != null) {
             tabLayout.addTab(tabLayout.newTab().setText(getString(R.string.not_reported)));
@@ -1505,6 +1506,7 @@ public class InvoiceActivity extends AppCompatActivity {
                             syncMeterReadingFromInvoice(invoice);
                             notifyRoomTenantsInvoiceReported(invoice);
                             bottomSheet.dismiss();
+                            switchToReportedTab();
                             showInvoiceExportDialog(invoice);
                         }),
                         () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.update_failed),
@@ -1515,6 +1517,30 @@ public class InvoiceActivity extends AppCompatActivity {
         });
 
         bottomSheet.show();
+    }
+
+    private void switchToReportedTab() {
+        selectedTabIndex = 1;
+        if (tabLayout != null) {
+            TabLayout.Tab reportedTab = tabLayout.getTabAt(1);
+            if (reportedTab != null) {
+                reportedTab.select();
+                return;
+            }
+        }
+        applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+    }
+
+    private void switchToPaidTab() {
+        selectedTabIndex = 2;
+        if (tabLayout != null) {
+            TabLayout.Tab paidTab = tabLayout.getTabAt(2);
+            if (paidTab != null) {
+                paidTab.select();
+                return;
+            }
+        }
+        applyInvoiceFilters(cachedInvoices, selectedTabIndex);
     }
 
     @NonNull
@@ -2652,7 +2678,8 @@ public class InvoiceActivity extends AppCompatActivity {
                 invoice,
                 this::scopedCollection,
                 paymentRepository,
-                viewModel);
+                viewModel,
+                this::switchToPaidTab);
     }
 
     @Override

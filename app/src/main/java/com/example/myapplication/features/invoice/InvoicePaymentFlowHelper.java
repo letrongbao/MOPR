@@ -32,6 +32,10 @@ public final class InvoicePaymentFlowHelper {
         CollectionReference get(@NonNull String collection);
     }
 
+    public interface PaymentRecordedCallback {
+        void onPaymentRecorded();
+    }
+
     private InvoicePaymentFlowHelper() {
     }
 
@@ -79,7 +83,8 @@ public final class InvoicePaymentFlowHelper {
             @NonNull Invoice invoice,
             @NonNull CollectionProvider scopedCollection,
             @NonNull PaymentRepository paymentRepository,
-            @NonNull InvoiceViewModel viewModel) {
+            @NonNull InvoiceViewModel viewModel,
+            @NonNull PaymentRecordedCallback paymentRecordedCallback) {
         View dialogView = activity.getLayoutInflater().inflate(R.layout.dialog_add_payment, null);
         EditText etAmount = dialogView.findViewById(R.id.etAmount);
         Spinner spinnerMethod = dialogView.findViewById(R.id.spinnerMethod);
@@ -133,7 +138,7 @@ public final class InvoicePaymentFlowHelper {
                         String note = etNote.getText().toString().trim();
 
                         submitPayment(activity, invoice, amount, method, paidAt, note,
-                                scopedCollection, paymentRepository, viewModel);
+                            scopedCollection, paymentRepository, viewModel, paymentRecordedCallback);
                     } catch (NumberFormatException e) {
                         Toast.makeText(activity, activity.getString(R.string.invalid_amount), Toast.LENGTH_SHORT)
                                 .show();
@@ -216,7 +221,8 @@ public final class InvoicePaymentFlowHelper {
             @NonNull String note,
             @NonNull CollectionProvider scopedCollection,
             @NonNull PaymentRepository paymentRepository,
-            @NonNull InvoiceViewModel viewModel) {
+            @NonNull InvoiceViewModel viewModel,
+            @NonNull PaymentRecordedCallback paymentRecordedCallback) {
         String invoiceId = invoice.getId();
         if (invoiceId == null || invoiceId.trim().isEmpty()) {
             Toast.makeText(activity, activity.getString(R.string.missing_invoice_id), Toast.LENGTH_SHORT).show();
@@ -260,6 +266,7 @@ public final class InvoicePaymentFlowHelper {
                                         .makeText(activity, activity.getString(R.string.payment_recorded),
                                                 Toast.LENGTH_SHORT)
                                         .show());
+                            activity.runOnUiThread(paymentRecordedCallback::onPaymentRecorded);
                             },
                             () -> activity.runOnUiThread(() -> Toast
                                     .makeText(activity, activity.getString(R.string.payment_record_failed),
