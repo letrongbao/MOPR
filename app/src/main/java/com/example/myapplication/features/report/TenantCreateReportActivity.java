@@ -477,8 +477,8 @@ public class TenantCreateReportActivity extends AppCompatActivity {
             data.put("createdBy",       uid);
             data.put("createdByName",   userName);
             data.put("roomId",          roomId != null ? roomId : "");
-            data.put("ownerId",         "iiJcZrGorjRW5adzNMW79BlUKtj2");
-            data.put("ownerName",       "Huy");
+            data.put("ownerId",         tenantId != null ? tenantId : ""); // tenantId variable corresponds to activeTenantId/owner's UID
+            data.put("ownerName",       "Chủ Trọ");
 
             db.collection("issues")
                     .add(data)

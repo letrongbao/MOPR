@@ -95,8 +95,9 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
         // ── Title ─────────────────────────────────────────────────────
         holder.tvReportTitle.setText(title != null ? title : "Không có tiêu đề");
 
-        // ── Tên khách (tạm dùng tenantId, sẽ lookup sau nếu cần) ──────
-        holder.tvTenantName.setText(tenantId != null ? "ID: " + tenantId.substring(0, Math.min(8, tenantId.length())) + "..." : "Khách thuê");
+        // ── Tên khách ──────
+        String createdByName = doc.getString("createdByName");
+        holder.tvTenantName.setText(createdByName != null ? createdByName : "Khách thuê");
 
         // ── Số phòng ──────────────────────────────────────────────────
         holder.tvRoomNumber.setText(roomId != null ? "Phòng " + roomId : "Phòng —");

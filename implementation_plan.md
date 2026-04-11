@@ -1,44 +1,51 @@
-# Thêm chức năng "Đăng tin phòng trọ"
+# Triển Khai Tính Năng Broadcast Notifications (Thông báo hàng loạt)
 
-## Mô tả (Goal Description)
-Chức năng "Đăng tin phòng trọ" là **hoàn toàn khả thi**. Việc bổ sung tính năng này giúp chủ trọ tạo các bài đăng quảng cáo cho các phòng đang trống, bao gồm mô tả, giá cả, và hình ảnh.
+Tính năng này giúp chủ trọ (`Owner`) có thể gửi thông báo tùy chỉnh (Khẩn cấp, Bảo trì, Thông tin) tới toàn bộ phòng (`ALL`) hoặc một phòng cụ thể. Đồng thời, khách thuê (`Tenant`) nhận được tin nhắn hiển thị đúng định dạng.
 
-## Lựa chọn kiến trúc (User Review Required)
-Tôi cần sự xác nhận của bạn về mục đích chính của tính năng này trước khi bắt đầu code:
+## Proposed Changes
+
+### Domain Models
+#### [NEW] [BroadcastNotification.java](file:///d:/AndroidProject/MOPR/app/src/main/java/com/example/myapplication/domain/BroadcastNotification.java)
+- Tạo model định nghĩa các trường cấu trúc: `id`, `title`, `content`, `senderName`, `type` (URGENT, INFO, MAINTENANCE), `targetRoomId`, và `sentAt` (kiểu `Object` để parse đa hình (poly-typed) an toàn).
+
+---
+
+### Giao Diện Chủ Trọ (Owner)
+#### [NEW] [activity_owner_send_broadcast.xml](file:///d:/AndroidProject/MOPR/app/src/main/res/layout/activity_owner_send_broadcast.xml)
+- Form nhập: Tiêu đề, Nội dung.
+- Spinner (Dropdown) chọn phòng: option đầu sẽ là "Tất cả các phòng" (`ALL`), theo sau là danh sách lấy động từ collection contracts (chỉ những hợp đồng `ACTIVE`).
+- Spinner/Radio chọn loại thông báo: URGENT, INFO, MAINTENANCE.
+- Nút "Gửi thông báo".
+
+#### [NEW] [OwnerSendBroadcastActivity.java](file:///d:/AndroidProject/MOPR/app/src/main/java/com/example/myapplication/features/home/OwnerSendBroadcastActivity.java)
+- Truy vấn lấy danh sách phòng từ `contracts` (có trạng thái `ACTIVE`).
+- Gắn chức năng lưu một đối tượng `BroadcastNotification` lên `broadcasts` (Dùng `FieldValue.serverTimestamp()` cho `sentAt`).
+
+#### [MODIFY] [AndroidManifest.xml](file:///d:/AndroidProject/MOPR/app/src/main/AndroidManifest.xml)
+- Đăng kí `OwnerSendBroadcastActivity` vào hệ thống.
+
+---
+
+### Giao Diện Khách Thuê (Tenant)
+#### [MODIFY] [NotificationItem.java](file:///d:/AndroidProject/MOPR/app/src/main/java/com/example/myapplication/features/home/NotificationItem.java)
+- Cập nhật thêm các type: `TYPE_URGENT` và `TYPE_MAINTENANCE` để định nghĩa loại card.
+- Thêm icon: `ICON_URGENT = "⚠️"`, `ICON_MAINTENANCE = "🛠️"`.
+
+#### [MODIFY] [NotificationAdapter.java](file:///d:/AndroidProject/MOPR/app/src/main/java/com/example/myapplication/features/home/NotificationAdapter.java)
+- Bổ sung cấu hình màu sắc trong `onBindViewHolder`:
+    - Dòng code if `TYPE_URGENT`: Card viền/nền màu Đỏ nhẹ, chữ Đỏ.
+    - Dòng code if `TYPE_MAINTENANCE`: Card viền/nền màu Xanh dương nhạt, chữ Xanh dương.
+
+#### [MODIFY] [NotificationActivity.java](file:///d:/AndroidProject/MOPR/app/src/main/java/com/example/myapplication/features/home/NotificationActivity.java)
+- Thêm một luồng Query song song để bắt toàn bộ các document nằm ở mảng `broadcasts` thoả mãn 2 điều kiện `targetRoomId == "ALL"` hoặc `targetRoomId == roomId cá nhân`.
+- Tiến hành truy vấn 2 đợt cho 2 query (ALL và phòng riêng) -> trộn với dữ liệu system và notification cũ -> Sắp xếp lại.
+- Dùng `instanceof` + try-catch giống như cách đã làm cho `parseDateFromDoc()`. Nếu lỗi định dạng `sentAt`, nó vẫn in ra thẻ nhưng ghi thời gian '--/--/----'.
+
+## User Review Required
 > [!IMPORTANT]
-> - Trọng tâm hiện tại của hệ thống là quản lí nội bộ. Vậy các "tin đăng" này sẽ được hiển thị cho ai xem?
-> - **Lựa chọn A**: App sẽ có một màn hình "Tìm phòng trống" cho khách vãng lai (khách không cần đăng nhập hoặc có role là "Người tìm phòng").
-> - **Lựa chọn B**: App chỉ hỗ trợ chủ trọ soạn tin đăng (gồm hình ảnh, nội dung mẫu) để chủ trọ dễ dàng copy và chia sẻ lên Facebook/Zalo/Web.
+> Firestore hiện tại không hỗ trợ query dạng `OR` (targetRoomId == "ALL" HOẶC targetRoomId == roomId) bằng code Android cơ bản một cách hiệu quả trong một lệnh Query đơn lẻ. Chúng ta cần gõ 2 Query riêng biệt (Một lấy "ALL", Một lấy "roomId") và trộn chúng lại trên RAM trước khi hiển thị cho Adapter. Bạn có đồng ý với cách tiếp cận tải 2 query kết hợp này không?
 
-## Các thay đổi dự kiến (Proposed Changes)
-
-### Domain
-#### [NEW] `com/example/myapplication/domain/TinDang.java`
-- Chứa các thông tin: `id`, `idChuTro`, `idNha`, `idPhong`, `tieuDe`, `moTa`, `giaThue`, `tinhTrang`, `danhSachHinhAnh`, `ngayTao`.
-
-### Repository
-#### [NEW] `com/example/myapplication/core/repository/domain/TinDangRepository.java`
-- Xử lí các thao tác thêm, sửa, xóa, lấy danh sách bài đăng từ Firestore (collection `tin_dang`).
-
-### Feature & UI (Quản lí tin đăng)
-#### [MODIFY] `com/example/myapplication/features/home/HomeMenuActivity.java`
-#### [MODIFY] `res/layout/activity_home_menu.xml`
-- Thêm Card Menu "Quản lí tin đăng" vào màn hình trang chủ của chủ trọ.
-
-#### [NEW] `com/example/myapplication/features/post/QuanLyTinDangActivity.java`
-- Màn hình danh sách các tin đăng của chủ trọ.
-
-#### [NEW] `com/example/myapplication/features/post/ThemTinDangActivity.java`
-- Màn hình form thêm/sửa tin đăng (chọn nhà, chọn phòng trống, nhập tiêu đề, nội dung, đính kèm ảnh).
-
-## Câu hỏi mở (Open Questions)
-> [!WARNING]
-> Những câu hỏi cần làm rõ để tối ưu quy trình:
-> 1. Bạn có muốn chức năng đính kèm ảnh không? (Nếu có thì sẽ cần tích hợp **Firebase Storage**).
-> 2. Có tự động ẩn tin đăng khi phòng đã được chuyển trạng thái sang "Đã thuê" không?
-
-## Kế hoạch kiểm thử (Verification Plan)
-### Bằng tay (Manual Verification)
-- Truy cập vào app với role chủ trọ, kiểm tra xem có nút "Quản lí tin đăng" trên màn hình Home.
-- Tạo một tin đăng mới và kiểm tra xem dữ liệu có được lưu lên Firestore.
-- Chọn một phòng trống để đăng tin và xem dữ liệu về Giá, Diện tích có tự trích xuất từ thông tin phòng hay không.
+## Verification Plan
+1. **Gửi tin nhắn**: Đứng tại màn hình `OwnerSendBroadcastActivity`, gửi tin rác phân loại Khẩn cấp/Sửa chữa vào phòng `ALL`.
+2. **Kiểm tra crash**: Vô màn hình Notification của Tenant chọc phá liên tục để đảm bảo `instanceof` xử lý trơn tru không sập app.
+3. **Màu sắc Alert**: Xem các tin nhắn này có đúng thiết kế UI màu Đỏ / Xanh nổi bật hay không.
