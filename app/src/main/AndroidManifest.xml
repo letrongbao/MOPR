@@ -80,6 +80,10 @@
         <!-- Tickets -->
         <activity android:name=".features.ticket.TicketActivity" />
 
+        <!-- Reports -->
+        <activity android:name=".features.report.TenantReportListActivity" />
+        <activity android:name=".features.report.OwnerReportListActivity" />
+
         <service
             android:name=".core.service.ImageUploadService"
             android:foregroundServiceType="dataSync" />

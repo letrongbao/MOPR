@@ -47,6 +47,7 @@ import com.example.myapplication.features.invoice.InvoiceActivity;
 import com.example.myapplication.features.invoice.TenantPaymentHistoryActivity;
 import com.example.myapplication.features.property.house.HouseActivity;
 import com.example.myapplication.features.property.room.RoomActivity;
+import com.example.myapplication.features.report.OwnerReportListActivity;
 import com.example.myapplication.features.ticket.TicketActivity;
 import com.example.myapplication.features.contract.ContractListActivity;
 import com.example.myapplication.domain.Room;
@@ -196,7 +197,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         enableHomeCard(cardInvoice, v -> startActivity(new Intent(this, InvoiceActivity.class)));
         enableHomeCard(cardExpense, v -> startActivity(new Intent(this, ExpenseActivity.class)));
         enableHomeCard(cardReport, v -> startActivity(new Intent(this, RevenueActivity.class)));
-        enableHomeCard(cardReportManagement, v -> startActivity(new Intent(this, TicketActivity.class)));
+        enableHomeCard(cardReportManagement, v -> startActivity(new Intent(this, OwnerReportListActivity.class)));
         enableHomeCard(cardKhachThue, v -> startActivity(new Intent(this, ChatHubActivity.class)));
         enableHomeCard(cardHopDong, v -> startActivity(new Intent(this, ContractListActivity.class)));
     }

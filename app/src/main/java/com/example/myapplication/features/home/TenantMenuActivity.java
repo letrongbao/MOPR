@@ -23,6 +23,7 @@ import com.example.myapplication.features.chat.ChatHubActivity;
 import com.example.myapplication.features.notification.NotificationCenterActivity;
 import com.example.myapplication.features.notification.NotificationRealtimeObserver;
 import com.example.myapplication.features.notification.push.AppFirebaseMessagingService;
+import com.example.myapplication.features.report.TenantReportListActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
 import com.example.myapplication.features.ticket.TicketActivity;
@@ -141,9 +142,9 @@ public class TenantMenuActivity extends AppCompatActivity {
         cardMyRoom.setOnClickListener(v -> openRoomDetail());
         cardBill.setOnClickListener(v -> openRoomDetail());   // cùng màn hình, tab billing
 
-        cardReport.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
+        cardReport.setOnClickListener(v -> startActivity(new Intent(this, TenantReportListActivity.class)));
         if (cardReportExternal != null) {
-            cardReportExternal.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
+            cardReportExternal.setOnClickListener(v -> startActivity(new Intent(this, TenantReportListActivity.class)));
         }
 
         cardNotification.setOnClickListener(v ->
