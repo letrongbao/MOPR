@@ -1,0 +1,73 @@
+commit b3a814275b1144dfd05e5e3c1a975c2881fe8ad0
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Mon Apr 6 23:46:25 2026 +0700
+
+    Clarify tenant Firestore scope and roles
+    
+    Add explicit runtime and data-model guidance reflecting tenant-scoped Firestore and UI role behavior.
+    
+    - AGENT_HANDOFF: add "Runtime Truth Snapshot (2026-04-06)" documenting tenants/{tenantId} as primary root scope (legacy users/{uid} fallback), no top-level org collection, Google sign-in behavior, Home shell UI gate by users/{uid}.primaryRole, forced sign-out on primaryRole change to OWNER, and password-change availability rules.
+    - ARCHITECTURE_MAP: document Firestore scope baseline pointing to tenants/{tenantId} with legacy users/{uid} fallback and note Org* names are UI/module terms.
+    - DOMAIN_COMPATIBILITY: list stable collections (tenants, users, members, invites) to avoid accidental renames.
+    - FIREBASE_DATA_MANAGEMENT_GUIDE: clarify change-password flow is only for accounts with password provider, block Google-only accounts from password flow, and surface Home UI role gating and tenant membership as the source of truth for authorization.
+    - FIRESTORE_DATA_CONTRACT: clarify primaryRole is account-level UI metadata used by Home shell gating; actual permissions come from tenant membership.
+    - WORKFLOW_GUIDE: emphasize tenant-scope membership for access control and that Home shell rendering is a separate UI gate based on primaryRole.
+    
+    These edits provide a consistent, non-negotiable reference for runtime behavior and data expectations to avoid regressions and misaligned changes.
+
+ docs/AGENT_HANDOFF.md                  | 13 +++++++++++++
+ docs/ARCHITECTURE_MAP.md               |  5 +++++
+ docs/DOMAIN_COMPATIBILITY.md           |  4 ++++
+ docs/FIREBASE_DATA_MANAGEMENT_GUIDE.md | 11 +++++++----
+ docs/FIRESTORE_DATA_CONTRACT.md        |  3 ++-
+ docs/WORKFLOW_GUIDE.md                 |  4 ++--
+ 6 files changed, 33 insertions(+), 7 deletions(-)
+
+commit 27f1e6f2cb51064e6c5c03b91ebe6d6d3a80d68d
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Mon Apr 6 23:38:18 2026 +0700
+
+    Add auth util, language UI tweaks, role handling
+    
+    Introduce AuthProviderUtil to detect auth providers and resolve sign-in labels; wire it into ChangePasswordActivity and EditProfileActivity to conditionally show/change password and display auth method. In MainActivity, ensure users/{uid} profile document is created/merged on sign-in and app start. Revamp HomeMenuActivity role logic to default to guest UI, observe users/{uid}.primaryRole via snapshot listener, apply owner/tenant UI appropriately, and force logout when promoted to OWNER during an active session; simplify/centralize card enable/disable logic and conditionally show Change Password menu. Improve language switcher visuals and behavior: new drawables, size/spacing adjustments, disabled state while switching, and consistent selected/unselected styling. Add layout and string resources for auth method, language labels, and app subtitle casing, plus a small background drawable. Update Firebase docs (FIREBASE_DATA_MANAGEMENT_GUIDE.md and FIRESTORE_DATA_CONTRACT.md) to reflect runtime auth flows, role handling, data contracts, and migration/backup notes.
+
+ .../myapplication/core/util/AuthProviderUtil.java  |  57 +++++
+ .../core/util/LanguageSwitcherHelper.java          |  23 +-
+ .../myapplication/features/auth/MainActivity.java  |  47 ++++-
+ .../features/home/HomeMenuActivity.java            | 234 ++++++++++++++-------
+ .../features/settings/ChangePasswordActivity.java  |  12 ++
+ .../features/settings/EditProfileActivity.java     |   7 +
+ app/src/main/res/drawable/bg_auth_method_badge.xml |   9 +
+ .../main/res/drawable/language_option_selected.xml |  12 ++
+ .../res/drawable/language_option_unselected.xml    |   6 +
+ app/src/main/res/drawable/language_switcher_bg.xml |   9 +-
+ app/src/main/res/layout/activity_edit_profile.xml  |  22 +-
+ app/src/main/res/layout/activity_home_menu.xml     |  44 +---
+ .../main/res/layout/home_menu_profile_drawer.xml   |  25 ++-
+ .../main/res/layout/home_menu_scroll_content.xml   |  12 +-
+ .../main/res/layout/include_language_switcher.xml  |  26 +--
+ app/src/main/res/values-en/strings.xml             |   8 +
+ app/src/main/res/values/strings.xml                |  14 +-
+ docs/FIREBASE_DATA_MANAGEMENT_GUIDE.md             | 114 +++++++++-
+ docs/FIRESTORE_DATA_CONTRACT.md                    |  98 ++++++---
+ 19 files changed, 582 insertions(+), 197 deletions(-)
+
+commit b5cd76d80040b768a19bc82c3cb59c45a8dd9d92
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Sun Apr 5 03:46:19 2026 +0700
+
+    Format Toasts and long concatenations
+    
+    Reformat UI-related lines for readability: wrap long Toast.makeText(...).show() chains and long string concatenations across multiple lines, adjust minor whitespace, and remove stray blank lines. This is a purely stylistic change with no behavioral or logic modifications. Affected files: ImageUploadService.java, ContractListActivity.java, ExpenseActivity.java, InvoiceExportDialogHelper.java, PaymentHistoryActivity.java, MeterReadingHistoryActivity.java, RoomAdapter.java, BackupRestoreActivity.java, EditProfileActivity.java, ProfileActivity.java.
+
+ .../core/service/ImageUploadService.java           |  1 -
+ .../features/contract/ContractListActivity.java    |  3 ++-
+ .../features/finance/ExpenseActivity.java          | 30 +++++++++++++++-------
+ .../invoice/InvoiceExportDialogHelper.java         | 26 +++++++++++++------
+ .../features/invoice/PaymentHistoryActivity.java   | 17 ++++++++----
+ .../property/room/MeterReadingHistoryActivity.java | 15 +++++++----
+ .../features/property/room/RoomAdapter.java        | 11 ++++----
+ .../features/settings/BackupRestoreActivity.java   |  3 ++-
+ .../features/settings/EditProfileActivity.java     | 15 +++++++----
+ .../features/settings/ProfileActivity.java         | 12 ++++++---
+ 10 files changed, 89 insertions(+), 44 deletions(-)

@@ -1,0 +1,35 @@
+commit 1359d90402f5bd06331914ed21c0bd56b812ff91
+Merge: 04cdc09 d2b3776
+Author: Đặng Gia Huy <118034265+Codenoname007@users.noreply.github.com>
+Date:   Tue Apr 7 04:29:11 2026 +0700
+
+    Merge pull request #16 from letrongbao/featuressbackup
+    
+    Add contractMembers model and sync logic
+
+commit d2b3776d923bc2fd503f3a19f86b76c2938ec65d
+Merge: 991f8b8 04cdc09
+Author: Đặng Gia Huy <118034265+Codenoname007@users.noreply.github.com>
+Date:   Tue Apr 7 04:28:59 2026 +0700
+
+    Merge branch 'featuress' into featuressbackup
+
+commit 04cdc091d8fe0a46b4abbc009ade9f009ebd8a12
+Author: Codenoname007 <118034265+Codenoname007@users.noreply.github.com>
+Date:   Tue Apr 7 03:46:28 2026 +0700
+
+    Update them mot so thong tin khach thue
+
+commit 991f8b8abe366020683ec64b84f4ad81f8be67f7
+Author: Lê Trọng Bảo <letrongbaopy@gmail.com>
+Date:   Tue Apr 7 02:47:03 2026 +0700
+
+    Add contractMembers model and sync logic
+    
+    Introduce a ContractMember domain model and ContractMemberRepository to track/sync contract participants. ContractActivity now upserts the primary contract member on create/update and deactivates members when a contract ends. Room flows updated to support and enforce max occupancy: RoomActivity adds a maxOccupancy field with validation and persists it; RoomDetailsActivity shows max/current occupancy, listens to contractMembers to keep current count updated, normalizes room status display, and adds a button to open contract management. TenantActivity is refactored to redirect tenant add/edit/delete actions into the contract-based UI (ContractActivity) and simplifies previous dialog-based flows. Backup/restore now includes the contractMembers collection. Also includes minor resource/string/doc fixes and UI layout updates related to these changes.
+
+commit 6c831b20cdadf293f684cef3cf71a3d0bfb664aa
+Author: Codenoname007 <118034265+Codenoname007@users.noreply.github.com>
+Date:   Tue Apr 7 02:30:17 2026 +0700
+
+    them TenantMenu

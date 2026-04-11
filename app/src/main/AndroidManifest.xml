@@ -56,6 +56,7 @@
         <activity android:name=".features.contract.ContractListActivity" />
         <activity android:name=".features.contract.ContractDetailsActivity" />
         <activity android:name=".features.contract.ContractPdfPreviewActivity" />
+        <activity android:name=".features.contract.TenantContractDetailsActivity" />
         
         <!-- History -->
         <activity android:name=".features.history.RentalHistoryActivity" />
