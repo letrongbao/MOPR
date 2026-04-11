@@ -208,8 +208,35 @@ service cloud.firestore {
           isTenantMember(tenantId)
           && memberRole(tenantId) == 'TENANT'
           && resource.data.createdBy == request.auth.uid
-          && resource.data.status == 'OPEN'
-          && request.resource.data.status == resource.data.status
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.roomId == resource.data.roomId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (
+            // Tenant can edit own OPEN ticket content without changing status
+            (
+              resource.data.status == 'OPEN'
+              && request.resource.data.status == 'OPEN'
+              && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+                'title',
+                'description',
+                'updatedAt'
+              ])
+            )
+            ||
+            // Tenant can resubmit rejected ticket: REJECTED -> OPEN and clear rejectReason
+            (
+              resource.data.status == 'REJECTED'
+              && request.resource.data.status == 'OPEN'
+              && request.resource.data.rejectReason == null
+              && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+                'title',
+                'description',
+                'status',
+                'rejectReason',
+                'updatedAt'
+              ])
+            )
+          )
         );
 
         allow delete: if isStaffOrOwner(tenantId);

@@ -20,6 +20,7 @@ import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Ticket;
 import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -217,8 +218,47 @@ public class OwnerReportListActivity extends AppCompatActivity {
         updates.put("status", status);
         updates.put("rejectReason", rejectReason);
         repository.updateFields(ticket.getId(), updates,
-                () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show()),
+                () -> runOnUiThread(() -> {
+                    Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
+                    sendTicketStatusNotification(ticket, status, rejectReason);
+                }),
                 () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT).show()));
+    }
+
+    private void sendTicketStatusNotification(Ticket ticket, String newStatus, String rejectReason) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || tenantId == null || tenantId.trim().isEmpty()) {
+            return;
+        }
+        String receiverUid = ticket.getCreatedBy();
+        if (receiverUid == null || receiverUid.trim().isEmpty()) {
+            return;
+        }
+
+        String title = getString(R.string.report_notification_title);
+        String ticketTitle = ticket.getTitle() != null && !ticket.getTitle().trim().isEmpty()
+                ? ticket.getTitle().trim()
+                : getString(R.string.ticket_title);
+        String statusText = toVietnameseStatus(newStatus);
+
+        String body = getString(R.string.report_notification_body, ticketTitle, statusText);
+        if (TicketStatus.REJECTED.equals(newStatus) && rejectReason != null && !rejectReason.trim().isEmpty()) {
+            body = body + " " + getString(R.string.report_notification_reject_reason, rejectReason.trim());
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("title", title);
+        payload.put("body", body);
+        payload.put("type", "REPORT_STATUS");
+        payload.put("conversationId", null);
+        payload.put("senderId", currentUser.getUid());
+        payload.put("userId", receiverUid);
+        payload.put("isRead", false);
+        payload.put("createdAt", Timestamp.now());
+
+        db.collection("tenants").document(tenantId)
+                .collection("notifications")
+                .add(payload);
     }
 
     private String toVietnameseStatus(String status) {

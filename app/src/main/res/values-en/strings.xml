@@ -646,6 +646,9 @@
     <string name="tenant_report_create_title">Create new report</string>
     <string name="report_resubmit_title">Edit report</string>
     <string name="report_resubmit_success">Report resubmitted</string>
+    <string name="report_notification_title">Report update</string>
+    <string name="report_notification_body">Report "%1$s" has changed to status: %2$s.</string>
+    <string name="report_notification_reject_reason">Reason: %1$s.</string>
 
     <string name="join_room_welcome">Welcome to MOPR!</string>
     <string name="join_room_instruction">Please enter the room group code shared by the owner to continue.</string>

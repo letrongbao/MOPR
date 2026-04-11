@@ -538,6 +538,9 @@
     <string name="tenant_report_create_title">Tạo phản ánh mới</string>
     <string name="report_resubmit_title">Sửa phản ánh</string>
     <string name="report_resubmit_success">Đã gửi lại phản ánh</string>
+    <string name="report_notification_title">Cập nhật phản ánh</string>
+    <string name="report_notification_body">Phản ánh "%1$s" đã chuyển sang trạng thái: %2$s.</string>
+    <string name="report_notification_reject_reason">Lí do: %1$s.</string>
     <string name="contract_not_found">Không tìm thấy hợp đồng</string>
     <string name="contract_status_expiring_soon">⚠ Sắp hết hạn</string>
     <string name="contract_status_days_left">⚠ Còn %1$d ngày</string>
