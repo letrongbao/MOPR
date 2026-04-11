@@ -648,6 +648,10 @@
     <string name="chat_house">House-wide</string>
     <string name="chat_room">Room group</string>
     <string name="chat_private">Private</string>
+    <string name="chat_tab_house">House</string>
+    <string name="chat_tab_room">Room</string>
+    <string name="chat_tab_guest">Guest</string>
+    <string name="chat_tab_landlord">Landlord</string>
     <string name="chat_room_with_id">Room %1$s</string>
     <string name="chat_enter_message_hint">Type your message...</string>
     <string name="chat_invalid_conversation">Conversation not found</string>
@@ -655,6 +659,7 @@
     <string name="chat_no_room_found">No room available for chat</string>
     <string name="chat_choose_private_target">Choose a user for private chat</string>
     <string name="chat_no_private_target">No private chat target found</string>
+    <string name="chat_owner_new_thread">Create a new conversation</string>
     <string name="chat_member_with_room">%1$s - room %2$s</string>
     <string name="chat_private_with_uid">Chat with %1$s</string>
     <string name="chat_notification_title">New message from %1$s</string>

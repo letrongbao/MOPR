@@ -28,6 +28,7 @@ import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
+import com.example.myapplication.core.session.TenantRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.core.util.LanguageManager;
@@ -479,26 +480,15 @@ public class HomeMenuActivity extends AppCompatActivity {
                     }
 
                     String role = normalizePrimaryRole(doc.getString("primaryRole"));
+                    syncTenantSession(role, doc);
                     if (!roleInitialized) {
-                        roleInitialized = true;
-                        resolvedRole = role;
-
                         if (TenantRoles.TENANT.equals(role)) {
-                            String activeTenantId = doc.getString("activeTenantId");
-                            if (activeTenantId == null || activeTenantId.trim().isEmpty()) {
-                                // Khách chưa liên kết phòng => vào màn hình nhập mã
-                                Intent joinIntent = new Intent(HomeMenuActivity.this, com.example.myapplication.features.auth.JoinRoomActivity.class);
-                                joinIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(joinIntent);
-                                finish();
-                                return;
-                            } else {
-                                // Khách đã liên kết phòng => vào dashboard riêng của khách
-                                navigateToTenantMenu(activeTenantId);
-                                return;
-                            }
+                            resolveLegacyOwnerOrContinueTenantFlow(user.getUid(), doc);
+                            return;
                         }
 
+                        roleInitialized = true;
+                        resolvedRole = role;
                         applyRoleUi(role);
                         setupMenuCards(role);
                         return;
@@ -523,6 +513,166 @@ public class HomeMenuActivity extends AppCompatActivity {
             return TenantRoles.OWNER;
         }
         return TenantRoles.TENANT;
+    }
+
+    private void syncTenantSession(String role, com.google.firebase.firestore.DocumentSnapshot doc) {
+        String activeTenantId = doc.getString("activeTenantId");
+        if (activeTenantId != null && !activeTenantId.trim().isEmpty()) {
+            TenantSession.setActiveTenantId(this, activeTenantId.trim());
+            return;
+        }
+
+        if (TenantRoles.OWNER.equals(role)) {
+            resolveOwnerTenantFallback();
+            return;
+        }
+
+        TenantSession.clear(this);
+    }
+
+    private void resolveOwnerTenantFallback() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            TenantSession.clear(this);
+            return;
+        }
+
+        String currentTenantId = TenantSession.getActiveTenantId();
+        if (currentTenantId != null && !currentTenantId.trim().isEmpty()) {
+            return;
+        }
+
+        findOwnedTenantId(user.getUid(), tenantId -> {
+            if (tenantId == null || tenantId.trim().isEmpty()) {
+                ensureOwnerTenantFromHome(user);
+                return;
+            }
+
+            TenantSession.setActiveTenantId(this, tenantId);
+
+            db.collection("users").document(user.getUid())
+                    .update("activeTenantId", tenantId)
+                    .addOnFailureListener(e -> {
+                        // Keep session usable even if profile sync fails.
+                    });
+        });
+    }
+
+    private void ensureOwnerTenantFromHome(FirebaseUser user) {
+        TenantRepository repo = new TenantRepository();
+        repo.ensureActiveTenant(this, new TenantRepository.TenantReadyCallback() {
+            @Override
+            public void onReady(@androidx.annotation.NonNull String tenantId) {
+                if (tenantId == null || tenantId.trim().isEmpty()) {
+                    TenantSession.clear(HomeMenuActivity.this);
+                    return;
+                }
+
+                String normalizedTenantId = tenantId.trim();
+                TenantSession.setActiveTenantId(HomeMenuActivity.this, normalizedTenantId);
+
+                java.util.Map<String, Object> ownerUpdate = new java.util.HashMap<>();
+                ownerUpdate.put("primaryRole", TenantRoles.OWNER);
+                ownerUpdate.put("activeTenantId", normalizedTenantId);
+                ownerUpdate.put("updatedAt", com.google.firebase.Timestamp.now());
+
+                db.collection("users").document(user.getUid())
+                        .set(ownerUpdate, com.google.firebase.firestore.SetOptions.merge());
+            }
+
+            @Override
+            public void onError(@androidx.annotation.NonNull Exception e) {
+                TenantSession.clear(HomeMenuActivity.this);
+            }
+        });
+    }
+
+    private void resolveLegacyOwnerOrContinueTenantFlow(String uid, com.google.firebase.firestore.DocumentSnapshot userDoc) {
+        findOwnedTenantId(uid, ownerTenantId -> {
+            if (ownerTenantId != null && !ownerTenantId.trim().isEmpty()) {
+                roleInitialized = true;
+                resolvedRole = TenantRoles.OWNER;
+                TenantSession.setActiveTenantId(this, ownerTenantId);
+                applyRoleUi(TenantRoles.OWNER);
+                setupMenuCards(TenantRoles.OWNER);
+
+                java.util.Map<String, Object> ownerUpdate = new java.util.HashMap<>();
+                ownerUpdate.put("primaryRole", TenantRoles.OWNER);
+                ownerUpdate.put("activeTenantId", ownerTenantId);
+                ownerUpdate.put("updatedAt", com.google.firebase.Timestamp.now());
+
+                db.collection("users").document(uid)
+                        .set(ownerUpdate, com.google.firebase.firestore.SetOptions.merge());
+                return;
+            }
+
+            roleInitialized = true;
+            resolvedRole = TenantRoles.TENANT;
+            String activeTenantId = userDoc.getString("activeTenantId");
+            if (activeTenantId == null || activeTenantId.trim().isEmpty()) {
+                Intent joinIntent = new Intent(HomeMenuActivity.this,
+                        com.example.myapplication.features.auth.JoinRoomActivity.class);
+                joinIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(joinIntent);
+                finish();
+                return;
+            }
+
+            navigateToTenantMenu(activeTenantId);
+        });
+    }
+
+    private interface OwnedTenantCallback {
+        void onResult(String tenantId);
+    }
+
+    private void findOwnedTenantId(String uid, OwnedTenantCallback callback) {
+        db.collection("tenants")
+                .whereEqualTo("ownerUid", uid)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    if (qs != null && !qs.isEmpty()) {
+                        callback.onResult(qs.getDocuments().get(0).getId());
+                        return;
+                    }
+
+                    db.collectionGroup("members")
+                            .whereEqualTo("uid", uid)
+                            .limit(20)
+                            .get()
+                            .addOnSuccessListener(memberQs -> {
+                                if (memberQs == null || memberQs.isEmpty()) {
+                                    callback.onResult(null);
+                                    return;
+                                }
+
+                                String selectedTenantId = null;
+                                for (com.google.firebase.firestore.DocumentSnapshot memberDoc : memberQs.getDocuments()) {
+                                    com.google.firebase.firestore.DocumentReference tenantRef = memberDoc
+                                            .getReference()
+                                            .getParent()
+                                            .getParent();
+                                    if (tenantRef == null) {
+                                        continue;
+                                    }
+
+                                    String role = memberDoc.getString("role");
+                                    if (role != null && TenantRoles.OWNER.equalsIgnoreCase(role.trim())) {
+                                        selectedTenantId = tenantRef.getId();
+                                        break;
+                                    }
+
+                                    if (selectedTenantId == null || selectedTenantId.trim().isEmpty()) {
+                                        selectedTenantId = tenantRef.getId();
+                                    }
+                                }
+
+                                callback.onResult(selectedTenantId);
+                            })
+                            .addOnFailureListener(e -> callback.onResult(null));
+                })
+                .addOnFailureListener(e -> callback.onResult(null));
     }
 
     /**

@@ -33,6 +33,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import android.view.View;
@@ -232,14 +233,9 @@ public class EditProfileActivity extends AppCompatActivity {
                                 finish();
                             })
                             .addOnFailureListener(e -> {
-                                updates.put("email", user.getEmail());
-                                updates.put("uid", user.getUid());
-                                updates.put("primaryRole", "TENANT");
-                                updates.put("activeTenantId", null);
-                                updates.put("createdAt", Timestamp.now());
                                 updates.put("updatedAt", Timestamp.now());
                                 db.collection("users").document(user.getUid())
-                                        .set(updates)
+                                        .set(updates, SetOptions.merge())
                                         .addOnSuccessListener(aVoid3 -> {
                                             selectedAvatarUri = null;
                                             Toast.makeText(this, getString(R.string.update_success), Toast.LENGTH_SHORT)

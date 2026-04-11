@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.session.TenantRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.LanguageManager;
 import com.example.myapplication.core.util.LanguageSwitcherHelper;
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) {
+                        TenantSession.clear(this);
                         navigateToHome();
                         return;
                     }
@@ -82,7 +84,19 @@ public class MainActivity extends AppCompatActivity {
                     String activeTenantId = doc.getString("activeTenantId");
 
                     boolean isTenant = TenantRoles.TENANT.equalsIgnoreCase(role);
+                    boolean isOwner = TenantRoles.OWNER.equalsIgnoreCase(role);
                     boolean hasRoom  = activeTenantId != null && !activeTenantId.trim().isEmpty();
+
+                    if (hasRoom) {
+                        TenantSession.setActiveTenantId(this, activeTenantId.trim());
+                    } else {
+                        TenantSession.clear(this);
+                    }
+
+                    if (!hasRoom) {
+                        resolveOwnerTenantAndNavigate(user, isOwner);
+                        return;
+                    }
 
                     if (isTenant && hasRoom) {
                         // Khách đã liên kết phòng: lấy roomId rồi vào TenantMenuActivity
@@ -92,7 +106,122 @@ public class MainActivity extends AppCompatActivity {
                         navigateToHome();
                     }
                 })
-                .addOnFailureListener(e -> navigateToHome());
+                .addOnFailureListener(e -> {
+                    TenantSession.clear(this);
+                    navigateToHome();
+                });
+    }
+
+    private void resolveOwnerTenantAndNavigate(FirebaseUser user, boolean allowCreateOwnerTenantIfMissing) {
+        findOwnedTenantId(user.getUid(), tenantId -> {
+            if (tenantId == null || tenantId.trim().isEmpty()) {
+                if (allowCreateOwnerTenantIfMissing) {
+                    ensureOwnerTenantAndNavigate(user);
+                    return;
+                }
+
+                TenantSession.clear(this);
+                navigateToHome();
+                return;
+            }
+
+            String normalizedTenantId = tenantId.trim();
+            TenantSession.setActiveTenantId(this, normalizedTenantId);
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("primaryRole", TenantRoles.OWNER);
+            update.put("activeTenantId", normalizedTenantId);
+            update.put("updatedAt", Timestamp.now());
+
+            db.collection("users").document(user.getUid())
+                    .set(update, SetOptions.merge())
+                    .addOnCompleteListener(task -> navigateToHome());
+        });
+    }
+
+    private void ensureOwnerTenantAndNavigate(FirebaseUser user) {
+        TenantRepository repo = new TenantRepository();
+        repo.ensureActiveTenant(this, new TenantRepository.TenantReadyCallback() {
+            @Override
+            public void onReady(String tenantId) {
+                if (tenantId == null || tenantId.trim().isEmpty()) {
+                    TenantSession.clear(MainActivity.this);
+                    navigateToHome();
+                    return;
+                }
+
+                String normalizedTenantId = tenantId.trim();
+                TenantSession.setActiveTenantId(MainActivity.this, normalizedTenantId);
+
+                Map<String, Object> update = new HashMap<>();
+                update.put("primaryRole", TenantRoles.OWNER);
+                update.put("activeTenantId", normalizedTenantId);
+                update.put("updatedAt", Timestamp.now());
+
+                db.collection("users").document(user.getUid())
+                        .set(update, SetOptions.merge())
+                        .addOnCompleteListener(task -> navigateToHome());
+            }
+
+            @Override
+            public void onError(Exception e) {
+                TenantSession.clear(MainActivity.this);
+                navigateToHome();
+            }
+        });
+    }
+
+    private interface OwnedTenantCallback {
+        void onResult(String tenantId);
+    }
+
+    private void findOwnedTenantId(String uid, OwnedTenantCallback callback) {
+        db.collection("tenants")
+                .whereEqualTo("ownerUid", uid)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    if (qs != null && !qs.isEmpty()) {
+                        callback.onResult(qs.getDocuments().get(0).getId());
+                        return;
+                    }
+
+                    db.collectionGroup("members")
+                            .whereEqualTo("uid", uid)
+                            .limit(20)
+                            .get()
+                            .addOnSuccessListener(memberQs -> {
+                                if (memberQs == null || memberQs.isEmpty()) {
+                                    callback.onResult(null);
+                                    return;
+                                }
+
+                                String selectedTenantId = null;
+                                for (com.google.firebase.firestore.DocumentSnapshot memberDoc : memberQs.getDocuments()) {
+                                    com.google.firebase.firestore.DocumentReference tenantRef = memberDoc
+                                            .getReference()
+                                            .getParent()
+                                            .getParent();
+                                    if (tenantRef == null) {
+                                        continue;
+                                    }
+
+                                    String role = memberDoc.getString("role");
+                                    if (role != null && TenantRoles.OWNER.equalsIgnoreCase(role.trim())) {
+                                        selectedTenantId = tenantRef.getId();
+                                        break;
+                                    }
+
+                                    if (selectedTenantId == null || selectedTenantId.trim().isEmpty()) {
+                                        selectedTenantId = tenantRef.getId();
+                                    }
+                                }
+
+                                callback.onResult(selectedTenantId);
+                            })
+                            .addOnFailureListener(e -> callback.onResult(null));
+                })
+                .addOnFailureListener(e -> callback.onResult(null));
     }
 
     private void fetchRoomIdAndNavigateToTenantMenu(String tenantId, String uid) {
@@ -188,7 +317,13 @@ public class MainActivity extends AppCompatActivity {
             mAuth.signInWithEmailAndPassword(email, pass)
                     .addOnSuccessListener(result -> {
                         saveRememberPreference(email);
-                        navigateToHome();
+                        FirebaseUser signedInUser = FirebaseAuth.getInstance().getCurrentUser();
+                        if (signedInUser == null) {
+                            TenantSession.clear(this);
+                            navigateToHome();
+                            return;
+                        }
+                        ensureUserProfileDocument(signedInUser, () -> checkRoleAndNavigate(signedInUser));
                     })
                     .addOnFailureListener(
                             e -> Toast.makeText(this, getString(R.string.wrong_credentials), Toast.LENGTH_SHORT)
@@ -223,10 +358,11 @@ public class MainActivity extends AppCompatActivity {
                     String email = user != null ? user.getEmail() : "";
                     saveRememberPreference(email != null ? email : "");
                     if (user == null) {
+                        TenantSession.clear(this);
                         navigateToHome();
                         return;
                     }
-                    ensureUserProfileDocument(user, this::navigateToHome);
+                    ensureUserProfileDocument(user, () -> checkRoleAndNavigate(user));
                 })
                 .addOnFailureListener(e -> Toast
                         .makeText(this, getString(R.string.google_sign_in_failed), Toast.LENGTH_SHORT).show());
@@ -279,9 +415,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigateToHome() {
-        // BUG FIX: Xóa TenantSession khi chủ nhà đăng nhập
-        // Tránh việc RoomActivity.scopedCollection() dùng nhầm path tenants/ thay vì users/
-        TenantSession.clear(this);
         startActivity(new Intent(this, HomeMenuActivity.class));
         finish();
     }

@@ -1117,6 +1117,10 @@
     <string name="chat_house">Cả căn nhà</string>
     <string name="chat_room">Nhóm phòng</string>
     <string name="chat_private">Riêng tư</string>
+    <string name="chat_tab_house">Nhà</string>
+    <string name="chat_tab_room">Phòng</string>
+    <string name="chat_tab_guest">Khách</string>
+    <string name="chat_tab_landlord">Chủ</string>
     <string name="chat_room_with_id">Phòng %1$s</string>
     <string name="chat_enter_message_hint">Nhập nội dung tin nhắn...</string>
     <string name="chat_invalid_conversation">Không tìm thấy cuộc trò chuyện</string>
@@ -1124,6 +1128,7 @@
     <string name="chat_no_room_found">Chưa có phòng để mở chat</string>
     <string name="chat_choose_private_target">Chọn người để nhắn riêng</string>
     <string name="chat_no_private_target">Không có người nhận phù hợp</string>
+    <string name="chat_owner_new_thread">Tạo cuộc trò chuyện mới</string>
     <string name="chat_member_with_room">%1$s - phòng %2$s</string>
     <string name="chat_private_with_uid">Chat với %1$s</string>
     <string name="chat_notification_title">Tin nhắn mới từ %1$s</string>
