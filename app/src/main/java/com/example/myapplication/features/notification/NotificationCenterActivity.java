@@ -12,6 +12,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.features.chat.ChatRoomActivity;
 import com.example.myapplication.features.notification.model.NotificationItem;
+import com.example.myapplication.features.report.TenantReportListActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -95,6 +96,8 @@ public class NotificationCenterActivity extends AppCompatActivity {
                         item.id = doc.getId();
                         item.title = doc.getString("title");
                         item.body = doc.getString("body");
+                        item.type = doc.getString("type");
+                        item.ticketId = doc.getString("ticketId");
                         item.conversationId = doc.getString("conversationId");
                         item.isRead = Boolean.TRUE.equals(doc.getBoolean("isRead"));
                         item.isSystem = false;
@@ -264,6 +267,13 @@ public class NotificationCenterActivity extends AppCompatActivity {
         update.put("isRead", true);
         update.put("readAt", Timestamp.now());
         ref.set(update, SetOptions.merge());
+
+        if ("REPORT_STATUS".equals(item.type) && item.ticketId != null && !item.ticketId.trim().isEmpty()) {
+            Intent intent = new Intent(this, TenantReportListActivity.class);
+            intent.putExtra(TenantReportListActivity.EXTRA_OPEN_TICKET_ID, item.ticketId);
+            startActivity(intent);
+            return;
+        }
 
         if (item.conversationId != null && !item.conversationId.trim().isEmpty()) {
             db.collection("tenants").document(tenantId)

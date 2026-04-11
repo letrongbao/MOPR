@@ -274,6 +274,7 @@ public class OwnerReportListActivity extends AppCompatActivity {
         payload.put("title", title);
         payload.put("body", body);
         payload.put("type", "REPORT_STATUS");
+        payload.put("ticketId", ticket.getId());
         payload.put("conversationId", null);
         payload.put("senderId", currentUser.getUid());
         payload.put("userId", receiverUid);

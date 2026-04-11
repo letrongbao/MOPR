@@ -6,6 +6,8 @@ public class NotificationItem {
     public String id;
     public String title;
     public String body;
+    public String type;
+    public String ticketId;
     public String conversationId;
     public boolean isRead;
     public boolean isSystem;

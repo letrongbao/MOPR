@@ -28,11 +28,15 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class TenantReportListActivity extends AppCompatActivity {
+
+    public static final String EXTRA_OPEN_TICKET_ID = "OPEN_TICKET_ID";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final TicketRepository repository = new TicketRepository();
@@ -45,7 +49,10 @@ public class TenantReportListActivity extends AppCompatActivity {
     private String tenantId;
     private String roomId;
     private String currentUserId;
+    private String pendingOpenTicketId;
     private String selectedStatus = TicketStatus.OPEN;
+
+    private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +101,8 @@ public class TenantReportListActivity extends AppCompatActivity {
 
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(v -> showCreateReportDialog());
+
+        pendingOpenTicketId = getIntent().getStringExtra(EXTRA_OPEN_TICKET_ID);
 
         setupTenantContextAndObserve();
     }
@@ -156,6 +165,68 @@ public class TenantReportListActivity extends AppCompatActivity {
         adapter.submit(filtered);
         tvEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         updateTabCounts();
+        openPendingTicketIfNeeded(filtered);
+    }
+
+    private void openPendingTicketIfNeeded(List<Ticket> filtered) {
+        if (pendingOpenTicketId == null || pendingOpenTicketId.trim().isEmpty()) {
+            return;
+        }
+
+        Ticket target = null;
+        for (Ticket ticket : allTickets) {
+            if (pendingOpenTicketId.equals(ticket.getId())) {
+                target = ticket;
+                break;
+            }
+        }
+        if (target == null) {
+            return;
+        }
+
+        String targetStatus = target.getStatus();
+        if (targetStatus == null) {
+            targetStatus = TicketStatus.OPEN;
+        }
+
+        if (!matchesSelectedStatus(targetStatus)) {
+            selectedStatus = TicketStatus.DONE.equals(targetStatus) || TicketStatus.REJECTED.equals(targetStatus)
+                    ? TicketStatus.DONE
+                    : targetStatus;
+            selectTabForStatus(selectedStatus);
+            return;
+        }
+
+        for (Ticket ticket : filtered) {
+            if (pendingOpenTicketId.equals(ticket.getId())) {
+                pendingOpenTicketId = null;
+                showTicketDetails(ticket);
+                return;
+            }
+        }
+    }
+
+    private boolean matchesSelectedStatus(String status) {
+        if (TicketStatus.DONE.equals(selectedStatus)) {
+            return TicketStatus.DONE.equals(status) || TicketStatus.REJECTED.equals(status);
+        }
+        return selectedStatus.equals(status);
+    }
+
+    private void selectTabForStatus(String status) {
+        if (tabStatuses == null) {
+            return;
+        }
+        int index = 0;
+        if (TicketStatus.IN_PROGRESS.equals(status)) {
+            index = 1;
+        } else if (TicketStatus.DONE.equals(status) || TicketStatus.REJECTED.equals(status)) {
+            index = 2;
+        }
+        TabLayout.Tab tab = tabStatuses.getTabAt(index);
+        if (tab != null) {
+            tab.select();
+        }
     }
 
     private void updateTabCounts() {
@@ -232,6 +303,7 @@ public class TenantReportListActivity extends AppCompatActivity {
             + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
             ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")
+                + buildTimelineText(ticket)
                 + "\n\n" + (ticket.getDescription() != null ? ticket.getDescription() : "");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
@@ -287,5 +359,22 @@ public class TenantReportListActivity extends AppCompatActivity {
         if (TicketStatus.DONE.equals(status)) return getString(R.string.completed);
         if (TicketStatus.REJECTED.equals(status)) return getString(R.string.report_status_rejected);
         return status != null ? status : "";
+    }
+
+    private String buildTimelineText(Ticket ticket) {
+        StringBuilder sb = new StringBuilder();
+        if (ticket.getProcessedAt() != null) {
+            sb.append("\n").append(getString(R.string.report_timeline_processed, DATE_TIME_FORMAT.format(ticket.getProcessedAt().toDate())));
+        }
+        if (ticket.getRejectedAt() != null) {
+            sb.append("\n").append(getString(R.string.report_timeline_rejected, DATE_TIME_FORMAT.format(ticket.getRejectedAt().toDate())));
+        }
+        if (ticket.getDoneAt() != null) {
+            sb.append("\n").append(getString(R.string.report_timeline_done, DATE_TIME_FORMAT.format(ticket.getDoneAt().toDate())));
+        }
+        if (ticket.getReopenedAt() != null) {
+            sb.append("\n").append(getString(R.string.report_timeline_reopened, DATE_TIME_FORMAT.format(ticket.getReopenedAt().toDate())));
+        }
+        return sb.toString();
     }
 }

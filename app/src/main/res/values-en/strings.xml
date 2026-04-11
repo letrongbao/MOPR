@@ -649,6 +649,10 @@
     <string name="report_notification_title">Report update</string>
     <string name="report_notification_body">Report "%1$s" has changed to status: %2$s.</string>
     <string name="report_notification_reject_reason">Reason: %1$s.</string>
+    <string name="report_timeline_processed">Started processing: %1$s</string>
+    <string name="report_timeline_rejected">Rejected at: %1$s</string>
+    <string name="report_timeline_done">Completed at: %1$s</string>
+    <string name="report_timeline_reopened">Reopened at: %1$s</string>
 
     <string name="join_room_welcome">Welcome to MOPR!</string>
     <string name="join_room_instruction">Please enter the room group code shared by the owner to continue.</string>
