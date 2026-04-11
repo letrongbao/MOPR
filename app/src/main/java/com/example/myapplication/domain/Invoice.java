@@ -32,6 +32,13 @@ public class Invoice {
     private double paidAmount; // Amount paid (for partial payments)
     private String ownerNote; // Owner note for follow-up on unpaid balance
 
+    // Tenant bank-transfer proof flow
+    private boolean transferProofPending;
+    private String transferProofImageUrl;
+    private double transferProofAmount;
+    private String transferProofNote;
+    private com.google.firebase.Timestamp transferProofSubmittedAt;
+
     // Audit timestamps
     private com.google.firebase.Timestamp createdAt;
     private com.google.firebase.Timestamp updatedAt;
@@ -253,6 +260,46 @@ public class Invoice {
 
     public void setOwnerNote(String ownerNote) {
         this.ownerNote = ownerNote;
+    }
+
+    public boolean isTransferProofPending() {
+        return transferProofPending;
+    }
+
+    public void setTransferProofPending(boolean transferProofPending) {
+        this.transferProofPending = transferProofPending;
+    }
+
+    public String getTransferProofImageUrl() {
+        return transferProofImageUrl;
+    }
+
+    public void setTransferProofImageUrl(String transferProofImageUrl) {
+        this.transferProofImageUrl = transferProofImageUrl;
+    }
+
+    public double getTransferProofAmount() {
+        return transferProofAmount;
+    }
+
+    public void setTransferProofAmount(double transferProofAmount) {
+        this.transferProofAmount = transferProofAmount;
+    }
+
+    public String getTransferProofNote() {
+        return transferProofNote;
+    }
+
+    public void setTransferProofNote(String transferProofNote) {
+        this.transferProofNote = transferProofNote;
+    }
+
+    public com.google.firebase.Timestamp getTransferProofSubmittedAt() {
+        return transferProofSubmittedAt;
+    }
+
+    public void setTransferProofSubmittedAt(com.google.firebase.Timestamp transferProofSubmittedAt) {
+        this.transferProofSubmittedAt = transferProofSubmittedAt;
     }
 
     public com.google.firebase.Timestamp getCreatedAt() {

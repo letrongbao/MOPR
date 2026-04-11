@@ -1,6 +1,10 @@
 package com.example.myapplication.features.invoice;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -17,15 +21,20 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.myapplication.core.constants.InvoiceStatus;
 import com.example.myapplication.R;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.constants.WaterCalculationMode;
+import com.example.myapplication.core.service.ImageUploadService;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.FinancePeriodUtil;
 import com.example.myapplication.core.util.MoneyFormatter;
@@ -33,6 +42,7 @@ import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.features.contract.ContractDateHelper;
 import com.example.myapplication.domain.House;
 import com.example.myapplication.domain.Invoice;
+import com.example.myapplication.domain.Payment;
 import com.example.myapplication.domain.Tenant;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.core.repository.domain.PaymentRepository;
@@ -40,6 +50,7 @@ import com.example.myapplication.viewmodel.InvoiceViewModel;
 import com.example.myapplication.viewmodel.RoomViewModel;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -52,6 +63,8 @@ import com.google.firebase.firestore.WriteBatch;
 import android.widget.AdapterView;
 
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -62,6 +75,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 public class InvoiceActivity extends AppCompatActivity {
@@ -146,10 +160,47 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final PaymentRepository paymentRepository = new PaymentRepository();
+    private ActivityResultLauncher<String> transferProofPickerLauncher;
+    private BroadcastReceiver transferProofUploadReceiver;
+    private Uri pendingTransferProofUri;
+    private String pendingTransferProofUrl;
+    private ImageView pendingTransferProofPreview;
+    private Invoice pendingTransferProofInvoice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        transferProofPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri == null) {
+                        return;
+                    }
+                    pendingTransferProofUri = uri;
+                    if (pendingTransferProofPreview != null) {
+                        pendingTransferProofPreview.setImageURI(uri);
+                    }
+                    startTransferProofUpload(uri);
+                });
+
+        transferProofUploadReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(android.content.Context context, Intent intent) {
+                String imageUrl = intent.getStringExtra(ImageUploadService.EXTRA_IMAGE_URL);
+                if (imageUrl == null || imageUrl.trim().isEmpty()) {
+                    return;
+                }
+                pendingTransferProofUrl = imageUrl.trim();
+                if (pendingTransferProofPreview != null) {
+                    Glide.with(InvoiceActivity.this).load(pendingTransferProofUrl).into(pendingTransferProofPreview);
+                }
+            }
+        };
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                transferProofUploadReceiver,
+                new IntentFilter(ImageUploadService.ACTION_UPLOAD_COMPLETE));
 
         ScreenUiHelper.enableEdgeToEdge(this, false);
 
@@ -253,7 +304,7 @@ public class InvoiceActivity extends AppCompatActivity {
                     return;
 
                 if (isTenantUser) {
-                    openPaymentHistory(invoice);
+                    showCollectPaymentDialog(invoice);
                     return;
                 }
 
@@ -793,7 +844,8 @@ public class InvoiceActivity extends AppCompatActivity {
                             .addOnSuccessListener(qs -> {
                                 int current = qs != null ? qs.size() : 0;
                                 if (current + toCreate > max) {
-                                    Toast.makeText(this, getString(R.string.exceeded_invoice_quota, max),
+                                    Toast.makeText(this,
+                                        getString(R.string.exceeded_invoice_quota, String.valueOf(max)),
                                             Toast.LENGTH_LONG)
                                             .show();
                                     return;
@@ -2603,11 +2655,24 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void openPaymentHistory(@NonNull Invoice invoice) {
         android.content.Intent intent = new android.content.Intent(InvoiceActivity.this, PaymentHistoryActivity.class);
+        Room room = findRoomById(invoice.getRoomId());
+        String resolvedRoomName = invoice.getRoomNumber();
+        if ((resolvedRoomName == null || resolvedRoomName.trim().isEmpty()) && room != null
+                && room.getRoomNumber() != null) {
+            resolvedRoomName = room.getRoomNumber().trim();
+        }
+
+        String resolvedHouseName = null;
+        if (room != null) {
+            resolvedHouseName = buildHouseDisplayLabel(room.getHouseId(), room.getHouseName());
+        }
+
         intent.putExtra("INVOICE_ID", invoice.getId());
         intent.putExtra("INVOICE_TOTAL", invoice.getTotalAmount());
         intent.putExtra("ROOM_ID", invoice.getRoomId());
-        intent.putExtra("TITLE",
-                getString(R.string.payment_title_format, invoice.getRoomNumber(), invoice.getBillingPeriod()));
+        intent.putExtra("CONTRACT_ID", invoice.getContractId());
+        intent.putExtra("ROOM_NAME", resolvedRoomName);
+        intent.putExtra("HOUSE_NAME", resolvedHouseName);
         startActivity(intent);
     }
 
@@ -2672,14 +2737,342 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void showCollectPaymentDialog(Invoice invoice) {
-        InvoicePaymentFlowHelper.showCollectPaymentDialog(
-                this,
-                db,
-                invoice,
-                this::scopedCollection,
-                paymentRepository,
-                viewModel,
-                this::switchToPaidTab);
+        if (isTenantUser) {
+            showTenantTransferSubmitDialog(invoice);
+            return;
+        }
+        showOwnerCollectPaymentDialog(invoice);
+    }
+
+    private void showTenantTransferSubmitDialog(@NonNull Invoice invoice) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_tenant_transfer_submit, null);
+        TextView tvBankInfo = dialogView.findViewById(R.id.tvTransferBankInfo);
+        TextView tvTransferContent = dialogView.findViewById(R.id.tvTransferContent);
+        EditText etAmount = dialogView.findViewById(R.id.etTransferAmount);
+        EditText etNote = dialogView.findViewById(R.id.etTransferProofNote);
+        ImageView imgProof = dialogView.findViewById(R.id.imgTransferProof);
+        MaterialButton btnPickImage = dialogView.findViewById(R.id.btnPickTransferProof);
+
+        pendingTransferProofInvoice = invoice;
+        pendingTransferProofPreview = imgProof;
+        pendingTransferProofUrl = null;
+        pendingTransferProofUri = null;
+
+        tvTransferContent.setText(getString(R.string.content_colon)
+                + "HD " + (invoice.getRoomNumber() != null ? invoice.getRoomNumber() : "--")
+                + " " + (invoice.getBillingPeriod() != null ? invoice.getBillingPeriod() : "--"));
+
+        scopedCollection("payments")
+                .whereEqualTo("invoiceId", invoice.getId())
+                .get()
+                .addOnSuccessListener(qs -> {
+                    double paid = 0;
+                    if (qs != null) {
+                        for (QueryDocumentSnapshot doc : qs) {
+                            Double amt = doc.getDouble("amount");
+                            if (amt != null) {
+                                paid += amt;
+                            }
+                        }
+                    }
+                    double remaining = Math.max(0, invoice.getTotalAmount() - paid);
+                    etAmount.setText(formatDouble(remaining > 0 ? remaining : invoice.getTotalAmount()));
+                });
+
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            tvBankInfo.setText(getString(R.string.transfer_proof_missing_bank_info));
+        } else {
+            db.collection("tenants").document(tenantId).get().addOnSuccessListener(tdoc -> {
+                String bankCode = tdoc.getString("bankCode");
+                String bankNo = tdoc.getString("bankAccountNo");
+                String bankName = tdoc.getString("bankAccountName");
+                if (bankCode == null || bankCode.trim().isEmpty() || bankNo == null || bankNo.trim().isEmpty()) {
+                    tvBankInfo.setText(getString(R.string.transfer_proof_missing_bank_info));
+                } else {
+                    tvBankInfo.setText(getString(R.string.transfer_info_colon)
+                            + bankCode.trim() + " - " + bankNo.trim()
+                            + (bankName != null && !bankName.trim().isEmpty() ? " (" + bankName.trim() + ")" : ""));
+                }
+            });
+        }
+
+        btnPickImage.setOnClickListener(v -> transferProofPickerLauncher.launch("image/*"));
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.transfer_proof_submit_title))
+                .setView(dialogView)
+                .setPositiveButton(getString(R.string.send), (d, w) -> {
+                    double amount;
+                    try {
+                        amount = parseAmount(etAmount.getText() != null ? etAmount.getText().toString() : "");
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(this, getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (amount <= 0) {
+                        Toast.makeText(this, getString(R.string.amount_must_positive), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (pendingTransferProofUrl == null || pendingTransferProofUrl.trim().isEmpty()) {
+                        Toast.makeText(this, getString(R.string.transfer_proof_missing_image), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    invoice.setTransferProofPending(true);
+                    invoice.setTransferProofImageUrl(pendingTransferProofUrl.trim());
+                    invoice.setTransferProofAmount(amount);
+                    invoice.setTransferProofNote(etNote.getText() != null ? etNote.getText().toString().trim() : "");
+                    invoice.setTransferProofSubmittedAt(Timestamp.now());
+
+                    viewModel.updateInvoice(invoice,
+                            () -> runOnUiThread(() -> {
+                                Toast.makeText(this, getString(R.string.transfer_proof_submit_success), Toast.LENGTH_SHORT)
+                                        .show();
+                                applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                            }),
+                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.update_failed),
+                                    Toast.LENGTH_SHORT).show()));
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    private void showOwnerCollectPaymentDialog(@NonNull Invoice invoice) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_owner_collect_payment_simple, null);
+        View layoutTransferProof = dialogView.findViewById(R.id.layoutTransferProof);
+        TextView tvTransferProofAmount = dialogView.findViewById(R.id.tvTransferProofAmount);
+        TextView tvTransferProofSubmittedAt = dialogView.findViewById(R.id.tvTransferProofSubmittedAt);
+        TextView tvTransferProofNote = dialogView.findViewById(R.id.tvTransferProofNote);
+        ImageView imgTransferProof = dialogView.findViewById(R.id.imgTransferProofPreview);
+        Spinner spinnerMethod = dialogView.findViewById(R.id.spinnerPaymentMethod);
+        EditText etPaymentDate = dialogView.findViewById(R.id.etPaymentDate);
+
+        ArrayAdapter<String> methodAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[] { getString(R.string.cash), getString(R.string.bank_transfer) });
+        methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerMethod.setAdapter(methodAdapter);
+
+        String today = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date());
+        etPaymentDate.setText(today);
+        etPaymentDate.setOnClickListener(v -> showDatePicker(etPaymentDate));
+
+        boolean hasTransferProof = invoice.isTransferProofPending()
+                && invoice.getTransferProofImageUrl() != null
+                && !invoice.getTransferProofImageUrl().trim().isEmpty();
+
+        if (hasTransferProof) {
+            layoutTransferProof.setVisibility(View.VISIBLE);
+            tvTransferProofAmount.setText(getString(R.string.transfer_proof_amount_label,
+                    MoneyFormatter.format(invoice.getTransferProofAmount())));
+
+            String submittedAtText = "--";
+            if (invoice.getTransferProofSubmittedAt() != null) {
+                Date submittedDate = invoice.getTransferProofSubmittedAt().toDate();
+                submittedAtText = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(submittedDate);
+            }
+            tvTransferProofSubmittedAt.setText(getString(R.string.transfer_proof_submitted_at_label, submittedAtText));
+
+            String proofNote = invoice.getTransferProofNote() != null ? invoice.getTransferProofNote().trim() : "";
+            if (!proofNote.isEmpty()) {
+                tvTransferProofNote.setVisibility(View.VISIBLE);
+                tvTransferProofNote.setText(getString(R.string.transfer_proof_note_label, proofNote));
+            } else {
+                tvTransferProofNote.setVisibility(View.GONE);
+            }
+            Glide.with(this).load(invoice.getTransferProofImageUrl()).into(imgTransferProof);
+        } else {
+            layoutTransferProof.setVisibility(View.GONE);
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.collect_payment_simple_title,
+                        invoice.getRoomNumber() != null ? invoice.getRoomNumber() : "--"))
+                .setView(dialogView)
+                .setPositiveButton(getString(R.string.confirm), (d, w) -> {
+                    String paidAt = etPaymentDate.getText() != null ? etPaymentDate.getText().toString().trim() : "";
+                    if (!isValidDate(paidAt)) {
+                        Toast.makeText(this, getString(R.string.collect_payment_need_date), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    String method = spinnerMethod.getSelectedItemPosition() == 0 ? "CASH" : "BANK";
+                    scopedCollection("payments")
+                            .whereEqualTo("invoiceId", invoice.getId())
+                            .get()
+                            .addOnSuccessListener(qs -> {
+                                double paid = 0;
+                                if (qs != null) {
+                                    for (QueryDocumentSnapshot doc : qs) {
+                                        Double amt = doc.getDouble("amount");
+                                        if (amt != null) {
+                                            paid += amt;
+                                        }
+                                    }
+                                }
+                                double remaining = Math.max(0, invoice.getTotalAmount() - paid);
+                                if (remaining <= 0.01) {
+                                    Toast.makeText(this, getString(R.string.payment_recorded), Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
+                                double amountToRecord;
+                                if ("BANK".equals(method)) {
+                                    if (!hasTransferProof) {
+                                        Toast.makeText(this, getString(R.string.collect_payment_bank_proof_required),
+                                                Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+                                    double transferAmount = Math.max(0, invoice.getTransferProofAmount());
+                                    if (transferAmount + 0.01 < remaining) {
+                                        Toast.makeText(this, getString(R.string.collect_payment_bank_not_enough),
+                                                Toast.LENGTH_LONG).show();
+                                        return;
+                                    }
+                                    amountToRecord = remaining;
+                                } else {
+                                    amountToRecord = remaining;
+                                }
+
+                                Payment payment = new Payment();
+                                payment.setInvoiceId(invoice.getId());
+                                payment.setRoomId(invoice.getRoomId());
+                                payment.setMethod(method);
+                                payment.setPaidAt(paidAt);
+                                payment.setAmount(amountToRecord);
+                                payment.setNote("BANK".equals(method)
+                                        ? "Xác nhận theo minh chứng chuyển khoản"
+                                        : "Thu tiền mặt");
+
+                                paymentRepository.add(payment,
+                                        () -> {
+                                            invoice.setTransferProofPending(false);
+                                            invoice.setTransferProofImageUrl(null);
+                                            invoice.setTransferProofAmount(0);
+                                            invoice.setTransferProofNote(null);
+                                            invoice.setTransferProofSubmittedAt(null);
+
+                                            viewModel.updateInvoice(invoice,
+                                                    () -> runOnUiThread(() -> {
+                                                        recomputeAndUpdateInvoiceStatus(invoice);
+                                                        switchToPaidTab();
+                                                        Toast.makeText(this, getString(R.string.payment_recorded),
+                                                                Toast.LENGTH_SHORT).show();
+                                                    }),
+                                                    () -> runOnUiThread(() -> Toast
+                                                            .makeText(this, getString(R.string.update_failed),
+                                                                    Toast.LENGTH_SHORT)
+                                                            .show()));
+                                        },
+                                        () -> runOnUiThread(() -> Toast
+                                                .makeText(this, getString(R.string.payment_record_failed),
+                                                        Toast.LENGTH_SHORT)
+                                                .show()));
+                            })
+                            .addOnFailureListener(e -> Toast
+                                    .makeText(this, getString(R.string.cannot_check_debt), Toast.LENGTH_SHORT)
+                                    .show());
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    private void showDatePicker(@NonNull EditText target) {
+        Calendar initial = Calendar.getInstance();
+        String currentValue = target.getText() != null ? target.getText().toString().trim() : "";
+        if (!currentValue.isEmpty()) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                sdf.setLenient(false);
+                Date parsed = sdf.parse(currentValue);
+                if (parsed != null) {
+                    initial.setTime(parsed);
+                }
+            } catch (ParseException ignored) {
+                // Fallback to today when existing text is invalid.
+            }
+        }
+
+        Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        utc.clear();
+        utc.set(
+                initial.get(Calendar.YEAR),
+                initial.get(Calendar.MONTH),
+                initial.get(Calendar.DAY_OF_MONTH),
+                0,
+                0,
+                0);
+
+        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(getString(R.string.select_payment_date))
+                .setSelection(utc.getTimeInMillis())
+                .build();
+
+        picker.addOnPositiveButtonClickListener(selection -> {
+            if (selection == null) {
+                return;
+            }
+
+            Calendar selectedUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            selectedUtc.setTimeInMillis(selection);
+
+            Calendar local = Calendar.getInstance();
+            local.set(
+                    selectedUtc.get(Calendar.YEAR),
+                    selectedUtc.get(Calendar.MONTH),
+                    selectedUtc.get(Calendar.DAY_OF_MONTH),
+                    0,
+                    0,
+                    0);
+            local.set(Calendar.MILLISECOND, 0);
+
+            target.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(local.getTime()));
+        });
+
+        picker.show(getSupportFragmentManager(), "owner_collect_payment_date_picker");
+    }
+
+    private void startTransferProofUpload(@NonNull Uri imageUri) {
+        Intent serviceIntent = new Intent(this, ImageUploadService.class);
+        serviceIntent.putExtra(ImageUploadService.EXTRA_IMAGE_URI, imageUri.toString());
+        startService(serviceIntent);
+    }
+
+    private boolean isValidDate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            sdf.setLenient(false);
+            return sdf.parse(value.trim()) != null;
+        } catch (ParseException e) {
+            return false;
+        }
+    }
+
+    private double parseAmount(@NonNull String raw) throws NumberFormatException {
+        String normalized = raw.replace(",", "").trim();
+        if (normalized.isEmpty()) {
+            return 0;
+        }
+        return Double.parseDouble(normalized);
+    }
+
+    private String formatDouble(double value) {
+        return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (transferProofUploadReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(transferProofUploadReceiver);
+            transferProofUploadReceiver = null;
+        }
+        super.onDestroy();
     }
 
     @Override

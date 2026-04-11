@@ -96,6 +96,7 @@ public class ContractActivity extends AppCompatActivity {
     private EditText etNote;
     private CheckBox cbShowNote;
     private final List<CheckBox> extraFeeOptionBoxes = new ArrayList<>();
+    private boolean isContractFormEditable = true;
 
     private MaterialButton btnSave, btnPrint, btnEnd, btnUpdate;
 
@@ -245,11 +246,7 @@ public class ContractActivity extends AppCompatActivity {
         etContractDate.setOnClickListener(pickDate);
         ivPickDate.setOnClickListener(pickDate);
         cbParkingService.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            etVehicleCount.setEnabled(isChecked);
-            etVehicleCount
-                    .setBackgroundResource(isChecked ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
-            if (!isChecked)
-                etVehicleCount.setText("");
+            updateVehicleCountInputState(isChecked);
         });
         ivEditFront.setOnClickListener(v -> {
             pendingUploadTarget = UploadTarget.FRONT;
@@ -529,6 +526,7 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void setContractFormEditable(boolean editable) {
+        isContractFormEditable = editable;
         setEditTextEnabled(etContractNumber, editable);
         setEditTextEnabled(etCustomerName, editable);
         setEditTextEnabled(etPhoneInput, editable);
@@ -541,7 +539,7 @@ public class ContractActivity extends AppCompatActivity {
         setEditTextEnabled(etContractMonths, editable);
         setEditTextEnabled(etElectricStartReading, editable);
         setEditTextEnabled(etWaterStartReading, editable);
-        setEditTextEnabled(etVehicleCount, editable && cbParkingService.isChecked());
+        updateVehicleCountInputState(cbParkingService != null && cbParkingService.isChecked());
         setEditTextEnabled(etNote, editable);
 
         if (cbShowDeposit != null)
@@ -585,6 +583,18 @@ public class ContractActivity extends AppCompatActivity {
         editText.setFocusableInTouchMode(enabled);
         editText.setClickable(enabled);
         editText.setLongClickable(enabled);
+    }
+
+    private void updateVehicleCountInputState(boolean hasParkingService) {
+        boolean canEditVehicleCount = isContractFormEditable && hasParkingService;
+        setEditTextEnabled(etVehicleCount, canEditVehicleCount);
+        if (etVehicleCount != null) {
+            etVehicleCount.setBackgroundResource(
+                    canEditVehicleCount ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
+            if (!canEditVehicleCount) {
+                etVehicleCount.clearFocus();
+            }
+        }
     }
 
     private void updateFullToolbarHeader() {
@@ -636,9 +646,7 @@ public class ContractActivity extends AppCompatActivity {
             parkingVisible = true;
         }
         cbParkingService.setChecked(c.hasParkingService());
-        etVehicleCount.setEnabled(cbParkingService.isChecked());
-        etVehicleCount.setBackgroundResource(
-            cbParkingService.isChecked() ? R.drawable.bg_input_rounded : R.drawable.bg_input_disabled);
+        updateVehicleCountInputState(cbParkingService.isChecked());
         etVehicleCount.setText(c.getVehicleCount() > 0 ? String.valueOf(c.getVehicleCount()) : "");
 
         if (cbInternet != null && c.hasInternetService()) {

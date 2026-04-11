@@ -16,7 +16,6 @@ import com.example.myapplication.core.repository.domain.PaymentRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Payment;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -37,8 +36,7 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
 
     private PaymentAdapter adapter;
     private TextView tvEmpty;
-    private TextView tvPaid;
-    private TextView tvRemaining;
+    private TextView tvSummaryInline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,10 +55,9 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.your_payment_history));
 
         tvEmpty = findViewById(R.id.tvEmpty);
-        tvPaid = findViewById(R.id.tvPaid);
-        tvRemaining = findViewById(R.id.tvRemaining);
+        tvSummaryInline = findViewById(R.id.tvSummaryInline);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        FloatingActionButton fabThem = findViewById(R.id.fabThem);
+        TextView tvHeaderSubtitle = findViewById(R.id.tvHeaderSubtitle);
 
         adapter = new PaymentAdapter(payment -> {
             // Tenant view: no delete action.
@@ -70,12 +67,10 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
-        if (fabThem != null) {
-            fabThem.setVisibility(View.GONE);
-        }
-
-        if (tvRemaining != null) {
-            tvRemaining.setVisibility(View.GONE);
+        if (tvHeaderSubtitle != null)
+            tvHeaderSubtitle.setVisibility(View.GONE);
+        if (tvSummaryInline != null) {
+            tvSummaryInline.setText(getString(R.string.total_paid_colon) + fmtMoney(0));
         }
 
         setupTenantData();
@@ -123,7 +118,9 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
             for (Payment p : safe) {
                 paid += p.getAmount();
             }
-            tvPaid.setText(getString(R.string.total_paid_colon) + fmtMoney(paid));
+            if (tvSummaryInline != null) {
+                tvSummaryInline.setText(getString(R.string.total_paid_colon) + fmtMoney(paid));
+            }
         });
     }
 
@@ -131,7 +128,9 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
         adapter.setDataList(new ArrayList<>());
         tvEmpty.setText(message);
         tvEmpty.setVisibility(View.VISIBLE);
-        tvPaid.setText(getString(R.string.total_paid_colon) + fmtMoney(0));
+        if (tvSummaryInline != null) {
+            tvSummaryInline.setText(getString(R.string.total_paid_colon) + fmtMoney(0));
+        }
     }
 
     private long parseDate(String s) {

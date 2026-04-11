@@ -31,6 +31,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
     private Map<String, String> roomWaterModeByRoom = new HashMap<>();
     private Map<String, Integer> roomMemberCountByRoom = new HashMap<>();
     private int currentTab = 0;
+    private boolean readOnly;
 
     public interface OnItemActionListener {
         void onDelete(Invoice invoice);
@@ -90,6 +91,11 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -112,7 +118,8 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
         String tenantDisplay = tenantDisplayByRoom.get(h.getRoomId());
         if (tenantDisplay == null || tenantDisplay.trim().isEmpty()) {
-            tenantDisplay = context.getString(R.string.tenant_colon) + context.getString(R.string.updating);
+            tenantDisplay = context.getString(R.string.invoice_representative_colon)
+                    + context.getString(R.string.updating);
         }
         holder.tvTenantName.setText(tenantDisplay);
 
@@ -155,7 +162,20 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
             }
         }
 
-        // View reported fees link - now bound to the whole card
+        if (holder.tvTransferProofBadge != null) {
+            boolean showBadge = !tenantMode && InvoiceStatus.REPORTED.equals(st) && h.isTransferProofPending();
+            holder.tvTransferProofBadge.setVisibility(showBadge ? View.VISIBLE : View.GONE);
+        }
+
+        if (readOnly) {
+            holder.itemView.setOnClickListener(null);
+            holder.btnMainAction.setOnClickListener(null);
+            holder.btnMainAction.setVisibility(View.GONE);
+            holder.btnMainAction.setEnabled(false);
+            return;
+        }
+
+        // Default card tap behavior.
         holder.itemView.setOnClickListener(v -> listener.onXuat(h));
 
         // Main action button changes based on tab
@@ -189,7 +209,6 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
             buttonText = context.getString(R.string.invoice_action_enter_report);
             buttonColor = R.color.btn_blue_action;
             buttonAction = v -> listener.onBaoPhi(h);
-            holder.itemView.setOnClickListener(v -> listener.onBaoPhi(h));
         } else if (InvoiceStatus.REPORTED.equals(st)) {
             buttonText = context.getString(R.string.invoice_action_collect_payment);
             buttonColor = R.color.btn_orange;
@@ -372,7 +391,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvPhong, tvTenantName, tvPriceMonth, tvReportDate, tvAmountTotal, tvExtraFeeSummary, tvMeterSummary,
-            tvRibbonStatus, tvOwnerNote;
+            tvRibbonStatus, tvTransferProofBadge, tvOwnerNote;
         MaterialButton btnMainAction;
 
         ViewHolder(View v) {
@@ -385,6 +404,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
             tvExtraFeeSummary = v.findViewById(R.id.tvExtraFeeSummary);
             tvMeterSummary = v.findViewById(R.id.tvMeterSummary);
             tvRibbonStatus = v.findViewById(R.id.tvRibbonStatus);
+            tvTransferProofBadge = v.findViewById(R.id.tvTransferProofBadge);
             tvOwnerNote = v.findViewById(R.id.tvOwnerNote);
             btnMainAction = v.findViewById(R.id.btnMainAction);
         }

@@ -29,6 +29,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="@string/item_invoice_room_sample"
                 android:textColor="@color/black"
                 android:textSize="20sp"
@@ -46,7 +48,31 @@
                 android:textColor="#0D47A1"
                 android:textSize="11sp"
                 android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvTransferProofBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_month_filter_chip"
+                android:gravity="center"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:text="@string/transfer_proof_pending_badge"
+                android:textColor="#B71C1C"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvReportDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/item_invoice_month_sample"
+            android:textColor="#1565C0"
+            android:textSize="12sp"/>
 
         <TextView
             android:id="@+id/tvAmountTotal"
@@ -63,18 +89,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="@string/item_invoice_tenant_info_sample"
             android:textColor="#37474F"
             android:textSize="13sp"/>
-
-        <TextView
-            android:id="@+id/tvReportDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/item_invoice_month_sample"
-            android:textColor="#607D8B"
-            android:textSize="12sp"/>
 
         <TextView
             android:id="@+id/tvPriceMonth"

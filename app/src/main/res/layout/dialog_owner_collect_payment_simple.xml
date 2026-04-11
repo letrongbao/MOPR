@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:id="@+id/layoutTransferProof"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/transfer_proof_section_title"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTransferProofAmount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="--"
+                android:textColor="#1B5E20" />
+
+            <TextView
+                android:id="@+id/tvTransferProofSubmittedAt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="--"
+                android:textColor="#455A64" />
+
+            <TextView
+                android:id="@+id/tvTransferProofNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text=""
+                android:textColor="#455A64"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/imgTransferProofPreview"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginTop="8dp"
+                android:adjustViewBounds="true"
+                android:background="#EEEEEE"
+                android:contentDescription="@string/transfer_proof_screenshot_label"
+                android:scaleType="centerCrop" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/payment_method"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerPaymentMethod"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/payment_date_label"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etPaymentDate"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:focusable="false"
+            android:clickable="true"
+            android:inputType="none"
+            android:drawableEnd="@drawable/ic_calendar"
+            android:drawablePadding="8dp"
+            android:paddingHorizontal="12dp" />
+
+    </LinearLayout>
+</ScrollView>

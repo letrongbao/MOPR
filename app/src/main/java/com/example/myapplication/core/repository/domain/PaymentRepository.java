@@ -104,6 +104,29 @@ public class PaymentRepository {
                 .addOnFailureListener(e -> onFail.run());
     }
 
+    public void updateInvoiceStatus(String invoiceId, String status) {
+        if (invoiceId == null || invoiceId.trim().isEmpty() || status == null || status.trim().isEmpty()) {
+            return;
+        }
+
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            db.collection("tenants").document(tenantId)
+                    .collection("invoices").document(invoiceId)
+                    .update("status", status.trim());
+            return;
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            return;
+        }
+
+        db.collection("users").document(user.getUid())
+                .collection("invoices").document(invoiceId)
+                .update("status", status.trim());
+    }
+
     private Map<String, Object> toPayload(Payment payment) {
         Map<String, Object> payload = new HashMap<>();
         putIfNotBlank(payload, "invoiceId", payment.getInvoiceId());

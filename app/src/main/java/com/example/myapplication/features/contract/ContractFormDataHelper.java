@@ -164,6 +164,10 @@ public final class ContractFormDataHelper {
             throw new ValidationException(invalidDataMessage);
         }
 
+        if (hasParkingService && vehicleCount <= 0) {
+            throw new ValidationException(vehicleCountRequiredMessage);
+        }
+
         return new FormData(
                 contractNumber,
                 fullName,

@@ -221,6 +221,14 @@ public class InvoiceRepository {
         putIfPositive(payload, "paidAmount", invoice.getPaidAmount());
         payload.put("ownerNote", invoice.getOwnerNote() == null ? "" : invoice.getOwnerNote().trim());
 
+        payload.put("transferProofPending", invoice.isTransferProofPending());
+        putIfNotBlank(payload, "transferProofImageUrl", invoice.getTransferProofImageUrl());
+        putIfPositive(payload, "transferProofAmount", invoice.getTransferProofAmount());
+        putIfNotBlank(payload, "transferProofNote", invoice.getTransferProofNote());
+        if (invoice.getTransferProofSubmittedAt() != null) {
+            payload.put("transferProofSubmittedAt", invoice.getTransferProofSubmittedAt());
+        }
+
         if (invoice.getCreatedAt() != null) {
             payload.put("createdAt", invoice.getCreatedAt());
         }
