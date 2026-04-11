@@ -176,6 +176,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         MaterialCardView cardInvoice = findViewById(R.id.cardInvoice);
         MaterialCardView cardExpense = findViewById(R.id.cardExpense);
         MaterialCardView cardReport = findViewById(R.id.cardReport);
+        MaterialCardView cardReportManagement = findViewById(R.id.cardReportManagement);
         MaterialCardView cardKhachThue = findViewById(R.id.cardKhachThue);
         MaterialCardView cardHopDong = findViewById(R.id.cardHopDong);
 
@@ -185,6 +186,7 @@ public class HomeMenuActivity extends AppCompatActivity {
             disableHomeCard(cardInvoice);
             disableHomeCard(cardExpense);
             disableHomeCard(cardReport);
+            disableHomeCard(cardReportManagement);
             disableHomeCard(cardKhachThue);
             disableHomeCard(cardHopDong);
             return;
@@ -194,6 +196,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         enableHomeCard(cardInvoice, v -> startActivity(new Intent(this, InvoiceActivity.class)));
         enableHomeCard(cardExpense, v -> startActivity(new Intent(this, ExpenseActivity.class)));
         enableHomeCard(cardReport, v -> startActivity(new Intent(this, RevenueActivity.class)));
+        enableHomeCard(cardReportManagement, v -> startActivity(new Intent(this, TicketActivity.class)));
         enableHomeCard(cardKhachThue, v -> startActivity(new Intent(this, ChatHubActivity.class)));
         enableHomeCard(cardHopDong, v -> startActivity(new Intent(this, ContractListActivity.class)));
     }
@@ -723,12 +726,14 @@ public class HomeMenuActivity extends AppCompatActivity {
         View rowTop = findViewById(R.id.rowTop);
         View rowMiddle = findViewById(R.id.rowMiddle);
         View rowBottom = findViewById(R.id.rowBottom);
+        View cardKhachThue = findViewById(R.id.cardKhachThue);
         View menuTenantProfiles = findViewById(R.id.menuTenantProfiles);
         View menuRentalHistory = findViewById(R.id.menuRentalHistory);
         TextView tvCardHouseLabel = findViewById(R.id.tvCardHouseLabel);
         TextView tvCardInvoiceLabel = findViewById(R.id.tvCardInvoiceLabel);
         TextView tvCardExpenseLabel = findViewById(R.id.tvCardExpenseLabel);
         TextView tvCardReportLabel = findViewById(R.id.tvCardReportLabel);
+        TextView tvCardReportManagementLabel = findViewById(R.id.tvCardReportManagementLabel);
         TextView tvCardTenantLabel = findViewById(R.id.tvCardTenantLabel);
         TextView tvCardContractLabel = findViewById(R.id.tvCardContractLabel);
 
@@ -744,6 +749,9 @@ public class HomeMenuActivity extends AppCompatActivity {
         if (rowBottom != null) {
             rowBottom.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
+        if (cardKhachThue != null) {
+            cardKhachThue.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        }
         if (menuTenantProfiles != null) {
             menuTenantProfiles.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         }
@@ -755,6 +763,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         setStylizedHomeCardLabel(tvCardInvoiceLabel, getString(R.string.home_owner_invoice_label), isOwner);
         setStylizedHomeCardLabel(tvCardExpenseLabel, getString(R.string.home_owner_expense_label), isOwner);
         setStylizedHomeCardLabel(tvCardReportLabel, getString(R.string.home_owner_report_label), isOwner);
+        setStylizedHomeCardLabel(tvCardReportManagementLabel, "Quản lí phản ánh", isOwner);
         setStylizedHomeCardLabel(tvCardTenantLabel, getString(R.string.home_owner_chat_label), isOwner);
         setStylizedHomeCardLabel(tvCardContractLabel, getString(R.string.home_owner_contract_label), isOwner);
     }

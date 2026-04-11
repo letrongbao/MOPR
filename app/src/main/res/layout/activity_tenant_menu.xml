@@ -244,6 +244,67 @@
 
                 </LinearLayout>
 
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardReportExternal"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_marginTop="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardCornerRadius="15dp"
+                    app:cardElevation="8dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_card_gradient_green"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:id="@+id/iconReportExternal"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:layout_centerVertical="true"
+                            android:contentDescription="@string/tenant_menu_report_issue"
+                            android:src="@drawable/ic_report"
+                            app:tint="@color/white" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="60dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/tenant_menu_report_issue"
+                                android:textColor="@color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:text="Gửi phản ánh nhanh cho chủ trọ và theo dõi trạng thái xử lí"
+                                android:textColor="#E8F5FF"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:rotation="180"
+                            android:src="@drawable/ic_arrow_back"
+                            app:tint="#CCFFFFFF" />
+                    </RelativeLayout>
+                </androidx.cardview.widget.CardView>
+
             </LinearLayout>
 
         </LinearLayout>

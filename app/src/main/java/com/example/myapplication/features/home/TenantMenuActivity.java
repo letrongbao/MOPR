@@ -46,6 +46,7 @@ public class TenantMenuActivity extends AppCompatActivity {
     private CardView cardBill;
     private CardView cardReport;
     private CardView cardNotification;
+    private CardView cardReportExternal;
 
     // ===== DrawerLayout (tái sử dụng home_menu_profile_drawer.xml) =====
     private DrawerLayout tenantDrawerLayout;
@@ -95,6 +96,7 @@ public class TenantMenuActivity extends AppCompatActivity {
         cardBill         = findViewById(R.id.cardBill);
         cardReport       = findViewById(R.id.cardReport);
         cardNotification = findViewById(R.id.cardNotification);
+        cardReportExternal = findViewById(R.id.cardReportExternal);
 
         // ===== Ánh xạ DrawerLayout và các view bên trong drawer =====
         tenantDrawerLayout  = findViewById(R.id.tenantDrawerLayout);
@@ -140,6 +142,9 @@ public class TenantMenuActivity extends AppCompatActivity {
         cardBill.setOnClickListener(v -> openRoomDetail());   // cùng màn hình, tab billing
 
         cardReport.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
+        if (cardReportExternal != null) {
+            cardReportExternal.setOnClickListener(v -> startActivity(new Intent(this, TicketActivity.class)));
+        }
 
         cardNotification.setOnClickListener(v ->
             startActivity(new Intent(this, ChatHubActivity.class)));
