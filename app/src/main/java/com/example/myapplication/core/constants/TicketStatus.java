@@ -7,4 +7,5 @@ public final class TicketStatus {
     public static final String OPEN = "OPEN";
     public static final String IN_PROGRESS = "IN_PROGRESS";
     public static final String DONE = "DONE";
+    public static final String REJECTED = "REJECTED";
 }

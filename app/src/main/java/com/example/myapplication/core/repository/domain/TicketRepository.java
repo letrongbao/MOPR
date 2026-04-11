@@ -12,7 +12,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TicketRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -77,6 +79,23 @@ public class TicketRepository {
         }
         getScopedCollection().document(id)
                 .update("status", status, "updatedAt", Timestamp.now())
+                .addOnSuccessListener(v -> onSuccess.run())
+                .addOnFailureListener(e -> onFail.run());
+    }
+
+    public void updateFields(String id, Map<String, Object> updates, Runnable onSuccess, Runnable onFail) {
+        if (id == null || id.trim().isEmpty()) {
+            onFail.run();
+            return;
+        }
+        Map<String, Object> payload = new HashMap<>();
+        if (updates != null) {
+            payload.putAll(updates);
+        }
+        payload.put("updatedAt", Timestamp.now());
+
+        getScopedCollection().document(id)
+                .update(payload)
                 .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(e -> onFail.run());
     }

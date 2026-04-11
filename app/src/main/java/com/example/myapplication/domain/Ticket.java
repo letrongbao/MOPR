@@ -8,6 +8,7 @@ public class Ticket {
     private String title;
     private String description;
     private String status;
+    private String rejectReason;
     private String createdBy;
     private Timestamp createdAt;
     private Timestamp updatedAt;
@@ -28,6 +29,9 @@ public class Ticket {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getRejectReason() { return rejectReason; }
+    public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
 
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }

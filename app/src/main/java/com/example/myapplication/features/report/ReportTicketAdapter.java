@@ -58,6 +58,9 @@ public class ReportTicketAdapter extends RecyclerView.Adapter<ReportTicketAdapte
         if (TicketStatus.DONE.equals(ticket.getStatus())) {
             badge.setColor(Color.parseColor("#E8F5E9"));
             holder.tvStatus.setTextColor(Color.parseColor("#2E7D32"));
+        } else if (TicketStatus.REJECTED.equals(ticket.getStatus())) {
+            badge.setColor(Color.parseColor("#FDECEA"));
+            holder.tvStatus.setTextColor(Color.parseColor("#C62828"));
         } else if (TicketStatus.IN_PROGRESS.equals(ticket.getStatus())) {
             badge.setColor(Color.parseColor("#E3F2FD"));
             holder.tvStatus.setTextColor(Color.parseColor("#1565C0"));
@@ -84,6 +87,9 @@ public class ReportTicketAdapter extends RecyclerView.Adapter<ReportTicketAdapte
         }
         if (TicketStatus.DONE.equals(status)) {
             return doneText;
+        }
+        if (TicketStatus.REJECTED.equals(status)) {
+            return "Cần sửa lại";
         }
         return status != null ? status : "";
     }
