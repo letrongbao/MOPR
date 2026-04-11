@@ -40,6 +40,7 @@ import com.example.myapplication.features.property.house.HouseActivity;
 import com.example.myapplication.features.property.room.RoomActivity;
 import com.example.myapplication.features.ticket.TicketActivity;
 import com.example.myapplication.features.contract.ContractListActivity;
+import com.example.myapplication.features.report.OwnerReportListActivity;
 import com.example.myapplication.domain.Room;
 import com.example.myapplication.core.repository.domain.HouseRepository;
 import com.example.myapplication.viewmodel.RoomViewModel;
@@ -154,12 +155,13 @@ public class HomeMenuActivity extends AppCompatActivity {
     }
 
     private void setupMenuCards(String role) {
-        MaterialCardView cardHouse = findViewById(R.id.cardHouse);
-        MaterialCardView cardInvoice = findViewById(R.id.cardInvoice);
-        MaterialCardView cardExpense = findViewById(R.id.cardExpense);
-        MaterialCardView cardReport = findViewById(R.id.cardReport);
+        MaterialCardView cardHouse     = findViewById(R.id.cardHouse);
+        MaterialCardView cardInvoice   = findViewById(R.id.cardInvoice);
+        MaterialCardView cardExpense   = findViewById(R.id.cardExpense);
+        MaterialCardView cardReport    = findViewById(R.id.cardReport);
         MaterialCardView cardKhachThue = findViewById(R.id.cardKhachThue);
-        MaterialCardView cardHopDong = findViewById(R.id.cardHopDong);
+        MaterialCardView cardHopDong   = findViewById(R.id.cardHopDong);
+        MaterialCardView cardReportManagement = findViewById(R.id.cardReportManagement);
 
         boolean isOwner = TenantRoles.OWNER.equals(role);
         if (!isOwner) {
@@ -169,19 +171,23 @@ public class HomeMenuActivity extends AppCompatActivity {
             disableHomeCard(cardReport);
             disableHomeCard(cardKhachThue);
             disableHomeCard(cardHopDong);
+            disableHomeCard(cardReportManagement);
             return;
         }
 
-        enableHomeCard(cardHouse, v -> startActivity(new Intent(this, HouseActivity.class)));
-        enableHomeCard(cardInvoice, v -> startActivity(new Intent(this, InvoiceActivity.class)));
-        enableHomeCard(cardExpense, v -> startActivity(new Intent(this, ExpenseActivity.class)));
-        enableHomeCard(cardReport, v -> startActivity(new Intent(this, RevenueActivity.class)));
+        enableHomeCard(cardHouse,     v -> startActivity(new Intent(this, HouseActivity.class)));
+        enableHomeCard(cardInvoice,   v -> startActivity(new Intent(this, InvoiceActivity.class)));
+        enableHomeCard(cardExpense,   v -> startActivity(new Intent(this, ExpenseActivity.class)));
+        enableHomeCard(cardReport,    v -> startActivity(new Intent(this, RevenueActivity.class)));
         enableHomeCard(cardKhachThue, v -> {
             Intent intent = new Intent(this, RoomActivity.class);
             intent.putExtra("FILTER_STATUS", RoomStatus.RENTED);
             startActivity(intent);
         });
-        enableHomeCard(cardHopDong, v -> startActivity(new Intent(this, ContractListActivity.class)));
+        enableHomeCard(cardHopDong,   v -> startActivity(new Intent(this, ContractListActivity.class)));
+        // Mở màn hình Quản lý sự cố
+        enableHomeCard(cardReportManagement,
+                v -> startActivity(new Intent(this, OwnerReportListActivity.class)));
     }
 
     private void enableHomeCard(MaterialCardView card, View.OnClickListener listener) {

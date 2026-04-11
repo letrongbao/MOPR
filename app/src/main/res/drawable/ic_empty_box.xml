@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="160dp"
+    android:viewportWidth="160"
+    android:viewportHeight="160">
+
+    <!-- Box body -->
+    <path
+        android:fillColor="#D8DCE6"
+        android:pathData="M30,75 L80,100 L130,75 L130,130 L80,155 L30,130 Z" />
+    <!-- Box top left flap -->
+    <path
+        android:fillColor="#BCC3D0"
+        android:pathData="M30,75 L80,50 L80,100 Z" />
+    <!-- Box top right flap -->
+    <path
+        android:fillColor="#C5CBD7"
+        android:pathData="M130,75 L80,50 L80,100 Z" />
+    <!-- Box front face -->
+    <path
+        android:fillColor="#E5E8EF"
+        android:pathData="M30,75 L80,100 L80,155 L30,130 Z" />
+
+    <!-- Dashed arc line above box -->
+    <path
+        android:strokeColor="#AAAAAA"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M75,45 Q95,20 115,35" />
+
+    <!-- Small circle at start of arc -->
+    <path
+        android:fillColor="#AAAAAA"
+        android:pathData="M75,45 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <!-- Small circle at end of arc -->
+    <path
+        android:fillColor="#AAAAAA"
+        android:pathData="M115,35 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+</vector>

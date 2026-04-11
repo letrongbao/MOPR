@@ -371,7 +371,73 @@
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
+
+        <!-- Row "Quản lý sự cố" - full width card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardReportManagement"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_card_gradient_orange"
+                android:padding="16dp">
+
+                <!-- Icon -->
+                <ImageView
+                    android:id="@+id/iconReportManagement"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_report"
+                    app:tint="@color/white" />
+
+                <!-- Texts -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="60dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Quản lý sự cố"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="Theo dõi và xử lý các phản ánh từ khách thuê"
+                        android:textColor="#E8F5FF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- Arrow -->
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_arrow_back"
+                    android:rotation="180"
+                    app:tint="#CCFFFFFF" />
+
+            </RelativeLayout>
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
 
-    
 </LinearLayout>

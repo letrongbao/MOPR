@@ -21,6 +21,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.features.contract.TenantContractDetailsActivity;
+import com.example.myapplication.features.report.TenantReportListActivity;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.settings.ChangePasswordActivity;
 import com.example.myapplication.features.settings.EditProfileActivity;
@@ -204,8 +205,12 @@ public class TenantMenuActivity extends AppCompatActivity {
         // Grid menu cards
         cardMyRoom.setOnClickListener(v -> openRoomDetail());
         cardBill.setOnClickListener(v -> openRoomDetail());
-        cardReport.setOnClickListener(v ->
-                Toast.makeText(this, "Báo cáo sự cố", Toast.LENGTH_SHORT).show());
+        cardReport.setOnClickListener(v -> {
+                Intent reportIntent = new Intent(this, TenantReportListActivity.class);
+                reportIntent.putExtra(TenantReportListActivity.EXTRA_ROOM_ID, roomId);
+                reportIntent.putExtra(TenantReportListActivity.EXTRA_TENANT_ID, tenantId);
+                startActivity(reportIntent);
+        });
         cardNotification.setOnClickListener(v ->
                 Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
 
