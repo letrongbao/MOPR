@@ -50,7 +50,12 @@ public class ReportTicketAdapter extends RecyclerView.Adapter<ReportTicketAdapte
         Ticket ticket = list.get(position);
         holder.tvTitle.setText(ticket.getTitle() != null ? ticket.getTitle() : holder.itemView.getContext().getString(R.string.ticket_no_title));
         holder.tvRoom.setText(ticket.getRoomId() != null ? ("Room: " + ticket.getRoomId()) : "");
-        holder.tvStatus.setText(toVietnameseStatus(ticket.getStatus(), holder.itemView.getContext().getString(R.string.completed)));
+        holder.tvStatus.setText(toStatusLabel(
+            ticket.getStatus(),
+            holder.itemView.getContext().getString(R.string.report_tab_open),
+            holder.itemView.getContext().getString(R.string.report_tab_in_progress),
+            holder.itemView.getContext().getString(R.string.completed),
+            holder.itemView.getContext().getString(R.string.report_status_rejected)));
 
         GradientDrawable badge = new GradientDrawable();
         badge.setShape(GradientDrawable.RECTANGLE);
@@ -78,18 +83,18 @@ public class ReportTicketAdapter extends RecyclerView.Adapter<ReportTicketAdapte
         return list.size();
     }
 
-    private String toVietnameseStatus(String status, String doneText) {
+    private String toStatusLabel(String status, String openText, String inProgressText, String doneText, String rejectedText) {
         if (TicketStatus.OPEN.equals(status)) {
-            return "Chưa làm";
+            return openText;
         }
         if (TicketStatus.IN_PROGRESS.equals(status)) {
-            return "Đang làm";
+            return inProgressText;
         }
         if (TicketStatus.DONE.equals(status)) {
             return doneText;
         }
         if (TicketStatus.REJECTED.equals(status)) {
-            return "Cần sửa lại";
+            return rejectedText;
         }
         return status != null ? status : "";
     }

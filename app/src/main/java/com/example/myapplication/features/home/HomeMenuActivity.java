@@ -764,7 +764,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         setStylizedHomeCardLabel(tvCardInvoiceLabel, getString(R.string.home_owner_invoice_label), isOwner);
         setStylizedHomeCardLabel(tvCardExpenseLabel, getString(R.string.home_owner_expense_label), isOwner);
         setStylizedHomeCardLabel(tvCardReportLabel, getString(R.string.home_owner_report_label), isOwner);
-        setStylizedHomeCardLabel(tvCardReportManagementLabel, "Quản lí phản ánh", isOwner);
+        setStylizedHomeCardLabel(tvCardReportManagementLabel, getString(R.string.report_management_title), isOwner);
         setStylizedHomeCardLabel(tvCardTenantLabel, getString(R.string.home_owner_chat_label), isOwner);
         setStylizedHomeCardLabel(tvCardContractLabel, getString(R.string.home_owner_contract_label), isOwner);
     }

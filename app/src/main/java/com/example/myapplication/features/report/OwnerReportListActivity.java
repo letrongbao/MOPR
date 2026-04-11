@@ -50,7 +50,7 @@ public class OwnerReportListActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         ScreenUiHelper.applyTopInset(toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Quản lí phản ánh");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.report_management_title));
 
         RecyclerView rvReports = findViewById(R.id.rvReports);
         rvReports.setLayoutManager(new LinearLayoutManager(this));
@@ -60,9 +60,9 @@ public class OwnerReportListActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvEmpty);
 
         tabStatuses = findViewById(R.id.tabStatuses);
-        tabStatuses.addTab(tabStatuses.newTab().setText("Chưa làm"));
-        tabStatuses.addTab(tabStatuses.newTab().setText("Đang làm"));
-        tabStatuses.addTab(tabStatuses.newTab().setText("Đã xong"));
+        tabStatuses.addTab(tabStatuses.newTab().setText(getString(R.string.report_tab_open)));
+        tabStatuses.addTab(tabStatuses.newTab().setText(getString(R.string.report_tab_in_progress)));
+        tabStatuses.addTab(tabStatuses.newTab().setText(getString(R.string.report_tab_done)));
         tabStatuses.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -103,7 +103,7 @@ public class OwnerReportListActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     String role = doc.getString("role");
                     if (!TenantRoles.OWNER.equals(role) && !TenantRoles.STAFF.equals(role)) {
-                        Toast.makeText(this, "Bạn không có quyền quản lí phản ánh", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.owner_report_no_permission), Toast.LENGTH_SHORT).show();
                         finish();
                         return;
                     }
@@ -162,16 +162,16 @@ public class OwnerReportListActivity extends AppCompatActivity {
         TabLayout.Tab tab0 = tabStatuses.getTabAt(0);
         TabLayout.Tab tab1 = tabStatuses.getTabAt(1);
         TabLayout.Tab tab2 = tabStatuses.getTabAt(2);
-        if (tab0 != null) tab0.setText("Chưa làm (" + countOpen + ")");
-        if (tab1 != null) tab1.setText("Đang làm (" + countInProgress + ")");
-        if (tab2 != null) tab2.setText("Đã xong (" + countDone + ")");
+        if (tab0 != null) tab0.setText(getString(R.string.report_tab_count, getString(R.string.report_tab_open), countOpen));
+        if (tab1 != null) tab1.setText(getString(R.string.report_tab_count, getString(R.string.report_tab_in_progress), countInProgress));
+        if (tab2 != null) tab2.setText(getString(R.string.report_tab_count, getString(R.string.report_tab_done), countDone));
     }
 
     private void showOwnerActionDialog(Ticket ticket) {
         String msg = "RoomId: " + (ticket.getRoomId() != null ? ticket.getRoomId() : "")
-                + "\nTrạng thái: " + toVietnameseStatus(ticket.getStatus())
+            + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
-                ? "\nLý do từ chối: " + ticket.getRejectReason() : "")
+            ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")
                 + "\n\n" + (ticket.getDescription() != null ? ticket.getDescription() : "");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
@@ -180,12 +180,12 @@ public class OwnerReportListActivity extends AppCompatActivity {
                 .setPositiveButton(getString(R.string.close), null);
 
         if (TicketStatus.OPEN.equals(ticket.getStatus())) {
-            builder.setNeutralButton("Bắt đầu xử lí", (d, w) -> updateTicketStatus(ticket, TicketStatus.IN_PROGRESS, null));
-            builder.setNegativeButton("Từ chối", (d, w) -> showRejectDialog(ticket));
+            builder.setNeutralButton(getString(R.string.report_action_start_processing), (d, w) -> updateTicketStatus(ticket, TicketStatus.IN_PROGRESS, null));
+            builder.setNegativeButton(getString(R.string.report_action_reject), (d, w) -> showRejectDialog(ticket));
         } else if (TicketStatus.IN_PROGRESS.equals(ticket.getStatus())) {
-            builder.setNeutralButton("Đánh dấu xong", (d, w) -> updateTicketStatus(ticket, TicketStatus.DONE, null));
+            builder.setNeutralButton(getString(R.string.report_action_mark_done), (d, w) -> updateTicketStatus(ticket, TicketStatus.DONE, null));
         } else if (TicketStatus.REJECTED.equals(ticket.getStatus())) {
-            builder.setNeutralButton("Mở lại", (d, w) -> updateTicketStatus(ticket, TicketStatus.OPEN, null));
+            builder.setNeutralButton(getString(R.string.report_action_reopen), (d, w) -> updateTicketStatus(ticket, TicketStatus.OPEN, null));
         }
 
         builder.show();
@@ -193,18 +193,18 @@ public class OwnerReportListActivity extends AppCompatActivity {
 
     private void showRejectDialog(Ticket ticket) {
         EditText etReason = new EditText(this);
-        etReason.setHint("Nhập lí do từ chối...");
+        etReason.setHint(getString(R.string.report_reject_reason_hint));
         int pad = (int) (16 * getResources().getDisplayMetrics().density);
         etReason.setPadding(pad, pad, pad, pad);
 
         new AlertDialog.Builder(this)
-                .setTitle("Từ chối phản ánh")
+                .setTitle(getString(R.string.report_reject_title))
                 .setView(etReason)
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.confirm), (d, w) -> {
                     String reason = etReason.getText().toString().trim();
                     if (reason.isEmpty()) {
-                        Toast.makeText(this, "Vui lòng nhập lí do", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.report_reject_reason_required), Toast.LENGTH_SHORT).show();
                         return;
                     }
                     updateTicketStatus(ticket, TicketStatus.REJECTED, reason);
@@ -222,10 +222,10 @@ public class OwnerReportListActivity extends AppCompatActivity {
     }
 
     private String toVietnameseStatus(String status) {
-        if (TicketStatus.OPEN.equals(status)) return "Chưa làm";
-        if (TicketStatus.IN_PROGRESS.equals(status)) return "Đang làm";
+        if (TicketStatus.OPEN.equals(status)) return getString(R.string.report_tab_open);
+        if (TicketStatus.IN_PROGRESS.equals(status)) return getString(R.string.report_tab_in_progress);
         if (TicketStatus.DONE.equals(status)) return getString(R.string.completed);
-        if (TicketStatus.REJECTED.equals(status)) return "Cần sửa lại";
+        if (TicketStatus.REJECTED.equals(status)) return getString(R.string.report_status_rejected);
         return status != null ? status : "";
     }
 }

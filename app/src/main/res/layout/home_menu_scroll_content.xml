@@ -326,7 +326,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentBottom="true"
-                        android:text="Quản lí phản ánh"
+                        android:text="@string/report_management_title"
                         android:textColor="@color/white"
                         android:textSize="17sp"
                         android:textStyle="bold" />
@@ -419,7 +419,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Trao đổi nhanh với khách thuê trong từng phòng"
+                        android:text="@string/home_owner_chat_quick_hint"
                         android:textColor="#E8F5FF"
                         android:textSize="11sp" />
                 </LinearLayout>

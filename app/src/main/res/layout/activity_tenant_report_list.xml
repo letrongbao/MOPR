@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorSurface"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:title="Phản ánh của tôi"
+            app:title="@string/tenant_report_title"
             app:titleTextColor="?attr/colorOnSurface" />
 
         <com.google.android.material.tabs.TabLayout
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="16dp"
-            android:text="Chưa có phản ánh"
+            android:text="@string/tenant_report_empty"
             android:textColor="#888888"
             android:visibility="gone" />
 
@@ -57,7 +57,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:contentDescription="Thêm phản ánh"
+        android:contentDescription="@string/tenant_report_add"
         app:layout_anchorGravity="bottom|end"
         app:srcCompat="@drawable/ic_report" />
 

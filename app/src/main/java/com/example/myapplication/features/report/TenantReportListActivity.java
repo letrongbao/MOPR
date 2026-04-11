@@ -54,7 +54,7 @@ public class TenantReportListActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         ScreenUiHelper.applyTopInset(toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, "Phản ánh của tôi");
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_report_title));
 
         RecyclerView rvReports = findViewById(R.id.rvReports);
         rvReports.setLayoutManager(new LinearLayoutManager(this));
@@ -64,9 +64,9 @@ public class TenantReportListActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvEmpty);
 
         tabStatuses = findViewById(R.id.tabStatuses);
-        tabStatuses.addTab(tabStatuses.newTab().setText("Chưa làm"));
-        tabStatuses.addTab(tabStatuses.newTab().setText("Đang làm"));
-        tabStatuses.addTab(tabStatuses.newTab().setText("Đã xong"));
+        tabStatuses.addTab(tabStatuses.newTab().setText(getString(R.string.report_tab_open)));
+        tabStatuses.addTab(tabStatuses.newTab().setText(getString(R.string.report_tab_in_progress)));
+        tabStatuses.addTab(tabStatuses.newTab().setText(getString(R.string.report_tab_done)));
         tabStatuses.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -172,9 +172,9 @@ public class TenantReportListActivity extends AppCompatActivity {
         TabLayout.Tab tab0 = tabStatuses.getTabAt(0);
         TabLayout.Tab tab1 = tabStatuses.getTabAt(1);
         TabLayout.Tab tab2 = tabStatuses.getTabAt(2);
-        if (tab0 != null) tab0.setText("Chưa làm (" + countOpen + ")");
-        if (tab1 != null) tab1.setText("Đang làm (" + countInProgress + ")");
-        if (tab2 != null) tab2.setText("Đã xong (" + countDone + ")");
+        if (tab0 != null) tab0.setText(getString(R.string.report_tab_count, getString(R.string.report_tab_open), countOpen));
+        if (tab1 != null) tab1.setText(getString(R.string.report_tab_count, getString(R.string.report_tab_in_progress), countInProgress));
+        if (tab2 != null) tab2.setText(getString(R.string.report_tab_count, getString(R.string.report_tab_done), countDone));
     }
 
     private void showCreateReportDialog() {
@@ -193,7 +193,7 @@ public class TenantReportListActivity extends AppCompatActivity {
         etRoomId.setVisibility(View.GONE);
 
         new AlertDialog.Builder(this)
-                .setTitle("Tạo phản ánh mới")
+                .setTitle(getString(R.string.tenant_report_create_title))
                 .setView(dialogView)
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.send), (d, w) -> {
@@ -213,7 +213,7 @@ public class TenantReportListActivity extends AppCompatActivity {
                     ticket.setCreatedAt(Timestamp.now());
 
                     repository.add(ticket,
-                            () -> runOnUiThread(() -> Toast.makeText(this, "Đã gửi phản ánh", Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_sent), Toast.LENGTH_SHORT).show()),
                             () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_send_failed), Toast.LENGTH_SHORT).show()));
                 })
                 .show();
@@ -221,9 +221,9 @@ public class TenantReportListActivity extends AppCompatActivity {
 
     private void showTicketDetails(Ticket ticket) {
         String msg = "RoomId: " + (ticket.getRoomId() != null ? ticket.getRoomId() : "")
-                + "\nTrạng thái: " + toVietnameseStatus(ticket.getStatus())
+            + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
-                ? "\nLý do từ chối: " + ticket.getRejectReason() : "")
+            ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")
                 + "\n\n" + (ticket.getDescription() != null ? ticket.getDescription() : "");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
@@ -232,7 +232,7 @@ public class TenantReportListActivity extends AppCompatActivity {
                 .setPositiveButton(getString(R.string.close), null);
 
         if (TicketStatus.REJECTED.equals(ticket.getStatus())) {
-            builder.setNeutralButton("Sửa và gửi lại", (d, w) -> showResubmitDialog(ticket));
+            builder.setNeutralButton(getString(R.string.report_action_resubmit), (d, w) -> showResubmitDialog(ticket));
         }
 
         builder.show();
@@ -251,7 +251,7 @@ public class TenantReportListActivity extends AppCompatActivity {
         etDesc.setText(ticket.getDescription());
 
         new AlertDialog.Builder(this)
-                .setTitle("Sửa phản ánh")
+                .setTitle(getString(R.string.report_resubmit_title))
                 .setView(dialogView)
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.update), (d, w) -> {
@@ -267,17 +267,17 @@ public class TenantReportListActivity extends AppCompatActivity {
                     updates.put("status", TicketStatus.OPEN);
                     updates.put("rejectReason", null);
                     repository.updateFields(ticket.getId(), updates,
-                            () -> runOnUiThread(() -> Toast.makeText(this, "Đã gửi lại phản ánh", Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.report_resubmit_success), Toast.LENGTH_SHORT).show()),
                             () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT).show()));
                 })
                 .show();
     }
 
     private String toVietnameseStatus(String status) {
-        if (TicketStatus.OPEN.equals(status)) return "Chưa làm";
-        if (TicketStatus.IN_PROGRESS.equals(status)) return "Đang làm";
+        if (TicketStatus.OPEN.equals(status)) return getString(R.string.report_tab_open);
+        if (TicketStatus.IN_PROGRESS.equals(status)) return getString(R.string.report_tab_in_progress);
         if (TicketStatus.DONE.equals(status)) return getString(R.string.completed);
-        if (TicketStatus.REJECTED.equals(status)) return "Cần sửa lại";
+        if (TicketStatus.REJECTED.equals(status)) return getString(R.string.report_status_rejected);
         return status != null ? status : "";
     }
 }

@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorSurface"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:title="Quản lí phản ánh"
+            app:title="@string/report_management_title"
             app:titleTextColor="?attr/colorOnSurface" />
 
         <com.google.android.material.tabs.TabLayout
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="16dp"
-            android:text="Không có phản ánh trong trạng thái này"
+            android:text="@string/owner_report_empty"
             android:textColor="#888888"
             android:visibility="gone" />
 
