@@ -49,7 +49,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         NotificationItem item = items.get(position);
-        holder.title.setText(item.title != null ? item.title : "");
+        String titlePrefix = item.isSystem ? "[Hệ thống] " : "";
+        holder.title.setText(titlePrefix + (item.title != null ? item.title : ""));
         holder.body.setText(item.body != null ? item.body : "");
 
         String time = "";
@@ -57,11 +58,11 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             Date date = item.createdAt.toDate();
             time = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(date);
         }
-        holder.meta.setText(time);
+        holder.meta.setText(item.isSystem ? (time + " • Hệ thống") : time);
 
-        int style = item.isRead ? Typeface.NORMAL : Typeface.BOLD;
+        int style = (item.isRead && !item.isSystem) ? Typeface.NORMAL : Typeface.BOLD;
         holder.title.setTypeface(holder.title.getTypeface(), style);
-        holder.itemView.setAlpha(item.isRead ? 0.72f : 1f);
+        holder.itemView.setAlpha((item.isRead && !item.isSystem) ? 0.72f : 1f);
         holder.itemView.setOnClickListener(v -> clickListener.onClick(item));
     }
 

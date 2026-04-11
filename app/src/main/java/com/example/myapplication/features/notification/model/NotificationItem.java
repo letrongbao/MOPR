@@ -8,6 +8,7 @@ public class NotificationItem {
     public String body;
     public String conversationId;
     public boolean isRead;
+    public boolean isSystem;
     public Timestamp createdAt;
 
     public NotificationItem() {
