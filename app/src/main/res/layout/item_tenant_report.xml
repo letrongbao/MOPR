@@ -26,23 +26,58 @@
             android:paddingTop="14dp"
             android:paddingBottom="10dp">
 
-            <TextView
-                android:id="@+id/tvReportTitle"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:text="Tiêu đề vấn đề"
-                android:textColor="#1A1A2E"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvReportTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="Tiêu đề vấn đề"
+                    android:textColor="#1A1A2E"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <!-- Hộp lý do từ chối (chỉ hiện khi REJECTED) -->
+                <LinearLayout
+                    android:id="@+id/rowRejectReason"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="#FFF1F0"
+                    android:padding="8dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚠️ Chủ nhà từ chối - Lý do:"
+                        android:textColor="#C0392B"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvRejectReason"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="#C0392B"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvPriority"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:layout_gravity="top"
                 android:background="@drawable/bg_priority_badge"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="3dp"
@@ -171,6 +206,7 @@
 
         <!-- Bottom buttons: Liên hệ + Hủy bỏ -->
         <LinearLayout
+            android:id="@+id/layoutTenantButtons"
             android:layout_width="match_parent"
             android:layout_height="44dp"
             android:orientation="horizontal">
@@ -206,6 +242,30 @@
                 android:gravity="center"
                 android:text="Hủy bỏ"
                 android:textColor="#E74C3C"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Nút Sửa lại (chỉ hiện khi REJECTED) -->
+        <LinearLayout
+            android:id="@+id/layoutResubmitButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" />
+
+            <TextView
+                android:id="@+id/btnResubmit"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:text="🔄  Sửa lại và gửi lại"
+                android:textColor="#2980B9"
                 android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>

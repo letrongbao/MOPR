@@ -67,6 +67,7 @@ public class TenantCreateReportActivity extends AppCompatActivity {
     // ---- Data ----
     private String roomId;
     private String tenantId;
+    private String editDocId = null;  // null = tạo mới, không null = sửa lại
 
     private FirebaseFirestore db;
     private FirebaseAuth      mAuth;
@@ -117,6 +118,7 @@ public class TenantCreateReportActivity extends AppCompatActivity {
 
         roomId   = getIntent().getStringExtra(TenantReportListActivity.EXTRA_ROOM_ID);
         tenantId = getIntent().getStringExtra(TenantReportListActivity.EXTRA_TENANT_ID);
+        editDocId = getIntent().getStringExtra("EDIT_DOC_ID"); // null nếu đang tạo mới
 
         // Fallback tenantId từ Session nếu Intent không truyền
         if (tenantId == null || tenantId.isEmpty()) {
@@ -125,6 +127,12 @@ public class TenantCreateReportActivity extends AppCompatActivity {
 
         bindViews();
         setupListeners();
+
+        // Nếu đang sửa lại: đổi tiêu đề và load dữ liệu cũ
+        if (editDocId != null) {
+            setScreenTitleEditMode();
+            loadExistingReport(editDocId);
+        }
     }
 
     // ================================================================
@@ -163,8 +171,60 @@ public class TenantCreateReportActivity extends AppCompatActivity {
         // Thêm từ thư viện
         btnGallery.setOnClickListener(v -> openGallery());
 
-        // Nút Thêm phản ánh
+        // Nút Thêm phản ánh / Lưu cập nhật
         btnSubmit.setOnClickListener(v -> submitReport());
+    }
+
+    // ================================================================
+    //  Đổi tiêu đề sang Edit mode
+    // ================================================================
+    private void setScreenTitleEditMode() {
+        // Cập nhật Toolbar title nếu có
+        TextView tvTitle = findViewById(R.id.tvScreenTitle);
+        if (tvTitle != null) tvTitle.setText("Sửa lại phản ánh");
+
+        // Đổi label nút gửi thành "Lưu thay đổi"
+        btnSubmit.setText("Lưu thay đổi và gửi lại");
+    }
+
+    // ================================================================
+    //  Load dữ liệu cũ từ Firestore
+    // ================================================================
+    private void loadExistingReport(String docId) {
+        btnSubmit.setEnabled(false);
+        btnSubmit.setText("Đang tải...");
+
+        db.collection("issues").document(docId).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        // Điền dữ liệu vào các ô nhập
+                        String oldTitle = snapshot.getString("title");
+                        String oldDesc  = snapshot.getString("description");
+                        String oldRoomId = snapshot.getString("roomId");
+
+                        if (oldTitle != null) etTitle.setText(oldTitle);
+                        if (oldDesc != null)  etDescription.setText(oldDesc);
+                        if (oldRoomId != null && (roomId == null || roomId.isEmpty())) {
+                            roomId = oldRoomId; // Dùng roomId từ document nếu Intent không có
+                        }
+
+                        // Load lại lịch hẹn nếu có
+                        com.google.firebase.Timestamp appt = snapshot.getTimestamp("appointmentTime");
+                        if (appt != null) {
+                            selectedCalendar = Calendar.getInstance();
+                            selectedCalendar.setTime(appt.toDate());
+                            tvSelectedDate.setText(DISPLAY_FORMAT.format(appt.toDate()));
+                            tvSelectedDate.setTextColor(getResources().getColor(android.R.color.black));
+                        }
+                    }
+                    btnSubmit.setEnabled(true);
+                    btnSubmit.setText("Lưu thay đổi và gửi lại");
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Không tải được dữ liệu!", Toast.LENGTH_SHORT).show();
+                    btnSubmit.setEnabled(true);
+                    btnSubmit.setText("Lưu thay đổi và gửi lại");
+                });
     }
 
     // ================================================================
@@ -357,58 +417,81 @@ public class TenantCreateReportActivity extends AppCompatActivity {
             etDescription.requestFocus();
             return;
         }
-
         if (tenantId == null || tenantId.isEmpty()) {
             Toast.makeText(this, "Không xác định được tài khoản!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Chuẩn bị dữ liệu
-        Timestamp now             = Timestamp.now();
+        // Chuẩn bị dữ liệu chung
         Timestamp appointmentTime = selectedCalendar != null
                 ? new Timestamp(selectedCalendar.getTime())
                 : null;
-
-        FirebaseUser user     = mAuth.getCurrentUser();
-        String       uid      = (user != null) ? user.getUid()   : "";
-        String       userName = (user != null && user.getDisplayName() != null)
-                                ? user.getDisplayName() : "Khách thuê";
-
-        Map<String, Object> data = new HashMap<>();
-        // Thông tin cốt lõi
-        data.put("title",           title);
-        data.put("description",     description);
-        data.put("status",          "PENDING");        // Luôn mặc định Chưa làm
-        data.put("priority",        "Trung bình");     // Độ ưu tiên mặc định
-        data.put("createdAt",       now);
-        data.put("appointmentTime", appointmentTime);
-        data.put("images",          Collections.emptyList());
-        // Người tạo (khách thuê)
-        data.put("tenantId",        tenantId != null ? tenantId : "");
-        data.put("createdBy",       uid);
-        data.put("createdByName",   userName);
-        // Phòng
-        data.put("roomId",          roomId != null ? roomId : "");
-        // Thông tin chủ nhà (hardcode theo yêu cầu)
-        data.put("ownerId",         "iiJcZrGorjRW5adzNMW79BlUKtj2");
-        data.put("ownerName",       "Huy");
 
         // Hiện loading
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Đang gửi...");
 
-        // Lưu vào collection gốc "issues" thay vì sub-collection của tenant
-        db.collection("issues")
-                .add(data)
-                .addOnSuccessListener(docRef -> {
-                    Toast.makeText(this, "Đã gửi phản ánh thành công!", Toast.LENGTH_SHORT).show();
-                    setResult(RESULT_OK); // Báo cho ReportListActivity biết để refresh
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    btnSubmit.setEnabled(true);
-                    btnSubmit.setText("Thêm phản ánh");
-                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+        if (editDocId != null) {
+            // ================================================================
+            //  CHỌ ĐỘ SỮA LẠI: chỉ cập nhật các trường đã sửa
+            // ================================================================
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("title",           title);
+            updates.put("description",     description);
+            updates.put("appointmentTime", appointmentTime);
+            updates.put("status",          "PENDING");   // Reset về PENDING để chủ trọ duyệt lại
+            updates.put("rejectReason",    null);        // Xóa lý do từ chối cũ
+            updates.put("updatedAt",       Timestamp.now());
+
+            db.collection("issues").document(editDocId)
+                    .update(updates)
+                    .addOnSuccessListener(unused -> {
+                        Toast.makeText(this, "Đã cập nhật và gửi lại phản ánh!", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Lưu thay đổi và gửi lại");
+                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        } else {
+            // ================================================================
+            //  CHỌ ĐỘ TẠO MỚI: giữ nguyên logic cũ
+            // ================================================================
+            Timestamp now = Timestamp.now();
+            FirebaseUser user     = mAuth.getCurrentUser();
+            String       uid      = (user != null) ? user.getUid()   : "";
+            String       userName = (user != null && user.getDisplayName() != null)
+                                    ? user.getDisplayName() : "Khách thuê";
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("title",           title);
+            data.put("description",     description);
+            data.put("status",          "PENDING");
+            data.put("priority",        "Trung bình");
+            data.put("createdAt",       now);
+            data.put("appointmentTime", appointmentTime);
+            data.put("images",          Collections.emptyList());
+            data.put("tenantId",        tenantId != null ? tenantId : "");
+            data.put("createdBy",       uid);
+            data.put("createdByName",   userName);
+            data.put("roomId",          roomId != null ? roomId : "");
+            data.put("ownerId",         "iiJcZrGorjRW5adzNMW79BlUKtj2");
+            data.put("ownerName",       "Huy");
+
+            db.collection("issues")
+                    .add(data)
+                    .addOnSuccessListener(docRef -> {
+                        Toast.makeText(this, "Đã gửi phản ánh thành công!", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Thêm phản ánh");
+                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        }
     }
 }

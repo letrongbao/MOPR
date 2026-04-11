@@ -30,7 +30,8 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
     //  Interface callback để báo lên Activity reload danh sách
     // ================================================================
     public interface OnReportActionListener {
-        void onReportCancelled(); // Gọi khi hủy thành công → Activity tải lại
+        void onReportCancelled();
+        void onResubmitReport(String docId); // Mở lại form chỉnh sửa phản ánh bị từ chối
     }
 
     // ================================================================
@@ -71,26 +72,36 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
     public void onBindViewHolder(@NonNull ReportViewHolder holder, int position) {
         DocumentSnapshot doc = reportList.get(position);
 
-        // ── Đọc các trường từ Firestore ──────────────────────────────
+        // ── Đọc các trường từ Firestore (An Toàn) ────────────────────────
         String title           = doc.getString("title");
         String status          = doc.getString("status");
         String priority        = doc.getString("priority");
-        Timestamp createdAt    = doc.getTimestamp("createdAt");
-        Timestamp appointment  = doc.getTimestamp("appointmentTime");
+
+        java.util.Date createdAtDate = parseDateSafely(doc, "createdAt");
+        java.util.Date appointmentDate = parseDateSafely(doc, "appointmentTime");
 
         // ── Title ────────────────────────────────────────────────────
         holder.tvReportTitle.setText(title != null ? title : "Không có tiêu đề");
 
         // ── Ngày gửi ─────────────────────────────────────────────────
         holder.tvCreatedAt.setText(
-                createdAt != null ? DATE_FORMAT.format(createdAt.toDate()) : "--/--/----");
+                createdAtDate != null ? DATE_FORMAT.format(createdAtDate) : "--/--/----");
 
         // ── Lịch hẹn (chỉ hiện khi có giá trị) ──────────────────────
-        if (appointment != null) {
+        if (appointmentDate != null) {
             holder.rowAppointment.setVisibility(View.VISIBLE);
-            holder.tvAppointment.setText(DATE_FORMAT.format(appointment.toDate()));
+            holder.tvAppointment.setText(DATE_FORMAT.format(appointmentDate));
         } else {
             holder.rowAppointment.setVisibility(View.GONE);
+        }
+
+        // ── Lý do từ chối (chỉ hiện khi REJECTED) ────────────────────
+        String rejectReason = doc.getString("rejectReason");
+        if ("REJECTED".equals(status) && rejectReason != null && !rejectReason.isEmpty()) {
+            holder.rowRejectReason.setVisibility(View.VISIBLE);
+            holder.tvRejectReason.setText(rejectReason);
+        } else {
+            holder.rowRejectReason.setVisibility(View.GONE);
         }
 
         // ── Priority badge ────────────────────────────────────────────
@@ -107,6 +118,11 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
         // ── Nút Hủy bỏ ───────────────────────────────────────────────
         holder.btnCancel.setOnClickListener(v ->
                 showCancelConfirmDialog(doc.getId()));
+
+        // ── Nút Sửa lại (chỉ có hiệu lực khi REJECTED) ───────────────
+        holder.btnResubmit.setOnClickListener(v -> {
+            if (listener != null) listener.onResubmitReport(doc.getId());
+        });
     }
 
     @Override
@@ -161,8 +177,17 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
                 holder.tvStatus.setTextColor(Color.parseColor("#27AE60"));
                 bg.setColor(Color.parseColor("#D5F5E3"));
                 bg.setStroke(1, Color.parseColor("#27AE60"));
-                // Ẩn nút Hủy khi đã xong
                 holder.btnCancel.setVisibility(View.GONE);
+                holder.layoutResubmitButton.setVisibility(View.GONE);
+                break;
+
+            case "REJECTED":
+                holder.tvStatus.setText("Cần sửa lại");
+                holder.tvStatus.setTextColor(Color.parseColor("#C0392B"));
+                bg.setColor(Color.parseColor("#FDEDEC"));
+                bg.setStroke(1, Color.parseColor("#C0392B"));
+                holder.btnCancel.setVisibility(View.GONE);
+                holder.layoutResubmitButton.setVisibility(View.VISIBLE); // Hiện nút Sửa lại
                 break;
 
             case "CANCELLED":
@@ -171,8 +196,8 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
                 holder.tvStatus.setTextColor(Color.parseColor("#7F8C8D"));
                 bg.setColor(Color.parseColor("#F2F3F4"));
                 bg.setStroke(1, Color.parseColor("#BDC3C7"));
-                // Ẩn nút Hủy khi đã hủy rồi
                 holder.btnCancel.setVisibility(View.GONE);
+                holder.layoutResubmitButton.setVisibility(View.GONE);
                 break;
 
             default:
@@ -181,6 +206,7 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
                 bg.setColor(Color.parseColor("#F2F3F4"));
                 bg.setStroke(1, Color.parseColor("#BDC3C7"));
                 holder.btnCancel.setVisibility(View.VISIBLE);
+                holder.layoutResubmitButton.setVisibility(View.GONE);
         }
     }
 
@@ -221,23 +247,58 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
     }
 
     // ================================================================
+    //  Hàm đọc Date an toàn chống Crash (ClassCastException)
+    // ================================================================
+    private java.util.Date parseDateSafely(DocumentSnapshot doc, String field) {
+        try {
+            Object obj = doc.get(field);
+            if (obj == null) return null;
+
+            if (obj instanceof Timestamp) {
+                return ((Timestamp) obj).toDate();
+            } else if (obj instanceof java.util.Date) {
+                return (java.util.Date) obj;
+            } else if (obj instanceof Long) {
+                return new java.util.Date((Long) obj);
+            } else if (obj instanceof String) {
+                String str = (String) obj;
+                if (!str.isEmpty()) {
+                    String[] patterns = {"dd/MM/yyyy", "yyyy-MM-dd", "MM/dd/yyyy", "yyyy-MM-dd'T'HH:mm:ss"};
+                    for (String pattern : patterns) {
+                        try {
+                            return new java.text.SimpleDateFormat(pattern, Locale.getDefault()).parse(str);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("TenantReportAdapter", "Lỗi parse ngày tháng field: " + field, e);
+        }
+        return null;
+    }
+
+    // ================================================================
     //  ViewHolder
     // ================================================================
     public static class ReportViewHolder extends RecyclerView.ViewHolder {
         TextView     tvReportTitle, tvPriority, tvCreatedAt, tvAppointment, tvStatus;
-        TextView     btnContact, btnCancel;
-        LinearLayout rowAppointment;
+        TextView     tvRejectReason, btnContact, btnCancel, btnResubmit;
+        LinearLayout rowAppointment, rowRejectReason, layoutResubmitButton;
 
         public ReportViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvReportTitle  = itemView.findViewById(R.id.tvReportTitle);
-            tvPriority     = itemView.findViewById(R.id.tvPriority);
-            tvCreatedAt    = itemView.findViewById(R.id.tvCreatedAt);
-            tvAppointment  = itemView.findViewById(R.id.tvAppointment);
-            tvStatus       = itemView.findViewById(R.id.tvStatus);
-            btnContact     = itemView.findViewById(R.id.btnContact);
-            btnCancel      = itemView.findViewById(R.id.btnCancel);
-            rowAppointment = itemView.findViewById(R.id.rowAppointment);
+            tvReportTitle        = itemView.findViewById(R.id.tvReportTitle);
+            tvPriority           = itemView.findViewById(R.id.tvPriority);
+            tvCreatedAt          = itemView.findViewById(R.id.tvCreatedAt);
+            tvAppointment        = itemView.findViewById(R.id.tvAppointment);
+            tvStatus             = itemView.findViewById(R.id.tvStatus);
+            tvRejectReason       = itemView.findViewById(R.id.tvRejectReason);
+            btnContact           = itemView.findViewById(R.id.btnContact);
+            btnCancel            = itemView.findViewById(R.id.btnCancel);
+            btnResubmit          = itemView.findViewById(R.id.btnResubmit);
+            rowAppointment       = itemView.findViewById(R.id.rowAppointment);
+            rowRejectReason      = itemView.findViewById(R.id.rowRejectReason);
+            layoutResubmitButton = itemView.findViewById(R.id.layoutResubmitButton);
         }
     }
 }

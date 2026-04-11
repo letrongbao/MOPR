@@ -116,6 +116,15 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
             holder.rowAppointment.setVisibility(View.GONE);
         }
 
+        // ── Lý do từ chối (hiện nếu REJECTED) ─────────────────────────
+        String rejectReason = doc.getString("rejectReason");
+        if ("REJECTED".equals(status) && rejectReason != null && !rejectReason.isEmpty()) {
+            holder.rowRejectReason.setVisibility(View.VISIBLE);
+            holder.tvRejectReason.setText(rejectReason);
+        } else {
+            holder.rowRejectReason.setVisibility(View.GONE);
+        }
+
         // ── Priority badge ────────────────────────────────────────────
         holder.tvPriority.setText(priority != null ? priority : "Bình thường");
         applyPriorityColor(holder.tvPriority, priority);
@@ -195,6 +204,56 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
                     confirmSchedule(docId, alarmId, currentTime); // Đặt alarm mới
                 })
                 .show();
+    }
+
+    // ================================================================
+    //  Dialog nhập lý do từ chối
+    // ================================================================
+    private void showRejectDialog(String docId) {
+        android.widget.EditText etReason = new android.widget.EditText(context);
+        etReason.setHint("Nhập lý do từ chối...");
+        etReason.setSingleLine(false);
+        etReason.setMinLines(2);
+        etReason.setMaxLines(4);
+        int pad = (int)(16 * context.getResources().getDisplayMetrics().density);
+        etReason.setPadding(pad, pad / 2, pad, pad / 2);
+
+        new AlertDialog.Builder(context)
+                .setTitle("Cần xác nhận lại")
+                .setMessage("Nhập lý do để khách thuê biết và sửa lại phản ánh:")
+                .setView(etReason)
+                .setNegativeButton("Hủy", (d, w) -> d.dismiss())
+                .setPositiveButton("Đồng ý", (d, w) -> {
+                    String reason = etReason.getText().toString().trim();
+                    if (reason.isEmpty()) {
+                        Toast.makeText(context, "Vui lòng nhập lý do!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    d.dismiss();
+                    rejectReport(docId, reason);
+                })
+                .show();
+    }
+
+    // ================================================================
+    //  Cập nhật Firestore: status = REJECTED + rejectReason
+    // ================================================================
+    private void rejectReport(String docId, String reason) {
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("status", "REJECTED");
+        updates.put("rejectReason", reason);
+
+        db.collection("issues").document(docId)
+                .update(updates)
+                .addOnSuccessListener(unused -> {
+                    Log.d("OwnerAdapter", "Từ chối phản ánh: " + docId);
+                    Toast.makeText(context, "Đã gửi yêu cầu xác nhận lại!", Toast.LENGTH_SHORT).show();
+                    if (listener != null) listener.onStatusChanged();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("OwnerAdapter", "Lỗi từ chối: " + e.getMessage(), e);
+                    Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     // ================================================================
@@ -333,6 +392,14 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
                 // Ẩn hết các nút (mặc định đã gone)
                 break;
 
+            case "REJECTED":
+                holder.tvStatus.setText("Từ chối");
+                holder.tvStatus.setTextColor(Color.parseColor("#C0392B"));
+                bg.setColor(Color.parseColor("#FDEDEC"));
+                bg.setStroke(1, Color.parseColor("#C0392B"));
+                // Ẩn hết các nút (mặc định đã gone)
+                break;
+
             default:
                 holder.tvStatus.setText(status != null ? status : "—");
                 holder.tvStatus.setTextColor(Color.parseColor("#7F8C8D"));
@@ -346,9 +413,9 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
     // ================================================================
     public static class OwnerReportViewHolder extends RecyclerView.ViewHolder {
         TextView     tvReportTitle, tvPriority, tvTenantName, tvRoomNumber;
-        TextView     tvCreatedAt, tvAppointment, tvStatus;
-        TextView     btnConfirmSchedule, btnProcessNow, btnComplete;
-        LinearLayout rowAppointment, layoutActionButtons, layoutCompleteButton;
+        TextView     tvCreatedAt, tvAppointment, tvStatus, tvRejectReason;
+        TextView     btnConfirmSchedule, btnProcessNow, btnComplete, btnReject;
+        LinearLayout rowAppointment, layoutActionButtons, layoutCompleteButton, rowRejectReason;
 
         public OwnerReportViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -359,10 +426,13 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
             tvCreatedAt         = itemView.findViewById(R.id.tvCreatedAt);
             tvAppointment       = itemView.findViewById(R.id.tvAppointment);
             tvStatus            = itemView.findViewById(R.id.tvStatus);
+            tvRejectReason      = itemView.findViewById(R.id.tvRejectReason);
             btnConfirmSchedule  = itemView.findViewById(R.id.btnConfirmSchedule);
             btnProcessNow       = itemView.findViewById(R.id.btnProcessNow);
             btnComplete         = itemView.findViewById(R.id.btnComplete);
+            btnReject           = itemView.findViewById(R.id.btnReject);
             rowAppointment      = itemView.findViewById(R.id.rowAppointment);
+            rowRejectReason     = itemView.findViewById(R.id.rowRejectReason);
             layoutActionButtons = itemView.findViewById(R.id.layoutActionButtons);
             layoutCompleteButton = itemView.findViewById(R.id.layoutCompleteButton);
         }

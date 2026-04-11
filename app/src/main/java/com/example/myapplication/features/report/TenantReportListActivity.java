@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class TenantReportListActivity extends AppCompatActivity
@@ -31,9 +32,9 @@ public class TenantReportListActivity extends AppCompatActivity
     public static final String EXTRA_TENANT_ID = "TENANT_ID";
 
     // ---- Tab status constants ----
-    private static final String STATUS_PENDING    = "PENDING";    // Chưa làm
+    private static final String STATUS_PENDING     = "PENDING";      // Chưa làm
     private static final String STATUS_IN_PROGRESS = "IN_PROGRESS"; // Đang làm
-    private static final String STATUS_DONE       = "DONE";       // Đã xong
+    private static final String STATUS_DONE        = "DONE";         // Đã xong (+ REJECTED)
 
     // ---- Views ----
     private RecyclerView   rvReports;
@@ -203,27 +204,45 @@ public class TenantReportListActivity extends AppCompatActivity
         Log.d("ReportList", "loadReports() - tenantId=[" + tenantId + "] status=[" + status + "]");
         showLoading();
 
-        // Bỏ orderBy để tránh yêu cầu Composite Index khi chưa tạo trên Firestore Console
-        // Sau khi tạo Index, có thể thêm lại: .orderBy("createdAt", Query.Direction.DESCENDING)
-        db.collection("issues")
-                .whereEqualTo("tenantId", tenantId)
-                .whereEqualTo("status", status)
-                .get()
-                .addOnSuccessListener(qs -> {
-                    hideLoading();
-                    Log.d("ReportList", "Query thành công. Số tài liệu = " + qs.size());
-                    List<DocumentSnapshot> docs = qs.getDocuments();
-                    if (docs.isEmpty()) {
+        // Tab "Đã xong" hiển thị cả DONE và REJECTED
+        if (STATUS_DONE.equals(status)) {
+            db.collection("issues")
+                    .whereEqualTo("tenantId", tenantId)
+                    .whereIn("status", Arrays.asList("DONE", "REJECTED"))
+                    .get()
+                    .addOnSuccessListener(qs -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        hideLoading();
+                        Log.d("ReportList", "Query [DONE+REJECTED] = " + qs.size());
+                        List<DocumentSnapshot> docs = qs.getDocuments();
+                        if (docs.isEmpty()) showEmpty(); else showList(docs);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        hideLoading();
+                        Log.e("ReportList", "Query thất bại: " + e.getMessage(), e);
                         showEmpty();
-                    } else {
-                        showList(docs);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    hideLoading();
-                    Log.e("ReportList", "Query thất bại: " + e.getMessage(), e);
-                    showEmpty();
-                });
+                    });
+        } else {
+            // Bỏ orderBy để tránh yêu cầu Composite Index
+            db.collection("issues")
+                    .whereEqualTo("tenantId", tenantId)
+                    .whereEqualTo("status", status)
+                    .get()
+                    .addOnSuccessListener(qs -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        hideLoading();
+                        Log.d("ReportList", "Query thành công. Số tài liệu = " + qs.size());
+                        List<DocumentSnapshot> docs = qs.getDocuments();
+                        if (docs.isEmpty()) showEmpty(); else showList(docs);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        hideLoading();
+                        Log.e("ReportList", "Query thất bại: " + e.getMessage(), e);
+                        showEmpty();
+                    });
+        }
     }
 
     // ================================================================
@@ -232,29 +251,32 @@ public class TenantReportListActivity extends AppCompatActivity
     private void fetchAllCounts() {
         if (tenantId == null || tenantId.isEmpty()) return;
 
-        // Dùng final local variable để lambda capture an toàn
-        final String[] statuses = {STATUS_PENDING, STATUS_IN_PROGRESS, STATUS_DONE};
-        for (final String s : statuses) {
-            db.collection("issues")
-                    .whereEqualTo("tenantId", tenantId)
-                    .whereEqualTo("status", s)
-                    .get()
-                    .addOnSuccessListener(qs -> {
-                        int count = qs.size();
-                        if (STATUS_PENDING.equals(s)) {
-                            countPending = count;
-                            badgeChuaLam.setText(String.valueOf(count));
-                        } else if (STATUS_IN_PROGRESS.equals(s)) {
-                            countInProgress = count;
-                            badgeDangLam.setText(String.valueOf(count));
-                        } else if (STATUS_DONE.equals(s)) {
-                            countDone = count;
-                            badgeDaXong.setText(String.valueOf(count));
-                        }
-                    })
-                    .addOnFailureListener(e ->
-                            Log.e("ReportList", "fetchAllCounts lỗi [" + s + "]: " + e.getMessage()));
-        }
+        // Badge "Chưa làm" = PENDING
+        db.collection("issues").whereEqualTo("tenantId", tenantId)
+                .whereEqualTo("status", STATUS_PENDING).get()
+                .addOnSuccessListener(qs -> {
+                    countPending = qs.size();
+                    badgeChuaLam.setText(String.valueOf(countPending));
+                })
+                .addOnFailureListener(e -> Log.e("ReportList", "Badge PENDING lỗi: " + e.getMessage()));
+
+        // Badge "Đang làm" = IN_PROGRESS
+        db.collection("issues").whereEqualTo("tenantId", tenantId)
+                .whereEqualTo("status", STATUS_IN_PROGRESS).get()
+                .addOnSuccessListener(qs -> {
+                    countInProgress = qs.size();
+                    badgeDangLam.setText(String.valueOf(countInProgress));
+                })
+                .addOnFailureListener(e -> Log.e("ReportList", "Badge IN_PROGRESS lỗi: " + e.getMessage()));
+
+        // Badge "Đã xong" = DONE + REJECTED
+        db.collection("issues").whereEqualTo("tenantId", tenantId)
+                .whereIn("status", Arrays.asList("DONE", "REJECTED")).get()
+                .addOnSuccessListener(qs -> {
+                    countDone = qs.size();
+                    badgeDaXong.setText(String.valueOf(countDone));
+                })
+                .addOnFailureListener(e -> Log.e("ReportList", "Badge DONE lỗi: " + e.getMessage()));
     }
 
     // ================================================================
@@ -294,9 +316,19 @@ public class TenantReportListActivity extends AppCompatActivity
     }
 
     @Override
+    public void onResubmitReport(String docId) {
+        // Mở TenantCreateReportActivity nhưng truyền thêm docId để chỉnh sửa
+        Log.d("ReportList", "onResubmitReport: docId=" + docId);
+        Intent intent = new Intent(this, TenantCreateReportActivity.class);
+        intent.putExtra(EXTRA_ROOM_ID,   roomId);
+        intent.putExtra(EXTRA_TENANT_ID, tenantId);
+        intent.putExtra("EDIT_DOC_ID",   docId);   // Flag để Activity biết đang edit
+        createReportLauncher.launch(intent);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        // Refresh dữ liệu khi quay lại từ màn hình tạo báo cáo
         fetchAllCounts();
         loadReports(currentStatus);
     }

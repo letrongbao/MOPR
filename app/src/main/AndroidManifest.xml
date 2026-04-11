@@ -40,6 +40,7 @@
         <activity android:name=".features.home.TenantMenuActivity" />
         <activity android:name=".features.home.TenantRoomDetailActivity" />
         <activity android:name=".features.home.ConfirmMeterActivity" />
+        <activity android:name=".features.home.NotificationActivity" />
 
         <!-- Property -->
         <activity android:name=".features.property.house.HouseActivity" />

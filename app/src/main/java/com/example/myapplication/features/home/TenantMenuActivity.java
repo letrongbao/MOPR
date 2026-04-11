@@ -211,8 +211,11 @@ public class TenantMenuActivity extends AppCompatActivity {
                 reportIntent.putExtra(TenantReportListActivity.EXTRA_TENANT_ID, tenantId);
                 startActivity(reportIntent);
         });
-        cardNotification.setOnClickListener(v ->
-                Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
+        cardNotification.setOnClickListener(v -> {
+            Intent notifIntent = new Intent(this, NotificationActivity.class);
+            notifIntent.putExtra("TENANT_ID", tenantId);
+            startActivity(notifIntent);
+        });
 
         // Nút Chốt đồng hồ → mở ConfirmMeterActivity
         if (btnConfirmMeter != null) {

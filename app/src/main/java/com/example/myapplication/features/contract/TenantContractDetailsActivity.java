@@ -116,22 +116,20 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
           .get()
           .addOnSuccessListener(qs -> {
               if (qs != null && !qs.isEmpty()) {
-                  Tenant activeContract = null;
+                  com.google.firebase.firestore.DocumentSnapshot activeContractDoc = null;
                   for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
                       String status = doc.getString("contractStatus");
                       if ("ACTIVE".equalsIgnoreCase(status)) {
-                          activeContract = doc.toObject(Tenant.class);
-                          if (activeContract != null) activeContract.setId(doc.getId());
+                          activeContractDoc = doc;
                           break;
                       }
                   }
-                  if (activeContract == null) {
-                      activeContract = qs.getDocuments().get(0).toObject(Tenant.class);
-                      if (activeContract != null) activeContract.setId(qs.getDocuments().get(0).getId());
+                  if (activeContractDoc == null) {
+                      activeContractDoc = qs.getDocuments().get(0);
                   }
                   
-                  if (activeContract != null) {
-                      displayData(activeContract);
+                  if (activeContractDoc != null) {
+                      displayData(activeContractDoc);
                   }
               } else {
                   // Fallback users/
@@ -142,11 +140,7 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
                     .get()
                     .addOnSuccessListener(qs2 -> {
                         if (qs2 != null && !qs2.isEmpty()) {
-                            Tenant c2 = qs2.getDocuments().get(0).toObject(Tenant.class);
-                            if (c2 != null) {
-                                c2.setId(qs2.getDocuments().get(0).getId());
-                                displayData(c2);
-                            }
+                            displayData(qs2.getDocuments().get(0));
                         } else {
                             showNotFound();
                         }
@@ -157,21 +151,23 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
           .addOnFailureListener(e -> showNotFound());
     }
 
-    private void displayData(Tenant contract) {
+    private void displayData(com.google.firebase.firestore.DocumentSnapshot doc) {
         // Thông tin chung
-        String cNum = contract.getContractNumber() != null && !contract.getContractNumber().isEmpty() 
-            ? contract.getContractNumber() 
-            : contract.getId() != null ? contract.getId().substring(0, Math.min(5, contract.getId().length())).toUpperCase() : "N/A";
+        String contractNumber = doc.getString("contractNumber");
+        String cNum = contractNumber != null && !contractNumber.isEmpty() 
+            ? contractNumber 
+            : doc.getId().substring(0, Math.min(5, doc.getId().length())).toUpperCase();
         
         tvContractTitle.setText("Hợp đồng (#" + cNum + ")");
         
-        String status = contract.getContractStatus();
+        String status = doc.getString("contractStatus");
+        long endTs = parseDateFieldToMillis(doc, "contractEndTimestamp", "contractEndDate");
+        
         if ("ENDED".equalsIgnoreCase(status)) {
             tvContractStatus.setText("Hợp đồng đã kết thúc");
             imgStatusDot.setImageTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E"))); // Xám
         } else {
             // Kiểm tra sắp hết hạn hay còn hạn
-            long endTs = contract.getContractEndTimestamp() > 0 ? contract.getContractEndTimestamp() : parseDateStringToMillis(contract.getContractEndDate());
             if (endTs > 0 && (endTs - System.currentTimeMillis() < 30L * 24 * 60 * 60 * 1000) && endTs > System.currentTimeMillis()) {
                 tvContractStatus.setText("Sắp hết hạn hợp đồng");
                 imgStatusDot.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FF6D00"))); // Cam
@@ -185,33 +181,43 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
         }
         
         // Đại diện cọc
-        String repName = contract.getRepresentativeName();
+        String repName = doc.getString("representativeName");
+        String fullName = doc.getString("fullName");
         if (repName == null || repName.trim().isEmpty()) {
-            repName = contract.getFullName();
+            repName = fullName;
         }
+        String phoneNumber = doc.getString("phoneNumber");
+        
         tvRepName.setText(repName != null && !repName.trim().isEmpty() ? repName : "—");
-        tvRepPhone.setText(contract.getPhoneNumber() != null && !contract.getPhoneNumber().isEmpty() ? contract.getPhoneNumber() : "—");
+        tvRepPhone.setText(phoneNumber != null && !phoneNumber.trim().isEmpty() ? phoneNumber : "—");
         
         // Thành viên
-        tvMemberCount.setText(contract.getMemberCount() > 0 ? contract.getMemberCount() + " người" : "—");
+        Object memberCountObj = doc.get("memberCount");
+        int memberCount = (memberCountObj instanceof Number) ? ((Number) memberCountObj).intValue() : 0;
+        tvMemberCount.setText(memberCount > 0 ? memberCount + " người" : "—");
         
         // Tài chính
-        tvDepositAmount.setText(formatMoney(contract.getDepositAmount() > 0 ? contract.getDepositAmount() : contract.getLegacyDepositAmount()));
-        tvRentAmount.setText(formatMoney(contract.getRentAmount() > 0 ? contract.getRentAmount() : contract.getRoomPrice()));
+        double depositAmount = getDoubleSafe(doc, "depositAmount", "legacyDepositAmount");
+        double rentAmount = getDoubleSafe(doc, "rentAmount", "roomPrice");
+        
+        tvDepositAmount.setText(formatMoney(depositAmount));
+        tvRentAmount.setText(formatMoney(rentAmount));
         
         tvBillingCycle.setText("1 tháng / 1 lần");
         
         // Ngày tháng
-        String startDateStr = contract.getRentalStartDate();
-        String endDateStr = contract.getContractEndTimestamp() > 0 ? DATE_FORMAT.format(new Date(contract.getContractEndTimestamp())) : contract.getContractEndDate();
-        String createdAtStr = contract.getCreatedAt() != null ? DATE_FORMAT.format(new Date(contract.getCreatedAt())) : startDateStr; 
+        long startTs = parseDateFieldToMillis(doc, "rentalStartDate");
+        long createdAtTs = parseDateFieldToMillis(doc, "createdAt", "rentalStartDate");
         
-        tvDepositDate.setText(createdAtStr != null ? createdAtStr : "—");
-        tvStartDate.setText(startDateStr != null ? startDateStr : "—");
-        tvEndDate.setText(endDateStr != null ? endDateStr : "—");
+        String startDateStr = startTs > 0 ? DATE_FORMAT.format(new Date(startTs)) : "—";
+        String endDateStr = endTs > 0 ? DATE_FORMAT.format(new Date(endTs)) : "—";
+        String createdAtStr = createdAtTs > 0 ? DATE_FORMAT.format(new Date(createdAtTs)) : startDateStr; 
+        
+        tvDepositDate.setText(createdAtStr);
+        tvStartDate.setText(startDateStr);
+        tvEndDate.setText(endDateStr);
         
         // Thời gian ở
-        long startTs = parseDateStringToMillis(startDateStr);
         if (startTs > 0) {
             long diff = System.currentTimeMillis() - startTs;
             long days = TimeUnit.MILLISECONDS.toDays(diff);
@@ -235,16 +241,44 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
         return String.format(Locale.getDefault(), "%,d", longVal).replace(',', '.') + " đ";
     }
     
-    private long parseDateStringToMillis(String dateStr) {
-        if (dateStr == null || dateStr.trim().isEmpty()) return 0;
-        try {
-            return DATE_FORMAT.parse(dateStr).getTime();
-        } catch (ParseException e) {
-            try {
-                return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr).getTime();
-            } catch (ParseException ex) {
-                return 0;
+    private long parseDateFieldToMillis(com.google.firebase.firestore.DocumentSnapshot doc, String... fieldNames) {
+        for (String field : fieldNames) {
+            Object val = doc.get(field);
+            if (val == null) continue;
+
+            if (val instanceof com.google.firebase.Timestamp) {
+                return ((com.google.firebase.Timestamp) val).toDate().getTime();
+            } else if (val instanceof Date) {
+                return ((Date) val).getTime();
+            } else if (val instanceof Long) {
+                return (Long) val;
+            } else if (val instanceof String) {
+                String str = (String) val;
+                if (!str.isEmpty()) {
+                    try {
+                        return DATE_FORMAT.parse(str).getTime();
+                    } catch (ParseException ignored) {
+                        try {
+                            return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(str).getTime();
+                        } catch (ParseException ignored2) {}
+                    }
+                }
             }
         }
+        return 0;
+    }
+
+    private double getDoubleSafe(com.google.firebase.firestore.DocumentSnapshot doc, String... fieldNames) {
+        for (String field : fieldNames) {
+            Object val = doc.get(field);
+            if (val instanceof Number) {
+                return ((Number) val).doubleValue();
+            } else if (val instanceof String) {
+                try {
+                    return Double.parseDouble((String) val);
+                } catch (Exception ignored) {}
+            }
+        }
+        return 0;
     }
 }

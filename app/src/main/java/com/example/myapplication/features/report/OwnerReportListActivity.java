@@ -19,6 +19,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class OwnerReportListActivity extends AppCompatActivity
@@ -157,9 +158,24 @@ public class OwnerReportListActivity extends AppCompatActivity
 
         // Tab "Chưa làm": lấy cả PENDING và CONFIRMED
         if (STATUS_PENDING.equals(status)) {
-            // Không thể dùng whereIn + orderBy mà không có Composite Index
-            // → Lấy PENDING và CONFIRMED riêng rồi gộp
             loadPendingAndConfirmed();
+        } else if (STATUS_DONE.equals(status)) {
+            // Tab "Đã xong" hiển thị cả DONE và REJECTED
+            db.collection("issues")
+                    .whereEqualTo("ownerId", ownerId)
+                    .whereIn("status", Arrays.asList("DONE", "REJECTED"))
+                    .get()
+                    .addOnSuccessListener(qs -> {
+                        hideLoading();
+                        Log.d("OwnerReportList", "Kết quả [DONE+REJECTED]: " + qs.size());
+                        List<DocumentSnapshot> docs = qs.getDocuments();
+                        if (docs.isEmpty()) showEmpty(); else showList(docs);
+                    })
+                    .addOnFailureListener(e -> {
+                        hideLoading();
+                        Log.e("OwnerReportList", "Lỗi query: " + e.getMessage(), e);
+                        showEmpty();
+                    });
         } else {
             db.collection("issues")
                     .whereEqualTo("ownerId", ownerId)
@@ -225,9 +241,9 @@ public class OwnerReportListActivity extends AppCompatActivity
                 .addOnSuccessListener(qs -> badgeDangLam.setText(String.valueOf(qs.size())))
                 .addOnFailureListener(e -> Log.e("OwnerReportList", "Badge lỗi: " + e.getMessage()));
 
-        // DONE tab count
+        // DONE tab count = DONE + REJECTED
         db.collection("issues").whereEqualTo("ownerId", ownerId)
-                .whereEqualTo("status", STATUS_DONE).get()
+                .whereIn("status", Arrays.asList("DONE", "REJECTED")).get()
                 .addOnSuccessListener(qs -> badgeDaXong.setText(String.valueOf(qs.size())))
                 .addOnFailureListener(e -> Log.e("OwnerReportList", "Badge lỗi: " + e.getMessage()));
     }
