@@ -44,6 +44,7 @@ public class TenantReportListActivity extends AppCompatActivity {
 
     private String tenantId;
     private String roomId;
+    private String currentUserId;
     private String selectedStatus = TicketStatus.OPEN;
 
     @Override
@@ -105,6 +106,7 @@ public class TenantReportListActivity extends AppCompatActivity {
             finish();
             return;
         }
+        currentUserId = user.getUid();
 
         db.collection("tenants").document(tenantId)
                 .collection("members").document(user.getUid())
@@ -138,6 +140,9 @@ public class TenantReportListActivity extends AppCompatActivity {
     private void renderFilteredList() {
         List<Ticket> filtered = new ArrayList<>();
         for (Ticket ticket : allTickets) {
+            if (currentUserId != null && ticket.getCreatedBy() != null && !currentUserId.equals(ticket.getCreatedBy())) {
+                continue;
+            }
             if (TicketStatus.DONE.equals(selectedStatus)) {
                 if (TicketStatus.DONE.equals(ticket.getStatus()) || TicketStatus.REJECTED.equals(ticket.getStatus())) {
                     filtered.add(ticket);
@@ -161,6 +166,9 @@ public class TenantReportListActivity extends AppCompatActivity {
         int countInProgress = 0;
         int countDone = 0;
         for (Ticket ticket : allTickets) {
+            if (currentUserId != null && ticket.getCreatedBy() != null && !currentUserId.equals(ticket.getCreatedBy())) {
+                continue;
+            }
             if (TicketStatus.OPEN.equals(ticket.getStatus())) {
                 countOpen++;
             } else if (TicketStatus.IN_PROGRESS.equals(ticket.getStatus())) {

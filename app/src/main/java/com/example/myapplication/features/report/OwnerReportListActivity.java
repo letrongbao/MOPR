@@ -214,9 +214,33 @@ public class OwnerReportListActivity extends AppCompatActivity {
     }
 
     private void updateTicketStatus(Ticket ticket, String status, String rejectReason) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         Map<String, Object> updates = new HashMap<>();
         updates.put("status", status);
         updates.put("rejectReason", rejectReason);
+
+        if (currentUser != null) {
+            updates.put("handledBy", currentUser.getUid());
+        }
+
+        com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
+        if (TicketStatus.IN_PROGRESS.equals(status)) {
+            updates.put("processedAt", now);
+            updates.put("doneAt", null);
+            updates.put("rejectedAt", null);
+        } else if (TicketStatus.DONE.equals(status)) {
+            updates.put("doneAt", now);
+        } else if (TicketStatus.REJECTED.equals(status)) {
+            updates.put("rejectedAt", now);
+            updates.put("doneAt", null);
+        } else if (TicketStatus.OPEN.equals(status)) {
+            updates.put("reopenedAt", now);
+            updates.put("processedAt", null);
+            updates.put("doneAt", null);
+            updates.put("rejectedAt", null);
+            updates.put("rejectReason", null);
+        }
+
         repository.updateFields(ticket.getId(), updates,
                 () -> runOnUiThread(() -> {
                     Toast.makeText(this, getString(R.string.updated), Toast.LENGTH_SHORT).show();

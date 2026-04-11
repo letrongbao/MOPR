@@ -10,8 +10,13 @@ public class Ticket {
     private String status;
     private String rejectReason;
     private String createdBy;
+    private String handledBy;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private Timestamp processedAt;
+    private Timestamp rejectedAt;
+    private Timestamp doneAt;
+    private Timestamp reopenedAt;
 
     public Ticket() {}
 
@@ -36,9 +41,24 @@ public class Ticket {
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 
+    public String getHandledBy() { return handledBy; }
+    public void setHandledBy(String handledBy) { this.handledBy = handledBy; }
+
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
     public Timestamp getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+
+    public Timestamp getProcessedAt() { return processedAt; }
+    public void setProcessedAt(Timestamp processedAt) { this.processedAt = processedAt; }
+
+    public Timestamp getRejectedAt() { return rejectedAt; }
+    public void setRejectedAt(Timestamp rejectedAt) { this.rejectedAt = rejectedAt; }
+
+    public Timestamp getDoneAt() { return doneAt; }
+    public void setDoneAt(Timestamp doneAt) { this.doneAt = doneAt; }
+
+    public Timestamp getReopenedAt() { return reopenedAt; }
+    public void setReopenedAt(Timestamp reopenedAt) { this.reopenedAt = reopenedAt; }
 }
