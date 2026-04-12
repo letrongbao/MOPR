@@ -1254,11 +1254,14 @@
     <string name="tenant_room_months_stayed_placeholder">-- tháng, -- ngày</string>
     <string name="tenant_room_months_stayed_value">%1$d tháng, %2$d ngày</string>
     <string name="tenant_room_contract_active">Trong thời hạn hợp đồng</string>
+    <string name="tenant_room_contract_active_days">Đang hiệu lực (còn %1$d ngày)</string>
+    <string name="tenant_room_contract_warning">Sắp hết hạn (còn %1$d ngày)</string>
+    <string name="tenant_room_contract_critical">Cực kỳ gấp (còn %1$d ngày)</string>
     <string name="tenant_room_contract_expired">Hợp đồng đã hết hạn</string>
     <string name="tenant_room_contract_not_found">Không tìm thấy hợp đồng</string>
     <string name="tenant_room_no_contract">Chưa có hợp đồng</string>
     <string name="tenant_room_view_contract_detail">Xem chi tiết →</string>
-    <string name="tenant_room_start_date_label">Ngày vào ở</string>
+    <string name="tenant_room_start_date_label">Ngày bắt đầu</string>
     <string name="tenant_room_end_date_label">Ngày kết thúc</string>
     <string name="tenant_room_date_placeholder">--/--/----</string>
     <string name="tenant_room_billing_catalog_title">Danh mục tính tiền</string>
@@ -1314,6 +1317,8 @@
     <string name="notification_rent_due_body">Đã đến kỳ thanh toán tháng này. Tiền thuê: %1$s. Vui lòng thanh toán trước ngày 05.</string>
     <string name="notification_deposit_incomplete_title">Tiền cọc chưa hoàn thiện</string>
     <string name="notification_deposit_incomplete_body">Bạn chưa đóng đủ tiền cọc (%1$s). Vui lòng liên hệ chủ trọ để hoàn thiện.</string>
+    <string name="notification_deposit_collected_title">Đã xác nhận thu cọc</string>
+    <string name="notification_deposit_collected_body">Chủ trọ đã xác nhận thu cọc cho %1$s: %2$s.</string>
     <string name="confirm_meter_feature_in_development">Chức năng Chốt đồng hồ đang phát triển</string>
     <string name="room_invite_requires_active_contract">Phòng chưa có hợp đồng đang hiệu lực nên chưa thể tạo mã vào phòng.</string>
     <string name="room_invite_generating">Đang tạo mã...</string>
@@ -1324,6 +1329,7 @@
     <string name="room_invite_clipboard_label">Mã phòng</string>
     <string name="room_invite_copied">Đã sao chép: %1$s</string>
     <string name="room_invite_create_error">Lỗi tạo mã: %1$s</string>
+    <string name="room_invite_quota_full">Phòng đã đủ số lượng thành viên theo hợp đồng, không thể tạo thêm mã mời.</string>
     <string name="tenant_invoice_total">Tổng hoá đơn: %1$s</string>
     <string name="tenant_invoice_empty">Chưa có hoá đơn cho phòng này</string>
     <string name="tenant_invoice_status">Trạng thái: %1$s</string>

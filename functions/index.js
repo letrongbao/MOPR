@@ -100,6 +100,104 @@ exports.dispatchTenantNotificationPush = onDocumentCreated(
   }
 );
 
+exports.processContractHardOffboard = onDocumentCreated(
+  {
+    document: "tenants/{tenantId}/auditLogs/{logId}",
+    retry: true
+  },
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+      return;
+    }
+
+    const tenantId = event.params.tenantId;
+    const logId = event.params.logId;
+    const payload = snapshot.data() || {};
+    if (String(payload.type || "").trim() !== "CONTRACT_HARD_OFFBOARD") {
+      return;
+    }
+
+    const affectedUserIds = normalizeStringArray(payload.affectedUserIds);
+    const contractId = normalizeText(payload.contractId, "");
+    const roomId = normalizeText(payload.roomId, "");
+
+    const db = admin.firestore();
+    const batch = db.batch();
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const updatedUsers = [];
+
+    for (const uid of affectedUserIds) {
+      const userRef = db.collection("users").doc(uid);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) {
+        continue;
+      }
+
+      const activeTenantId = normalizeText(userSnap.get("activeTenantId"), "");
+      if (activeTenantId !== tenantId) {
+        continue;
+      }
+
+      batch.set(
+        userRef,
+        {
+          activeTenantId: null,
+          activeContractMemberRole: null,
+          updatedAt: now
+        },
+        { merge: true }
+      );
+
+      const notificationId = `contract_end_relink_${logId}_${uid}`;
+      const notifRef = db
+        .collection("tenants")
+        .doc(tenantId)
+        .collection("notifications")
+        .doc(notificationId);
+
+      batch.set(
+        notifRef,
+        {
+          userId: uid,
+          title: "Hop dong da ket thuc",
+          body: "Hop dong phong cua ban da ket thuc. Vui long nhap ma phong moi de tiep tuc su dung.",
+          type: "CONTRACT_ENDED_RELINK",
+          contractId,
+          roomId,
+          senderId: null,
+          conversationId: null,
+          isRead: false,
+          createdAt: now
+        },
+        { merge: true }
+      );
+
+      updatedUsers.push(uid);
+    }
+
+    batch.set(
+      snapshot.ref,
+      {
+        processingState: "DONE",
+        processedAt: now,
+        affectedCount: updatedUsers.length
+      },
+      { merge: true }
+    );
+
+    await batch.commit();
+
+    logger.info("processContractHardOffboard", {
+      tenantId,
+      logId,
+      contractId,
+      roomId,
+      affectedCount: updatedUsers.length
+    });
+  }
+);
+
 async function markPushState(ref, state, reason) {
   const payload = {
     pushState: state,
@@ -140,4 +238,13 @@ function normalizeText(value, fallback) {
 
 function isTokenInvalidError(code) {
   return code === "messaging/invalid-registration-token" || code === "messaging/registration-token-not-registered";
+}
+
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((item) => item.length > 0);
 }

@@ -18,6 +18,7 @@ import java.util.Map;
 public class InviteRepository {
     private static final String CONTRACT_MEMBER_ROLE_OCCUPANT = "OCCUPANT";
     private static final String CONTRACT_MEMBER_ROLE_REPRESENTATIVE = "REPRESENTATIVE";
+    private static final int INVITE_CODE_MAX_RETRY = 6;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final SecureRandom rnd = new SecureRandom();
@@ -239,6 +240,21 @@ public class InviteRepository {
             int totalSlots,
             int remainingSlots,
             @NonNull InviteCallback cb) {
+        writeAnonymousInviteWithRetry(tenantId, roomId, contractId, totalSlots, remainingSlots, 0, cb);
+        }
+
+        private void writeAnonymousInviteWithRetry(@NonNull String tenantId,
+            @NonNull String roomId,
+            @NonNull String contractId,
+            int totalSlots,
+            int remainingSlots,
+            int attempt,
+            @NonNull InviteCallback cb) {
+        if (attempt >= INVITE_CODE_MAX_RETRY) {
+            cb.onError(new IllegalStateException("Không thể tạo mã phòng mới, vui lòng thử lại."));
+            return;
+        }
+
         String code = generateCode(8);
         Timestamp now = Timestamp.now();
 
@@ -255,13 +271,32 @@ public class InviteRepository {
         invite.put("createdAt", now);
         invite.put("updatedAt", now);
         invite.put("createdBy", FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
-                : "");
+            ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+            : "");
 
         db.collection("tenants").document(tenantId)
-                .collection("invites").document(code).set(invite)
-                .addOnSuccessListener(v -> cb.onSuccess(code))
-                .addOnFailureListener(cb::onError);
+            .collection("invites").document(code)
+            .get()
+            .addOnSuccessListener(existing -> {
+                if (existing.exists()) {
+                writeAnonymousInviteWithRetry(
+                    tenantId,
+                    roomId,
+                    contractId,
+                    totalSlots,
+                    remainingSlots,
+                    attempt + 1,
+                    cb);
+                return;
+                }
+
+                db.collection("tenants").document(tenantId)
+                    .collection("invites").document(code)
+                    .set(invite)
+                    .addOnSuccessListener(v -> cb.onSuccess(code))
+                    .addOnFailureListener(cb::onError);
+            })
+            .addOnFailureListener(cb::onError);
     }
 
     /**
@@ -284,6 +319,11 @@ public class InviteRepository {
                 .addOnSuccessListener(querySnapshot -> {
                     if (querySnapshot.isEmpty()) {
                         cb.onError(new IllegalStateException("Mã phòng không tồn tại hoặc đã được sử dụng."));
+                        return;
+                    }
+
+                    if (querySnapshot.size() > 1) {
+                        cb.onError(new IllegalStateException("Mã phòng bị trùng, vui lòng yêu cầu chủ trọ tạo mã mới."));
                         return;
                     }
 
@@ -735,6 +775,7 @@ public class InviteRepository {
                         Map<String, Object> updates = new HashMap<>();
                         updates.put("contractRepresentative", false);
                         updates.put("primaryContact", false);
+                        updates.put("active", false);
                         updates.put("updatedAt", nowMillis);
                         batch.set(doc.getReference(), updates, SetOptions.merge());
                         hasUpdate = true;

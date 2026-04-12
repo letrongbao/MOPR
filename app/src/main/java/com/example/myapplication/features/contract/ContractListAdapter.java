@@ -26,6 +26,10 @@ import java.util.Locale;
 
 public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapter.ViewHolder> {
 
+    public interface ActionListener {
+        void onConfirmDepositCollected(@NonNull Tenant contract);
+    }
+
     public enum LegalFilter {
         ALL,
         ACTIVE,
@@ -37,6 +41,7 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     private List<Tenant> displayList = new ArrayList<>();
     private String filterQuery = "";
     private LegalFilter legalFilter = LegalFilter.ALL;
+    private ActionListener actionListener;
 
     // Internal note.
 
@@ -64,6 +69,10 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
     public void setLegalFilter(LegalFilter filter) {
         this.legalFilter = filter != null ? filter : LegalFilter.ALL;
         rebuildDisplay();
+    }
+
+    public void setActionListener(ActionListener actionListener) {
+        this.actionListener = actionListener;
     }
 
     public int getDisplayCount() {
@@ -260,6 +269,11 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
         PopupMenu popup = new PopupMenu(anchor.getContext(), anchor);
         popup.getMenuInflater().inflate(R.menu.menu_contract, popup.getMenu());
 
+        android.view.MenuItem menuConfirmDeposit = popup.getMenu().findItem(R.id.menu_xac_nhan_thu_coc);
+        if (menuConfirmDeposit != null) {
+            menuConfirmDeposit.setVisible(!contract.isDepositCollected() && status != ContractStatus.ENDED);
+        }
+
         // Internal note.
         android.view.MenuItem menuRenewalReminder = popup.getMenu().findItem(R.id.menu_nhac_tai_ky);
         if (menuRenewalReminder != null) {
@@ -268,7 +282,12 @@ public class ContractListAdapter extends RecyclerView.Adapter<ContractListAdapte
 
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.menu_nhac_tai_ky) {
+            if (itemId == R.id.menu_xac_nhan_thu_coc) {
+                if (actionListener != null) {
+                    actionListener.onConfirmDepositCollected(contract);
+                    return true;
+                }
+            } else if (itemId == R.id.menu_nhac_tai_ky) {
                 sendRenewalReminder(anchor.getContext(), contract);
                 return true;
             } else if (itemId == R.id.menu_xem_chi_tiet) {

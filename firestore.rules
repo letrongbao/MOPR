@@ -6,12 +6,15 @@ service cloud.firestore {
     }
 
     function isTenantMember(tenantId) {
-      return signedIn() && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+      return signedIn()
+        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.status == 'ACTIVE';
     }
 
     function uidIsTenantMember(tenantId, uid) {
       return uid is string
-        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(uid));
+        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(uid))
+        && get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(uid)).data.status == 'ACTIVE';
     }
 
     function memberRole(tenantId) {
@@ -24,10 +27,18 @@ service cloud.firestore {
 
     function validInvite(tenantId, code) {
       return signedIn()
-        && request.auth.token.email != null
         && exists(invitePath(tenantId, code))
-        && get(invitePath(tenantId, code)).data.email == request.auth.token.email
-        && get(invitePath(tenantId, code)).data.status == 'PENDING';
+        && get(invitePath(tenantId, code)).data.status == 'PENDING'
+        && (
+          (
+            get(invitePath(tenantId, code)).data.type == 'ANONYMOUS'
+            && get(invitePath(tenantId, code)).data.role == 'TENANT'
+          )
+          || (
+            request.auth.token.email != null
+            && get(invitePath(tenantId, code)).data.email == request.auth.token.email
+          )
+        );
     }
 
     function isOwner(tenantId) {
@@ -94,14 +105,18 @@ service cloud.firestore {
       }
 
       match /invites/{inviteId} {
-        allow read: if isOwner(tenantId) || (signedIn() && request.auth.token.email != null && request.auth.token.email == resource.data.email);
+        allow read: if isOwner(tenantId)
+          || (signedIn() && request.auth.token.email != null && request.auth.token.email == resource.data.email)
+          || (signedIn() && resource.data.type == 'ANONYMOUS' && resource.data.status == 'PENDING');
         allow create: if isOwner(tenantId);
         // invitee chỉ được update khi invite đang PENDING (accept), owner được update mọi lúc
         allow update: if isOwner(tenantId) || (
           signedIn()
-          && request.auth.token.email != null
-          && request.auth.token.email == resource.data.email
           && resource.data.status == 'PENDING'
+          && (
+            (request.auth.token.email != null && request.auth.token.email == resource.data.email)
+            || resource.data.type == 'ANONYMOUS'
+          )
         );
         allow delete: if false;
       }

@@ -231,7 +231,18 @@ public class OwnerReportListActivity extends AppCompatActivity {
     }
 
     private void showOwnerActionDialog(Ticket ticket) {
-        String msg = getString(R.string.ticket_room_id_line, ticket.getRoomId() != null ? ticket.getRoomId() : "")
+        String roomId = ticket.getRoomId();
+        String roomLabel = (roomId != null && roomLabelById.containsKey(roomId))
+                ? roomLabelById.get(roomId)
+                : (roomId != null && !roomId.trim().isEmpty()
+                    ? getString(R.string.room_number, roomId)
+                    : getString(R.string.report_unknown_room));
+        String houseLabel = (roomId != null && houseLabelByRoomId.containsKey(roomId))
+                ? houseLabelByRoomId.get(roomId)
+                : getString(R.string.report_unknown_house);
+
+        String msg = getString(R.string.report_house_line, houseLabel)
+            + "\n" + getString(R.string.report_room_line, roomLabel)
             + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
             ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")

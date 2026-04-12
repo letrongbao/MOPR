@@ -238,7 +238,20 @@ public class MainActivity extends AppCompatActivity {
                 .collection("members").document(uid)
                 .get()
                 .addOnSuccessListener(doc -> {
-                    String roomId = doc.exists() ? doc.getString("roomId") : null;
+                    if (!doc.exists()) {
+                        clearActiveTenantAndNavigateHome(uid);
+                        return;
+                    }
+
+                    String status = doc.getString("status");
+                    String roomId = doc.getString("roomId");
+                    if (!"ACTIVE".equalsIgnoreCase(status == null ? "" : status.trim())
+                            || roomId == null
+                            || roomId.trim().isEmpty()) {
+                        clearActiveTenantAndNavigateHome(uid);
+                        return;
+                    }
+
                     Intent intent = new Intent(this, TenantMenuActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     intent.putExtra("TENANT_ID", tenantId);
@@ -247,13 +260,20 @@ public class MainActivity extends AppCompatActivity {
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    // Fallback: vào TenantMenuActivity không có roomId
-                    Intent intent = new Intent(this, TenantMenuActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    intent.putExtra("TENANT_ID", tenantId);
-                    startActivity(intent);
-                    finish();
+                    clearActiveTenantAndNavigateHome(uid);
                 });
+    }
+
+    private void clearActiveTenantAndNavigateHome(String uid) {
+        TenantSession.clear(this);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("activeTenantId", null);
+        payload.put("activeContractMemberRole", null);
+        payload.put("updatedAt", Timestamp.now());
+
+        db.collection("users").document(uid)
+                .set(payload, SetOptions.merge())
+                .addOnCompleteListener(task -> navigateToHome());
     }
 
     @Override

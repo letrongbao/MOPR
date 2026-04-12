@@ -1,6 +1,8 @@
 package com.example.myapplication.features.home;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -26,8 +28,10 @@ import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.AuthProviderUtil;
+import com.example.myapplication.features.auth.JoinRoomActivity;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.chat.ChatHubActivity;
+import com.example.myapplication.features.contract.ContractDetailsActivity;
 import com.example.myapplication.features.contract.TenantContractDetailsActivity;
 import com.example.myapplication.features.invoice.InvoiceActivity;
 import com.example.myapplication.features.notification.NotificationCenterActivity;
@@ -46,7 +50,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.Timestamp;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -77,6 +83,7 @@ public class TenantMenuActivity extends AppCompatActivity {
     private TextView tvDaysRemaining;
     private TextView tvMonthsStayed;
     private TextView tvContractStatus;
+    private ImageView ivContractStatusIcon;
     private TextView tvStartDate;
     private TextView tvEndDate;
     private TextView btnViewContractDetail;
@@ -101,12 +108,22 @@ public class TenantMenuActivity extends AppCompatActivity {
     private String roomId;
     private String activeMemberContractId;
     private boolean profilePromptShown;
+    private boolean redirectingToJoinRoom;
+    private ListenerRegistration tenantMemberListener;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private NotificationRealtimeObserver notificationRealtimeObserver;
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    private static final int CONTRACT_COLOR_SAFE = Color.parseColor("#1B5E20");
+    private static final int CONTRACT_COLOR_WARNING = Color.parseColor("#EF6C00");
+    private static final int CONTRACT_COLOR_CRITICAL = Color.parseColor("#C62828");
+    private static final int CONTRACT_COLOR_NEUTRAL = Color.parseColor("#757575");
+    private static final int CONTRACT_COLOR_END_DATE = Color.parseColor("#7A0C0C");
+    private static final int CONTRACT_RING_BG_SAFE = Color.parseColor("#DFF4E8");
+    private static final int CONTRACT_RING_BG_WARNING = Color.parseColor("#FFE8D1");
+    private static final int CONTRACT_RING_BG_CRITICAL = Color.parseColor("#FADBD8");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,6 +162,7 @@ public class TenantMenuActivity extends AppCompatActivity {
         tvDaysRemaining = findViewById(R.id.tvDaysRemaining);
         tvMonthsStayed = findViewById(R.id.tvMonthsStayed);
         tvContractStatus = findViewById(R.id.tvContractStatus);
+        ivContractStatusIcon = findViewById(R.id.ivContractStatusIcon);
         tvStartDate = findViewById(R.id.tvStartDate);
         tvEndDate = findViewById(R.id.tvEndDate);
         btnViewContractDetail = findViewById(R.id.btnViewContractDetail);
@@ -256,41 +274,106 @@ public class TenantMenuActivity extends AppCompatActivity {
                     }
 
                     if (freshTenantId == null || freshTenantId.trim().isEmpty()) {
-                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
-                        if (tvHouseInfo != null) {
-                            tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
-                        }
-                        showNoContractUI();
+                        redirectToJoinRoomForRelink();
                         return;
                     }
 
                     tenantId = freshTenantId;
+                    observeTenantMembership(freshTenantId, user.getUid());
                     db.collection("tenants").document(freshTenantId)
                             .collection("members")
                             .document(user.getUid())
                             .get()
                             .addOnSuccessListener(memberDoc -> {
-                                if (memberDoc.exists()) {
-                                    String mappedRoomId = memberDoc.getString("roomId");
-                                    String mappedContractId = memberDoc.getString("contractId");
-
-                                    if ((roomId == null || roomId.trim().isEmpty())
-                                            && mappedRoomId != null
-                                            && !mappedRoomId.trim().isEmpty()) {
-                                        roomId = mappedRoomId.trim();
-                                    }
-
-                                    if (mappedContractId != null && !mappedContractId.trim().isEmpty()) {
-                                        activeMemberContractId = mappedContractId.trim();
-                                    }
-
-                                    maybePromptTenantProfileCompletion(memberDoc);
+                                if (!memberDoc.exists()) {
+                                    redirectToJoinRoomForRelink();
+                                    return;
                                 }
+
+                                String status = memberDoc.getString("status");
+                                String mappedRoomId = memberDoc.getString("roomId");
+                                if (!"ACTIVE".equalsIgnoreCase(status == null ? "" : status.trim())
+                                        || mappedRoomId == null
+                                        || mappedRoomId.trim().isEmpty()) {
+                                    redirectToJoinRoomForRelink();
+                                    return;
+                                }
+
+                                String mappedContractId = memberDoc.getString("contractId");
+
+                                if (roomId == null || roomId.trim().isEmpty()) {
+                                    roomId = mappedRoomId.trim();
+                                }
+
+                                if (mappedContractId != null && !mappedContractId.trim().isEmpty()) {
+                                    activeMemberContractId = mappedContractId.trim();
+                                }
+
+                                maybePromptTenantProfileCompletion(memberDoc);
                                 loadRoomAndContractData();
                             })
-                            .addOnFailureListener(e -> loadRoomAndContractData());
+                            .addOnFailureListener(e -> redirectToJoinRoomForRelink());
                 })
-                .addOnFailureListener(e -> loadRoomAndContractData());
+                .addOnFailureListener(e -> redirectToJoinRoomForRelink());
+    }
+
+    private void observeTenantMembership(String activeTenantId, String uid) {
+        if (tenantMemberListener != null) {
+            tenantMemberListener.remove();
+            tenantMemberListener = null;
+        }
+        if (activeTenantId == null || activeTenantId.trim().isEmpty() || uid == null || uid.trim().isEmpty()) {
+            return;
+        }
+
+        tenantMemberListener = db.collection("tenants").document(activeTenantId.trim())
+                .collection("members")
+                .document(uid)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || redirectingToJoinRoom) {
+                        return;
+                    }
+                    if (snapshot == null || !snapshot.exists()) {
+                        redirectToJoinRoomForRelink();
+                        return;
+                    }
+
+                    String status = snapshot.getString("status");
+                    String memberRoomId = snapshot.getString("roomId");
+                    if (!"ACTIVE".equalsIgnoreCase(status == null ? "" : status.trim())
+                            || memberRoomId == null
+                            || memberRoomId.trim().isEmpty()) {
+                        redirectToJoinRoomForRelink();
+                    }
+                });
+    }
+
+    private void redirectToJoinRoomForRelink() {
+        if (redirectingToJoinRoom) {
+            return;
+        }
+        redirectingToJoinRoom = true;
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        TenantSession.clear(this);
+
+        Runnable navigate = () -> {
+            Intent intent = new Intent(this, JoinRoomActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        };
+
+        if (currentUser == null) {
+            navigate.run();
+            return;
+        }
+
+        db.collection("users").document(currentUser.getUid())
+                .update("activeTenantId", null,
+                        "activeContractMemberRole", null,
+                        "updatedAt", Timestamp.now())
+                .addOnCompleteListener(task -> navigate.run());
     }
 
     private void maybePromptTenantProfileCompletion(DocumentSnapshot memberDoc) {
@@ -407,6 +490,10 @@ public class TenantMenuActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (tenantMemberListener != null) {
+            tenantMemberListener.remove();
+            tenantMemberListener = null;
+        }
         if (notificationRealtimeObserver != null) {
             notificationRealtimeObserver.stop();
             notificationRealtimeObserver = null;
@@ -431,6 +518,16 @@ public class TenantMenuActivity extends AppCompatActivity {
             Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
             return;
         }
+
+        if (activeMemberContractId != null && !activeMemberContractId.trim().isEmpty()) {
+            Intent intent = new Intent(this, ContractDetailsActivity.class);
+            intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, activeMemberContractId.trim());
+            intent.putExtra(ContractDetailsActivity.EXTRA_HEADER_TITLE, getString(R.string.tenant_contract_your_title));
+            intent.putExtra(ContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
+            startActivity(intent);
+            return;
+        }
+
         Intent intent = new Intent(this, TenantContractDetailsActivity.class);
         intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
         intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
@@ -889,6 +986,8 @@ public class TenantMenuActivity extends AppCompatActivity {
     }
 
     private void applyContractToUI(DocumentSnapshot doc) {
+        activeMemberContractId = doc.getId();
+
         Date startDate = parseDate(doc, "rentalStartDate", "startDate");
         Date endDate = parseDate(doc, "contractEndDate", "endDate", "contractEndTimestamp");
 
@@ -926,31 +1025,115 @@ public class TenantMenuActivity extends AppCompatActivity {
             tvEndDate.setText(DATE_FORMAT.format(endDate));
         }
         if (tvContractStatus != null) {
-            tvContractStatus.setText(daysLeft > 0
-                    ? getString(R.string.tenant_room_contract_active)
-                    : getString(R.string.tenant_room_contract_expired));
+            tvContractStatus.setText(resolveContractStatusText(daysLeft));
         }
+
+        applyContractVisualState(daysLeft);
     }
 
     private void showNoContractUI() {
+        activeMemberContractId = null;
+
         if (tvDaysRemaining != null) {
             tvDaysRemaining.setText(getString(R.string.tenant_room_value_placeholder));
+            tvDaysRemaining.setTextColor(CONTRACT_COLOR_NEUTRAL);
         }
         if (tvMonthsStayed != null) {
             tvMonthsStayed.setText(getString(R.string.tenant_room_no_contract));
         }
         if (tvContractStatus != null) {
             tvContractStatus.setText(getString(R.string.tenant_room_contract_not_found));
+            tvContractStatus.setTextColor(CONTRACT_COLOR_NEUTRAL);
         }
         if (tvStartDate != null) {
             tvStartDate.setText(getString(R.string.tenant_room_date_placeholder));
+            tvStartDate.setTextColor(CONTRACT_COLOR_SAFE);
         }
         if (tvEndDate != null) {
             tvEndDate.setText(getString(R.string.tenant_room_date_placeholder));
+            tvEndDate.setTextColor(CONTRACT_COLOR_END_DATE);
         }
         if (contractProgress != null) {
             contractProgress.setProgress(0);
         }
+        if (ivContractStatusIcon != null) {
+            ivContractStatusIcon.setImageTintList(ColorStateList.valueOf(CONTRACT_COLOR_NEUTRAL));
+        }
+        applyContractDetailButtonStyle(CONTRACT_COLOR_NEUTRAL);
+    }
+
+    private void applyContractVisualState(long daysLeft) {
+        int color;
+        int ringBgColor;
+        if (daysLeft < 0) {
+            color = CONTRACT_COLOR_CRITICAL;
+            ringBgColor = CONTRACT_RING_BG_CRITICAL;
+        } else if (daysLeft <= 7) {
+            color = CONTRACT_COLOR_CRITICAL;
+            ringBgColor = CONTRACT_RING_BG_CRITICAL;
+        } else if (daysLeft <= 30) {
+            color = CONTRACT_COLOR_WARNING;
+            ringBgColor = CONTRACT_RING_BG_WARNING;
+        } else {
+            color = CONTRACT_COLOR_SAFE;
+            ringBgColor = CONTRACT_RING_BG_SAFE;
+        }
+
+        if (tvDaysRemaining != null) {
+            tvDaysRemaining.setTextColor(color);
+        }
+        if (tvContractStatus != null) {
+            tvContractStatus.setTextColor(color);
+        }
+        if (tvStartDate != null) {
+            tvStartDate.setTextColor(CONTRACT_COLOR_SAFE);
+        }
+        if (tvEndDate != null) {
+            tvEndDate.setTextColor(CONTRACT_COLOR_END_DATE);
+        }
+        if (ivContractStatusIcon != null) {
+            ivContractStatusIcon.setImageTintList(ColorStateList.valueOf(color));
+        }
+        applyContractDetailButtonStyle(color);
+        if (contractProgress != null) {
+            contractProgress.setProgressTintList(ColorStateList.valueOf(color));
+            contractProgress.setProgressBackgroundTintList(ColorStateList.valueOf(ringBgColor));
+        }
+    }
+
+    private void applyContractDetailButtonStyle(int accentColor) {
+        if (btnViewContractDetail == null) {
+            return;
+        }
+        btnViewContractDetail.setTextColor(accentColor);
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(dpToPx(8));
+        bg.setColor(Color.argb(20, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor)));
+        bg.setStroke(dpToPxInt(1), Color.argb(110, Color.red(accentColor), Color.green(accentColor), Color.blue(accentColor)));
+        btnViewContractDetail.setBackground(bg);
+    }
+
+    private float dpToPx(int dp) {
+        return dp * getResources().getDisplayMetrics().density;
+    }
+
+    private int dpToPxInt(int dp) {
+        return Math.max(1, Math.round(dpToPx(dp)));
+    }
+
+    private String resolveContractStatusText(long daysLeft) {
+        if (daysLeft < 0) {
+            return getString(R.string.tenant_room_contract_expired);
+        }
+        if (daysLeft <= 7) {
+            return getString(R.string.tenant_room_contract_critical, daysLeft);
+        }
+        if (daysLeft <= 30) {
+            return getString(R.string.tenant_room_contract_warning, daysLeft);
+        }
+        return getString(R.string.tenant_room_contract_active_days, daysLeft);
     }
 
     private Date parseDate(DocumentSnapshot doc, String... fieldNames) {

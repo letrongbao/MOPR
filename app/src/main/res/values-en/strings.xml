@@ -775,11 +775,14 @@
     <string name="tenant_room_months_stayed_placeholder">-- months, -- days</string>
     <string name="tenant_room_months_stayed_value">%1$d months, %2$d days</string>
     <string name="tenant_room_contract_active">Within contract period</string>
+    <string name="tenant_room_contract_active_days">Active (remaining %1$d day(s))</string>
+    <string name="tenant_room_contract_warning">Expiring soon (remaining %1$d day(s))</string>
+    <string name="tenant_room_contract_critical">Critical (remaining %1$d day(s))</string>
     <string name="tenant_room_contract_expired">Contract expired</string>
     <string name="tenant_room_contract_not_found">Contract not found</string>
     <string name="tenant_room_no_contract">No contract yet</string>
     <string name="tenant_room_view_contract_detail">View details →</string>
-    <string name="tenant_room_start_date_label">Move-in date</string>
+    <string name="tenant_room_start_date_label">Start date</string>
     <string name="tenant_room_end_date_label">End date</string>
     <string name="tenant_room_date_placeholder">--/--/----</string>
     <string name="tenant_room_billing_catalog_title">Billing catalog</string>
@@ -858,6 +861,8 @@
     <string name="notification_rent_due_body">This month payment is due. Rent amount: %1$s. Please pay before day 05.</string>
     <string name="notification_deposit_incomplete_title">Deposit not fully completed</string>
     <string name="notification_deposit_incomplete_body">Your deposit is not fully paid yet (%1$s). Please contact the landlord to complete it.</string>
+    <string name="notification_deposit_collected_title">Deposit collection confirmed</string>
+    <string name="notification_deposit_collected_body">The landlord confirmed deposit collection for %1$s: %2$s.</string>
     <string name="confirm_meter_feature_in_development">Meter confirmation feature is under development</string>
     <string name="room_invite_requires_active_contract">This room has no active contract yet, so an invite code cannot be created.</string>
     <string name="room_invite_generating">Generating code...</string>
@@ -868,6 +873,7 @@
     <string name="room_invite_clipboard_label">Room code</string>
     <string name="room_invite_copied">Copied: %1$s</string>
     <string name="room_invite_create_error">Failed to create code: %1$s</string>
+    <string name="room_invite_quota_full">This room already reached the contract member limit, so no more invite code can be created.</string>
 
     <!-- Language Switcher -->
     <string name="english_language">English</string>

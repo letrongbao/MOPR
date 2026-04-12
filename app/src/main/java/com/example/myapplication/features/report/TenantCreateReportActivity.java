@@ -178,39 +178,75 @@ public class TenantCreateReportActivity extends AppCompatActivity {
         String safeTitle = (reportTitle != null && !reportTitle.trim().isEmpty())
                 ? reportTitle.trim()
                 : getString(R.string.ticket_title);
-        String roomLabel = getString(R.string.room_number,
-                ticket.getRoomId() != null && !ticket.getRoomId().trim().isEmpty()
-                        ? ticket.getRoomId().trim()
-                        : "-");
+        String roomId = ticket.getRoomId() != null ? ticket.getRoomId().trim() : "";
+        if (roomId.isEmpty()) {
+            pushOwnerReportCreatedNotificationsWithLocation(currentUser.getUid(), ticket.getId(), safeTitle,
+                getString(R.string.report_unknown_house),
+                getString(R.string.report_unknown_room));
+            return;
+        }
 
         db.collection("tenants").document(tenantId)
-                .collection("members")
-                .whereIn("role", Arrays.asList(TenantRoles.OWNER, TenantRoles.STAFF))
-                .get()
-                .addOnSuccessListener(members -> {
-                    com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
-                    for (com.google.firebase.firestore.DocumentSnapshot member : members.getDocuments()) {
-                        String receiverUid = member.getId();
-                        if (receiverUid == null || receiverUid.trim().isEmpty() || receiverUid.equals(currentUser.getUid())) {
-                            continue;
-                        }
+            .collection("rooms").document(roomId)
+            .get()
+            .addOnSuccessListener(roomDoc -> {
+                String roomNumber = roomDoc.getString("roomNumber");
+                String houseName = roomDoc.getString("houseName");
 
-                        Map<String, Object> payload = new HashMap<>();
-                        payload.put("title", getString(R.string.report_created_notification_title));
-                        payload.put("body", getString(R.string.report_created_notification_body, safeTitle, roomLabel));
-                        payload.put("type", "REPORT_CREATED");
-                        payload.put("ticketId", ticket.getId());
-                        payload.put("conversationId", null);
-                        payload.put("senderId", currentUser.getUid());
-                        payload.put("userId", receiverUid);
-                        payload.put("isRead", false);
-                        payload.put("createdAt", now);
+                String roomLabel = (roomNumber != null && !roomNumber.trim().isEmpty())
+                    ? getString(R.string.room_number, roomNumber.trim())
+                    : getString(R.string.room_number, roomId);
+                String houseLabel = (houseName != null && !houseName.trim().isEmpty())
+                    ? houseName.trim()
+                    : getString(R.string.report_unknown_house);
 
-                        db.collection("tenants").document(tenantId)
-                                .collection("notifications")
-                                .document(UUID.randomUUID().toString())
-                                .set(payload, SetOptions.merge());
-                    }
-                });
+                pushOwnerReportCreatedNotificationsWithLocation(currentUser.getUid(), ticket.getId(), safeTitle, houseLabel, roomLabel);
+            })
+            .addOnFailureListener(e -> pushOwnerReportCreatedNotificationsWithLocation(
+                currentUser.getUid(),
+                ticket.getId(),
+                safeTitle,
+                getString(R.string.report_unknown_house),
+                getString(R.string.room_number, roomId)));
+        }
+
+        private void pushOwnerReportCreatedNotificationsWithLocation(
+            String senderUid,
+            String ticketId,
+            String reportTitle,
+            String houseLabel,
+            String roomLabel) {
+        String locationText = getString(R.string.report_house_line, houseLabel)
+            + " - " + getString(R.string.report_room_line, roomLabel);
+
+        db.collection("tenants").document(tenantId)
+            .collection("members")
+            .whereIn("role", Arrays.asList(TenantRoles.OWNER, TenantRoles.STAFF))
+            .get()
+            .addOnSuccessListener(members -> {
+                com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
+                for (com.google.firebase.firestore.DocumentSnapshot member : members.getDocuments()) {
+                String receiverUid = member.getId();
+                if (receiverUid == null || receiverUid.trim().isEmpty() || receiverUid.equals(senderUid)) {
+                    continue;
+                }
+
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("title", getString(R.string.report_created_notification_title));
+                payload.put("body", getString(R.string.report_created_notification_body, reportTitle, locationText));
+                payload.put("type", "REPORT_CREATED");
+                payload.put("ticketId", ticketId);
+                payload.put("conversationId", null);
+                payload.put("senderId", senderUid);
+                payload.put("userId", receiverUid);
+                payload.put("isRead", false);
+                payload.put("createdAt", now);
+
+                db.collection("tenants").document(tenantId)
+                    .collection("notifications")
+                    .document(UUID.randomUUID().toString())
+                    .set(payload, SetOptions.merge());
+                }
+            });
     }
 }
