@@ -62,12 +62,16 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
 
         holder.tvReportTitle.setText(ticket.getTitle() != null ? ticket.getTitle() : holder.itemView.getContext().getString(R.string.ticket_no_title));
         holder.tvCreatedAt.setText(ticket.getCreatedAt() != null
-                ? DATE_FORMAT.format(ticket.getCreatedAt().toDate())
-                : "--/--/----");
+                ? holder.itemView.getContext().getString(
+                        R.string.report_created_at_line,
+                        DATE_FORMAT.format(ticket.getCreatedAt().toDate()))
+                : holder.itemView.getContext().getString(R.string.report_created_at_line, "--/--/----"));
 
         if (ticket.getAppointmentTime() != null) {
             holder.rowAppointment.setVisibility(View.VISIBLE);
-            holder.tvAppointment.setText(DATE_FORMAT.format(ticket.getAppointmentTime().toDate()));
+            holder.tvAppointment.setText(holder.itemView.getContext().getString(
+                    R.string.report_appointment_line,
+                    DATE_FORMAT.format(ticket.getAppointmentTime().toDate())));
         } else {
             holder.rowAppointment.setVisibility(View.GONE);
         }
@@ -84,7 +88,6 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
         holder.btnResubmit.setEnabled(rejected);
         holder.btnResubmit.setVisibility(rejected ? View.VISIBLE : View.GONE);
 
-        holder.tvPriority.setText(holder.itemView.getContext().getString(R.string.report_priority_default));
         styleStatus(holder.tvStatus, ticket.getStatus());
 
         boolean canCancel = TicketStatus.OPEN.equals(ticket.getStatus());
@@ -131,7 +134,6 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
         final View rowRejectReason;
         final TextView tvRejectReason;
         final TextView tvStatus;
-        final TextView tvPriority;
         final View layoutResubmitButton;
         final TextView btnResubmit;
         final TextView btnContact;
@@ -146,7 +148,6 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
             rowRejectReason = itemView.findViewById(R.id.rowRejectReason);
             tvRejectReason = itemView.findViewById(R.id.tvRejectReason);
             tvStatus = itemView.findViewById(R.id.tvStatus);
-            tvPriority = itemView.findViewById(R.id.tvPriority);
             layoutResubmitButton = itemView.findViewById(R.id.layoutResubmitButton);
             btnResubmit = itemView.findViewById(R.id.btnResubmit);
             btnContact = itemView.findViewById(R.id.btnContact);

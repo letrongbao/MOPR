@@ -335,6 +335,16 @@
                         android:clickable="false"
                         android:focusable="false"/>
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnViewFullContract"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/contract_view_full_button"
+                        app:cornerRadius="10dp"
+                        app:backgroundTint="@color/btn_blue_action"
+                        android:textColor="@color/white" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

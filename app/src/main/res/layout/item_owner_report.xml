@@ -32,13 +32,12 @@
                 android:textColor="?attr/colorOnSurface" />
 
             <TextView
-                android:id="@+id/tvPriority"
+                android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_manager_badge"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:textColor="@android:color/white"
+                android:background="@drawable/bg_month_filter_chip"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -63,9 +62,10 @@
             android:id="@+id/tvCreatedAt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp" />
+            android:layout_marginTop="8dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:id="@+id/rowAppointment"
@@ -76,18 +76,12 @@
             android:visibility="gone">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/report_appointment_prefix_inline"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="12sp" />
-
-            <TextView
                 android:id="@+id/tvAppointment"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="12sp" />
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -116,17 +110,6 @@
                 android:textColor="#C0392B"
                 android:textSize="12sp" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_month_filter_chip"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:textSize="11sp"
-            android:textStyle="bold" />
 
     </LinearLayout>
 

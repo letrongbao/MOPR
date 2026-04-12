@@ -16,8 +16,10 @@ import com.example.myapplication.domain.Ticket;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.VH> {
 
@@ -29,6 +31,8 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
 
     private final OnItemClickListener listener;
     private final List<Ticket> list = new ArrayList<>();
+    private final Map<String, String> roomLabelById = new HashMap<>();
+    private final Map<String, String> houseLabelByRoomId = new HashMap<>();
 
     public OwnerReportAdapter(OnItemClickListener listener) {
         this.listener = listener;
@@ -38,6 +42,18 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
         list.clear();
         if (tickets != null) {
             list.addAll(tickets);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void updateLocationLabels(Map<String, String> roomLabels, Map<String, String> houseLabels) {
+        roomLabelById.clear();
+        houseLabelByRoomId.clear();
+        if (roomLabels != null) {
+            roomLabelById.putAll(roomLabels);
+        }
+        if (houseLabels != null) {
+            houseLabelByRoomId.putAll(houseLabels);
         }
         notifyDataSetChanged();
     }
@@ -54,16 +70,31 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
         Ticket ticket = list.get(position);
 
         holder.tvReportTitle.setText(ticket.getTitle() != null ? ticket.getTitle() : holder.itemView.getContext().getString(R.string.ticket_no_title));
-        holder.tvTenantName.setText(ticket.getCreatedBy() != null ? ticket.getCreatedBy() : "-");
-        holder.tvRoomNumber.setText(ticket.getRoomId() != null ? holder.itemView.getContext().getString(R.string.room_number, ticket.getRoomId()) : "-");
+        String roomId = ticket.getRoomId();
+        String roomLabel = roomId != null ? roomLabelById.get(roomId) : null;
+        if (roomLabel == null || roomLabel.trim().isEmpty()) {
+            roomLabel = roomId != null && !roomId.trim().isEmpty()
+                    ? holder.itemView.getContext().getString(R.string.room_number, roomId)
+                    : holder.itemView.getContext().getString(R.string.report_unknown_room);
+        }
+        String houseLabel = roomId != null ? houseLabelByRoomId.get(roomId) : null;
+        if (houseLabel == null || houseLabel.trim().isEmpty()) {
+            houseLabel = holder.itemView.getContext().getString(R.string.report_unknown_house);
+        }
+        holder.tvTenantName.setText(holder.itemView.getContext().getString(R.string.report_house_line, houseLabel));
+        holder.tvRoomNumber.setText(holder.itemView.getContext().getString(R.string.report_room_line, roomLabel));
 
         holder.tvCreatedAt.setText(ticket.getCreatedAt() != null
-                ? DATE_FORMAT.format(ticket.getCreatedAt().toDate())
-                : "--/--/----");
+                ? holder.itemView.getContext().getString(
+                        R.string.report_created_at_line,
+                        DATE_FORMAT.format(ticket.getCreatedAt().toDate()))
+                : holder.itemView.getContext().getString(R.string.report_created_at_line, "--/--/----"));
 
         if (ticket.getAppointmentTime() != null) {
             holder.rowAppointment.setVisibility(View.VISIBLE);
-            holder.tvAppointment.setText(DATE_FORMAT.format(ticket.getAppointmentTime().toDate()));
+            holder.tvAppointment.setText(holder.itemView.getContext().getString(
+                    R.string.report_appointment_line,
+                    DATE_FORMAT.format(ticket.getAppointmentTime().toDate())));
         } else {
             holder.rowAppointment.setVisibility(View.GONE);
         }
@@ -75,7 +106,6 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
             holder.rowRejectReason.setVisibility(View.GONE);
         }
 
-        holder.tvPriority.setText(holder.itemView.getContext().getString(R.string.report_priority_default));
         styleStatus(holder.tvStatus, ticket.getStatus());
         holder.itemView.setOnClickListener(v -> listener.onClick(ticket));
     }
@@ -116,7 +146,6 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
         final View rowRejectReason;
         final TextView tvRejectReason;
         final TextView tvStatus;
-        final TextView tvPriority;
 
         VH(@NonNull View itemView) {
             super(itemView);
@@ -129,7 +158,6 @@ public class OwnerReportAdapter extends RecyclerView.Adapter<OwnerReportAdapter.
             rowRejectReason = itemView.findViewById(R.id.rowRejectReason);
             tvRejectReason = itemView.findViewById(R.id.tvRejectReason);
             tvStatus = itemView.findViewById(R.id.tvStatus);
-            tvPriority = itemView.findViewById(R.id.tvPriority);
         }
     }
 }

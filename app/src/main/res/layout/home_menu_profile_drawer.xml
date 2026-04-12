@@ -17,6 +17,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_drawer_header"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:paddingHorizontal="20dp"
         android:paddingTop="14dp"
         android:paddingBottom="16dp">
@@ -31,13 +33,15 @@
 
         <FrameLayout
             android:id="@+id/btnDrawerNotification"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
             android:background="@drawable/bg_icon_circle"
             android:backgroundTint="#33FFFFFF"
             android:clickable="true"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless">
 
@@ -51,13 +55,16 @@
 
             <TextView
                 android:id="@+id/tvDrawerNotificationBadge"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="top|end"
-                android:layout_marginTop="-4dp"
-                android:layout_marginEnd="-4dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="1dp"
                 android:background="@drawable/bg_notification_badge"
                 android:gravity="center"
+                android:minWidth="20dp"
+                android:minHeight="20dp"
+                android:paddingHorizontal="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
                 android:textSize="10sp"

@@ -318,12 +318,12 @@ public class TenantReportListActivity extends AppCompatActivity {
     }
 
     private void showTicketDetails(Ticket ticket) {
-        String msg = getString(R.string.ticket_room_id_line, ticket.getRoomId() != null ? ticket.getRoomId() : "")
-            + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
+        String description = ticket.getDescription() != null ? ticket.getDescription() : "";
+        String msg = getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
             ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")
                 + buildTimelineText(ticket)
-                + "\n\n" + (ticket.getDescription() != null ? ticket.getDescription() : "");
+                + "\n\n" + getString(R.string.report_description_colon) + description;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(ticket.getTitle() != null ? ticket.getTitle() : getString(R.string.ticket_title))

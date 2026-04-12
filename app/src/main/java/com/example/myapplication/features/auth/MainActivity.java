@@ -57,7 +57,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Nếu đã đăng nhập, kiểm tra role để điều hướng đúng màn hình.
+        boolean remembered = prefs != null && prefs.getBoolean("rememberMe", false);
+
+        // Nếu không bật ghi nhớ đăng nhập thì không cho auto-login ở lần mở app mới.
+        if (!remembered) {
+            FirebaseAuth.getInstance().signOut();
+            TenantSession.clear(this);
+            return;
+        }
+
+        // Nếu đã đăng nhập và có bật ghi nhớ, kiểm tra role để điều hướng đúng màn hình.
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             ensureUserProfileDocument(currentUser, () -> checkRoleAndNavigate(currentUser));

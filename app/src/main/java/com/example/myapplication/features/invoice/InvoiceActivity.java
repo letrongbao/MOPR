@@ -74,6 +74,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Collections;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -143,11 +144,13 @@ public class InvoiceActivity extends AppCompatActivity {
     private EditText etSearchInvoice;
     private View btnSelectKhu;
     private View btnDatePicker;
+    private View layoutInvoiceSearchSection;
 
     private String selectedMonth;
     private String selectedKhuId;
     private String searchQuery;
     private int selectedTabIndex;
+    private boolean tenantAllTimeMode;
     private List<Invoice> cachedInvoices = new ArrayList<>();
     private Map<String, String> tenantDisplayByRoom = new HashMap<>();
     private Map<String, String> roomAddressByRoom = new HashMap<>();
@@ -162,6 +165,15 @@ public class InvoiceActivity extends AppCompatActivity {
     private boolean hasBackfilledMeterReadings;
     private boolean hasLoadedRoomsSnapshot;
     private boolean hasLoadedHousesSnapshot;
+
+    private enum TenantInvoiceSortOption {
+        AMOUNT_DESC,
+        AMOUNT_ASC,
+        UNPAID,
+        PAID
+    }
+
+    private TenantInvoiceSortOption tenantSortOption = TenantInvoiceSortOption.AMOUNT_DESC;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final PaymentRepository paymentRepository = new PaymentRepository();
@@ -233,10 +245,12 @@ public class InvoiceActivity extends AppCompatActivity {
         etSearchInvoice = findViewById(R.id.etSearchInvoice);
         btnSelectKhu = findViewById(R.id.btnSelectKhu);
         btnDatePicker = findViewById(R.id.btnDatePicker);
+        layoutInvoiceSearchSection = findViewById(R.id.layoutInvoiceSearchSection);
         selectedMonth = normalizeToAllowedBillingMonth(
                 new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
         selectedKhuId = null;
         searchQuery = "";
+        tenantAllTimeMode = true;
         selectedTabIndex = resolveRequestedInitialTab();
         pendingOpenInvoiceId = resolveRequestedInvoiceId();
         updateDeepLinkLoading(pendingOpenInvoiceId != null);
@@ -398,12 +412,24 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void setupFilterListeners() {
         if (btnSelectKhu != null) {
-            btnSelectKhu.setOnClickListener(v -> showHouseFilterDialog());
+            btnSelectKhu.setOnClickListener(v -> {
+                if (isTenantUser) {
+                    showTenantTimeFilterDialog();
+                } else {
+                    showHouseFilterDialog();
+                }
+            });
         }
         if (btnDatePicker != null) {
-            btnDatePicker.setOnClickListener(v -> showMonthFilterDialog());
+            btnDatePicker.setOnClickListener(v -> {
+                if (isTenantUser) {
+                    showTenantSortDialog();
+                } else {
+                    showMonthFilterDialog();
+                }
+            });
         }
-        if (etSearchInvoice != null) {
+        if (etSearchInvoice != null && !isTenantUser) {
             etSearchInvoice.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -438,17 +464,25 @@ public class InvoiceActivity extends AppCompatActivity {
             }
             if (tabLayout != null) {
                 tabLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+                tabLayout.setVisibility(View.GONE);
             }
             ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_invoice_title));
             if (btnSelectKhu != null) {
-                btnSelectKhu.setVisibility(View.GONE);
+                btnSelectKhu.setVisibility(View.VISIBLE);
             }
             if (btnDatePicker != null) {
-                btnDatePicker.setVisibility(View.GONE);
+                btnDatePicker.setVisibility(View.VISIBLE);
             }
             if (etSearchInvoice != null) {
-                etSearchInvoice.setHint(getString(R.string.invoice_search_hint));
+                etSearchInvoice.setVisibility(View.GONE);
             }
+            if (layoutInvoiceSearchSection != null) {
+                layoutInvoiceSearchSection.setVisibility(View.GONE);
+            }
+            if (tvFilterSummary != null) {
+                tvFilterSummary.setVisibility(View.GONE);
+            }
+            updateTenantFilterUi();
             return;
         }
 
@@ -460,6 +494,7 @@ public class InvoiceActivity extends AppCompatActivity {
         }
         if (tabLayout != null) {
             tabLayout.setBackgroundResource(R.color.primary);
+            tabLayout.setVisibility(View.VISIBLE);
         }
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.invoice_statistics));
         if (btnSelectKhu != null) {
@@ -469,10 +504,59 @@ public class InvoiceActivity extends AppCompatActivity {
             btnDatePicker.setVisibility(View.VISIBLE);
         }
         if (etSearchInvoice != null) {
+            etSearchInvoice.setVisibility(View.VISIBLE);
             etSearchInvoice.setHint(getString(R.string.invoice_search_hint));
+        }
+        if (layoutInvoiceSearchSection != null) {
+            layoutInvoiceSearchSection.setVisibility(View.VISIBLE);
+        }
+        if (tvFilterSummary != null) {
+            tvFilterSummary.setVisibility(View.VISIBLE);
         }
         if (tvSelectedKhu != null) {
             tvSelectedKhu.setText(getString(R.string.all_houses));
+        }
+    }
+
+    private void updateTenantFilterUi() {
+        if (!isTenantUser) {
+            return;
+        }
+
+        if (tvSelectedKhu != null) {
+            if (tenantAllTimeMode) {
+                tvSelectedKhu.setText(getString(R.string.tenant_invoice_time_all));
+            } else {
+                tvSelectedKhu.setText(selectedMonth);
+            }
+        }
+
+        if (btnDatePicker != null) {
+            btnDatePicker.setVisibility(tenantAllTimeMode ? View.VISIBLE : View.GONE);
+        }
+
+        if (tvSelectedMonth != null) {
+            if (tenantAllTimeMode) {
+                tvSelectedMonth.setVisibility(View.VISIBLE);
+                tvSelectedMonth.setText(getTenantSortLabel(tenantSortOption));
+            } else {
+                tvSelectedMonth.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private String getTenantSortLabel(@NonNull TenantInvoiceSortOption sort) {
+        switch (sort) {
+            case AMOUNT_DESC:
+                return getString(R.string.tenant_invoice_sort_amount_desc);
+            case AMOUNT_ASC:
+                return getString(R.string.tenant_invoice_sort_amount_asc);
+            case UNPAID:
+                return getString(R.string.invoice_status_unpaid_tenant);
+            case PAID:
+                return getString(R.string.invoice_status_paid_tenant);
+            default:
+                return getString(R.string.tenant_invoice_sort_amount_desc);
         }
     }
 
@@ -1942,21 +2026,62 @@ public class InvoiceActivity extends AppCompatActivity {
     }
 
     private void showInvoiceExportDialog(Invoice h) {
+        if (h == null) {
+            return;
+        }
         Room room = null;
         if (danhSachPhong != null) {
             for (Room r : danhSachPhong) {
-                if (r.getId().equals(h.getRoomId())) {
+                if (r == null) {
+                    continue;
+                }
+                String roomId = r.getId();
+                if (roomId != null && roomId.equals(h.getRoomId())) {
                     room = r;
                     break;
                 }
             }
         }
         House house = resolveHouseForRoom(room);
+        String resolvedElectricMode = roomElectricModeByRoom.get(h.getRoomId());
+        if (resolvedElectricMode == null || resolvedElectricMode.trim().isEmpty()) {
+            Integer memberCount = roomMemberCountByRoom.get(h.getRoomId());
+            if (memberCount != null
+                    && memberCount > 0
+                    && Math.abs(h.getElectricStartReading()) < 0.001
+                    && Math.abs(h.getElectricEndReading() - memberCount) < 0.001) {
+                resolvedElectricMode = "per_person";
+            } else if (Math.abs(h.getElectricStartReading()) < 0.001
+                    && Math.abs(h.getElectricEndReading() - 1.0) < 0.001) {
+                resolvedElectricMode = "room";
+            } else {
+                resolvedElectricMode = "kwh";
+            }
+        }
+
+        String resolvedWaterMode = roomWaterModeByRoom.get(h.getRoomId());
+        if (resolvedWaterMode == null || resolvedWaterMode.trim().isEmpty()) {
+            Integer memberCount = roomMemberCountByRoom.get(h.getRoomId());
+            if (memberCount != null
+                    && memberCount > 0
+                    && Math.abs(h.getWaterStartReading()) < 0.001
+                    && Math.abs(h.getWaterEndReading() - memberCount) < 0.001) {
+                resolvedWaterMode = WaterCalculationMode.PER_PERSON;
+            } else if (Math.abs(h.getWaterStartReading()) < 0.001
+                    && Math.abs(h.getWaterEndReading() - 1.0) < 0.001) {
+                resolvedWaterMode = WaterCalculationMode.ROOM;
+            } else {
+                resolvedWaterMode = WaterCalculationMode.METER;
+            }
+        }
+
         InvoiceExportDialogHelper.showInvoiceExportDialog(
                 this,
                 this,
                 h,
                 house,
+                resolvedElectricMode,
+                resolvedWaterMode,
                 paymentRepository,
                 isTenantUser,
                 this::openPaymentHistory,
@@ -2711,6 +2836,20 @@ public class InvoiceActivity extends AppCompatActivity {
             return;
         }
 
+        if (isTenantUser) {
+            java.util.List<Invoice> tenantOut = filterTenantInvoices(list);
+            adapter.setDataList(tenantOut);
+            adapter.setTenantDisplayByRoom(tenantDisplayByRoom);
+            adapter.setRoomAddressByRoom(roomAddressByRoom);
+            adapter.setRoomElectricModeByRoom(roomElectricModeByRoom);
+            adapter.setRoomWaterModeByRoom(roomWaterModeByRoom);
+            adapter.setRoomMemberCountByRoom(roomMemberCountByRoom);
+            adapter.setCurrentTab(TAB_UNREPORTED);
+            if (llEmpty != null)
+                llEmpty.setVisibility(tenantOut.isEmpty() ? View.VISIBLE : View.GONE);
+            return;
+        }
+
         java.util.List<Invoice> out = InvoiceFilterCoordinator.filter(
                 list,
                 danhSachPhong,
@@ -2734,6 +2873,74 @@ public class InvoiceActivity extends AppCompatActivity {
             llEmpty.setVisibility(out.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
+    private List<Invoice> filterTenantInvoices(@NonNull List<Invoice> source) {
+        List<Invoice> out = new ArrayList<>();
+        String selectedMonthNormalized = FinancePeriodUtil.normalizeMonthYear(selectedMonth);
+
+        for (Invoice invoice : source) {
+            if (invoice == null) {
+                continue;
+            }
+            if (!tenantAllTimeMode) {
+                String invoiceMonth = FinancePeriodUtil.normalizeMonthYear(invoice.getBillingPeriod());
+                if (!selectedMonthNormalized.equals(invoiceMonth)) {
+                    continue;
+                }
+            }
+
+            String normalizedStatus = normalizeInvoiceStatus(invoice.getStatus());
+            if (tenantSortOption == TenantInvoiceSortOption.UNPAID
+                    && InvoiceStatus.PAID.equals(normalizedStatus)) {
+                continue;
+            }
+            if (tenantSortOption == TenantInvoiceSortOption.PAID
+                    && !InvoiceStatus.PAID.equals(normalizedStatus)) {
+                continue;
+            }
+
+            out.add(invoice);
+        }
+
+        Collections.sort(out, (a, b) -> compareTenantInvoices(a, b));
+        return out;
+    }
+
+    private int compareTenantInvoices(@NonNull Invoice a, @NonNull Invoice b) {
+        switch (tenantSortOption) {
+            case AMOUNT_DESC:
+                return Double.compare(getInvoiceDisplayTotal(b), getInvoiceDisplayTotal(a));
+            case AMOUNT_ASC:
+                return Double.compare(getInvoiceDisplayTotal(a), getInvoiceDisplayTotal(b));
+            case UNPAID:
+            case PAID:
+            default:
+                return getInvoicePeriodKey(b).compareTo(getInvoicePeriodKey(a));
+        }
+    }
+
+    @NonNull
+    private String getInvoicePeriodKey(@NonNull Invoice invoice) {
+        String normalized = FinancePeriodUtil.normalizeMonthYear(invoice.getBillingPeriod());
+        String key = toPeriodKey(normalized);
+        return key == null ? "" : key;
+    }
+
+    private double getInvoiceDisplayTotal(@NonNull Invoice invoice) {
+        if (invoice.getTotalAmount() > 0) {
+            return invoice.getTotalAmount();
+        }
+
+        double electricUsage = Math.max(0, invoice.getElectricEndReading() - invoice.getElectricStartReading());
+        double waterUsage = Math.max(0, invoice.getWaterEndReading() - invoice.getWaterStartReading());
+        return invoice.getRentAmount()
+                + electricUsage * invoice.getElectricUnitPrice()
+                + waterUsage * invoice.getWaterUnitPrice()
+                + invoice.getTrashFee()
+                + invoice.getInternetFee()
+                + invoice.getParkingFee()
+                + invoice.getOtherFee();
+    }
+
     private void showMonthFilterDialog() {
         InvoiceFilterDialogHelper.showMonthFilterDialog(this, selectedMonth, (period, month, year) -> {
             selectedMonth = normalizeToAllowedBillingMonth(String.format(Locale.US, "%02d/%04d", month, year));
@@ -2748,6 +2955,58 @@ public class InvoiceActivity extends AppCompatActivity {
             applyInvoiceFilters(cachedInvoices, selectedTabIndex);
             maybeAutoCreateDraftInvoicesForSelectedMonth();
         });
+    }
+
+    private void showTenantTimeFilterDialog() {
+        String[] options = new String[] {
+                getString(R.string.tenant_invoice_time_all),
+            selectedMonth
+        };
+        int checked = tenantAllTimeMode ? 0 : 1;
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.tenant_invoice_filter_time_title))
+                .setSingleChoiceItems(options, checked, (dialog, which) -> {
+                    if (which == 0) {
+                        tenantAllTimeMode = true;
+                        updateTenantFilterUi();
+                        applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                        dialog.dismiss();
+                    } else {
+                        dialog.dismiss();
+                        InvoiceFilterDialogHelper.showMonthFilterDialog(this, selectedMonth, (period, month, year) -> {
+                            tenantAllTimeMode = false;
+                            selectedMonth = normalizeToAllowedBillingMonth(
+                                    String.format(Locale.US, "%02d/%04d", month, year));
+                            updateTenantFilterUi();
+                            applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                        });
+                    }
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
+    private void showTenantSortDialog() {
+        TenantInvoiceSortOption[] values = TenantInvoiceSortOption.values();
+        String[] labels = new String[] {
+                getString(R.string.tenant_invoice_sort_amount_desc),
+                getString(R.string.tenant_invoice_sort_amount_asc),
+            getString(R.string.invoice_status_unpaid_tenant),
+            getString(R.string.invoice_status_paid_tenant)
+        };
+
+        int checked = tenantSortOption.ordinal();
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.tenant_invoice_sort_title))
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    tenantSortOption = values[which];
+                    updateTenantFilterUi();
+                    applyInvoiceFilters(cachedInvoices, selectedTabIndex);
+                    dialog.dismiss();
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
     }
 
     private void showHouseFilterDialog() {
@@ -2905,21 +3164,80 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void showTenantTransferSubmitDialog(@NonNull Invoice invoice) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_tenant_transfer_submit, null);
-        TextView tvBankInfo = dialogView.findViewById(R.id.tvTransferBankInfo);
+        Spinner spinnerTransferMethod = dialogView.findViewById(R.id.spinnerTransferPaymentMethod);
+        View layoutTransferInfo = dialogView.findViewById(R.id.layoutTransferInfo);
+        View layoutTransferProofSection = dialogView.findViewById(R.id.layoutTransferProofSection);
+        TextView tvTransferInfoLabel = dialogView.findViewById(R.id.tvTransferInfoLabel);
+        TextView tvTransferAccountNo = dialogView.findViewById(R.id.tvTransferAccountNo);
+        TextView tvTransferBankName = dialogView.findViewById(R.id.tvTransferBankName);
+        TextView tvTransferAccountName = dialogView.findViewById(R.id.tvTransferAccountName);
         TextView tvTransferContent = dialogView.findViewById(R.id.tvTransferContent);
-        EditText etAmount = dialogView.findViewById(R.id.etTransferAmount);
+        TextView tvTransferAmount = dialogView.findViewById(R.id.tvTransferAmount);
+        TextView tvTransferQrEmpty = dialogView.findViewById(R.id.tvTransferQrEmpty);
+        TextView tvTransferProofLabel = dialogView.findViewById(R.id.tvTransferProofLabel);
         EditText etNote = dialogView.findViewById(R.id.etTransferProofNote);
         ImageView imgProof = dialogView.findViewById(R.id.imgTransferProof);
+        ImageView imgTransferQr = dialogView.findViewById(R.id.imgTransferQr);
         MaterialButton btnPickImage = dialogView.findViewById(R.id.btnPickTransferProof);
 
         pendingTransferProofInvoice = invoice;
         pendingTransferProofPreview = imgProof;
         pendingTransferProofUrl = null;
         pendingTransferProofUri = null;
+        final double[] computedTransferAmount = new double[] { Math.max(0, invoice.getTotalAmount()) };
+        final boolean[] receiverInfoReady = new boolean[] { false };
+        final boolean[] useBankTransfer = new boolean[] { true };
 
-        tvTransferContent.setText(getString(R.string.content_colon)
-                + "HD " + (invoice.getRoomNumber() != null ? invoice.getRoomNumber() : "--")
-                + " " + (invoice.getBillingPeriod() != null ? invoice.getBillingPeriod() : "--"));
+        ArrayAdapter<String> methodAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[] { getString(R.string.bank_transfer), getString(R.string.cash) });
+        methodAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTransferMethod.setAdapter(methodAdapter);
+
+        String roomLabel = invoice.getRoomNumber() != null ? invoice.getRoomNumber() : "--";
+        String periodLabel = invoice.getBillingPeriod() != null ? invoice.getBillingPeriod() : "--";
+        tvTransferContent.setText(getString(R.string.transfer_content_value, roomLabel, periodLabel));
+
+        Runnable applyPaymentMethodUi = () -> {
+            boolean isBankTransfer = useBankTransfer[0];
+            if (layoutTransferInfo != null) {
+                layoutTransferInfo.setVisibility(isBankTransfer ? View.VISIBLE : View.GONE);
+            }
+            if (layoutTransferProofSection != null) {
+                layoutTransferProofSection.setVisibility(isBankTransfer ? View.VISIBLE : View.GONE);
+            }
+            if (tvTransferInfoLabel != null) {
+                tvTransferInfoLabel.setText(isBankTransfer
+                        ? getString(R.string.transfer_info_label)
+                        : getString(R.string.amount_colon));
+            }
+            if (tvTransferProofLabel != null) {
+                tvTransferProofLabel.setText(isBankTransfer
+                        ? getString(R.string.transfer_proof_screenshot_label_required)
+                        : getString(R.string.transfer_proof_screenshot_label));
+            }
+            if (etNote != null) {
+                etNote.setHint(isBankTransfer
+                        ? getString(R.string.transfer_proof_note_hint_transfer)
+                        : getString(R.string.transfer_proof_note_hint_cash));
+            }
+        };
+
+        spinnerTransferMethod.setSelection(0);
+        spinnerTransferMethod.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                useBankTransfer[0] = position == 0;
+                applyPaymentMethodUi.run();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                useBankTransfer[0] = true;
+                applyPaymentMethodUi.run();
+            }
+        });
+        applyPaymentMethodUi.run();
 
         scopedCollection("payments")
                 .whereEqualTo("invoiceId", invoice.getId())
@@ -2935,26 +3253,58 @@ public class InvoiceActivity extends AppCompatActivity {
                         }
                     }
                     double remaining = Math.max(0, invoice.getTotalAmount() - paid);
-                    etAmount.setText(formatDouble(remaining > 0 ? remaining : invoice.getTotalAmount()));
-                });
+                    double amount = remaining > 0 ? remaining : invoice.getTotalAmount();
+                    computedTransferAmount[0] = Math.max(0, amount);
+                    tvTransferAmount.setText(getString(R.string.transfer_amount_value,
+                            MoneyFormatter.format(amount)));
 
-        String tenantId = TenantSession.getActiveTenantId();
-        if (tenantId == null || tenantId.trim().isEmpty()) {
-            tvBankInfo.setText(getString(R.string.transfer_proof_missing_bank_info));
-        } else {
-            db.collection("tenants").document(tenantId).get().addOnSuccessListener(tdoc -> {
-                String bankCode = tdoc.getString("bankCode");
-                String bankNo = tdoc.getString("bankAccountNo");
-                String bankName = tdoc.getString("bankAccountName");
-                if (bankCode == null || bankCode.trim().isEmpty() || bankNo == null || bankNo.trim().isEmpty()) {
-                    tvBankInfo.setText(getString(R.string.transfer_proof_missing_bank_info));
-                } else {
-                    tvBankInfo.setText(getString(R.string.transfer_info_colon)
-                            + bankCode.trim() + " - " + bankNo.trim()
-                            + (bankName != null && !bankName.trim().isEmpty() ? " (" + bankName.trim() + ")" : ""));
-                }
-            });
-        }
+                    if (!useBankTransfer[0]) {
+                        receiverInfoReady[0] = true;
+                        return;
+                    }
+
+                    loadTransferReceiverInfo(invoice, receiverInfo -> {
+                        if (receiverInfo == null || receiverInfo.isMissingCoreInfo()) {
+                            receiverInfoReady[0] = false;
+                            tvTransferAccountNo.setText(getString(R.string.transfer_account_no_value, "--"));
+                            tvTransferBankName.setText(getString(R.string.transfer_bank_name_value, "--"));
+                            tvTransferAccountName.setText(getString(R.string.transfer_account_holder_value, "--"));
+                            if (imgTransferQr != null) {
+                                imgTransferQr.setVisibility(View.GONE);
+                            }
+                            if (tvTransferQrEmpty != null) {
+                                tvTransferQrEmpty.setVisibility(View.VISIBLE);
+                            }
+                            Toast.makeText(this, getString(R.string.transfer_proof_missing_bank_info), Toast.LENGTH_SHORT)
+                                    .show();
+                            return;
+                        }
+
+                        receiverInfoReady[0] = true;
+
+                        tvTransferAccountNo.setText(getString(R.string.transfer_account_no_value,
+                                receiverInfo.bankAccountNo));
+                        tvTransferBankName.setText(getString(R.string.transfer_bank_name_value,
+                                receiverInfo.bankName));
+                        tvTransferAccountName.setText(getString(R.string.transfer_account_holder_value,
+                                receiverInfo.bankAccountName));
+
+                        if (imgTransferQr != null) {
+                            if (receiverInfo.paymentQrUrl != null && !receiverInfo.paymentQrUrl.trim().isEmpty()) {
+                                imgTransferQr.setVisibility(View.VISIBLE);
+                                Glide.with(this).load(receiverInfo.paymentQrUrl.trim()).into(imgTransferQr);
+                                if (tvTransferQrEmpty != null) {
+                                    tvTransferQrEmpty.setVisibility(View.GONE);
+                                }
+                            } else {
+                                imgTransferQr.setVisibility(View.GONE);
+                                if (tvTransferQrEmpty != null) {
+                                    tvTransferQrEmpty.setVisibility(View.VISIBLE);
+                                }
+                            }
+                        }
+                    });
+                });
 
         btnPickImage.setOnClickListener(v -> transferProofPickerLauncher.launch("image/*"));
 
@@ -2962,33 +3312,41 @@ public class InvoiceActivity extends AppCompatActivity {
                 .setTitle(getString(R.string.transfer_proof_submit_title))
                 .setView(dialogView)
                 .setPositiveButton(getString(R.string.send), (d, w) -> {
-                    double amount;
-                    try {
-                        amount = parseAmount(etAmount.getText() != null ? etAmount.getText().toString() : "");
-                    } catch (NumberFormatException e) {
+                    double amount = Math.max(0, computedTransferAmount[0]);
+                    if (amount <= 0) {
                         Toast.makeText(this, getString(R.string.invalid_amount), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    if (amount <= 0) {
-                        Toast.makeText(this, getString(R.string.amount_must_positive), Toast.LENGTH_SHORT).show();
+                    if (useBankTransfer[0] && !receiverInfoReady[0]) {
+                        Toast.makeText(this, getString(R.string.transfer_proof_missing_bank_info), Toast.LENGTH_SHORT)
+                                .show();
                         return;
                     }
 
-                    if (pendingTransferProofUrl == null || pendingTransferProofUrl.trim().isEmpty()) {
+                    if (useBankTransfer[0] && (pendingTransferProofUrl == null || pendingTransferProofUrl.trim().isEmpty())) {
                         Toast.makeText(this, getString(R.string.transfer_proof_missing_image), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
+                    String selectedMethod = useBankTransfer[0] ? "BANK" : "CASH";
+                    String proofImageUrl = useBankTransfer[0]
+                            ? (pendingTransferProofUrl != null ? pendingTransferProofUrl.trim() : null)
+                            : null;
+
+                    invoice.setPaymentMethod(selectedMethod);
                     invoice.setTransferProofPending(true);
-                    invoice.setTransferProofImageUrl(pendingTransferProofUrl.trim());
+                    invoice.setTransferProofImageUrl(proofImageUrl);
                     invoice.setTransferProofAmount(amount);
                     invoice.setTransferProofNote(etNote.getText() != null ? etNote.getText().toString().trim() : "");
                     invoice.setTransferProofSubmittedAt(Timestamp.now());
 
                     viewModel.updateInvoice(invoice,
                             () -> runOnUiThread(() -> {
-                                Toast.makeText(this, getString(R.string.transfer_proof_submit_success), Toast.LENGTH_SHORT)
+                                int successMessage = useBankTransfer[0]
+                                        ? R.string.transfer_proof_submit_success
+                                        : R.string.cash_proof_submit_success;
+                                Toast.makeText(this, getString(successMessage), Toast.LENGTH_SHORT)
                                         .show();
                                 applyInvoiceFilters(cachedInvoices, selectedTabIndex);
                             }),
@@ -2997,6 +3355,161 @@ public class InvoiceActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show();
+    }
+
+    private interface TransferReceiverCallback {
+        void onResolved(TransferReceiverInfo info);
+    }
+
+    private static final class TransferReceiverInfo {
+        final String bankAccountNo;
+        final String bankName;
+        final String bankAccountName;
+        final String paymentQrUrl;
+
+        TransferReceiverInfo(String bankAccountNo, String bankName, String bankAccountName, String paymentQrUrl) {
+            this.bankAccountNo = safeTrim(bankAccountNo);
+            this.bankName = safeTrim(bankName);
+            this.bankAccountName = safeTrim(bankAccountName);
+            this.paymentQrUrl = safeTrim(paymentQrUrl);
+        }
+
+        boolean isMissingCoreInfo() {
+            return bankAccountNo.isEmpty() || bankName.isEmpty() || bankAccountName.isEmpty();
+        }
+
+        private static String safeTrim(String value) {
+            return value == null ? "" : value.trim();
+        }
+    }
+
+    private void loadTransferReceiverInfo(@NonNull Invoice invoice, @NonNull TransferReceiverCallback callback) {
+        String tenantId = TenantSession.getActiveTenantId();
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            callback.onResolved(new TransferReceiverInfo("", "", "", ""));
+            return;
+        }
+
+        String roomId = invoice.getRoomId();
+        if (roomId == null || roomId.trim().isEmpty()) {
+            loadOwnerReceiverInfo(tenantId.trim(), callback);
+            return;
+        }
+
+        scopedCollection("rooms").document(roomId.trim()).get()
+                .addOnSuccessListener(roomDoc -> {
+                    String houseId = roomDoc != null && roomDoc.exists() ? roomDoc.getString("houseId") : null;
+                    if (houseId == null || houseId.trim().isEmpty()) {
+                        loadOwnerReceiverInfo(tenantId.trim(), callback);
+                        return;
+                    }
+                    loadManagerReceiverInfo(tenantId.trim(), houseId.trim(), callback);
+                })
+                .addOnFailureListener(e -> loadOwnerReceiverInfo(tenantId.trim(), callback));
+    }
+
+    private void loadManagerReceiverInfo(@NonNull String tenantId,
+            @NonNull String houseId,
+            @NonNull TransferReceiverCallback callback) {
+        scopedCollection("members")
+                .whereEqualTo("role", TenantRoles.STAFF)
+                .whereEqualTo("status", "ACTIVE")
+                .whereArrayContains("assignedHouseIds", houseId)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(memberQs -> {
+                    if (memberQs == null || memberQs.isEmpty()) {
+                        loadOwnerReceiverInfo(tenantId, callback);
+                        return;
+                    }
+
+                    String managerUid = memberQs.getDocuments().get(0).getId();
+                    if (managerUid == null || managerUid.trim().isEmpty()) {
+                        loadOwnerReceiverInfo(tenantId, callback);
+                        return;
+                    }
+
+                    db.collection("users").document(managerUid.trim()).get()
+                            .addOnSuccessListener(userDoc -> {
+                                TransferReceiverInfo managerInfo = userDocToTransferInfo(userDoc, true);
+                                if (managerInfo == null || managerInfo.isMissingCoreInfo()) {
+                                    loadOwnerReceiverInfo(tenantId, callback);
+                                } else {
+                                    callback.onResolved(managerInfo);
+                                }
+                            })
+                            .addOnFailureListener(e -> loadOwnerReceiverInfo(tenantId, callback));
+                })
+                .addOnFailureListener(e -> loadOwnerReceiverInfo(tenantId, callback));
+    }
+
+    private void loadOwnerReceiverInfo(@NonNull String tenantId, @NonNull TransferReceiverCallback callback) {
+        db.collection("tenants").document(tenantId).get()
+                .addOnSuccessListener(tenantDoc -> {
+                    String tenantBankAccountNo = safeTrim(tenantDoc.getString("bankAccountNo"));
+                    String tenantBankNameRaw = safeTrim(tenantDoc.getString("bankName"));
+                    if (tenantBankNameRaw.isEmpty()) {
+                        tenantBankNameRaw = safeTrim(tenantDoc.getString("bankCode"));
+                    }
+                    final String tenantBankName = tenantBankNameRaw;
+                    String tenantBankAccountName = safeTrim(tenantDoc.getString("bankAccountName"));
+                    String tenantQrUrl = safeTrim(tenantDoc.getString("paymentQrUrl"));
+
+                    String ownerUid = safeTrim(tenantDoc.getString("ownerUid"));
+                    if (ownerUid.isEmpty()) {
+                        ownerUid = tenantId;
+                    }
+
+                    db.collection("users").document(ownerUid).get()
+                            .addOnSuccessListener(userDoc -> {
+                                TransferReceiverInfo fromOwnerUser = userDocToTransferInfo(userDoc, true);
+                                if (fromOwnerUser != null && !fromOwnerUser.isMissingCoreInfo()) {
+                                    String mergedQr = fromOwnerUser.paymentQrUrl;
+                                    if (mergedQr.isEmpty()) {
+                                        mergedQr = tenantQrUrl;
+                                    }
+                                    callback.onResolved(new TransferReceiverInfo(
+                                            fromOwnerUser.bankAccountNo,
+                                            fromOwnerUser.bankName,
+                                            fromOwnerUser.bankAccountName,
+                                            mergedQr));
+                                    return;
+                                }
+
+                                callback.onResolved(new TransferReceiverInfo(
+                                        tenantBankAccountNo,
+                                        tenantBankName,
+                                        tenantBankAccountName,
+                                        tenantQrUrl));
+                            })
+                            .addOnFailureListener(e -> callback.onResolved(new TransferReceiverInfo(
+                                    tenantBankAccountNo,
+                                    tenantBankName,
+                                    tenantBankAccountName,
+                                    tenantQrUrl)));
+                })
+                .addOnFailureListener(e -> callback.onResolved(new TransferReceiverInfo("", "", "", "")));
+    }
+
+    private TransferReceiverInfo userDocToTransferInfo(com.google.firebase.firestore.DocumentSnapshot userDoc,
+            boolean includeDisplayNameFallback) {
+        if (userDoc == null || !userDoc.exists()) {
+            return null;
+        }
+
+        String bankAccountNo = safeTrim(userDoc.getString("bankAccountNo"));
+        String bankName = safeTrim(userDoc.getString("bankName"));
+        String bankAccountName = safeTrim(userDoc.getString("bankAccountName"));
+        if (includeDisplayNameFallback && bankAccountName.isEmpty()) {
+            bankAccountName = safeTrim(userDoc.getString("fullName"));
+        }
+        String qrUrl = safeTrim(userDoc.getString("paymentQrUrl"));
+
+        return new TransferReceiverInfo(bankAccountNo, bankName, bankAccountName, qrUrl);
+    }
+
+    private String safeTrim(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void showOwnerCollectPaymentDialog(@NonNull Invoice invoice) {

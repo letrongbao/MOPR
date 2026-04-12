@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.constants.TicketStatus;
 import com.example.myapplication.core.repository.domain.TicketRepository;
 import com.example.myapplication.core.session.TenantSession;
@@ -21,10 +22,16 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 public class TenantCreateReportActivity extends AppCompatActivity {
 
@@ -32,6 +39,7 @@ public class TenantCreateReportActivity extends AppCompatActivity {
     public static final String EXTRA_TENANT_ID = "TENANT_ID";
 
     private final TicketRepository repository = new TicketRepository();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final SimpleDateFormat DATE_TIME_FORMAT =
             new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
@@ -146,6 +154,7 @@ public class TenantCreateReportActivity extends AppCompatActivity {
 
         repository.add(ticket,
                 () -> runOnUiThread(() -> {
+                    pushOwnerReportCreatedNotifications(ticket, title);
                     if (appointmentCalendar != null) {
                         long triggerAt = appointmentCalendar.getTimeInMillis();
                         if (triggerAt > System.currentTimeMillis()) {
@@ -158,5 +167,50 @@ public class TenantCreateReportActivity extends AppCompatActivity {
                     finish();
                 }),
                 () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_send_failed), Toast.LENGTH_SHORT).show()));
+    }
+
+    private void pushOwnerReportCreatedNotifications(Ticket ticket, String reportTitle) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || tenantId == null || tenantId.trim().isEmpty() || ticket == null) {
+            return;
+        }
+
+        String safeTitle = (reportTitle != null && !reportTitle.trim().isEmpty())
+                ? reportTitle.trim()
+                : getString(R.string.ticket_title);
+        String roomLabel = getString(R.string.room_number,
+                ticket.getRoomId() != null && !ticket.getRoomId().trim().isEmpty()
+                        ? ticket.getRoomId().trim()
+                        : "-");
+
+        db.collection("tenants").document(tenantId)
+                .collection("members")
+                .whereIn("role", Arrays.asList(TenantRoles.OWNER, TenantRoles.STAFF))
+                .get()
+                .addOnSuccessListener(members -> {
+                    com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
+                    for (com.google.firebase.firestore.DocumentSnapshot member : members.getDocuments()) {
+                        String receiverUid = member.getId();
+                        if (receiverUid == null || receiverUid.trim().isEmpty() || receiverUid.equals(currentUser.getUid())) {
+                            continue;
+                        }
+
+                        Map<String, Object> payload = new HashMap<>();
+                        payload.put("title", getString(R.string.report_created_notification_title));
+                        payload.put("body", getString(R.string.report_created_notification_body, safeTitle, roomLabel));
+                        payload.put("type", "REPORT_CREATED");
+                        payload.put("ticketId", ticket.getId());
+                        payload.put("conversationId", null);
+                        payload.put("senderId", currentUser.getUid());
+                        payload.put("userId", receiverUid);
+                        payload.put("isRead", false);
+                        payload.put("createdAt", now);
+
+                        db.collection("tenants").document(tenantId)
+                                .collection("notifications")
+                                .document(UUID.randomUUID().toString())
+                                .set(payload, SetOptions.merge());
+                    }
+                });
     }
 }

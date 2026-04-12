@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -28,6 +30,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.text.Normalizer;
 
 public class TenantProfilesActivity extends AppCompatActivity {
 
@@ -46,22 +50,28 @@ public class TenantProfilesActivity extends AppCompatActivity {
     private MaterialButton btnSort;
     private MaterialButton btnSelectHouse;
     private MaterialButton btnSelectRoom;
+    private EditText edtSearchProfiles;
 
     private final List<ContractMember> profiles = new ArrayList<>();
     private ListenerRegistration memberListener;
+    private ListenerRegistration tenantMemberLinkListener;
     private ListenerRegistration roomListener;
     private ListenerRegistration houseListener;
 
     private final Map<String, String> houseNameById = new HashMap<>();
     private final Map<String, String> roomLabelById = new HashMap<>();
     private final Map<String, String> roomHouseById = new HashMap<>();
+    private final java.util.Set<String> joinedMemberUids = new java.util.HashSet<>();
     private String selectedHouseId;
     private String selectedRoomId;
+    private String searchQuery = "";
 
     private enum SortOption {
         REPRESENTATIVE_FIRST,
         NAME_AZ,
-        ROOM_ASC
+        ROOM_ASC,
+        DOCUMENTS_READY_FIRST,
+        TEMPORARY_RESIDENT_FIRST
     }
 
     private SortOption currentSort = SortOption.REPRESENTATIVE_FIRST;
@@ -88,6 +98,7 @@ public class TenantProfilesActivity extends AppCompatActivity {
         btnSort = findViewById(R.id.btnSort);
         btnSelectHouse = findViewById(R.id.btnSelectHouse);
         btnSelectRoom = findViewById(R.id.btnSelectRoom);
+        edtSearchProfiles = findViewById(R.id.edtSearchProfiles);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new TenantProfileQuickAdapter(new TenantProfileQuickAdapter.OnProfileActionListener() {
@@ -100,8 +111,19 @@ public class TenantProfilesActivity extends AppCompatActivity {
             public void onUpdate(@androidx.annotation.NonNull ContractMember member) {
                 openContractUpdate(member);
             }
+
+            @Override
+            public void onViewPersonalIdImage(@androidx.annotation.NonNull ContractMember member) {
+                openPersonalIdImage(member.getPersonalIdImageUrl());
+            }
+
+            @Override
+            public void onConfirmTemporaryResidence(@androidx.annotation.NonNull ContractMember member) {
+                confirmTemporaryResidence(member);
+            }
         });
         recyclerView.setAdapter(adapter);
+        adapter.setLocationContext(roomLabelById, roomHouseById, houseNameById);
 
         if (btnSort != null) {
             btnSort.setOnClickListener(v -> showSortDialog());
@@ -111,6 +133,23 @@ public class TenantProfilesActivity extends AppCompatActivity {
         }
         if (btnSelectRoom != null) {
             btnSelectRoom.setOnClickListener(v -> showRoomFilterDialog());
+        }
+        if (edtSearchProfiles != null) {
+            edtSearchProfiles.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    searchQuery = s == null ? "" : s.toString();
+                    applyFiltersAndSort();
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+            });
         }
 
         DocumentReference scopeDoc = resolveScopeDoc();
@@ -143,6 +182,7 @@ public class TenantProfilesActivity extends AppCompatActivity {
                         ContractMember member = doc.toObject(ContractMember.class);
                         if (member != null) {
                             member.setId(doc.getId());
+                            applyEffectiveProfileState(member);
                             profiles.add(member);
                         }
                     });
@@ -154,6 +194,23 @@ public class TenantProfilesActivity extends AppCompatActivity {
                         return;
                     }
 
+                    applyFiltersAndSort();
+                });
+
+        tenantMemberLinkListener = scopeDoc.collection("members")
+                .whereEqualTo("status", "ACTIVE")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null) {
+                        return;
+                    }
+                    joinedMemberUids.clear();
+                    snapshot.getDocuments().forEach(doc -> {
+                        String uid = doc.getId();
+                        if (uid != null && !uid.trim().isEmpty()) {
+                            joinedMemberUids.add(uid.trim());
+                        }
+                    });
+                    profiles.forEach(this::applyEffectiveProfileState);
                     applyFiltersAndSort();
                 });
     }
@@ -183,6 +240,7 @@ public class TenantProfilesActivity extends AppCompatActivity {
                     }
                     ensureRoomSelectionBelongsToHouse();
                     updateFilterButtons();
+                    adapter.setLocationContext(roomLabelById, roomHouseById, houseNameById);
                     applyFiltersAndSort();
                 });
 
@@ -211,6 +269,7 @@ public class TenantProfilesActivity extends AppCompatActivity {
                         ensureRoomSelectionBelongsToHouse();
                     }
                     updateFilterButtons();
+                    adapter.setLocationContext(roomLabelById, roomHouseById, houseNameById);
                     applyFiltersAndSort();
                 });
     }
@@ -231,7 +290,9 @@ public class TenantProfilesActivity extends AppCompatActivity {
         String[] options = {
                 getString(R.string.tenant_profiles_sort_representative_first),
                 getString(R.string.sort_tenant_name_az),
-                getString(R.string.tenant_profiles_sort_room)
+            getString(R.string.tenant_profiles_sort_room),
+            getString(R.string.tenant_profiles_sort_documents_ready_first),
+            getString(R.string.tenant_profiles_sort_temporary_resident_first)
         };
 
         new AlertDialog.Builder(this)
@@ -342,6 +403,7 @@ public class TenantProfilesActivity extends AppCompatActivity {
             if (member == null) {
                 continue;
             }
+            applyEffectiveProfileState(member);
             String roomId = member.getRoomId();
             if (selectedHouseId != null) {
                 String houseId = roomId != null ? roomHouseById.get(roomId) : null;
@@ -353,6 +415,9 @@ public class TenantProfilesActivity extends AppCompatActivity {
                 if (roomId == null || !selectedRoomId.equals(roomId)) {
                     continue;
                 }
+            }
+            if (!matchesSearch(member, searchQuery)) {
+                continue;
             }
             out.add(member);
         }
@@ -382,11 +447,37 @@ public class TenantProfilesActivity extends AppCompatActivity {
                 return nameA.compareToIgnoreCase(nameB);
             });
         } else {
-            Collections.sort(out, (a, b) -> {
-                String roomA = resolveRoomLabel(a);
-                String roomB = resolveRoomLabel(b);
-                return roomA.compareToIgnoreCase(roomB);
-            });
+            if (option == SortOption.DOCUMENTS_READY_FIRST) {
+                Collections.sort(out, (a, b) -> {
+                    if (a.isFullyDocumented() != b.isFullyDocumented()) {
+                        return a.isFullyDocumented() ? -1 : 1;
+                    }
+                    String nameA = a.getFullName() != null ? a.getFullName() : "";
+                    String nameB = b.getFullName() != null ? b.getFullName() : "";
+                    return nameA.compareToIgnoreCase(nameB);
+                });
+            } else if (option == SortOption.TEMPORARY_RESIDENT_FIRST) {
+                Collections.sort(out, (a, b) -> {
+                    if (a.isTemporaryResident() != b.isTemporaryResident()) {
+                        return a.isTemporaryResident() ? -1 : 1;
+                    }
+                    String roomA = resolveRoomLabel(a);
+                    String roomB = resolveRoomLabel(b);
+                    int roomCmp = roomA.compareToIgnoreCase(roomB);
+                    if (roomCmp != 0) {
+                        return roomCmp;
+                    }
+                    String nameA = a.getFullName() != null ? a.getFullName() : "";
+                    String nameB = b.getFullName() != null ? b.getFullName() : "";
+                    return nameA.compareToIgnoreCase(nameB);
+                });
+            } else {
+                Collections.sort(out, (a, b) -> {
+                    String roomA = resolveRoomLabel(a);
+                    String roomB = resolveRoomLabel(b);
+                    return roomA.compareToIgnoreCase(roomB);
+                });
+            }
         }
 
         tvProfileCount.setText(out.isEmpty()
@@ -398,6 +489,58 @@ public class TenantProfilesActivity extends AppCompatActivity {
 
     private void applyFiltersAndSort() {
         applySorting(currentSort);
+    }
+
+    private boolean matchesSearch(@androidx.annotation.NonNull ContractMember member, String query) {
+        String normalizedQuery = normalizeSearch(query);
+        if (normalizedQuery.isEmpty()) {
+            return true;
+        }
+
+        String fullName = normalizeSearch(member.getFullName());
+        String phone = normalizeSearch(member.getPhoneNumber());
+        String personalId = normalizeSearch(member.getPersonalId());
+        String roomLabel = normalizeSearch(resolveRoomLabel(member));
+        String role = normalizeSearch(member.isContractRepresentative()
+                ? getString(R.string.tenant_profile_role_representative)
+                : getString(R.string.tenant_profile_role_member));
+        String docs = normalizeSearch(member.isFullyDocumented()
+                ? getString(R.string.documents_complete)
+                : getString(R.string.documents_incomplete));
+        String tempResidence = normalizeSearch(member.isTemporaryResident()
+                ? getString(R.string.temporary_residence_registered)
+                : getString(R.string.temporary_residence_not_registered));
+
+        String fullText = String.join(" ",
+                fullName,
+                phone,
+                personalId,
+                roomLabel,
+                role,
+                docs,
+                tempResidence);
+
+        String[] terms = normalizedQuery.split("\\s+");
+        for (String term : terms) {
+            if (term.isEmpty()) {
+                continue;
+            }
+            if (!fullText.contains(term)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String normalizeSearch(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+        return normalized.replace('đ', 'd');
     }
 
     private String resolveRoomLabel(@androidx.annotation.NonNull ContractMember member) {
@@ -412,6 +555,40 @@ public class TenantProfilesActivity extends AppCompatActivity {
         return "";
     }
 
+    private void applyEffectiveProfileState(@androidx.annotation.NonNull ContractMember member) {
+        boolean effectiveDocumented;
+        if (member.isContractRepresentative()) {
+            effectiveDocumented = isRepresentativeJoined(member);
+        } else {
+            effectiveDocumented = hasBasicTenantProfile(member);
+        }
+        member.setFullyDocumented(effectiveDocumented);
+    }
+
+    private boolean hasBasicTenantProfile(@androidx.annotation.NonNull ContractMember member) {
+        return !isBlank(member.getFullName())
+                && !isBlank(member.getPhoneNumber())
+                && !isBlank(member.getPersonalId());
+    }
+
+    private boolean isRepresentativeJoined(@androidx.annotation.NonNull ContractMember member) {
+        if (member.isAccountLinked()) {
+            return true;
+        }
+
+        String uid = member.getUid();
+        if (!isBlank(uid) && joinedMemberUids.contains(uid.trim())) {
+            return true;
+        }
+
+        String docId = member.getId();
+        return !isBlank(docId) && joinedMemberUids.contains(docId.trim());
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
     private void openDial(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
             Toast.makeText(this, getString(R.string.common_not_available), Toast.LENGTH_SHORT).show();
@@ -420,6 +597,19 @@ public class TenantProfilesActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_DIAL);
         intent.setData(Uri.parse("tel:" + phone.trim()));
         startActivity(intent);
+    }
+
+    private void openPersonalIdImage(String imageUrl) {
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.common_not_available), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(imageUrl.trim()));
+            startActivity(intent);
+        } catch (Exception ex) {
+            Toast.makeText(this, getString(R.string.error_load_data), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openContractUpdate(@androidx.annotation.NonNull ContractMember member) {
@@ -433,12 +623,57 @@ public class TenantProfilesActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void confirmTemporaryResidence(@androidx.annotation.NonNull ContractMember member) {
+        if (!member.isFullyDocumented() || (member.isTemporaryResident() && member.isTemporaryAbsent())) {
+            return;
+        }
+
+        String memberId = member.getId();
+        if (memberId == null || memberId.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.tenant_profile_temporary_residence_confirm_failed), Toast.LENGTH_SHORT)
+                    .show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.tenant_profile_confirm_temporary_residence_absence_title))
+                .setMessage(getString(R.string.tenant_profile_confirm_temporary_residence_absence_message))
+                .setPositiveButton(getString(R.string.confirm), (dialog, which) -> {
+                    DocumentReference scopeDoc = resolveScopeDoc();
+                    if (scopeDoc == null) {
+                        Toast.makeText(this, getString(R.string.not_logged_in), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("temporaryResident", true);
+                    updates.put("temporaryAbsent", true);
+                    updates.put("updatedAt", System.currentTimeMillis());
+
+                    scopeDoc.collection("contractMembers")
+                            .document(memberId.trim())
+                            .set(updates, SetOptions.merge())
+                            .addOnSuccessListener(v -> Toast.makeText(this,
+                                    getString(R.string.tenant_profile_temporary_residence_absence_confirmed),
+                                    Toast.LENGTH_SHORT).show())
+                            .addOnFailureListener(e -> Toast.makeText(this,
+                                    getString(R.string.tenant_profile_temporary_residence_confirm_failed),
+                                    Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (memberListener != null) {
             memberListener.remove();
             memberListener = null;
+        }
+        if (tenantMemberLinkListener != null) {
+            tenantMemberLinkListener.remove();
+            tenantMemberLinkListener = null;
         }
         if (roomListener != null) {
             roomListener.remove();

@@ -37,6 +37,7 @@ public class ImageUploadService extends Service {
     private static final String UPLOAD_PRESET = "MOPRupload";
 
     public static final String EXTRA_IMAGE_URI = "image_uri";
+    public static final String EXTRA_UPLOAD_PURPOSE = "upload_purpose";
     public static final String ACTION_UPLOAD_COMPLETE = "com.example.myapplication.UPLOAD_COMPLETE";
     public static final String EXTRA_IMAGE_URL = "image_url";
 
@@ -54,6 +55,7 @@ public class ImageUploadService extends Service {
         }
 
         Uri imageUri = Uri.parse(intent.getStringExtra(EXTRA_IMAGE_URI));
+        String uploadPurpose = intent.getStringExtra(EXTRA_UPLOAD_PURPOSE);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.uploading_image_notification))
@@ -132,6 +134,9 @@ public class ImageUploadService extends Service {
 
                     Intent resultIntent = new Intent(ACTION_UPLOAD_COMPLETE);
                     resultIntent.putExtra(EXTRA_IMAGE_URL, imageUrl);
+                    if (uploadPurpose != null) {
+                        resultIntent.putExtra(EXTRA_UPLOAD_PURPOSE, uploadPurpose);
+                    }
                     LocalBroadcastManager.getInstance(this).sendBroadcast(resultIntent);
 
                     showCompleteNotification(getString(R.string.image_upload_success));

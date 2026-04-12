@@ -100,6 +100,7 @@ public class TenantMenuActivity extends AppCompatActivity {
     private String tenantId;
     private String roomId;
     private String activeMemberContractId;
+    private boolean profilePromptShown;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -282,12 +283,66 @@ public class TenantMenuActivity extends AppCompatActivity {
                                     if (mappedContractId != null && !mappedContractId.trim().isEmpty()) {
                                         activeMemberContractId = mappedContractId.trim();
                                     }
+
+                                    maybePromptTenantProfileCompletion(memberDoc);
                                 }
                                 loadRoomAndContractData();
                             })
                             .addOnFailureListener(e -> loadRoomAndContractData());
                 })
                 .addOnFailureListener(e -> loadRoomAndContractData());
+    }
+
+    private void maybePromptTenantProfileCompletion(DocumentSnapshot memberDoc) {
+        if (profilePromptShown || memberDoc == null || !memberDoc.exists()) {
+            return;
+        }
+
+        Boolean representativeFlag = memberDoc.getBoolean("contractRepresentative");
+        boolean representative = representativeFlag != null && representativeFlag;
+        if (!representative) {
+            String role = memberDoc.getString("contractMemberRole");
+            representative = role != null && "REPRESENTATIVE".equalsIgnoreCase(role.trim());
+        }
+        if (representative) {
+            return;
+        }
+
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            return;
+        }
+
+        db.collection("users").document(user.getUid())
+                .get()
+                .addOnSuccessListener(userDoc -> {
+                    if (!userDoc.exists()) {
+                        return;
+                    }
+
+                    String fullName = userDoc.getString("fullName");
+                    String phone = userDoc.getString("phoneNumber");
+                    String personalId = userDoc.getString("personalId");
+
+                    boolean complete = fullName != null && !fullName.trim().isEmpty()
+                            && phone != null && !phone.trim().isEmpty()
+                            && personalId != null && !personalId.trim().isEmpty();
+                    if (complete) {
+                        return;
+                    }
+
+                    profilePromptShown = true;
+                    new AlertDialog.Builder(this)
+                            .setTitle(getString(R.string.tenant_profile_completion_prompt_title))
+                            .setMessage(getString(R.string.tenant_profile_completion_prompt_message))
+                            .setPositiveButton(getString(R.string.tenant_profile_completion_prompt_action), (dialog, which) -> {
+                                Intent intent = new Intent(this, EditProfileActivity.class);
+                                intent.putExtra(EditProfileActivity.EXTRA_USE_TENANT_HEADER, true);
+                                startActivity(intent);
+                            })
+                            .setNegativeButton(getString(R.string.cancel), null)
+                            .show();
+                });
     }
 
     private void loadRoomAndContractData() {
