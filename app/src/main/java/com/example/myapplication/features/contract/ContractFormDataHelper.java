@@ -164,6 +164,16 @@ public final class ContractFormDataHelper {
             throw new ValidationException(invalidDataMessage);
         }
 
+        if (memberCount <= 0 || contractMonths <= 0) {
+            throw new ValidationException(invalidDataMessage);
+        }
+
+        if ((electricMeterMode && electricStartReading < 0)
+                || (waterMeterMode && waterStartReading < 0)
+                || (hasParkingService && vehicleCount < 0)) {
+            throw new ValidationException(invalidDataMessage);
+        }
+
         if (hasParkingService && vehicleCount <= 0) {
             throw new ValidationException(vehicleCountRequiredMessage);
         }
@@ -224,8 +234,13 @@ public final class ContractFormDataHelper {
         contract.setHasLaundryService(data.hasLaundryService);
         contract.setNote(data.note);
         contract.setShowNoteOnInvoice(data.showNoteOnInvoice);
-        contract.setContractStatus("ACTIVE");
-        contract.setContractEndDate(endDateComputer.compute(data.signingDate, data.contractMonths));
+        String computedEndDate = endDateComputer.compute(data.signingDate, data.contractMonths);
+        contract.setContractEndDate(computedEndDate);
+
+        Calendar endCalendar = ContractDateHelper.parseContractDate(computedEndDate);
+        boolean isExpiredAtCreation = endCalendar != null && endCalendar.getTimeInMillis() < System.currentTimeMillis();
+        contract.setContractStatus(isExpiredAtCreation ? "ENDED" : "ACTIVE");
+        contract.setEndedAt(isExpiredAtCreation ? System.currentTimeMillis() : null);
     }
 
     @NonNull

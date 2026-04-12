@@ -4,111 +4,219 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="#F2F5FA"
     tools:context=".features.auth.JoinRoomActivity">
 
-    <ImageView
-        android:id="@+id/ivLogo"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_marginTop="60dp"
-        android:src="@drawable/ic_user_avatar" 
+    <View
+        android:id="@+id/bgOrbTop"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:layout_marginTop="-110dp"
+        android:layout_marginEnd="-70dp"
+        android:alpha="0.6"
+        android:background="@drawable/bg_join_room_orb"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/primary" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/join_room_welcome"
-        android:textColor="#333333"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ivLogo" />
+    <View
+        android:id="@+id/bgOrbBottom"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_marginStart="-70dp"
+        android:layout_marginBottom="-70dp"
+        android:alpha="0.45"
+        android:background="@drawable/bg_join_room_orb_alt"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <TextView
-        android:id="@+id/tvInstruction"
+    <ScrollView
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:text="@string/join_room_instruction"
-        android:textColor="#666666"
-        android:textSize="16sp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingStart="20dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvWelcome" />
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardInput"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="32dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvInstruction">
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="24dp">
+            android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/edtInviteCode"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardHero"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="@null"
-                android:hint="@string/join_room_code_hint"
-                android:inputType="textCapCharacters"
-                android:maxLines="1"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:letterSpacing="0.2" />
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="26dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
-            <View
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_join_room_hero"
+                    android:orientation="vertical"
+                    android:paddingStart="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp">
+
+                    <LinearLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/bg_join_room_badge"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:id="@+id/ivLogo"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:src="@drawable/ic_user_avatar"
+                            android:tint="#0A3554" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvWelcome"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:fontFamily="sans-serif-black"
+                        android:lineSpacingExtra="2dp"
+                        android:text="@string/join_room_welcome"
+                        android:textColor="#0B2940"
+                        android:textSize="28sp" />
+
+                    <TextView
+                        android:id="@+id/tvInstruction"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:lineSpacingExtra="2dp"
+                        android:text="@string/join_room_instruction"
+                        android:textColor="#36586F"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardInput"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="8dp"
-                android:background="#E0E0E0" />
-            
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="10dp"
+                app:strokeColor="#DEE8F2"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="@string/join_room_code_section_title"
+                        android:textColor="#122C45"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/join_room_code_section_subtitle"
+                        android:textColor="#5D7082"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilInviteCode"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        app:boxBackgroundColor="#F8FBFF"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxStrokeColor="#B4CADF"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:endIconMode="clear_text"
+                        app:hintEnabled="false">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtInviteCode"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:gravity="center"
+                            android:hint="@string/join_room_code_hint"
+                            android:imeOptions="actionDone"
+                            android:inputType="textCapCharacters"
+                            android:letterSpacing="0.16"
+                            android:maxLength="24"
+                            android:maxLines="1"
+                            android:textColor="#0E2740"
+                            android:textColorHint="#7A8E9F"
+                            android:textSize="20sp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/join_room_code_tip"
+                        android:textColor="#4F6880"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnJoin"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="18dp"
+                        android:fontFamily="sans-serif-black"
+                        android:text="@string/join_room_connect"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        app:backgroundTint="#0C7BD9"
+                        app:cornerRadius="16dp"
+                        app:icon="@drawable/ic_arrow_right"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="#FFFFFF"
+                        app:rippleColor="#66FFFFFF" />
+
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <Button
-        android:id="@+id/btnJoin"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="32dp"
-        android:backgroundTint="@color/primary"
-        android:text="@string/join_room_connect"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:cornerRadius="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardInput" />
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnJoin" />
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

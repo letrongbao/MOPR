@@ -1221,7 +1221,11 @@
     <string name="join_room_welcome">Chào mừng đến MOPR!</string>
     <string name="join_room_instruction">Vui lòng nhập mã nhóm phòng mà chủ nhà đã chia sẻ cho bạn để tiếp tục.</string>
     <string name="join_room_code_hint">Nhập mã chữ hoặc số (VD: A1B2C3)</string>
+    <string name="join_room_code_section_title">Mã phòng của bạn</string>
+    <string name="join_room_code_section_subtitle">Dán mã chủ trọ gửi cho bạn để kích hoạt quyền truy cập phòng.</string>
+    <string name="join_room_code_tip">Mã phòng không phân biệt khoảng trắng. Ứng dụng sẽ tự chuẩn hoá trước khi kết nối.</string>
     <string name="join_room_connect">Kết nối phòng</string>
+    <string name="join_room_connecting">Đang kết nối...</string>
     <string name="join_room_enter_code_required">Vui lòng nhập mã phòng!</string>
     <string name="join_room_session_expired">Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.</string>
     <string name="join_room_success">Kết nối phòng thành công!</string>

@@ -103,6 +103,7 @@ public class ContractActivity extends AppCompatActivity {
     private boolean isContractFormEditable = true;
 
     private MaterialButton btnSave, btnPrint, btnEnd, btnUpdate;
+    private boolean isEndingContractInProgress = false;
 
     private ActivityResultLauncher<String> imagePicker;
     private Uri selectedImageUri;
@@ -775,19 +776,21 @@ public class ContractActivity extends AppCompatActivity {
         scopedCollection("contracts").add(currentContract)
                 .addOnSuccessListener(ref -> {
                     currentContract.setId(ref.getId());
+                    final boolean endedAtCreation = "ENDED".equalsIgnoreCase(currentContract.getContractStatus());
+                    final String targetRoomStatus = endedAtCreation ? RoomStatus.VACANT : RoomStatus.RENTED;
                     contractMemberRepository.upsertPrimaryMemberFromContract(
                             currentContract,
                             () -> {
-                                markRoomStatus(RoomStatus.RENTED);
+                                markRoomStatus(targetRoomStatus);
                                 Toast.makeText(this, getString(R.string.contract_saved), Toast.LENGTH_SHORT).show();
-                                navigateToRoomList(RoomStatus.RENTED);
+                                navigateToRoomList(targetRoomStatus);
                             },
                             () -> {
-                                markRoomStatus(RoomStatus.RENTED);
+                                markRoomStatus(targetRoomStatus);
                                 Toast.makeText(this,
                                         getString(R.string.contract_saved_with_member_sync_warning),
                                         Toast.LENGTH_SHORT).show();
-                                navigateToRoomList(RoomStatus.RENTED);
+                                navigateToRoomList(targetRoomStatus);
                             });
                 })
                 .addOnFailureListener(e -> {
@@ -843,7 +846,7 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void confirmEndContract() {
-        if (currentContract == null || currentContract.getId() == null)
+        if (currentContract == null || currentContract.getId() == null || isEndingContractInProgress)
             return;
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.contract_end_confirm_title))
@@ -853,8 +856,11 @@ public class ContractActivity extends AppCompatActivity {
     }
 
     private void endContract() {
-        if (currentContract == null || currentContract.getId() == null)
+        if (currentContract == null || currentContract.getId() == null || isEndingContractInProgress)
             return;
+
+        setEndingContractInProgress(true);
+
         String oldRoomId = roomId;
         long now = System.currentTimeMillis();
         String contractId = currentContract.getId();
@@ -862,7 +868,7 @@ public class ContractActivity extends AppCompatActivity {
             () -> contractMemberRepository.deactivateMembersByContract(
                 contractId,
                 () -> hardOffboardAfterContractEnd(contractId, oldRoomId)),
-                () -> Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+                this::handleEndContractError);
     }
 
         private void hardOffboardAfterContractEnd(@NonNull String contractId, @NonNull String oldRoomId) {
@@ -870,15 +876,22 @@ public class ContractActivity extends AppCompatActivity {
         String tenantId = TenantSession.getActiveTenantId();
 
         if (user == null || tenantId == null || tenantId.trim().isEmpty()) {
+            Map<String, Object> contractUpdates = new HashMap<>();
+            contractUpdates.put("contractStatus", "ENDED");
+            contractUpdates.put("endedAt", System.currentTimeMillis());
+            contractUpdates.put("updatedAt", System.currentTimeMillis());
+            contractUpdates.put("previousRoomId", oldRoomId);
+            contractUpdates.put("roomId", null);
+
             scopedCollection("contracts").document(contractId)
-                .delete()
+                .set(contractUpdates, com.google.firebase.firestore.SetOptions.merge())
                 .addOnSuccessListener(v -> {
+                setEndingContractInProgress(false);
                 markRoomStatus(RoomStatus.VACANT);
                 Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
                 navigateToRoomList(RoomStatus.VACANT);
                 })
-                .addOnFailureListener(e -> Toast
-                    .makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> handleEndContractError());
             return;
         }
 
@@ -902,7 +915,14 @@ public class ContractActivity extends AppCompatActivity {
                         batch.set(tenantScope.collection("rooms").document(oldRoomId), roomUpdates,
                             com.google.firebase.firestore.SetOptions.merge());
 
-                        batch.delete(tenantScope.collection("contracts").document(contractId));
+                        Map<String, Object> contractUpdates = new HashMap<>();
+                        contractUpdates.put("contractStatus", "ENDED");
+                        contractUpdates.put("endedAt", System.currentTimeMillis());
+                        contractUpdates.put("updatedAt", System.currentTimeMillis());
+                        contractUpdates.put("previousRoomId", oldRoomId);
+                        contractUpdates.put("roomId", null);
+                        batch.set(tenantScope.collection("contracts").document(contractId), contractUpdates,
+                            com.google.firebase.firestore.SetOptions.merge());
 
                         for (DocumentSnapshot memberDoc : memberSnapshot.getDocuments()) {
                         String affectedUid = memberDoc.getId();
@@ -932,19 +952,38 @@ public class ContractActivity extends AppCompatActivity {
 
                         batch.commit()
                             .addOnSuccessListener(v -> {
+                            setEndingContractInProgress(false);
                             writeContractOffboardingAuditLog(tenantScope, contractId, oldRoomId, affectedUserIds);
                             Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT)
                                 .show();
                             navigateToRoomList(RoomStatus.VACANT);
                             })
-                            .addOnFailureListener(e -> Toast.makeText(this,
-                                getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+                            .addOnFailureListener(e -> handleEndContractError());
                     })
-                    .addOnFailureListener(e -> Toast.makeText(this,
-                        getString(R.string.operation_failed), Toast.LENGTH_SHORT).show()))
-            .addOnFailureListener(e -> Toast.makeText(this,
-                getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> handleEndContractError()))
+            .addOnFailureListener(e -> handleEndContractError());
         }
+
+    private void setEndingContractInProgress(boolean inProgress) {
+        isEndingContractInProgress = inProgress;
+        if (btnEnd != null) {
+            btnEnd.setEnabled(!inProgress);
+        }
+        if (btnPrint != null) {
+            btnPrint.setEnabled(!inProgress);
+        }
+        if (btnSave != null) {
+            btnSave.setEnabled(!inProgress);
+        }
+        if (btnUpdate != null) {
+            btnUpdate.setEnabled(!inProgress);
+        }
+    }
+
+    private void handleEndContractError() {
+        setEndingContractInProgress(false);
+        Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show();
+    }
 
             private void writeContractOffboardingAuditLog(
                 @NonNull DocumentReference tenantScope,

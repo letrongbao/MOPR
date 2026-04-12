@@ -751,7 +751,11 @@
     <string name="join_room_welcome">Welcome to MOPR!</string>
     <string name="join_room_instruction">Please enter the room group code shared by the owner to continue.</string>
     <string name="join_room_code_hint">Enter letters or numbers (e.g. A1B2C3)</string>
+    <string name="join_room_code_section_title">Your room code</string>
+    <string name="join_room_code_section_subtitle">Paste the code shared by your landlord to unlock room access.</string>
+    <string name="join_room_code_tip">Spaces are ignored automatically. We will normalize the code before connecting.</string>
     <string name="join_room_connect">Connect Room</string>
+    <string name="join_room_connecting">Connecting...</string>
     <string name="join_room_enter_code_required">Please enter the room code!</string>
     <string name="join_room_session_expired">Your session has expired. Please sign in again.</string>
     <string name="join_room_success">Room connected successfully!</string>
