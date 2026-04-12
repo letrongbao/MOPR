@@ -17,7 +17,7 @@ public final class ReportReminderScheduler {
     private ReportReminderScheduler() {}
 
     public static int scheduleReminder(Context context, long triggerAtMillis, String title, String message) {
-        int requestCode = (int) (triggerAtMillis % Integer.MAX_VALUE);
+        int requestCode = generateRequestCode(context, triggerAtMillis, title, message);
         Intent intent = new Intent(context, ReportAlarmReceiver.class);
         intent.putExtra(ReportAlarmReceiver.EXTRA_REQUEST_CODE, requestCode);
         intent.putExtra(ReportAlarmReceiver.EXTRA_TITLE, title);
@@ -31,11 +31,7 @@ public final class ReportReminderScheduler {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
-            } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
-            }
+            scheduleWithBestEffort(alarmManager, triggerAtMillis, pendingIntent);
         }
 
         saveReminder(context, requestCode, triggerAtMillis, title, message);
@@ -80,11 +76,7 @@ public final class ReportReminderScheduler {
 
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             if (alarmManager != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent);
-                } else {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent);
-                }
+                scheduleWithBestEffort(alarmManager, triggerAt, pendingIntent);
             }
         }
     }
@@ -111,6 +103,48 @@ public final class ReportReminderScheduler {
                 .edit()
                 .putStringSet(KEY_SET, entries)
                 .apply();
+    }
+
+    private static int generateRequestCode(Context context, long triggerAtMillis, String title, String message) {
+        Set<String> entries = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getStringSet(KEY_SET, new HashSet<>());
+        int candidate = Math.abs((triggerAtMillis + "|" + safe(title) + "|" + safe(message)).hashCode());
+        if (candidate == 0) {
+            candidate = 1;
+        }
+
+        Set<String> safeEntries = entries != null ? entries : new HashSet<>();
+        while (containsRequestCode(safeEntries, candidate)) {
+            candidate++;
+            if (candidate <= 0) {
+                candidate = 1;
+            }
+        }
+        return candidate;
+    }
+
+    private static boolean containsRequestCode(Set<String> entries, int requestCode) {
+        String prefix = requestCode + "|";
+        for (String entry : entries) {
+            if (entry != null && entry.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void scheduleWithBestEffort(AlarmManager alarmManager,
+            long triggerAtMillis,
+            PendingIntent pendingIntent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+            return;
+        }
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
     }
 
     private static String safe(String value) {

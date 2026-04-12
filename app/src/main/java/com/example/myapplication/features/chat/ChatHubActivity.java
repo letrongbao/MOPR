@@ -3,6 +3,7 @@ package com.example.myapplication.features.chat;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 import android.widget.LinearLayout;
 
@@ -51,6 +52,12 @@ public class ChatHubActivity extends AppCompatActivity {
 
     private static final String STATE_SELECTED_TAB = "chat_hub_selected_tab";
     public static final String EXTRA_USE_TENANT_HEADER = "USE_TENANT_HEADER";
+    public static final String EXTRA_INITIAL_TAB = "INITIAL_TAB";
+    public static final String EXTRA_FOCUS_MESSAGE_INPUT = "FOCUS_MESSAGE_INPUT";
+
+    public static final int TAB_HOUSE = 0;
+    public static final int TAB_ROOM = 1;
+    public static final int TAB_PRIVATE = 2;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -70,6 +77,7 @@ public class ChatHubActivity extends AppCompatActivity {
     private FloatingActionButton ownerNewConversationFab;
     private int restoredTabPosition = 0;
     private boolean hasRestoredTab = false;
+    private boolean shouldFocusMessageInput = false;
 
     private ChatConversationAdapter adapter;
     private ListenerRegistration conversationListener;
@@ -87,8 +95,17 @@ public class ChatHubActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        shouldFocusMessageInput = getIntent().getBooleanExtra(EXTRA_FOCUS_MESSAGE_INPUT, false);
+
         if (savedInstanceState != null) {
             restoredTabPosition = savedInstanceState.getInt(STATE_SELECTED_TAB, 0);
+            hasRestoredTab = true;
+        } else {
+            int initialTab = getIntent().getIntExtra(EXTRA_INITIAL_TAB, TAB_HOUSE);
+            if (initialTab < TAB_HOUSE || initialTab > TAB_PRIVATE) {
+                initialTab = TAB_HOUSE;
+            }
+            restoredTabPosition = initialTab;
             hasRestoredTab = true;
         }
 
@@ -834,6 +851,21 @@ public class ChatHubActivity extends AppCompatActivity {
         observeTenantInlineMessages(activeTenantConversationId);
         markConversationNotificationsRead(activeTenantConversationId);
         ChatForegroundState.setActiveConversationId(activeTenantConversationId);
+        focusMessageInputIfNeeded();
+    }
+
+    private void focusMessageInputIfNeeded() {
+        if (!shouldFocusMessageInput || tenantInlineMessageInput == null) {
+            return;
+        }
+        shouldFocusMessageInput = false;
+        tenantInlineMessageInput.post(() -> {
+            tenantInlineMessageInput.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(tenantInlineMessageInput, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
     }
 
     private void updateTabUnreadBadges() {

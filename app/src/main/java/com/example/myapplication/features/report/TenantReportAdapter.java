@@ -21,8 +21,15 @@ import java.util.Locale;
 
 public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapter.VH> {
 
+    public enum Action {
+        OPEN,
+        RESUBMIT,
+        CONTACT,
+        CANCEL
+    }
+
     public interface OnItemClickListener {
-        void onClick(Ticket ticket);
+        void onClick(Ticket ticket, Action action);
     }
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
@@ -65,7 +72,8 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
             holder.rowAppointment.setVisibility(View.GONE);
         }
 
-        if (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null && !ticket.getRejectReason().trim().isEmpty()) {
+        boolean rejected = TicketStatus.REJECTED.equals(ticket.getStatus());
+        if (rejected && ticket.getRejectReason() != null && !ticket.getRejectReason().trim().isEmpty()) {
             holder.rowRejectReason.setVisibility(View.VISIBLE);
             holder.tvRejectReason.setText(ticket.getRejectReason());
             holder.layoutResubmitButton.setVisibility(View.VISIBLE);
@@ -73,14 +81,20 @@ public class TenantReportAdapter extends RecyclerView.Adapter<TenantReportAdapte
             holder.rowRejectReason.setVisibility(View.GONE);
             holder.layoutResubmitButton.setVisibility(View.GONE);
         }
+        holder.btnResubmit.setEnabled(rejected);
+        holder.btnResubmit.setVisibility(rejected ? View.VISIBLE : View.GONE);
 
         holder.tvPriority.setText(holder.itemView.getContext().getString(R.string.report_priority_default));
         styleStatus(holder.tvStatus, ticket.getStatus());
 
-        holder.itemView.setOnClickListener(v -> listener.onClick(ticket));
-        holder.btnResubmit.setOnClickListener(v -> listener.onClick(ticket));
-        holder.btnContact.setOnClickListener(v -> listener.onClick(ticket));
-        holder.btnCancel.setOnClickListener(v -> listener.onClick(ticket));
+        boolean canCancel = TicketStatus.OPEN.equals(ticket.getStatus());
+        holder.btnCancel.setEnabled(canCancel);
+        holder.btnCancel.setVisibility(canCancel ? View.VISIBLE : View.GONE);
+
+        holder.itemView.setOnClickListener(v -> listener.onClick(ticket, Action.OPEN));
+        holder.btnResubmit.setOnClickListener(v -> listener.onClick(ticket, Action.RESUBMIT));
+        holder.btnContact.setOnClickListener(v -> listener.onClick(ticket, Action.CONTACT));
+        holder.btnCancel.setOnClickListener(v -> listener.onClick(ticket, Action.CANCEL));
     }
 
     @Override

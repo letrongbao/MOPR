@@ -560,6 +560,10 @@
     <string name="report_timeline_rejected">Từ chối lúc: %1$s</string>
     <string name="report_timeline_done">Hoàn thành lúc: %1$s</string>
     <string name="report_timeline_reopened">Mở lại lúc: %1$s</string>
+    <string name="report_cancel_title">Hủy phản ánh</string>
+    <string name="report_cancel_confirm_message">Bạn có chắc chắn muốn hủy phản ánh này?</string>
+    <string name="report_cancel_success">Đã hủy phản ánh</string>
+    <string name="report_cancel_only_open">Chỉ có thể hủy phản ánh ở trạng thái Chưa làm</string>
     <string name="contract_not_found">Không tìm thấy hợp đồng</string>
     <string name="contract_status_expiring_soon">⚠ Sắp hết hạn</string>
     <string name="contract_status_days_left">⚠ Còn %1$d ngày</string>

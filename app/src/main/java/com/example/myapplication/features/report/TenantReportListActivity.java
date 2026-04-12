@@ -19,6 +19,7 @@ import com.example.myapplication.core.constants.TicketStatus;
 import com.example.myapplication.core.repository.domain.TicketRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
+import com.example.myapplication.features.chat.ChatHubActivity;
 import com.example.myapplication.domain.Ticket;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -73,7 +74,7 @@ public class TenantReportListActivity extends AppCompatActivity {
 
         RecyclerView rvReports = findViewById(R.id.rvReports);
         rvReports.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new TenantReportAdapter(this::showTicketDetails);
+        adapter = new TenantReportAdapter(this::onTicketAction);
         rvReports.setAdapter(adapter);
 
         tvEmpty = findViewById(R.id.tvEmpty);
@@ -334,6 +335,64 @@ public class TenantReportListActivity extends AppCompatActivity {
         }
 
         builder.show();
+    }
+
+    private void onTicketAction(Ticket ticket, TenantReportAdapter.Action action) {
+        if (ticket == null || action == null) {
+            return;
+        }
+
+        switch (action) {
+            case OPEN:
+                showTicketDetails(ticket);
+                break;
+            case RESUBMIT:
+                if (TicketStatus.REJECTED.equals(ticket.getStatus())) {
+                    showResubmitDialog(ticket);
+                } else {
+                    showTicketDetails(ticket);
+                }
+                break;
+            case CONTACT:
+                openChatHubToContactOwner();
+                break;
+            case CANCEL:
+                confirmCancelTicket(ticket);
+                break;
+            default:
+                showTicketDetails(ticket);
+                break;
+        }
+    }
+
+    private void openChatHubToContactOwner() {
+        android.content.Intent intent = new android.content.Intent(this, ChatHubActivity.class);
+        intent.putExtra(ChatHubActivity.EXTRA_USE_TENANT_HEADER, true);
+        intent.putExtra(ChatHubActivity.EXTRA_INITIAL_TAB, ChatHubActivity.TAB_PRIVATE);
+        intent.putExtra(ChatHubActivity.EXTRA_FOCUS_MESSAGE_INPUT, true);
+        startActivity(intent);
+    }
+
+    private void confirmCancelTicket(Ticket ticket) {
+        if (!TicketStatus.OPEN.equals(ticket.getStatus())) {
+            Toast.makeText(this, getString(R.string.report_cancel_only_open), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (ticket.getId() == null || ticket.getId().trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.report_cancel_title))
+                .setMessage(getString(R.string.report_cancel_confirm_message))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.confirm), (d, w) -> {
+                    repository.delete(ticket.getId(),
+                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.report_cancel_success), Toast.LENGTH_SHORT).show()),
+                            () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_update_failed), Toast.LENGTH_SHORT).show()));
+                })
+                .show();
     }
 
     private void showResubmitDialog(Ticket ticket) {
