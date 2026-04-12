@@ -185,6 +185,7 @@
     <string name="select_house">Chọn căn nhà</string>
     <string name="collect_payment_room">Thu tiền — Phòng %1$s</string>
     <string name="confirm">Xác nhận</string>
+    <string name="contact">Liên hệ</string>
     <string name="qr_transfer">QR chuyển khoản</string>
     <string name="qr_tenant_only">Chỉ hỗ trợ VietQR khi dùng tenant scope</string>
     <string name="bank_not_configured">Chưa cấu hình thông tin chuyển khoản (Org Admin)</string>
@@ -546,6 +547,12 @@
     <string name="report_notification_title">Cập nhật phản ánh</string>
     <string name="report_notification_body">Phản ánh "%1$s" đã chuyển sang trạng thái: %2$s.</string>
     <string name="report_notification_reject_reason">Lí do: %1$s.</string>
+    <string name="report_priority_default">Trung bình</string>
+    <string name="report_alarm_channel_name">Nhắc sửa chữa</string>
+    <string name="report_alarm_channel_desc">Nhắc lịch hẹn xử lí phản ánh</string>
+    <string name="report_alarm_default_title">Nhắc nhở sửa chữa</string>
+    <string name="report_alarm_default_message">Đã đến lịch hẹn xử lí phản ánh.</string>
+    <string name="report_alarm_message_with_title">Đã đến lịch hẹn xử lí phản ánh: %1$s</string>
     <string name="report_timeline_processed">Bắt đầu xử lí: %1$s</string>
     <string name="report_timeline_rejected">Từ chối lúc: %1$s</string>
     <string name="report_timeline_done">Hoàn thành lúc: %1$s</string>

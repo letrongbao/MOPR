@@ -26,6 +26,7 @@
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="confirm">Confirm</string>
+    <string name="contact">Contact</string>
     <string name="create">Create</string>
     <string name="add">Add</string>
     <string name="send">Send</string>
@@ -654,6 +655,12 @@
     <string name="report_notification_title">Report update</string>
     <string name="report_notification_body">Report "%1$s" has changed to status: %2$s.</string>
     <string name="report_notification_reject_reason">Reason: %1$s.</string>
+    <string name="report_priority_default">Normal</string>
+    <string name="report_alarm_channel_name">Repair reminders</string>
+    <string name="report_alarm_channel_desc">Reminder for issue handling appointments</string>
+    <string name="report_alarm_default_title">Repair reminder</string>
+    <string name="report_alarm_default_message">It is time for the issue handling appointment.</string>
+    <string name="report_alarm_message_with_title">It is time to handle report: %1$s</string>
     <string name="report_timeline_processed">Started processing: %1$s</string>
     <string name="report_timeline_rejected">Rejected at: %1$s</string>
     <string name="report_timeline_done">Completed at: %1$s</string>

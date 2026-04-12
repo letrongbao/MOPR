@@ -135,9 +135,20 @@ public class TenantCreateReportActivity extends AppCompatActivity {
         ticket.setStatus(TicketStatus.OPEN);
         ticket.setCreatedBy(user.getUid());
         ticket.setCreatedAt(Timestamp.now());
+        if (appointmentCalendar != null) {
+            ticket.setAppointmentTime(new Timestamp(appointmentCalendar.getTime()));
+        }
 
         repository.add(ticket,
                 () -> runOnUiThread(() -> {
+                    if (appointmentCalendar != null) {
+                        long triggerAt = appointmentCalendar.getTimeInMillis();
+                        if (triggerAt > System.currentTimeMillis()) {
+                            String alarmTitle = getString(R.string.report_alarm_default_title);
+                            String alarmMessage = getString(R.string.report_alarm_message_with_title, title);
+                            ReportReminderScheduler.scheduleReminder(this, triggerAt, alarmTitle, alarmMessage);
+                        }
+                    }
                     Toast.makeText(this, getString(R.string.ticket_sent), Toast.LENGTH_SHORT).show();
                     finish();
                 }),

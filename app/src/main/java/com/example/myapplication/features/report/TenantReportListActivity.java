@@ -44,7 +44,7 @@ public class TenantReportListActivity extends AppCompatActivity {
     private final TicketRepository repository = new TicketRepository();
 
     private final List<Ticket> allTickets = new ArrayList<>();
-    private ReportTicketAdapter adapter;
+    private TenantReportAdapter adapter;
     private TextView tvEmpty;
     private TabLayout tabStatuses;
 
@@ -68,7 +68,7 @@ public class TenantReportListActivity extends AppCompatActivity {
 
         RecyclerView rvReports = findViewById(R.id.rvReports);
         rvReports.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ReportTicketAdapter(this::showTicketDetails);
+        adapter = new TenantReportAdapter(this::showTicketDetails);
         rvReports.setAdapter(adapter);
 
         tvEmpty = findViewById(R.id.tvEmpty);

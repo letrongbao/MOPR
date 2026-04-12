@@ -13,6 +13,7 @@ public class Ticket {
     private String handledBy;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private Timestamp appointmentTime;
     private Timestamp processedAt;
     private Timestamp rejectedAt;
     private Timestamp doneAt;
@@ -49,6 +50,9 @@ public class Ticket {
 
     public Timestamp getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+
+    public Timestamp getAppointmentTime() { return appointmentTime; }
+    public void setAppointmentTime(Timestamp appointmentTime) { this.appointmentTime = appointmentTime; }
 
     public Timestamp getProcessedAt() { return processedAt; }
     public void setProcessedAt(Timestamp processedAt) { this.processedAt = processedAt; }
