@@ -166,6 +166,15 @@
     <string name="contract_header_title">Contract</string>
     <string name="contract_details_title">Contract details</string>
     <string name="contract_smart_title">Smart contracts</string>
+    <string name="revenue_cashflow_model_title">4-way cash flow model</string>
+    <string name="revenue_flow_reported_uncollected">Reported (uncollected)</string>
+    <string name="revenue_flow_collected">Collected</string>
+    <string name="revenue_flow_pending_expense">Pending expense</string>
+    <string name="revenue_flow_paid_expense">Paid expense</string>
+    <string name="revenue_flow_projected_profit">Projected profit</string>
+    <string name="revenue_flow_actual_profit">Actual profit</string>
+    <string name="revenue_profit_delta_default">Projected vs actual delta: 0 VND</string>
+    <string name="revenue_trend_line">Income %1$s • Expense %2$s • Profit %3$s</string>
     <string name="create_contract">Create contract</string>
     <string name="update_contract">Update contract</string>
     <string name="edit_contract">Edit contract</string>
@@ -254,6 +263,8 @@
     <string name="expense_category_hint">Category (e.g. Repair, Trash, Wifi...)</string>
     <string name="expense_amount_hint">Amount</string>
     <string name="expense_date_hint">Date (dd/MM/yyyy)</string>
+    <string name="expense_filter_summary_default">0 items | Planned: 0 VND | Spent: 0 VND</string>
+    <string name="expense_form_info_title">Expense details</string>
     <string name="note_label">Note</string>
     <string name="note_optional_hint">Note (optional)</string>
 
@@ -489,6 +500,7 @@
     <string name="tenant_profiles_sort_room">Room (ascending)</string>
     <string name="tenant_profiles_sort_representative_first">Representative first</string>
     <string name="tenant_profile_unknown_name">Unknown name</string>
+    <string name="tenant_profile_initial_placeholder">N</string>
     <string name="tenant_profile_role_representative">Contract representative</string>
     <string name="tenant_profile_role_member">Room member</string>
     <string name="tenant_profile_role_with_room">%1$s • Room %2$s</string>
@@ -601,6 +613,7 @@
     <string name="contract_extra_fee_option_text">%1$s: %2$s%3$s</string>
 
     <string name="ticket_create_title">Create ticket</string>
+    <string name="ticket_room_id_line">RoomId: %1$s</string>
     <string name="ticket_title_hint">Title</string>
     <string name="ticket_description_hint">Description (optional)</string>
     <string name="tickets_empty">No tickets yet</string>
@@ -651,6 +664,7 @@
     <string name="report_appointment_label">Repair appointment (optional)</string>
     <string name="report_appointment_pick">Pick date and time</string>
     <string name="report_appointment_prefix">Appointment: %1$s</string>
+    <string name="report_appointment_prefix_inline">Appointment: </string>
     <string name="report_description_label">Issue description</string>
     <string name="report_resubmit_title">Edit report</string>
     <string name="report_resubmit_success">Report resubmitted</string>
@@ -690,6 +704,7 @@
     <string name="tenant_menu_room_not_identified">Room is not identified yet</string>
 
     <string name="tenant_room_days_remaining_label">Days\nleft</string>
+    <string name="tenant_room_value_placeholder">--</string>
     <string name="tenant_room_months_stayed_label">Months stayed</string>
     <string name="tenant_room_months_stayed_placeholder">-- months, -- days</string>
     <string name="tenant_room_months_stayed_value">%1$d months, %2$d days</string>
@@ -700,6 +715,7 @@
     <string name="tenant_room_view_contract_detail">View details →</string>
     <string name="tenant_room_start_date_label">Move-in date</string>
     <string name="tenant_room_end_date_label">End date</string>
+    <string name="tenant_room_date_placeholder">--/--/----</string>
     <string name="tenant_room_billing_catalog_title">Billing catalog</string>
     <string name="tenant_room_billing_subtitle_placeholder">Services &amp; rates at --</string>
     <string name="tenant_room_billing_subtitle_with_house">Services &amp; rates at %1$s</string>
@@ -760,6 +776,32 @@
     <string name="notification_center_title">Notification Center</string>
     <string name="chat_notification_channel_name">Message notifications</string>
     <string name="chat_notification_channel_description">Realtime notifications for messages and reminders</string>
+    <string name="invoice_export_billing_period_line">Billing period: %1$s</string>
+    <string name="invoice_export_quantity_line">   -&gt; Qty: %1$s %2$s x %3$s</string>
+    <string name="invoice_export_meter_range_line"> (Reading: %1$s - %2$s)</string>
+    <string name="invoice_export_extra_fee_line">   + %1$s</string>
+    <string name="notification_system_title_prefix">[System] </string>
+    <string name="notification_system_meta_only">System</string>
+    <string name="notification_system_meta_format">%1$s • System</string>
+    <string name="notification_amount_vnd">%1$s VND</string>
+    <string name="notification_amount_contract_based">as defined in contract</string>
+    <string name="notification_contract_expiry_title">Contract expiring soon</string>
+    <string name="notification_contract_expiry_today_body">Your contract expires today. Please contact the landlord to renew.</string>
+    <string name="notification_contract_expiry_body">Your contract expires on %1$s (%2$d day(s) left). Please contact the landlord to renew.</string>
+    <string name="notification_rent_due_title">Rent payment reminder</string>
+    <string name="notification_rent_due_body">This month payment is due. Rent amount: %1$s. Please pay before day 05.</string>
+    <string name="notification_deposit_incomplete_title">Deposit not fully completed</string>
+    <string name="notification_deposit_incomplete_body">Your deposit is not fully paid yet (%1$s). Please contact the landlord to complete it.</string>
+    <string name="confirm_meter_feature_in_development">Meter confirmation feature is under development</string>
+    <string name="room_invite_requires_active_contract">This room has no active contract yet, so an invite code cannot be created.</string>
+    <string name="room_invite_generating">Generating code...</string>
+    <string name="room_invite_generate_button">Create room invite code (anonymous)</string>
+    <string name="room_invite_created_title">Room code created successfully!</string>
+    <string name="room_invite_created_message">This code is used to join the room based on remaining contract member slots.\n\nCode: %1$s</string>
+    <string name="room_invite_copy_code">Copy code</string>
+    <string name="room_invite_clipboard_label">Room code</string>
+    <string name="room_invite_copied">Copied: %1$s</string>
+    <string name="room_invite_create_error">Failed to create code: %1$s</string>
 
     <!-- Language Switcher -->
     <string name="english_language">English</string>

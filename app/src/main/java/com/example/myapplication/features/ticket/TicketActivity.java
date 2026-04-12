@@ -215,7 +215,7 @@ public class TicketActivity extends AppCompatActivity {
     }
 
     private void showTicketDetailDialog(@NonNull Ticket t) {
-        String msg = "RoomId: " + (t.getRoomId() != null ? t.getRoomId() : "") +
+        String msg = getString(R.string.ticket_room_id_line, t.getRoomId() != null ? t.getRoomId() : "") +
                 "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(t.getStatus()) +
                 "\n\n" + (t.getDescription() != null ? t.getDescription() : "");
 

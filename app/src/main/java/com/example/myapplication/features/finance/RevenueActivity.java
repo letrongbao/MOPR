@@ -169,7 +169,7 @@ public class RevenueActivity extends AppCompatActivity {
             tvSelectedMonth.setText(getString(R.string.month_with_value, selectedMonth));
         }
         updateSelectedHouseLabel();
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.getDefault());
 
         ViewModelProvider viewModelProvider = new ViewModelProvider(this);
 
@@ -705,9 +705,11 @@ public class RevenueActivity extends AppCompatActivity {
             title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
 
             TextView valueLine = new TextView(this);
-            valueLine.setText("Thu " + fmt.format(trend.revenue)
-                + " • Chi " + fmt.format(trend.expense)
-                + " • LN " + fmt.format(trend.profit));
+            valueLine.setText(getString(
+                R.string.revenue_trend_line,
+                fmt.format(trend.revenue),
+                fmt.format(trend.expense),
+                fmt.format(trend.profit)));
             valueLine.setTextSize(11f);
             valueLine.setTextColor(Color.parseColor("#607D8B"));
             valueLine.setPadding(0, 2, 0, 4);

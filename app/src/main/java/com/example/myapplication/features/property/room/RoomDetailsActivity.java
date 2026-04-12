@@ -293,7 +293,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
         }
 
         if (activeContractId == null || activeContractId.trim().isEmpty()) {
-            Toast.makeText(this, "Phòng chưa có hợp đồng đang hiệu lực nên chưa thể tạo mã vào phòng.", Toast.LENGTH_LONG)
+            Toast.makeText(this, getString(R.string.room_invite_requires_active_contract), Toast.LENGTH_LONG)
                     .show();
             return;
         }
@@ -304,25 +304,26 @@ public class RoomDetailsActivity extends AppCompatActivity {
         }
 
         btnGenerateCode.setEnabled(false);
-        btnGenerateCode.setText("Đang tạo mã...");
+        btnGenerateCode.setText(getString(R.string.room_invite_generating));
 
         new InviteRepository().createAnonymousTenantInvite(tenantId, roomId, new InviteRepository.InviteCallback() {
             @Override
             public void onSuccess(@NonNull String code) {
                 btnGenerateCode.setEnabled(true);
-                btnGenerateCode.setText("Tạo mã vào phòng (Mã ẩn danh)");
+                btnGenerateCode.setText(getString(R.string.room_invite_generate_button));
 
                 new AlertDialog.Builder(RoomDetailsActivity.this)
-                        .setTitle("Mã phòng được tạo thành công!")
-                    .setMessage("Mã này dùng để vào phòng theo số lượng thành viên còn trống của hợp đồng.\n\nCode: "
-                        + code)
-                        .setPositiveButton("Copy Mã", (dialog, which) -> {
+                        .setTitle(getString(R.string.room_invite_created_title))
+                    .setMessage(getString(R.string.room_invite_created_message, code))
+                        .setPositiveButton(getString(R.string.room_invite_copy_code), (dialog, which) -> {
                             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("Room Code", code);
+                            ClipData clip = ClipData.newPlainText(getString(R.string.room_invite_clipboard_label), code);
                             clipboard.setPrimaryClip(clip);
-                            Toast.makeText(RoomDetailsActivity.this, "Đã sao chép: " + code, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RoomDetailsActivity.this,
+                                    getString(R.string.room_invite_copied, code),
+                                    Toast.LENGTH_SHORT).show();
                         })
-                        .setNegativeButton("Đóng", null)
+                        .setNegativeButton(getString(R.string.close), null)
                         .setCancelable(false)
                         .show();
             }
@@ -330,8 +331,10 @@ public class RoomDetailsActivity extends AppCompatActivity {
             @Override
             public void onError(@NonNull Exception e) {
                 btnGenerateCode.setEnabled(true);
-                btnGenerateCode.setText("Tạo mã vào phòng (Mã ẩn danh)");
-                Toast.makeText(RoomDetailsActivity.this, "Lỗi tạo mã: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                btnGenerateCode.setText(getString(R.string.room_invite_generate_button));
+                Toast.makeText(RoomDetailsActivity.this,
+                        getString(R.string.room_invite_create_error, e.getMessage()),
+                        Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -579,7 +582,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
         tvRoomType.setText(room.getRoomType());
         tvArea.setText(getString(R.string.room_area_value, (int) room.getArea()));
 
-        NumberFormat fmt = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"));
+        NumberFormat fmt = NumberFormat.getNumberInstance(Locale.getDefault());
         tvRentAmount.setText(getString(R.string.room_rent_value, fmt.format(room.getRentAmount())));
         tvMaxOccupancy.setText(room.getMaxOccupancy() > 0
             ? getString(R.string.room_max_occupancy_value, room.getMaxOccupancy())
@@ -1069,7 +1072,6 @@ public class RoomDetailsActivity extends AppCompatActivity {
         String normalized = status.trim();
         return RoomStatus.VACANT.equalsIgnoreCase(normalized)
                 || getString(R.string.room_status_vacant).equalsIgnoreCase(normalized)
-                || "Đang trống".equalsIgnoreCase(normalized)
                 || "Vacant".equalsIgnoreCase(normalized);
     }
 
@@ -1081,15 +1083,13 @@ public class RoomDetailsActivity extends AppCompatActivity {
         String normalized = status.trim();
         if (RoomStatus.VACANT.equalsIgnoreCase(normalized)
                 || getString(R.string.room_status_vacant).equalsIgnoreCase(normalized)
-                || "Vacant".equalsIgnoreCase(normalized)
-                || "Đang trống".equalsIgnoreCase(normalized)) {
+                || "Vacant".equalsIgnoreCase(normalized)) {
             return getString(R.string.room_status_vacant);
         }
 
         if (RoomStatus.RENTED.equalsIgnoreCase(normalized)
                 || getString(R.string.room_status_rented).equalsIgnoreCase(normalized)
-                || "Rented".equalsIgnoreCase(normalized)
-                || "Đang thuê".equalsIgnoreCase(normalized)) {
+                || "Rented".equalsIgnoreCase(normalized)) {
             return getString(R.string.room_status_rented);
         }
 

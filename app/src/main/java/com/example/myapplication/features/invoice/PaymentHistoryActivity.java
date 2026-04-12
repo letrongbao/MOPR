@@ -592,7 +592,7 @@ public class PaymentHistoryActivity extends AppCompatActivity {
     }
 
     private String fmtMoney(double v) {
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
+        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.getDefault());
         return fmt.format(v);
     }
 

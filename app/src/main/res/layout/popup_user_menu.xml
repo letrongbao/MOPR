@@ -35,7 +35,7 @@
             android:layout_below="@id/popupAvatar"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="10dp"
-            android:text="Tên người dùng"
+            android:text="@string/profile_display_name_placeholder"
             android:textColor="@color/white"
             android:textSize="17sp"
             android:textStyle="bold" />
@@ -48,7 +48,7 @@
             android:layout_below="@id/popupUserName"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="4dp"
-            android:text="email@example.com"
+            android:text="@string/profile_email_placeholder"
             android:textColor="#DDFFFFFF"
             android:textSize="13sp" />
 

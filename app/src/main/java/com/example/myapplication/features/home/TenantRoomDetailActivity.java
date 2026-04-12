@@ -370,11 +370,11 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     }
 
     private void showNoContractUI() {
-        tvDaysRemaining.setText("--");
+        tvDaysRemaining.setText(getString(R.string.tenant_room_value_placeholder));
         tvMonthsStayed.setText(getString(R.string.tenant_room_no_contract));
         tvContractStatus.setText(getString(R.string.tenant_room_contract_not_found));
-        tvStartDate.setText("--/--/----");
-        tvEndDate.setText("--/--/----");
+        tvStartDate.setText(getString(R.string.tenant_room_date_placeholder));
+        tvEndDate.setText(getString(R.string.tenant_room_date_placeholder));
         contractProgress.setProgress(0);
     }
 

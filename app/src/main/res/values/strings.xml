@@ -320,6 +320,8 @@
     <string name="expense_empty_paid">Chưa có khoản đã chi trong tháng này</string>
     <string name="expense_search_hint">Tìm hạng mục / ghi chú / ngày chi</string>
     <string name="expense_filter_summary">%1$d khoản | Dự kiến: %2$s | Đã chi: %3$s</string>
+    <string name="expense_filter_summary_default">0 khoản | Dự kiến: 0 đ | Đã chi: 0 đ</string>
+    <string name="expense_form_info_title">Thông tin khoản chi</string>
     <string name="expense_house_filter_coming_soon">Bộ lọc căn nhà cho chi phí sẽ được bổ sung ở bản tiếp theo</string>
     <string name="expense_select_house_required">Vui lòng chọn căn nhà cho khoản chi</string>
     <string name="expense_house_unknown">Chưa gán căn nhà</string>
@@ -338,12 +340,15 @@
     <string name="revenue_profit_delta_label">Độ lệch dự kiến - thực tế: %1$s</string>
     <string name="revenue_cashflow_bridge_title">Liên kết 4 dòng tiền</string>
     <string name="revenue_cashflow_bridge_subtitle">Đã báo + Đã thu - Chưa chi - Đã chi</string>
+    <string name="revenue_cashflow_model_title">Mô hình 4 dòng tiền</string>
     <string name="revenue_flow_reported_uncollected">Đã báo (chưa thu)</string>
     <string name="revenue_flow_collected">Đã thu</string>
     <string name="revenue_flow_pending_expense">Chưa chi</string>
     <string name="revenue_flow_paid_expense">Đã chi</string>
     <string name="revenue_flow_projected_profit">Lợi nhuận dự kiến</string>
     <string name="revenue_flow_actual_profit">Lợi nhuận thực tế</string>
+    <string name="revenue_profit_delta_default">Độ lệch dự kiến - thực tế: 0 đ</string>
+    <string name="revenue_trend_line">Thu %1$s • Chi %2$s • LN %3$s</string>
     <string name="other">Khác</string>
     <string name="total_expense">Tổng chi: </string>
     <string name="number_of_items">Số khoản: </string>
@@ -446,6 +451,7 @@
     <string name="status_label">Trạng thái:</string>
     <string name="ticket_title">Phản ánh</string>
     <string name="ticket_change_status">Đổi trạng thái</string>
+    <string name="ticket_room_id_line">RoomId: %1$s</string>
     <string name="ticket_update_failed">Cập nhật thất bại</string>
     <string name="ticket_status_new">Mới</string>
     <string name="ticket_status_processing">Đang xử lí</string>
@@ -544,6 +550,7 @@
     <string name="report_appointment_label">Lịch hẹn sửa chữa (tuỳ chọn)</string>
     <string name="report_appointment_pick">Chọn ngày giờ</string>
     <string name="report_appointment_prefix">Lịch hẹn: %1$s</string>
+    <string name="report_appointment_prefix_inline">Hẹn: </string>
     <string name="report_description_label">Mô tả vấn đề</string>
     <string name="report_resubmit_title">Sửa phản ánh</string>
     <string name="report_resubmit_success">Đã gửi lại phản ánh</string>
@@ -1016,6 +1023,7 @@
     <string name="tenant_profiles_sort_room">Phòng (tăng dần)</string>
     <string name="tenant_profiles_sort_representative_first">Ưu tiên đại diện hợp đồng</string>
     <string name="tenant_profile_unknown_name">Chưa rõ tên</string>
+    <string name="tenant_profile_initial_placeholder">N</string>
     <string name="tenant_profile_role_representative">Người đại diện hợp đồng</string>
     <string name="tenant_profile_role_member">Thành viên thuê</string>
     <string name="tenant_profile_role_with_room">%1$s • Phòng %2$s</string>
@@ -1175,6 +1183,7 @@
     <string name="tenant_menu_chat_quick_hint_owner">Trò chuyện nhanh với chủ nhà</string>
 
     <string name="tenant_room_days_remaining_label">Ngày\ncòn lại</string>
+    <string name="tenant_room_value_placeholder">--</string>
     <string name="tenant_room_months_stayed_label">Số tháng đã ở</string>
     <string name="tenant_room_months_stayed_placeholder">-- tháng, -- ngày</string>
     <string name="tenant_room_months_stayed_value">%1$d tháng, %2$d ngày</string>
@@ -1185,6 +1194,7 @@
     <string name="tenant_room_view_contract_detail">Xem chi tiết →</string>
     <string name="tenant_room_start_date_label">Ngày vào ở</string>
     <string name="tenant_room_end_date_label">Ngày kết thúc</string>
+    <string name="tenant_room_date_placeholder">--/--/----</string>
     <string name="tenant_room_billing_catalog_title">Danh mục tính tiền</string>
     <string name="tenant_room_billing_subtitle_placeholder">Dịch vụ &amp; giá tại --</string>
     <string name="tenant_room_billing_subtitle_with_house">Dịch vụ &amp; giá tại %1$s</string>
@@ -1222,6 +1232,32 @@
     <string name="tenant_invoice_subtitle">Danh sách hoá đơn theo phòng hiện tại</string>
     <string name="invoice_open_from_notification_loading">Đang mở hoá đơn từ thông báo...</string>
     <string name="invoice_open_from_notification_not_found">Không tìm thấy hoá đơn từ thông báo.</string>
+    <string name="invoice_export_billing_period_line">Kỳ thanh toán: Tháng %1$s</string>
+    <string name="invoice_export_quantity_line">   -&gt; SL: %1$s %2$s x %3$s</string>
+    <string name="invoice_export_meter_range_line"> (CS: %1$s - %2$s)</string>
+    <string name="invoice_export_extra_fee_line">   + %1$s</string>
+    <string name="notification_system_title_prefix">[Hệ thống] </string>
+    <string name="notification_system_meta_only">Hệ thống</string>
+    <string name="notification_system_meta_format">%1$s • Hệ thống</string>
+    <string name="notification_amount_vnd">%1$s đ</string>
+    <string name="notification_amount_contract_based">theo hợp đồng</string>
+    <string name="notification_contract_expiry_title">Sắp hết hạn hợp đồng</string>
+    <string name="notification_contract_expiry_today_body">Hợp đồng của bạn hết hạn hôm nay. Hãy liên hệ chủ trọ để gia hạn.</string>
+    <string name="notification_contract_expiry_body">Hợp đồng hết hạn vào %1$s (còn %2$d ngày). Hãy liên hệ chủ trọ để gia hạn.</string>
+    <string name="notification_rent_due_title">Nhắc nhở đóng tiền thuê</string>
+    <string name="notification_rent_due_body">Đã đến kỳ thanh toán tháng này. Tiền thuê: %1$s. Vui lòng thanh toán trước ngày 05.</string>
+    <string name="notification_deposit_incomplete_title">Tiền cọc chưa hoàn thiện</string>
+    <string name="notification_deposit_incomplete_body">Bạn chưa đóng đủ tiền cọc (%1$s). Vui lòng liên hệ chủ trọ để hoàn thiện.</string>
+    <string name="confirm_meter_feature_in_development">Chức năng Chốt đồng hồ đang phát triển</string>
+    <string name="room_invite_requires_active_contract">Phòng chưa có hợp đồng đang hiệu lực nên chưa thể tạo mã vào phòng.</string>
+    <string name="room_invite_generating">Đang tạo mã...</string>
+    <string name="room_invite_generate_button">Tạo mã vào phòng (Mã ẩn danh)</string>
+    <string name="room_invite_created_title">Mã phòng được tạo thành công!</string>
+    <string name="room_invite_created_message">Mã này dùng để vào phòng theo số lượng thành viên còn trống của hợp đồng.\n\nCode: %1$s</string>
+    <string name="room_invite_copy_code">Copy mã</string>
+    <string name="room_invite_clipboard_label">Mã phòng</string>
+    <string name="room_invite_copied">Đã sao chép: %1$s</string>
+    <string name="room_invite_create_error">Lỗi tạo mã: %1$s</string>
     <string name="tenant_invoice_total">Tổng hoá đơn: %1$s</string>
     <string name="tenant_invoice_empty">Chưa có hoá đơn cho phòng này</string>
     <string name="tenant_invoice_status">Trạng thái: %1$s</string>

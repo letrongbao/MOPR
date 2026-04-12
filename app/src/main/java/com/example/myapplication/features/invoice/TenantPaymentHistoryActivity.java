@@ -149,7 +149,7 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
     }
 
     private String fmtMoney(double amount) {
-        NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"));
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.getDefault());
         return nf.format(amount) + " ₫";
     }
 }

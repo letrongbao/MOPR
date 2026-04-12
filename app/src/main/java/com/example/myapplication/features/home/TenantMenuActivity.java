@@ -879,7 +879,7 @@ public class TenantMenuActivity extends AppCompatActivity {
 
     private void showNoContractUI() {
         if (tvDaysRemaining != null) {
-            tvDaysRemaining.setText("--");
+            tvDaysRemaining.setText(getString(R.string.tenant_room_value_placeholder));
         }
         if (tvMonthsStayed != null) {
             tvMonthsStayed.setText(getString(R.string.tenant_room_no_contract));
@@ -888,10 +888,10 @@ public class TenantMenuActivity extends AppCompatActivity {
             tvContractStatus.setText(getString(R.string.tenant_room_contract_not_found));
         }
         if (tvStartDate != null) {
-            tvStartDate.setText("--/--/----");
+            tvStartDate.setText(getString(R.string.tenant_room_date_placeholder));
         }
         if (tvEndDate != null) {
-            tvEndDate.setText("--/--/----");
+            tvEndDate.setText(getString(R.string.tenant_room_date_placeholder));
         }
         if (contractProgress != null) {
             contractProgress.setProgress(0);

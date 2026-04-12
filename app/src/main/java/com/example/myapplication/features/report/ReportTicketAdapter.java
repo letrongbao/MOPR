@@ -49,7 +49,9 @@ public class ReportTicketAdapter extends RecyclerView.Adapter<ReportTicketAdapte
     public void onBindViewHolder(@NonNull VH holder, int position) {
         Ticket ticket = list.get(position);
         holder.tvTitle.setText(ticket.getTitle() != null ? ticket.getTitle() : holder.itemView.getContext().getString(R.string.ticket_no_title));
-        holder.tvRoom.setText(ticket.getRoomId() != null ? ("Room: " + ticket.getRoomId()) : "");
+        holder.tvRoom.setText(ticket.getRoomId() != null
+            ? holder.itemView.getContext().getString(R.string.room_number, ticket.getRoomId())
+            : "");
         holder.tvStatus.setText(toStatusLabel(
             ticket.getStatus(),
             holder.itemView.getContext().getString(R.string.report_tab_open),

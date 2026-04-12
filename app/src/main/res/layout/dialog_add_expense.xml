@@ -29,7 +29,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Thông tin khoản chi"
+                    android:text="@string/expense_form_info_title"
                     android:textColor="@color/primary_dark"
                     android:textSize="13sp"
                     android:textStyle="bold" />

@@ -133,7 +133,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Mô hình 4 dòng tiền"
+                            android:text="@string/revenue_cashflow_model_title"
                             android:textColor="#2B3A4E"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -153,7 +153,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Đã báo (chưa thu)"
+                                    android:text="@string/revenue_flow_reported_uncollected"
                                     android:textColor="#6B7A8C"
                                     android:textSize="11sp" />
 
@@ -162,7 +162,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="0 đ"
+                                    android:text="@string/revenue_amount_zero"
                                     android:textColor="#C62828"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -178,7 +178,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Đã thu"
+                                    android:text="@string/revenue_flow_collected"
                                     android:textColor="#6B7A8C"
                                     android:textSize="11sp" />
 
@@ -187,7 +187,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="0 đ"
+                                    android:text="@string/revenue_amount_zero"
                                     android:textColor="#2E7D32"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -203,7 +203,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Chưa chi"
+                                    android:text="@string/revenue_flow_pending_expense"
                                     android:textColor="#6B7A8C"
                                     android:textSize="11sp" />
 
@@ -212,7 +212,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="0 đ"
+                                    android:text="@string/revenue_amount_zero"
                                     android:textColor="#EF6C00"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -234,7 +234,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Đã chi"
+                                    android:text="@string/revenue_flow_paid_expense"
                                     android:textColor="#6B7A8C"
                                     android:textSize="11sp" />
 
@@ -243,7 +243,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="0 đ"
+                                    android:text="@string/revenue_amount_zero"
                                     android:textColor="#E65100"
                                     android:textSize="16sp"
                                     android:textStyle="bold" />
@@ -258,7 +258,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Lợi nhuận dự kiến"
+                                    android:text="@string/revenue_flow_projected_profit"
                                     android:textColor="#6B7A8C"
                                     android:textSize="11sp" />
 
@@ -267,7 +267,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="0 đ"
+                                    android:text="@string/revenue_amount_zero"
                                     android:textColor="#1565C0"
                                     android:textSize="18sp"
                                     android:textStyle="bold" />
@@ -285,7 +285,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Lợi nhuận thực tế"
+                                android:text="@string/revenue_flow_actual_profit"
                                 android:textColor="#667789"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -294,7 +294,7 @@
                                 android:id="@+id/tvLoiNhuanThucTe"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0 đ"
+                                android:text="@string/revenue_amount_zero"
                                 android:textColor="#2E7D32"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -305,7 +305,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:text="Độ lệch dự kiến - thực tế: 0 đ"
+                            android:text="@string/revenue_profit_delta_default"
                             android:textColor="#546E7A"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -363,7 +363,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Chi tháng"
+                                android:text="@string/revenue_monthly_expense"
                                 android:textColor="#6B7A8C"
                                 android:textSize="11sp" />
 
@@ -372,7 +372,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="0 đ"
+                                android:text="@string/revenue_amount_zero"
                                 android:textColor="#E65100"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
@@ -399,7 +399,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Lợi nhuận"
+                                android:text="@string/revenue_monthly_profit"
                                 android:textColor="#6B7A8C"
                                 android:textSize="11sp" />
 
@@ -408,7 +408,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="0 đ"
+                                android:text="@string/revenue_amount_zero"
                                 android:textColor="#1565C0"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />

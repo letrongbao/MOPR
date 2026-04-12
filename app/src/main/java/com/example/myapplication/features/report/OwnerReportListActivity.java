@@ -174,7 +174,7 @@ public class OwnerReportListActivity extends AppCompatActivity {
     }
 
     private void showOwnerActionDialog(Ticket ticket) {
-        String msg = "RoomId: " + (ticket.getRoomId() != null ? ticket.getRoomId() : "")
+        String msg = getString(R.string.ticket_room_id_line, ticket.getRoomId() != null ? ticket.getRoomId() : "")
             + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
             ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")

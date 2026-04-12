@@ -49,7 +49,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         NotificationItem item = items.get(position);
-        String titlePrefix = item.isSystem ? "[Hệ thống] " : "";
+        android.content.Context context = holder.itemView.getContext();
+        String titlePrefix = item.isSystem ? context.getString(R.string.notification_system_title_prefix) : "";
         holder.title.setText(titlePrefix + (item.title != null ? item.title : ""));
         holder.body.setText(item.body != null ? item.body : "");
 
@@ -58,7 +59,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             Date date = item.createdAt.toDate();
             time = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(date);
         }
-        holder.meta.setText(item.isSystem ? (time + " • Hệ thống") : time);
+        if (item.isSystem) {
+            holder.meta.setText(time.isEmpty()
+                    ? context.getString(R.string.notification_system_meta_only)
+                    : context.getString(R.string.notification_system_meta_format, time));
+        } else {
+            holder.meta.setText(time);
+        }
 
         int style = (item.isRead && !item.isSystem) ? Typeface.NORMAL : Typeface.BOLD;
         holder.title.setTypeface(holder.title.getTypeface(), style);

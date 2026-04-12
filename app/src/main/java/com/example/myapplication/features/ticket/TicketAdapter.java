@@ -46,7 +46,9 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.VH> {
     public void onBindViewHolder(@NonNull VH h, int position) {
         Ticket t = list.get(position);
         h.tvTitle.setText(t.getTitle() != null ? t.getTitle() : h.itemView.getContext().getString(R.string.ticket_no_title));
-        h.tvRoom.setText(t.getRoomId() != null ? ("Room: " + t.getRoomId()) : "");
+        h.tvRoom.setText(t.getRoomId() != null
+            ? h.itemView.getContext().getString(R.string.room_number, t.getRoomId())
+            : "");
         h.tvStatus.setText(toVietnameseStatus(t.getStatus(), h.itemView.getContext()));
 
         GradientDrawable badge = new GradientDrawable();

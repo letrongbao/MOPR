@@ -52,7 +52,7 @@ public class NotificationCenterActivity extends AppCompatActivity {
     private final List<NotificationItem> systemItems = new ArrayList<>();
 
     private static final int CONTRACT_EXPIRY_WARNING_DAYS = 30;
-    private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
+    private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,11 +155,12 @@ public class NotificationCenterActivity extends AppCompatActivity {
                             if (daysLeft >= 0 && daysLeft <= CONTRACT_EXPIRY_WARNING_DAYS) {
                                 NotificationItem item = new NotificationItem();
                                 item.id = "system-contract-expiry-" + contractId;
-                                item.title = "Sắp hết hạn hợp đồng";
+                                item.title = getString(R.string.notification_contract_expiry_title);
                                 item.body = daysLeft == 0
-                                        ? "Hợp đồng của bạn hết hạn hôm nay. Hãy liên hệ chủ trọ để gia hạn."
-                                        : "Hợp đồng hết hạn vào " + formatDate(endDate)
-                                        + " (còn " + daysLeft + " ngày). Hãy liên hệ chủ trọ để gia hạn.";
+                                    ? getString(R.string.notification_contract_expiry_today_body)
+                                    : getString(R.string.notification_contract_expiry_body,
+                                        formatDate(endDate),
+                                        daysLeft);
                                 item.conversationId = null;
                                 item.isRead = false;
                                 item.isSystem = true;
@@ -175,14 +176,14 @@ public class NotificationCenterActivity extends AppCompatActivity {
                                 rentObj = doc.get("rentAmount");
                             }
                             String rentText = (rentObj instanceof Number)
-                                    ? formatMoney(((Number) rentObj).doubleValue()) + " đ"
-                                    : "theo hợp đồng";
+                                    ? getString(R.string.notification_amount_vnd,
+                                        formatMoney(((Number) rentObj).doubleValue()))
+                                    : getString(R.string.notification_amount_contract_based);
 
                             NotificationItem item = new NotificationItem();
                             item.id = "system-billing-reminder-" + contractId;
-                            item.title = "Nhắc nhở đóng tiền thuê";
-                            item.body = "Đã đến kỳ thanh toán tháng này. Tiền thuê: " + rentText
-                                    + ". Vui lòng thanh toán trước ngày 05.";
+                                item.title = getString(R.string.notification_rent_due_title);
+                                item.body = getString(R.string.notification_rent_due_body, rentText);
                             item.conversationId = null;
                             item.isRead = false;
                             item.isSystem = true;
@@ -194,14 +195,14 @@ public class NotificationCenterActivity extends AppCompatActivity {
                         if (!depositComplete) {
                             Object depositObj = doc.get("depositAmount");
                             String depositText = (depositObj instanceof Number)
-                                    ? formatMoney(((Number) depositObj).doubleValue()) + " đ"
-                                    : "theo hợp đồng";
+                                ? getString(R.string.notification_amount_vnd,
+                                    formatMoney(((Number) depositObj).doubleValue()))
+                                : getString(R.string.notification_amount_contract_based);
 
                             NotificationItem item = new NotificationItem();
                             item.id = "system-deposit-reminder-" + contractId;
-                            item.title = "Tiền cọc chưa hoàn thiện";
-                            item.body = "Bạn chưa đóng đủ tiền cọc (" + depositText
-                                    + "). Vui lòng liên hệ chủ trọ để hoàn thiện.";
+                            item.title = getString(R.string.notification_deposit_incomplete_title);
+                            item.body = getString(R.string.notification_deposit_incomplete_body, depositText);
                             item.conversationId = null;
                             item.isRead = false;
                             item.isSystem = true;
