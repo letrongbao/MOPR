@@ -1,5 +1,6 @@
 package com.example.myapplication.features.contract;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -14,20 +16,29 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.repository.domain.TenantRepository;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ContractStatusHelper;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.ContractStatus;
 import com.example.myapplication.domain.Tenant;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class ContractListActivity extends AppCompatActivity {
 
     private ContractListAdapter adapter;
     private TenantRepository repo;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private TextView tvCountDangThue, tvCountSapHet, tvCountKetThuc;
     private TextView tvDueIn7Days, tvDueIn30Days, tvExpiredNeedAction;
@@ -64,6 +75,7 @@ public class ContractListActivity extends AppCompatActivity {
 
         // RecyclerView + Adapter
         adapter = new ContractListAdapter();
+        adapter.setActionListener(this::confirmDepositCollection);
         rvHopDong.setLayoutManager(new LinearLayoutManager(this));
         rvHopDong.setAdapter(adapter);
 
@@ -173,6 +185,78 @@ public class ContractListActivity extends AppCompatActivity {
         rvHopDong.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
         if (layoutEmpty != null)
             layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+    }
+
+    private void confirmDepositCollection(Tenant contract) {
+        if (contract == null || contract.getId() == null || contract.getId().trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.error_contract_not_found), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (contract.isDepositCollected()) {
+            Toast.makeText(this, getString(R.string.deposit_collected_confirmed_plain), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.deposit_collect_title))
+                .setMessage(getString(R.string.deposit_confirm_collected))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.confirm), (dialog, which) ->
+                        repo.updateStatusThuCoc(contract.getId(), true)
+                                .addOnSuccessListener(unused -> {
+                                    Toast.makeText(this, getString(R.string.contract_deposit_updated), Toast.LENGTH_SHORT).show();
+                                    pushDepositCollectedNotificationToRoomTenants(contract);
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()))
+                .show();
+    }
+
+    private void pushDepositCollectedNotificationToRoomTenants(Tenant contract) {
+        if (contract == null) {
+            return;
+        }
+        String tenantId = TenantSession.getActiveTenantId();
+        String roomId = contract.getRoomId();
+        if (tenantId == null || tenantId.trim().isEmpty() || roomId == null || roomId.trim().isEmpty()) {
+            return;
+        }
+
+        String roomLabel = contract.getRoomNumber() != null && !contract.getRoomNumber().trim().isEmpty()
+                ? getString(R.string.room_number, contract.getRoomNumber().trim())
+                : getString(R.string.room_number, roomId);
+        String amountText = ContractListItemUiHelper.formatMoney(contract.getDepositAmount());
+
+        db.collection("tenants").document(tenantId)
+                .collection("members")
+                .whereEqualTo("role", TenantRoles.TENANT)
+                .whereEqualTo("roomId", roomId)
+                .get()
+                .addOnSuccessListener(members -> {
+                    Timestamp now = Timestamp.now();
+                    for (com.google.firebase.firestore.DocumentSnapshot member : members.getDocuments()) {
+                        String receiverUid = member.getId();
+                        if (receiverUid == null || receiverUid.trim().isEmpty()) {
+                            continue;
+                        }
+
+                        Map<String, Object> payload = new HashMap<>();
+                        payload.put("title", getString(R.string.notification_deposit_collected_title));
+                        payload.put("body", getString(R.string.notification_deposit_collected_body, roomLabel, amountText));
+                        payload.put("type", "DEPOSIT_COLLECTED");
+                        payload.put("contractId", contract.getId());
+                        payload.put("conversationId", null);
+                        payload.put("senderId", null);
+                        payload.put("userId", receiverUid);
+                        payload.put("isRead", false);
+                        payload.put("createdAt", now);
+
+                        db.collection("tenants").document(tenantId)
+                                .collection("notifications")
+                                .document(UUID.randomUUID().toString())
+                                .set(payload, SetOptions.merge());
+                    }
+                });
     }
 
 }

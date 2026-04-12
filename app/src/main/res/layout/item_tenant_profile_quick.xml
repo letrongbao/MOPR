@@ -63,7 +63,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:textColor="#EAF2FF"
-                    android:textSize="12sp"/>
+                    android:textSize="12sp"
+                    android:maxLines="3"/>
             </LinearLayout>
 
             <TextView
@@ -107,7 +108,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:textColor="@color/text_main"
-                    android:textSize="13sp"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
             </LinearLayout>
 
             <LinearLayout
@@ -129,7 +131,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:textColor="@color/text_main"
-                    android:textSize="13sp"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
             </LinearLayout>
 
             <LinearLayout
@@ -140,21 +143,9 @@
                 android:gravity="start|center_vertical">
 
                 <TextView
-                    android:id="@+id/tvBadgePrimaryContact"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_card_rounded"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:visibility="gone"/>
-
-                <TextView
                     android:id="@+id/tvBadgeTemporaryResidence"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
                     android:background="@drawable/bg_card_rounded"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="4dp"
@@ -162,7 +153,7 @@
                     android:textStyle="bold"/>
 
                 <TextView
-                    android:id="@+id/tvBadgeDocuments"
+                    android:id="@+id/tvBadgeTemporaryAbsence"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
@@ -193,13 +184,25 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/btnProfileUpdate"
+                    android:id="@+id/btnProfileViewIdImage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:paddingHorizontal="10dp"
                     android:paddingVertical="6dp"
-                    android:text="@string/tenant_profile_action_update"
+                    android:text="@string/tenant_profile_action_view_id_image"
+                    android:textColor="#1565C0"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnProfileConfirmResidenceAbsence"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/tenant_profile_action_confirm_temporary_residence_absence"
                     android:textColor="#2E7D32"
                     android:textSize="12sp"
                     android:textStyle="bold" />

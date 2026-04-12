@@ -1,11 +1,13 @@
 package com.example.myapplication.features.contract;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -15,6 +17,8 @@ import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ContractStatusHelper;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.ContractStatus;
+import com.example.myapplication.domain.House;
+import com.example.myapplication.domain.Room;
 import com.example.myapplication.domain.Tenant;
 import com.google.android.material.chip.Chip;
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,10 +34,16 @@ public class ContractDetailsActivity extends AppCompatActivity {
 
     public static final String EXTRA_CONTRACT_ID = "CONTRACT_ID";
     public static final String EXTRA_HEADER_TITLE = "HEADER_TITLE";
+    public static final String EXTRA_TENANT_ID = "TENANT_ID";
 
     private FirebaseFirestore db;
     private TenantRepository repository;
     private String contractId;
+    private String scopedTenantId;
+    private Tenant currentContract;
+    private Room currentRoom;
+    private House currentHouse;
+    private View btnViewFullContract;
 
     // UI Elements
     private TextView tvRoomName, tvContractNumber, tvRepresentativeName, tvPhoneNumber;
@@ -90,10 +100,18 @@ public class ContractDetailsActivity extends AppCompatActivity {
         tvRentAmount = findViewById(R.id.tvGiaThue);
         tvDepositAmount = findViewById(R.id.tvTienCoc);
         chipStatus = findViewById(R.id.chipTrangThai);
+        btnViewFullContract = findViewById(R.id.btnViewFullContract);
+        if (btnViewFullContract != null) {
+            btnViewFullContract.setOnClickListener(v -> openFullContractPreview());
+        }
     }
 
     private void loadContractDetails() {
-        String tenantId = TenantSession.getActiveTenantId();
+        String tenantId = getIntent().getStringExtra(EXTRA_TENANT_ID);
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            tenantId = TenantSession.getActiveTenantId();
+        }
+        scopedTenantId = tenantId != null ? tenantId.trim() : "";
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {
@@ -103,9 +121,9 @@ public class ContractDetailsActivity extends AppCompatActivity {
         }
 
         // Get contract from Firestore
-        if (tenantId != null && !tenantId.isEmpty()) {
+        if (!scopedTenantId.isEmpty()) {
             db.collection("tenants")
-                    .document(tenantId)
+                    .document(scopedTenantId)
                     .collection("contracts")
                     .document(contractId)
                     .get()
@@ -117,42 +135,67 @@ public class ContractDetailsActivity extends AppCompatActivity {
                                 displayContractDetails(contract);
                             }
                         } else {
-                            Toast.makeText(this, getString(R.string.contract_not_found), Toast.LENGTH_SHORT).show();
-                            finish();
+                            fallbackLoadContractFromUsersScoped(user);
                         }
                     })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG)
-                                .show();
-                        finish();
-                    });
+                    .addOnFailureListener(e -> fallbackLoadContractFromUsersScoped(user));
         } else {
-            db.collection("users")
-                    .document(user.getUid())
-                    .collection("contracts")
-                    .document(contractId)
-                    .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            Tenant contract = documentSnapshot.toObject(Tenant.class);
-                            if (contract != null) {
-                                contract.setId(documentSnapshot.getId());
-                                displayContractDetails(contract);
-                            }
-                        } else {
-                            Toast.makeText(this, getString(R.string.contract_not_found), Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG)
-                                .show();
-                        finish();
-                    });
+            fallbackLoadContractFromUsersScoped(user);
         }
     }
 
+    private void fallbackLoadContractFromUsersScoped(@NonNull FirebaseUser user) {
+        if (!scopedTenantId.isEmpty()) {
+            db.collection("users")
+                    .document(scopedTenantId)
+                    .collection("contracts")
+                    .document(contractId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            Tenant contract = documentSnapshot.toObject(Tenant.class);
+                            if (contract != null) {
+                                contract.setId(documentSnapshot.getId());
+                                displayContractDetails(contract);
+                                return;
+                            }
+                        }
+                        fallbackLoadContractFromCurrentUser(user);
+                    })
+                    .addOnFailureListener(e -> fallbackLoadContractFromCurrentUser(user));
+            return;
+        }
+
+        fallbackLoadContractFromCurrentUser(user);
+    }
+
+    private void fallbackLoadContractFromCurrentUser(@NonNull FirebaseUser user) {
+        db.collection("users")
+                .document(user.getUid())
+                .collection("contracts")
+                .document(contractId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Tenant contract = documentSnapshot.toObject(Tenant.class);
+                        if (contract != null) {
+                            contract.setId(documentSnapshot.getId());
+                            displayContractDetails(contract);
+                            return;
+                        }
+                    }
+                    Toast.makeText(this, getString(R.string.contract_not_found), Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, getString(R.string.error_colon) + e.getMessage(), Toast.LENGTH_LONG)
+                            .show();
+                    finish();
+                });
+    }
+
     private void displayContractDetails(Tenant contract) {
+        currentContract = contract;
         // Internal note.
         if (tvRoomName != null) {
             String roomLabel = contract.getRoomNumber() != null
@@ -259,5 +302,213 @@ public class ContractDetailsActivity extends AppCompatActivity {
                     break;
             }
         }
+    }
+
+    private void openFullContractPreview() {
+        if (currentContract == null) {
+            Toast.makeText(this, getString(R.string.contract_not_found), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        resolveRoomAndHouseForContract(currentContract, () -> {
+            String html = ContractHtmlBuilder.buildContractHtml(this, currentContract, currentRoom, currentHouse);
+            Intent intent = new Intent(this, ContractPdfPreviewActivity.class);
+            intent.putExtra(ContractPdfPreviewActivity.EXTRA_HTML, html);
+            intent.putExtra(
+                    ContractPdfPreviewActivity.EXTRA_FILE_NAME,
+                    buildContractPdfFileName(currentContract));
+            intent.putExtra(ContractPdfPreviewActivity.EXTRA_SHARE_SUBJECT, getString(R.string.contract_details_title));
+            intent.putExtra(ContractPdfPreviewActivity.EXTRA_SHARE_TEXT, getString(R.string.room_view_contract));
+            startActivity(intent);
+        });
+    }
+
+    private String buildContractPdfFileName(@NonNull Tenant contract) {
+        String number = contract.getContractNumber();
+        if (number == null || number.trim().isEmpty()) {
+            return getString(R.string.contract_pdf_filename_placeholder);
+        }
+        String safeNumber = number.trim().replaceAll("[^a-zA-Z0-9_-]", "_");
+        return "HopDong_" + safeNumber + ".pdf";
+    }
+
+    private void resolveRoomAndHouseForContract(@NonNull Tenant contract, @NonNull Runnable onDone) {
+        String roomId = contract.getRoomId();
+        if (roomId == null || roomId.trim().isEmpty()) {
+            currentRoom = null;
+            currentHouse = null;
+            onDone.run();
+            return;
+        }
+
+        String tenantId = scopedTenantId;
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            db.collection("tenants")
+                    .document(tenantId)
+                    .collection("rooms")
+                    .document(roomId)
+                    .get()
+                    .addOnSuccessListener(roomDoc -> {
+                        if (roomDoc != null && roomDoc.exists()) {
+                            currentRoom = roomDoc.toObject(Room.class);
+                            if (currentRoom != null) {
+                                currentRoom.setId(roomDoc.getId());
+                            }
+                            resolveHouseForCurrentRoom(tenantId, user, onDone);
+                            return;
+                        }
+
+                        db.collection("users")
+                                .document(tenantId)
+                                .collection("rooms")
+                                .document(roomId)
+                                .get()
+                                .addOnSuccessListener(userRoomDoc -> {
+                                    currentRoom = userRoomDoc.toObject(Room.class);
+                                    if (currentRoom != null) {
+                                        currentRoom.setId(userRoomDoc.getId());
+                                    }
+                                    resolveHouseForCurrentRoom(tenantId, user, onDone);
+                                })
+                                .addOnFailureListener(innerError -> {
+                                    currentRoom = null;
+                                    currentHouse = null;
+                                    onDone.run();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        db.collection("users")
+                                .document(tenantId)
+                                .collection("rooms")
+                                .document(roomId)
+                                .get()
+                                .addOnSuccessListener(userRoomDoc -> {
+                                    currentRoom = userRoomDoc.toObject(Room.class);
+                                    if (currentRoom != null) {
+                                        currentRoom.setId(userRoomDoc.getId());
+                                    }
+                                    resolveHouseForCurrentRoom(tenantId, user, onDone);
+                                })
+                                .addOnFailureListener(innerError -> {
+                                    currentRoom = null;
+                                    currentHouse = null;
+                                    onDone.run();
+                                });
+                    });
+            return;
+        }
+
+        if (user == null) {
+            currentRoom = null;
+            currentHouse = null;
+            onDone.run();
+            return;
+        }
+
+        db.collection("users")
+                .document(user.getUid())
+                .collection("rooms")
+                .document(roomId)
+                .get()
+                .addOnSuccessListener(roomDoc -> {
+                    currentRoom = roomDoc.toObject(Room.class);
+                    if (currentRoom != null) {
+                        currentRoom.setId(roomDoc.getId());
+                    }
+                    resolveHouseForCurrentRoom(null, user, onDone);
+                })
+                .addOnFailureListener(e -> {
+                    currentRoom = null;
+                    currentHouse = null;
+                    onDone.run();
+                });
+    }
+
+    private void resolveHouseForCurrentRoom(String tenantId, FirebaseUser user, @NonNull Runnable onDone) {
+        if (currentRoom == null || currentRoom.getHouseId() == null || currentRoom.getHouseId().trim().isEmpty()) {
+            currentHouse = null;
+            onDone.run();
+            return;
+        }
+
+        String houseId = currentRoom.getHouseId();
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            db.collection("tenants")
+                    .document(tenantId)
+                    .collection("houses")
+                    .document(houseId)
+                    .get()
+                    .addOnSuccessListener(houseDoc -> {
+                        if (houseDoc != null && houseDoc.exists()) {
+                            currentHouse = houseDoc.toObject(House.class);
+                            if (currentHouse != null) {
+                                currentHouse.setId(houseDoc.getId());
+                            }
+                            onDone.run();
+                            return;
+                        }
+
+                        db.collection("users")
+                                .document(tenantId)
+                                .collection("houses")
+                                .document(houseId)
+                                .get()
+                                .addOnSuccessListener(userHouseDoc -> {
+                                    currentHouse = userHouseDoc.toObject(House.class);
+                                    if (currentHouse != null) {
+                                        currentHouse.setId(userHouseDoc.getId());
+                                    }
+                                    onDone.run();
+                                })
+                                .addOnFailureListener(innerError -> {
+                                    currentHouse = null;
+                                    onDone.run();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        db.collection("users")
+                                .document(tenantId)
+                                .collection("houses")
+                                .document(houseId)
+                                .get()
+                                .addOnSuccessListener(userHouseDoc -> {
+                                    currentHouse = userHouseDoc.toObject(House.class);
+                                    if (currentHouse != null) {
+                                        currentHouse.setId(userHouseDoc.getId());
+                                    }
+                                    onDone.run();
+                                })
+                                .addOnFailureListener(innerError -> {
+                                    currentHouse = null;
+                                    onDone.run();
+                                });
+                    });
+            return;
+        }
+
+        if (user == null) {
+            currentHouse = null;
+            onDone.run();
+            return;
+        }
+
+        db.collection("users")
+                .document(user.getUid())
+                .collection("houses")
+                .document(houseId)
+                .get()
+                .addOnSuccessListener(houseDoc -> {
+                    currentHouse = houseDoc.toObject(House.class);
+                    if (currentHouse != null) {
+                        currentHouse.setId(houseDoc.getId());
+                    }
+                    onDone.run();
+                })
+                .addOnFailureListener(e -> {
+                    currentHouse = null;
+                    onDone.run();
+                });
     }
 }

@@ -3,6 +3,9 @@ package com.example.myapplication.domain;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.PropertyName;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Internal note.
  * Internal note.
@@ -52,6 +55,7 @@ public class RentalHistory {
     private Timestamp createdAt;
     private Long startTimestamp;
     private Long endTimestamp;
+    private List<Map<String, Object>> memberSnapshots;
 
     public RentalHistory() {
         // Required for Firestore
@@ -321,6 +325,16 @@ public class RentalHistory {
 
     public void setEndTimestamp(Long endTimestamp) {
         this.endTimestamp = endTimestamp;
+    }
+
+    @PropertyName("memberSnapshots")
+    public List<Map<String, Object>> getMemberSnapshots() {
+        return memberSnapshots;
+    }
+
+    @PropertyName("memberSnapshots")
+    public void setMemberSnapshots(List<Map<String, Object>> memberSnapshots) {
+        this.memberSnapshots = memberSnapshots;
     }
 
     @com.google.firebase.firestore.PropertyName("hasInternetService")

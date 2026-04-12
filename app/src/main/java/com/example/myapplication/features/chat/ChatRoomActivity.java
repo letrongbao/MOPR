@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -244,17 +245,18 @@ public class ChatRoomActivity extends AppCompatActivity {
                     }
 
                     String type = conversationDoc.getString("type");
-                    if ("HOUSE".equals(type)) {
+                    String normalizedType = type != null ? type.trim().toUpperCase(Locale.US) : "";
+                    if ("HOUSE".equals(normalizedType)) {
                         resolveHouseHeader(fallbackHeader);
                         return;
                     }
 
-                    if ("ROOM".equals(type)) {
+                    if ("ROOM".equals(normalizedType)) {
                         resolveRoomHeader(conversationDoc, fallbackHeader);
                         return;
                     }
 
-                    if ("PRIVATE".equals(type)) {
+                    if ("PRIVATE".equals(normalizedType)) {
                         resolvePrivateHeader(conversationDoc, fallbackHeader);
                         return;
                     }
@@ -332,12 +334,6 @@ public class ChatRoomActivity extends AppCompatActivity {
     }
 
     private void resolvePrivateHeader(DocumentSnapshot conversationDoc, String fallbackHeader) {
-        String displayName = conversationDoc.getString("displayName");
-        if (displayName != null && !displayName.trim().isEmpty()) {
-            setToolbarHeader(displayName.trim(), null);
-            return;
-        }
-
         List<String> participants = (List<String>) conversationDoc.get("participantIds");
         if (participants == null || participants.isEmpty()) {
             setToolbarHeader(fallbackHeader, null);

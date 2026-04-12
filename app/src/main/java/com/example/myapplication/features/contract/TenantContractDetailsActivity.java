@@ -18,13 +18,14 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
     public static final String EXTRA_TENANT_ID = "TENANT_ID";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private String tenantId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         String roomId = getIntent().getStringExtra(EXTRA_ROOM_ID);
-        String tenantId = getIntent().getStringExtra(EXTRA_TENANT_ID);
+        tenantId = getIntent().getStringExtra(EXTRA_TENANT_ID);
         if (tenantId == null || tenantId.trim().isEmpty()) {
             tenantId = TenantSession.getActiveTenantId();
         }
@@ -93,6 +94,7 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ContractDetailsActivity.class);
         intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, contractId);
         intent.putExtra(ContractDetailsActivity.EXTRA_HEADER_TITLE, getString(R.string.tenant_contract_your_title));
+        intent.putExtra(ContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
         startActivity(intent);
         finish();
     }

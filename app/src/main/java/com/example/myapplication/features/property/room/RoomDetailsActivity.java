@@ -298,6 +298,11 @@ public class RoomDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        if (isInviteQuotaFull()) {
+            Toast.makeText(this, getString(R.string.room_invite_quota_full), Toast.LENGTH_LONG).show();
+            return;
+        }
+
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = user.getUid();
@@ -397,24 +402,28 @@ public class RoomDetailsActivity extends AppCompatActivity {
 
                     QueryDocumentSnapshot selectedDoc = null;
                     Tenant selectedTenant = null;
+                    long selectedSortTime = Long.MIN_VALUE;
 
-                    // Ưu tiên ACTIVE, fallback dữ liệu legacy: contractStatus null/khác ENDED.
+                    // Ưu tiên ACTIVE, sau đó chọn hợp đồng mới nhất để tránh hiển thị không ổn định.
                     for (QueryDocumentSnapshot doc : value) {
                         Tenant tenant = doc.toObject(Tenant.class);
                         if (tenant == null) {
                             continue;
                         }
 
-                        String status = tenant.getContractStatus();
-                        if (status != null && "ACTIVE".equalsIgnoreCase(status.trim())) {
-                            selectedDoc = doc;
-                            selectedTenant = tenant;
-                            break;
+                        int candidatePriority = resolveContractPriority(tenant);
+                        if (candidatePriority <= 0) {
+                            continue;
                         }
 
-                        if (selectedDoc == null && (status == null || !"ENDED".equalsIgnoreCase(status.trim()))) {
+                        long candidateSortTime = resolveContractSortTime(tenant);
+                        int selectedPriority = selectedTenant != null ? resolveContractPriority(selectedTenant) : -1;
+                        if (selectedDoc == null
+                                || candidatePriority > selectedPriority
+                                || (candidatePriority == selectedPriority && candidateSortTime > selectedSortTime)) {
                             selectedDoc = doc;
                             selectedTenant = tenant;
+                            selectedSortTime = candidateSortTime;
                         }
                     }
 
@@ -546,6 +555,8 @@ public class RoomDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        updateTenantProfileLocationContext();
+
         if (!hasActiveContract || isVacantRoom) {
             cardTenantProfiles.setVisibility(View.GONE);
             tenantProfileAdapter.submitList(new ArrayList<>());
@@ -575,6 +586,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
                 ? roomHouseName.trim()
                 : getString(R.string.common_not_available);
         applyHouseDisplayName();
+        updateTenantProfileLocationContext();
 
         loadHouseMetaForHeader(room.getHouseId());
         updateInfoHeaderMeta();
@@ -595,7 +607,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
         int color = Color.parseColor(isVacant ? "#4CAF50" : "#F44336");
 
         if (btnGenerateCode != null) {
-            btnGenerateCode.setVisibility(isVacant ? View.GONE : View.VISIBLE);
+            updateInviteCodeButtonState();
         }
 
         // Status badge overlay on image
@@ -667,6 +679,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
         if (houseId == null || houseId.trim().isEmpty()) {
             currentManagerName = resolveFallbackManagerName();
             applyHouseDisplayName();
+            updateTenantProfileLocationContext();
             updateInfoHeaderMeta();
             return;
         }
@@ -675,6 +688,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
         if (scopeDoc == null) {
             currentManagerName = resolveFallbackManagerName();
             applyHouseDisplayName();
+            updateTenantProfileLocationContext();
             updateInfoHeaderMeta();
             return;
         }
@@ -685,6 +699,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
                     if (doc == null || !doc.exists()) {
                         currentManagerName = resolveFallbackManagerName();
                         applyHouseDisplayName();
+                        updateTenantProfileLocationContext();
                         updateInfoHeaderMeta();
                         return;
                     }
@@ -710,13 +725,80 @@ public class RoomDetailsActivity extends AppCompatActivity {
                             ? managerName.trim()
                             : resolveFallbackManagerName();
                     applyHouseDisplayName();
+                    updateTenantProfileLocationContext();
                     updateInfoHeaderMeta();
                 })
                 .addOnFailureListener(e -> {
                     currentManagerName = resolveFallbackManagerName();
                     applyHouseDisplayName();
+                    updateTenantProfileLocationContext();
                     updateInfoHeaderMeta();
                 });
+    }
+
+    private int resolveContractPriority(@NonNull Tenant tenant) {
+        String status = tenant.getContractStatus();
+        if (status != null && "ACTIVE".equalsIgnoreCase(status.trim())) {
+            return 2;
+        }
+        if (status == null || !"ENDED".equalsIgnoreCase(status.trim())) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private long resolveContractSortTime(@NonNull Tenant tenant) {
+        Long updatedAt = tenant.getUpdatedAt();
+        if (updatedAt != null && updatedAt > 0) {
+            return updatedAt;
+        }
+        Long createdAt = tenant.getCreatedAt();
+        if (createdAt != null && createdAt > 0) {
+            return createdAt;
+        }
+        return Long.MIN_VALUE;
+    }
+
+    private void updateTenantProfileLocationContext() {
+        if (tenantProfileAdapter == null) {
+            return;
+        }
+
+        Map<String, String> roomLabels = new HashMap<>();
+        Map<String, String> roomHouses = new HashMap<>();
+        Map<String, String> houseLabels = new HashMap<>();
+
+        String resolvedRoomLabel = (currentRoomNumber != null && !currentRoomNumber.trim().isEmpty())
+                ? currentRoomNumber.trim()
+                : (currentRoom != null && currentRoom.getRoomNumber() != null ? currentRoom.getRoomNumber().trim() : "");
+
+        if (roomId != null && !roomId.trim().isEmpty() && !resolvedRoomLabel.isEmpty()) {
+            roomLabels.put(roomId.trim(), resolvedRoomLabel);
+        }
+
+        if (currentRoom != null && currentRoom.getId() != null && !currentRoom.getId().trim().isEmpty()
+                && !resolvedRoomLabel.isEmpty()) {
+            roomLabels.put(currentRoom.getId().trim(), resolvedRoomLabel);
+        }
+
+        String houseId = currentRoom != null ? currentRoom.getHouseId() : null;
+        String houseLabel = (currentHouseDisplayName != null && !currentHouseDisplayName.trim().isEmpty())
+                ? currentHouseDisplayName.trim()
+                : getString(R.string.common_not_available);
+
+        if (houseId != null && !houseId.trim().isEmpty()) {
+            String safeHouseId = houseId.trim();
+            houseLabels.put(safeHouseId, houseLabel);
+
+            if (roomId != null && !roomId.trim().isEmpty()) {
+                roomHouses.put(roomId.trim(), safeHouseId);
+            }
+            if (currentRoom != null && currentRoom.getId() != null && !currentRoom.getId().trim().isEmpty()) {
+                roomHouses.put(currentRoom.getId().trim(), safeHouseId);
+            }
+        }
+
+        tenantProfileAdapter.setLocationContext(roomLabels, roomHouses, houseLabels);
     }
 
     private void updateOccupancySection() {
@@ -734,6 +816,7 @@ public class RoomDetailsActivity extends AppCompatActivity {
             tvMaxOccupancy.setText(maxOccupancy > 0
                     ? getString(R.string.room_max_occupancy_value, maxOccupancy)
                     : getString(R.string.common_not_available));
+                updateInviteCodeButtonState();
             return;
         }
 
@@ -749,6 +832,22 @@ public class RoomDetailsActivity extends AppCompatActivity {
             tvCurrentOccupancy.setText(getString(R.string.room_current_occupancy_unknown,
                     Math.max(currentMemberCount, 0)));
         }
+
+        updateInviteCodeButtonState();
+    }
+
+    private boolean isInviteQuotaFull() {
+        return declaredMemberCount > 0 && Math.max(currentMemberCount, 0) >= declaredMemberCount;
+    }
+
+    private void updateInviteCodeButtonState() {
+        if (btnGenerateCode == null) {
+            return;
+        }
+
+        boolean hasActiveContract = activeContractId != null && !activeContractId.trim().isEmpty();
+        boolean shouldShow = !isVacantRoom && hasActiveContract && !isInviteQuotaFull();
+        btnGenerateCode.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
     }
 
     private boolean hasRepresentativeTenant() {

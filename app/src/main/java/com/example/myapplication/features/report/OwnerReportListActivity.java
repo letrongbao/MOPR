@@ -27,9 +27,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OwnerReportListActivity extends AppCompatActivity {
 
@@ -37,6 +40,8 @@ public class OwnerReportListActivity extends AppCompatActivity {
     private final TicketRepository repository = new TicketRepository();
 
     private final List<Ticket> allTickets = new ArrayList<>();
+    private final Map<String, String> roomLabelById = new HashMap<>();
+    private final Map<String, String> houseLabelByRoomId = new HashMap<>();
     private OwnerReportAdapter adapter;
     private TextView tvEmpty;
     private TabLayout tabStatuses;
@@ -127,8 +132,59 @@ public class OwnerReportListActivity extends AppCompatActivity {
             if (tickets != null) {
                 allTickets.addAll(tickets);
             }
-            renderFilteredList();
+            preloadRoomLabelsAndRender();
         });
+    }
+
+    private void preloadRoomLabelsAndRender() {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            renderFilteredList();
+            return;
+        }
+
+        Set<String> pendingRoomIds = new HashSet<>();
+        for (Ticket ticket : allTickets) {
+            String roomId = ticket.getRoomId();
+            if (roomId == null || roomId.trim().isEmpty() || roomLabelById.containsKey(roomId)) {
+                continue;
+            }
+            pendingRoomIds.add(roomId);
+        }
+
+        if (pendingRoomIds.isEmpty()) {
+            renderFilteredList();
+            return;
+        }
+
+        AtomicInteger remaining = new AtomicInteger(pendingRoomIds.size());
+        for (String roomId : pendingRoomIds) {
+            db.collection("tenants").document(tenantId)
+                    .collection("rooms").document(roomId)
+                    .get()
+                    .addOnSuccessListener(roomDoc -> {
+                        String roomNumber = roomDoc.getString("roomNumber");
+                        String houseName = roomDoc.getString("houseName");
+
+                        String safeRoomLabel = (roomNumber != null && !roomNumber.trim().isEmpty())
+                                ? getString(R.string.room_number, roomNumber.trim())
+                                : getString(R.string.room_number, roomId);
+                        String safeHouseLabel = (houseName != null && !houseName.trim().isEmpty())
+                                ? houseName.trim()
+                                : getString(R.string.report_unknown_house);
+
+                        roomLabelById.put(roomId, safeRoomLabel);
+                        houseLabelByRoomId.put(roomId, safeHouseLabel);
+                    })
+                    .addOnFailureListener(e -> {
+                        roomLabelById.put(roomId, getString(R.string.room_number, roomId));
+                        houseLabelByRoomId.put(roomId, getString(R.string.report_unknown_house));
+                    })
+                    .addOnCompleteListener(task -> {
+                        if (remaining.decrementAndGet() == 0) {
+                            renderFilteredList();
+                        }
+                    });
+        }
     }
 
     private void renderFilteredList() {
@@ -144,6 +200,7 @@ public class OwnerReportListActivity extends AppCompatActivity {
                 filtered.add(ticket);
             }
         }
+        adapter.updateLocationLabels(roomLabelById, houseLabelByRoomId);
         adapter.submit(filtered);
         tvEmpty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         updateTabCounts();
@@ -174,7 +231,18 @@ public class OwnerReportListActivity extends AppCompatActivity {
     }
 
     private void showOwnerActionDialog(Ticket ticket) {
-        String msg = getString(R.string.ticket_room_id_line, ticket.getRoomId() != null ? ticket.getRoomId() : "")
+        String roomId = ticket.getRoomId();
+        String roomLabel = (roomId != null && roomLabelById.containsKey(roomId))
+                ? roomLabelById.get(roomId)
+                : (roomId != null && !roomId.trim().isEmpty()
+                    ? getString(R.string.room_number, roomId)
+                    : getString(R.string.report_unknown_room));
+        String houseLabel = (roomId != null && houseLabelByRoomId.containsKey(roomId))
+                ? houseLabelByRoomId.get(roomId)
+                : getString(R.string.report_unknown_house);
+
+        String msg = getString(R.string.report_house_line, houseLabel)
+            + "\n" + getString(R.string.report_room_line, roomLabel)
             + "\n" + getString(R.string.status_label) + " " + toVietnameseStatus(ticket.getStatus())
                 + (TicketStatus.REJECTED.equals(ticket.getStatus()) && ticket.getRejectReason() != null
             ? "\n" + getString(R.string.report_reject_reason_prefix) + " " + ticket.getRejectReason() : "")

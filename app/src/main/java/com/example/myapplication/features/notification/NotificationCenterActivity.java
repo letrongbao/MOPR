@@ -14,6 +14,7 @@ import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.features.chat.ChatRoomActivity;
 import com.example.myapplication.features.invoice.InvoiceActivity;
 import com.example.myapplication.features.notification.model.NotificationItem;
+import com.example.myapplication.features.report.OwnerReportListActivity;
 import com.example.myapplication.features.report.TenantReportListActivity;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -291,6 +292,12 @@ public class NotificationCenterActivity extends AppCompatActivity {
         if ("REPORT_STATUS".equals(item.type) && item.ticketId != null && !item.ticketId.trim().isEmpty()) {
             Intent intent = new Intent(this, TenantReportListActivity.class);
             intent.putExtra(TenantReportListActivity.EXTRA_OPEN_TICKET_ID, item.ticketId);
+            startActivity(intent);
+            return;
+        }
+
+        if ("REPORT_CREATED".equals(item.type)) {
+            Intent intent = new Intent(this, OwnerReportListActivity.class);
             startActivity(intent);
             return;
         }

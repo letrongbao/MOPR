@@ -75,6 +75,8 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private String roomId;
     private String tenantId;   // = activeTenantId từ Firestore (= ownerUid trong hệ thống hiện tại)
     private String contractId;
+    private DocumentSnapshot activeContractDoc;
+    private DocumentSnapshot activeRoomDoc;
 
     private FirebaseFirestore db;
     private FirebaseAuth      mAuth;
@@ -175,6 +177,8 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
 
     private void applyRoomOverview(DocumentSnapshot doc) {
         if (doc == null || !doc.exists()) return;
+
+        activeRoomDoc = doc;
 
         String roomNumber = doc.getString("roomNumber");
         if (roomNumber == null || roomNumber.trim().isEmpty()) {
@@ -316,6 +320,7 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     /** Áp dụng dữ liệu hợp đồng lên UI */
     private void applyContractToUI(DocumentSnapshot doc) {
         contractId = doc.getId();
+        activeContractDoc = doc;
 
         // Đọc ngày bắt đầu: ưu tiên rentalStartDate (String dd/MM/yyyy)
         Date startDate = parseDate(doc, "rentalStartDate", "startDate");
@@ -357,16 +362,19 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         }
 
         // Tiền cọc từ contract (depositAmount)
-        Object deposit = doc.get("depositAmount");
-        if (deposit instanceof Number) {
-            tvDepositAmount.setText(formatMoney(((Number) deposit).doubleValue()));
+        double deposit = getNumber(doc, "depositAmount", "legacyDepositAmount");
+        if (deposit > 0) {
+            tvDepositAmount.setText(formatMoney(deposit));
         }
 
-        // Tiền thuê từ contract (roomPrice)
-        Object rentPrice = doc.get("roomPrice");
-        if (rentPrice instanceof Number) {
-            tvRentAmount.setText(formatMoney(((Number) rentPrice).doubleValue()));
+        // Tiền thuê từ contract (ưu tiên rentAmount, fallback roomPrice)
+        double rentPrice = getNumber(doc, "rentAmount", "roomPrice");
+        if (rentPrice > 0) {
+            tvRentAmount.setText(formatMoney(rentPrice));
         }
+
+        // Sau khi có contract, nạp lại bảng đơn giá để phản ánh đúng dịch vụ theo hợp đồng.
+        getLatestServiceRates(roomId);
     }
 
     private void showNoContractUI() {
@@ -407,10 +415,12 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private void applyServiceRatesToUI(DocumentSnapshot doc) {
         if (!doc.exists()) return;
 
+        activeRoomDoc = doc;
+
         // Tiền thuê (rentAmount)
-        Object rent = doc.get("rentAmount");
-        if (rent instanceof Number && tvRentAmount.getText().toString().contains("--")) {
-            tvRentAmount.setText(formatMoney(((Number) rent).doubleValue()));
+        double rent = getNumber(doc, "rentAmount", "roomPrice");
+        if (rent > 0 && (tvRentAmount.getText() == null || tvRentAmount.getText().toString().contains("--"))) {
+            tvRentAmount.setText(formatMoney(rent));
         }
 
         // Tên nhà
@@ -419,42 +429,171 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
             tvBillingSubtitle.setText(getString(R.string.tenant_room_billing_subtitle_with_house, houseName));
         }
 
-        // Tiền nước (waterRate)
-        Object waterRate = doc.get("waterRate");
-        if (waterRate instanceof Number) {
-            tvWaterRate.setText(getString(R.string.tenant_room_rate_water,
-                    formatMoneyShort(((Number) waterRate).doubleValue())));
+        // Tiền nước
+        double waterRate = getNumber(doc, "waterRate", "waterPrice");
+        if (waterRate > 0) {
+            tvWaterRate.setText(getString(R.string.tenant_room_rate_water, formatMoneyShort(waterRate)));
         }
 
-        // Tiền điện (electricityRate hoặc electricRate)
-        Object elecRate = doc.get("electricityRate");
-        if (!(elecRate instanceof Number)) elecRate = doc.get("electricRate");
-        if (elecRate instanceof Number) {
-            tvElecRate.setText(getString(R.string.tenant_room_rate_electric,
-                    formatMoneyShort(((Number) elecRate).doubleValue())));
+        // Tiền điện
+        double elecRate = getNumber(doc, "electricityRate", "electricRate", "electricityPrice");
+        if (elecRate > 0) {
+            tvElecRate.setText(getString(R.string.tenant_room_rate_electric, formatMoneyShort(elecRate)));
         }
 
-        // Tiền rác (garbageFee)
-        Object garbage = doc.get("garbageFee");
-        if (garbage instanceof Number) {
-            tvGarbageFee.setText(getString(R.string.tenant_room_rate_per_person,
-                    formatMoneyShort(((Number) garbage).doubleValue())));
+        // Tiền rác
+        double garbage = getNumber(doc, "garbageFee", "trashFee", "trashPrice");
+        if (garbage > 0) {
+            tvGarbageFee.setText(getString(R.string.tenant_room_rate_per_person, formatMoneyShort(garbage)));
         }
 
-        // Tiền wifi/internet (ưu tiên internetFee, fallback wifiFee)
-        Object wifi = doc.get("internetFee");
-        if (!(wifi instanceof Number)) wifi = doc.get("wifiFee");
-        if (wifi instanceof Number) {
-            tvWifiFee.setText(getString(R.string.tenant_room_rate_per_person,
-                    formatMoneyShort(((Number) wifi).doubleValue())));
+        // Tiền wifi/internet
+        double wifi = getNumber(doc, "internetFee", "wifiFee", "internetPrice");
+        if (wifi > 0) {
+            tvWifiFee.setText(getString(R.string.tenant_room_rate_per_person, formatMoneyShort(wifi)));
         }
 
         // Ngày chốt tiền thuê (paymentDay)
-        Object payDay = doc.get("paymentDay");
-        if (payDay instanceof Number) {
-            int day = ((Number) payDay).intValue();
+        int day = (int) Math.round(getNumber(doc, "paymentDay", "billingDay"));
+        if (day > 0 && day <= 31) {
             tvPaymentDayLabel.setText(getString(R.string.tenant_room_payment_day_label, day));
             updatePaymentDaysWarning(day);
+        }
+
+        loadHouseServiceRates(doc);
+        applyServiceRatesFromLatestInvoice(roomId);
+    }
+
+    private void loadHouseServiceRates(DocumentSnapshot roomDoc) {
+        if (roomDoc == null || !roomDoc.exists() || tenantId == null) {
+            return;
+        }
+
+        String houseId = roomDoc.getString("houseId");
+        if (houseId == null || houseId.trim().isEmpty()) {
+            return;
+        }
+
+        db.collection("users").document(tenantId)
+                .collection("houses").document(houseId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc != null && doc.exists()) {
+                        applyHouseServiceRates(doc);
+                    } else {
+                        db.collection("tenants").document(tenantId)
+                                .collection("houses").document(houseId)
+                                .get()
+                                .addOnSuccessListener(this::applyHouseServiceRates);
+                    }
+                });
+    }
+
+    private void applyHouseServiceRates(DocumentSnapshot houseDoc) {
+        if (houseDoc == null || !houseDoc.exists()) {
+            return;
+        }
+
+        String houseName = houseDoc.getString("houseName");
+        if (houseName != null && !houseName.trim().isEmpty() && tvBillingSubtitle != null) {
+            tvBillingSubtitle.setText(getString(R.string.tenant_room_billing_subtitle_with_house, houseName.trim()));
+        }
+
+        double elec = getNumber(houseDoc, "electricityPrice", "electricRate", "electricityRate");
+        if (elec > 0) {
+            String unit = unitLabelFromCode(houseDoc.getString("electricityCalculationMethod"), "KWh");
+            tvElecRate.setText(formatRate(elec, unit));
+        }
+
+        double water = getNumber(houseDoc, "waterPrice", "waterRate");
+        if (water > 0) {
+            String unit = unitLabelFromCode(houseDoc.getString("waterCalculationMethod"), "Khối");
+            tvWaterRate.setText(formatRate(water, unit));
+        }
+
+        double trash = getNumber(houseDoc, "trashPrice", "garbageFee", "trashFee");
+        if (trash > 0) {
+            String unit = unitLabelFromCode(houseDoc.getString("trashUnit"), "Người");
+            tvGarbageFee.setText(formatRate(trash, unit));
+        }
+
+        double wifi = getNumber(houseDoc, "internetPrice", "wifiFee", "internetFee");
+        if (wifi > 0) {
+            String unit = unitLabelFromCode(houseDoc.getString("internetUnit"), "Phòng");
+            tvWifiFee.setText(formatRate(wifi, unit));
+        }
+    }
+
+    private void applyServiceRatesFromLatestInvoice(String activeRoomId) {
+        if (tenantId == null || activeRoomId == null || activeRoomId.isEmpty()) {
+            return;
+        }
+
+        db.collection("tenants").document(tenantId)
+                .collection("invoices")
+                .whereEqualTo("roomId", activeRoomId)
+                .limit(24)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    DocumentSnapshot latest = pickLatestInvoice(qs);
+                    if (latest != null) {
+                        applyInvoiceRateFallback(latest);
+                    } else {
+                        db.collection("users").document(tenantId)
+                                .collection("invoices")
+                                .whereEqualTo("roomId", activeRoomId)
+                                .limit(24)
+                                .get()
+                                .addOnSuccessListener(qs2 -> {
+                                    DocumentSnapshot legacy = pickLatestInvoice(qs2);
+                                    if (legacy != null) {
+                                        applyInvoiceRateFallback(legacy);
+                                    }
+                                });
+                    }
+                });
+    }
+
+    private DocumentSnapshot pickLatestInvoice(QuerySnapshot qs) {
+        if (qs == null || qs.isEmpty()) {
+            return null;
+        }
+        DocumentSnapshot latest = null;
+        int latestKey = -1;
+        for (QueryDocumentSnapshot doc : qs) {
+            String period = doc.getString("billingPeriod");
+            int key = billingPeriodKey(period);
+            if (key > latestKey) {
+                latestKey = key;
+                latest = doc;
+            }
+        }
+        return latest != null ? latest : qs.getDocuments().get(0);
+    }
+
+    private void applyInvoiceRateFallback(DocumentSnapshot invoiceDoc) {
+        if (invoiceDoc == null || !invoiceDoc.exists()) {
+            return;
+        }
+
+        double elec = getNumber(invoiceDoc, "electricUnitPrice");
+        if (elec > 0) {
+            tvElecRate.setText(getString(R.string.tenant_room_rate_electric, formatMoneyShort(elec)));
+        }
+
+        double water = getNumber(invoiceDoc, "waterUnitPrice");
+        if (water > 0) {
+            tvWaterRate.setText(getString(R.string.tenant_room_rate_water, formatMoneyShort(water)));
+        }
+
+        double trash = getNumber(invoiceDoc, "trashFee", "garbageFee");
+        if (trash > 0) {
+            tvGarbageFee.setText(getString(R.string.tenant_room_money_amount, formatMoneyShort(trash)));
+        }
+
+        double wifi = getNumber(invoiceDoc, "internetFee", "wifiFee");
+        if (wifi > 0) {
+            tvWifiFee.setText(getString(R.string.tenant_room_money_amount, formatMoneyShort(wifi)));
         }
     }
 
@@ -606,5 +745,64 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private String formatMoneyShort(double amount) {
         long longVal = (long) amount;
         return String.format(Locale.getDefault(), "%,d", longVal).replace(',', '.');
+    }
+
+    private String formatRate(double amount, String unitLabel) {
+        return formatMoneyShort(amount) + " đ / " + unitLabel;
+    }
+
+    private String unitLabelFromCode(String unitCode, String fallback) {
+        if (unitCode == null || unitCode.trim().isEmpty()) {
+            return fallback;
+        }
+        String normalized = unitCode.trim().toLowerCase(Locale.ROOT);
+        switch (normalized) {
+            case "kwh":
+                return "KWh";
+            case "meter":
+                return "Khối";
+            case "person":
+            case "per_person":
+                return "Người";
+            case "room":
+                return "Phòng";
+            case "vehicle":
+                return "Xe";
+            default:
+                return fallback;
+        }
+    }
+
+    private double getNumber(DocumentSnapshot doc, String... keys) {
+        if (doc == null || keys == null) {
+            return 0;
+        }
+        for (String key : keys) {
+            Object raw = doc.get(key);
+            if (raw instanceof Number) {
+                return ((Number) raw).doubleValue();
+            }
+        }
+        return 0;
+    }
+
+    private int billingPeriodKey(String period) {
+        if (period == null || period.trim().isEmpty()) {
+            return -1;
+        }
+        String[] parts = period.trim().split("/");
+        if (parts.length != 2) {
+            return -1;
+        }
+        try {
+            int month = Integer.parseInt(parts[0]);
+            int year = Integer.parseInt(parts[1]);
+            if (month < 1 || month > 12) {
+                return -1;
+            }
+            return year * 100 + month;
+        } catch (NumberFormatException ignore) {
+            return -1;
+        }
     }
 }

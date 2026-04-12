@@ -11,13 +11,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.constants.WaterCalculationMode;
+import com.example.myapplication.core.util.MoneyFormatter;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.domain.Payment;
 import com.example.myapplication.features.invoice.InvoiceFormValueHelper;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
-
-import java.text.NumberFormat;
 import java.util.Locale;
 
 public final class InvoiceExportDialogHelper {
@@ -50,6 +50,8 @@ public final class InvoiceExportDialogHelper {
             @NonNull LifecycleOwner owner,
             @NonNull Invoice invoice,
             com.example.myapplication.domain.House house,
+            String electricModeHint,
+            String waterModeHint,
             @NonNull com.example.myapplication.core.repository.domain.PaymentRepository paymentRepository,
             boolean isTenantUser,
             @NonNull InvoiceAction openPaymentHistory,
@@ -65,94 +67,98 @@ public final class InvoiceExportDialogHelper {
         View btnPaymentHistory = view.findViewById(R.id.btnPaymentHistory);
         View btnClose = view.findViewById(R.id.btnClose);
 
-        NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.getDefault());
-
         tvTitle.setText(activity.getString(R.string.invoice_room, invoice.getRoomNumber()));
 
         StringBuilder sb = new StringBuilder();
         sb.append(activity.getString(R.string.invoice_export_billing_period_line, invoice.getBillingPeriod()))
             .append("\n\n");
-        sb.append(activity.getString(R.string.room_fee_colon)).append(fmt.format(invoice.getRentAmount())).append("\n");
+        sb.append(activity.getString(R.string.room_fee_colon)).append(MoneyFormatter.format(invoice.getRentAmount())).append("\n");
 
-        double soDien = invoice.getElectricEndReading() - invoice.getElectricStartReading();
+        String electricMethod = normalizeMode(
+            electricModeHint,
+            house != null ? house.getElectricityCalculationMethod() : null,
+            "kwh");
+        double soDien = "kwh".equalsIgnoreCase(electricMethod)
+            ? Math.max(0, invoice.getElectricEndReading() - invoice.getElectricStartReading())
+            : Math.max(0, invoice.getElectricEndReading());
         double tienDien = soDien * invoice.getElectricUnitPrice();
-        sb.append(activity.getString(R.string.electric_fee_colon)).append(fmt.format(tienDien)).append("\n");
+        sb.append(activity.getString(R.string.electric_fee_colon)).append(MoneyFormatter.format(tienDien)).append("\n");
         if (soDien > 0) {
-                        String electricUnit = formatUnitName(activity, house.getElectricityCalculationMethod());
-                        sb.append(activity.getString(
-                                        R.string.invoice_export_quantity_line,
-                                        InvoiceFormValueHelper.formatDouble(soDien),
-                                        electricUnit,
-                                        fmt.format(invoice.getElectricUnitPrice())));
+            String electricUnit = formatUnitName(activity, electricMethod);
+            sb.append(activity.getString(
+                    R.string.invoice_export_quantity_line,
+                    InvoiceFormValueHelper.formatDouble(soDien),
+                    electricUnit,
+                    MoneyFormatter.format(invoice.getElectricUnitPrice())));
             if (invoice.getElectricStartReading() > 0 || invoice.getElectricEndReading() > 50) {
-                                sb.append(activity.getString(
-                                                R.string.invoice_export_meter_range_line,
-                                                InvoiceFormValueHelper.formatDouble(invoice.getElectricStartReading()),
-                                                InvoiceFormValueHelper.formatDouble(invoice.getElectricEndReading())));
+                sb.append(activity.getString(
+                        R.string.invoice_export_meter_range_line,
+                        InvoiceFormValueHelper.formatDouble(invoice.getElectricStartReading()),
+                        InvoiceFormValueHelper.formatDouble(invoice.getElectricEndReading())));
             }
             sb.append("\n");
         }
 
-        double soNuoc = invoice.getWaterEndReading() - invoice.getWaterStartReading();
+            String waterMethod = normalizeMode(
+                waterModeHint,
+                house != null ? house.getWaterCalculationMethod() : null,
+                WaterCalculationMode.METER);
+            double soNuoc = WaterCalculationMode.isMeter(waterMethod)
+                ? Math.max(0, invoice.getWaterEndReading() - invoice.getWaterStartReading())
+                : Math.max(0, invoice.getWaterEndReading());
         double tienNuoc = soNuoc * invoice.getWaterUnitPrice();
-        sb.append(activity.getString(R.string.water_fee_colon)).append(fmt.format(tienNuoc)).append("\n");
+    sb.append(activity.getString(R.string.water_fee_colon)).append(MoneyFormatter.format(tienNuoc)).append("\n");
         if (soNuoc > 0) {
-                        String waterUnit = formatUnitName(activity, house.getWaterCalculationMethod());
-                        sb.append(activity.getString(
-                                        R.string.invoice_export_quantity_line,
-                                        InvoiceFormValueHelper.formatDouble(soNuoc),
-                                        waterUnit,
-                                        fmt.format(invoice.getWaterUnitPrice())));
+            String waterUnit = formatUnitName(activity, waterMethod);
+            sb.append(activity.getString(
+                    R.string.invoice_export_quantity_line,
+                    InvoiceFormValueHelper.formatDouble(soNuoc),
+                    waterUnit,
+            MoneyFormatter.format(invoice.getWaterUnitPrice())));
             if (invoice.getWaterStartReading() > 0 || invoice.getWaterEndReading() > 50) {
-                                sb.append(activity.getString(
-                                                R.string.invoice_export_meter_range_line,
-                                                InvoiceFormValueHelper.formatDouble(invoice.getWaterStartReading()),
-                                                InvoiceFormValueHelper.formatDouble(invoice.getWaterEndReading())));
+                sb.append(activity.getString(
+                        R.string.invoice_export_meter_range_line,
+                        InvoiceFormValueHelper.formatDouble(invoice.getWaterStartReading()),
+                        InvoiceFormValueHelper.formatDouble(invoice.getWaterEndReading())));
             }
             sb.append("\n");
         }
 
         if (invoice.getTrashFee() > 0) {
-            sb.append(activity.getString(R.string.trash_fee_colon)).append(fmt.format(invoice.getTrashFee())).append("\n");
-            double price = house.getTrashPrice();
-            if (price > 0 && Math.abs((invoice.getTrashFee() / price) - Math.round(invoice.getTrashFee() / price)) < 0.001) {
-                double qty = Math.round(invoice.getTrashFee() / price);
-                String unit = formatUnitName(activity, house.getTrashUnitSafe());
-                sb.append(activity.getString(
-                        R.string.invoice_export_quantity_line,
-                        InvoiceFormValueHelper.formatDouble(qty),
-                        unit,
-                        fmt.format(price))).append("\n");
-            }
+            sb.append(activity.getString(R.string.trash_fee_colon)).append(MoneyFormatter.format(invoice.getTrashFee())).append("\n");
+            double unitPrice = house != null && house.getTrashPrice() > 0 ? house.getTrashPrice() : invoice.getTrashFee();
+            String unitCode = house != null && house.getTrashUnitSafe() != null ? house.getTrashUnitSafe() : "room";
+            double qty = unitPrice > 0 ? Math.max(1d, invoice.getTrashFee() / unitPrice) : 1d;
+            sb.append(activity.getString(
+                    R.string.invoice_export_quantity_line,
+                    InvoiceFormValueHelper.formatDouble(qty),
+                    formatUnitName(activity, unitCode),
+                    MoneyFormatter.format(unitPrice))).append("\n");
         }
         if (invoice.getInternetFee() > 0) {
-            sb.append(activity.getString(R.string.wifi_fee_colon)).append(fmt.format(invoice.getInternetFee())).append("\n");
-            double price = house.getInternetPrice();
-            if (price > 0 && Math.abs((invoice.getInternetFee() / price) - Math.round(invoice.getInternetFee() / price)) < 0.001) {
-                double qty = Math.round(invoice.getInternetFee() / price);
-                String unit = formatUnitName(activity, house.getInternetUnitSafe());
-                sb.append(activity.getString(
-                        R.string.invoice_export_quantity_line,
-                        InvoiceFormValueHelper.formatDouble(qty),
-                        unit,
-                        fmt.format(price))).append("\n");
-            }
+            sb.append(activity.getString(R.string.wifi_fee_colon)).append(MoneyFormatter.format(invoice.getInternetFee())).append("\n");
+            double unitPrice = house != null && house.getInternetPrice() > 0 ? house.getInternetPrice() : invoice.getInternetFee();
+            String unitCode = house != null && house.getInternetUnitSafe() != null ? house.getInternetUnitSafe() : "room";
+            double qty = unitPrice > 0 ? Math.max(1d, invoice.getInternetFee() / unitPrice) : 1d;
+            sb.append(activity.getString(
+                    R.string.invoice_export_quantity_line,
+                    InvoiceFormValueHelper.formatDouble(qty),
+                    formatUnitName(activity, unitCode),
+                    MoneyFormatter.format(unitPrice))).append("\n");
         }
         if (invoice.getParkingFee() > 0) {
-            sb.append(activity.getString(R.string.parking_fee_colon)).append(fmt.format(invoice.getParkingFee())).append("\n");
-            double price = house.getParkingPrice();
-            if (price > 0 && Math.abs((invoice.getParkingFee() / price) - Math.round(invoice.getParkingFee() / price)) < 0.001) {
-                double qty = Math.round(invoice.getParkingFee() / price);
-                String unit = formatUnitName(activity, house.getParkingUnitSafe());
-                sb.append(activity.getString(
-                        R.string.invoice_export_quantity_line,
-                        InvoiceFormValueHelper.formatDouble(qty),
-                        unit,
-                        fmt.format(price))).append("\n");
-            }
+            sb.append(activity.getString(R.string.parking_fee_colon)).append(MoneyFormatter.format(invoice.getParkingFee())).append("\n");
+            double unitPrice = house != null && house.getParkingPrice() > 0 ? house.getParkingPrice() : invoice.getParkingFee();
+            String unitCode = house != null && house.getParkingUnitSafe() != null ? house.getParkingUnitSafe() : "vehicle";
+            double qty = unitPrice > 0 ? Math.max(1d, invoice.getParkingFee() / unitPrice) : 1d;
+            sb.append(activity.getString(
+                    R.string.invoice_export_quantity_line,
+                    InvoiceFormValueHelper.formatDouble(qty),
+                    formatUnitName(activity, unitCode),
+                    MoneyFormatter.format(unitPrice))).append("\n");
         }
         if (invoice.getOtherFee() > 0) {
-            sb.append(activity.getString(R.string.other_fee_colon)).append(fmt.format(invoice.getOtherFee())).append("\n");
+            sb.append(activity.getString(R.string.other_fee_colon)).append(MoneyFormatter.format(invoice.getOtherFee())).append("\n");
             if (invoice.getOtherFeeLines() != null && !invoice.getOtherFeeLines().isEmpty()) {
                 for (String line : invoice.getOtherFeeLines()) {
                     if (line == null || line.trim().isEmpty())
@@ -162,10 +168,44 @@ public final class InvoiceExportDialogHelper {
             }
         }
 
-        tvChiTiet.setText(sb + "\n\n" + activity.getString(R.string.loading_payments));
-        tvTong.setText(activity.getString(R.string.total_amount_colon) + fmt.format(invoice.getTotalAmount()));
+        tvChiTiet.setText(sb.toString());
+        tvTong.setText(activity.getString(R.string.total_amount_colon) + MoneyFormatter.format(invoice.getTotalAmount()));
 
-        paymentRepository.listByInvoice(invoice.getId()).observe(owner, payments -> {
+        if (isTenantUser) {
+            AlertDialog dialog = new AlertDialog.Builder(activity).setView(view).create();
+
+            btnNote.setVisibility(View.GONE);
+            btnPaymentHistory.setVisibility(View.GONE);
+
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+            dialog.show();
+            return;
+        }
+
+        String invoiceId = invoice.getId();
+        if (invoiceId == null || invoiceId.trim().isEmpty()) {
+            AlertDialog dialog = new AlertDialog.Builder(activity).setView(view).create();
+
+            btnNote.setVisibility(View.VISIBLE);
+            btnNote.setOnClickListener(v -> {
+                openEditNote.run(invoice);
+                dialog.dismiss();
+            });
+
+            btnPaymentHistory.setVisibility(View.VISIBLE);
+            btnPaymentHistory.setOnClickListener(v -> {
+                openPaymentHistory.run(invoice);
+                dialog.dismiss();
+            });
+
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+            dialog.show();
+            return;
+        }
+
+        tvChiTiet.setText(sb + "\n\n" + activity.getString(R.string.loading_payments));
+
+        paymentRepository.listByInvoice(invoiceId).observe(owner, payments -> {
             if (payments == null)
                 return;
             double paid = 0;
@@ -174,30 +214,38 @@ public final class InvoiceExportDialogHelper {
             }
             double remaining = Math.max(0, invoice.getTotalAmount() - paid);
             String extra = "\n\n" + activity.getString(R.string.payment_separator) + "\n" +
-                    activity.getString(R.string.collected_colon) + fmt.format(paid) + "\n" +
-                    activity.getString(R.string.remaining_colon) + fmt.format(remaining);
+                    activity.getString(R.string.collected_colon) + MoneyFormatter.format(paid) + "\n" +
+                    activity.getString(R.string.remaining_colon) + MoneyFormatter.format(remaining);
             tvChiTiet.setText(sb + extra);
         });
 
         AlertDialog dialog = new AlertDialog.Builder(activity).setView(view).create();
 
+        btnNote.setVisibility(View.VISIBLE);
+        btnNote.setOnClickListener(v -> {
+            openEditNote.run(invoice);
+            dialog.dismiss();
+        });
+
+        btnPaymentHistory.setVisibility(View.VISIBLE);
         btnPaymentHistory.setOnClickListener(v -> {
             openPaymentHistory.run(invoice);
             dialog.dismiss();
         });
 
-        if (isTenantUser) {
-            btnNote.setVisibility(View.GONE);
-        } else {
-            btnNote.setVisibility(View.VISIBLE);
-            btnNote.setOnClickListener(v -> {
-                openEditNote.run(invoice);
-                dialog.dismiss();
-            });
-        }
-
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+
+    @NonNull
+    private static String normalizeMode(String preferredMode, String fallbackMode, @NonNull String defaultMode) {
+        if (preferredMode != null && !preferredMode.trim().isEmpty()) {
+            return preferredMode.trim();
+        }
+        if (fallbackMode != null && !fallbackMode.trim().isEmpty()) {
+            return fallbackMode.trim();
+        }
+        return defaultMode;
     }
 
     public static void showTenantConfirmMeterDialog(@NonNull AppCompatActivity activity,

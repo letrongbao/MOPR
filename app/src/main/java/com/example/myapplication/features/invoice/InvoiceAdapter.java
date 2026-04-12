@@ -188,7 +188,11 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
         if (holder.tvRibbonStatus != null) {
             holder.tvRibbonStatus.setText(toDisplayStatus(context, st));
-            if (InvoiceStatus.PAID.equals(st)) {
+            if (tenantMode) {
+                holder.tvRibbonStatus.setBackgroundColor(
+                        ContextCompat.getColor(context,
+                                InvoiceStatus.PAID.equals(st) ? R.color.success : R.color.warning));
+            } else if (InvoiceStatus.PAID.equals(st)) {
                 holder.tvRibbonStatus
                         .setBackgroundColor(ContextCompat.getColor(context, R.color.success));
             } else if (InvoiceStatus.REPORTED.equals(st)) {
@@ -271,6 +275,11 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
     }
 
     private String toDisplayStatus(@NonNull android.content.Context context, String status) {
+        if (tenantMode) {
+            return InvoiceStatus.PAID.equals(status)
+                    ? context.getString(R.string.invoice_status_paid_tenant)
+                    : context.getString(R.string.invoice_status_unpaid_tenant);
+        }
         if (InvoiceStatus.PAID.equals(status)) {
             return context.getString(R.string.invoice_status_paid);
         }

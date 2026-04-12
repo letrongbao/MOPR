@@ -52,13 +52,17 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
+import java.util.HashMap;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -855,18 +859,114 @@ public class ContractActivity extends AppCompatActivity {
         long now = System.currentTimeMillis();
         String contractId = currentContract.getId();
         createRentalHistoryLog(currentContract, oldRoomId, now,
-                () -> contractMemberRepository.deactivateMembersByContract(contractId, () -> scopedCollection("contracts")
-                        .document(contractId)
-                        .delete()
-                        .addOnSuccessListener(v -> {
-                            markRoomStatus(RoomStatus.VACANT);
-                            Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
-                            navigateToRoomList(RoomStatus.VACANT);
-                        })
-                        .addOnFailureListener(e -> Toast
-                                .makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show())),
+            () -> contractMemberRepository.deactivateMembersByContract(
+                contractId,
+                () -> hardOffboardAfterContractEnd(contractId, oldRoomId)),
                 () -> Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
     }
+
+        private void hardOffboardAfterContractEnd(@NonNull String contractId, @NonNull String oldRoomId) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String tenantId = TenantSession.getActiveTenantId();
+
+        if (user == null || tenantId == null || tenantId.trim().isEmpty()) {
+            scopedCollection("contracts").document(contractId)
+                .delete()
+                .addOnSuccessListener(v -> {
+                markRoomStatus(RoomStatus.VACANT);
+                Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT).show();
+                navigateToRoomList(RoomStatus.VACANT);
+                })
+                .addOnFailureListener(e -> Toast
+                    .makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+            return;
+        }
+
+        DocumentReference tenantScope = db.collection("tenants").document(tenantId.trim());
+        CollectionReference membersCol = tenantScope.collection("members");
+        CollectionReference invitesCol = tenantScope.collection("invites");
+
+        membersCol.whereEqualTo("roomId", oldRoomId)
+            .get()
+            .addOnSuccessListener(memberSnapshot ->
+                invitesCol.whereEqualTo("roomId", oldRoomId)
+                    .whereEqualTo("status", "PENDING")
+                    .get()
+                    .addOnSuccessListener(inviteSnapshot -> {
+                        WriteBatch batch = db.batch();
+                        List<String> affectedUserIds = new ArrayList<>();
+
+                        Map<String, Object> roomUpdates = new HashMap<>();
+                        roomUpdates.put("status", RoomStatus.VACANT);
+                        roomUpdates.put("updatedAt", Timestamp.now());
+                        batch.set(tenantScope.collection("rooms").document(oldRoomId), roomUpdates,
+                            com.google.firebase.firestore.SetOptions.merge());
+
+                        batch.delete(tenantScope.collection("contracts").document(contractId));
+
+                        for (DocumentSnapshot memberDoc : memberSnapshot.getDocuments()) {
+                        String affectedUid = memberDoc.getId();
+                        if (affectedUid != null && !affectedUid.trim().isEmpty()
+                                && !affectedUserIds.contains(affectedUid)) {
+                            affectedUserIds.add(affectedUid);
+                        }
+                        Map<String, Object> memberUpdates = new HashMap<>();
+                        memberUpdates.put("status", "INACTIVE");
+                        memberUpdates.put("roomId", null);
+                        memberUpdates.put("contractId", null);
+                        memberUpdates.put("assignedRoomIds", new ArrayList<>());
+                        memberUpdates.put("contractRepresentative", false);
+                        memberUpdates.put("primaryContact", false);
+                        memberUpdates.put("updatedAt", Timestamp.now());
+                        batch.set(memberDoc.getReference(), memberUpdates,
+                            com.google.firebase.firestore.SetOptions.merge());
+                        }
+
+                        for (DocumentSnapshot inviteDoc : inviteSnapshot.getDocuments()) {
+                        Map<String, Object> inviteUpdates = new HashMap<>();
+                        inviteUpdates.put("status", "REVOKED");
+                        inviteUpdates.put("updatedAt", Timestamp.now());
+                        batch.set(inviteDoc.getReference(), inviteUpdates,
+                            com.google.firebase.firestore.SetOptions.merge());
+                        }
+
+                        batch.commit()
+                            .addOnSuccessListener(v -> {
+                            writeContractOffboardingAuditLog(tenantScope, contractId, oldRoomId, affectedUserIds);
+                            Toast.makeText(this, getString(R.string.contract_end_success), Toast.LENGTH_SHORT)
+                                .show();
+                            navigateToRoomList(RoomStatus.VACANT);
+                            })
+                            .addOnFailureListener(e -> Toast.makeText(this,
+                                getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this,
+                        getString(R.string.operation_failed), Toast.LENGTH_SHORT).show()))
+            .addOnFailureListener(e -> Toast.makeText(this,
+                getString(R.string.operation_failed), Toast.LENGTH_SHORT).show());
+        }
+
+            private void writeContractOffboardingAuditLog(
+                @NonNull DocumentReference tenantScope,
+                @NonNull String contractId,
+                @NonNull String roomId,
+                @NonNull List<String> affectedUserIds) {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "CONTRACT_HARD_OFFBOARD");
+            payload.put("contractId", contractId);
+            payload.put("roomId", roomId);
+            payload.put("affectedUserIds", affectedUserIds);
+            payload.put("createdBy", user != null ? user.getUid() : "");
+            payload.put("createdAt", Timestamp.now());
+
+            tenantScope.collection("auditLogs")
+                .add(payload)
+                .addOnFailureListener(e -> android.util.Log.w(
+                    "ContractActivity",
+                    "Failed to write offboarding audit log",
+                    e));
+            }
 
     private void navigateToRoomList(@NonNull String status) {
         Intent intent = new Intent(this, RoomActivity.class);
@@ -929,22 +1029,52 @@ public class ContractActivity extends AppCompatActivity {
         history.setNote(contract.getNote());
         history.setEndReason(getString(R.string.contract_end_reason_default));
         history.setCreatedAt(Timestamp.now());
-        calculateInvoiceStats(contract.getId(), (totalPaid, paidCount, unpaidCount) -> {
-            history.setTotalPaidAmount(totalPaid);
-            history.setPaidInvoiceCount(paidCount);
-            history.setUnpaidInvoiceCount(unpaidCount);
-            rentalHistoryRepo.addHistory(history)
-                    .addOnSuccessListener(ref -> {
-                        history.setId(ref.getId());
-                        android.util.Log.d("ContractActivity", "Rental history saved: " + ref.getId());
-                        onSuccess.run();
-                    })
-                    .addOnFailureListener(e -> {
-                        android.util.Log.e("ContractActivity",
-                                "Failed to save rental history: " + e.getMessage());
-                        onFailure.run();
-                    });
+        loadContractMemberSnapshots(contract.getId(), memberSnapshots -> {
+            history.setMemberSnapshots(memberSnapshots);
+            calculateInvoiceStats(contract.getId(), (totalPaid, paidCount, unpaidCount) -> {
+                history.setTotalPaidAmount(totalPaid);
+                history.setPaidInvoiceCount(paidCount);
+                history.setUnpaidInvoiceCount(unpaidCount);
+                rentalHistoryRepo.addHistory(history)
+                        .addOnSuccessListener(ref -> {
+                            history.setId(ref.getId());
+                            android.util.Log.d("ContractActivity", "Rental history saved: " + ref.getId());
+                            onSuccess.run();
+                        })
+                        .addOnFailureListener(e -> {
+                            android.util.Log.e("ContractActivity",
+                                    "Failed to save rental history: " + e.getMessage());
+                            onFailure.run();
+                        });
+            });
         });
+    }
+
+    private interface ContractMemberSnapshotCallback {
+        void onDone(@NonNull List<Map<String, Object>> memberSnapshots);
+    }
+
+    private void loadContractMemberSnapshots(@NonNull String contractId,
+            @NonNull ContractMemberSnapshotCallback callback) {
+        scopedCollection("contractMembers")
+                .whereEqualTo("contractId", contractId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<Map<String, Object>> snapshots = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Map<String, Object> item = new HashMap<>();
+                        item.put("uid", doc.getId());
+                        item.put("fullName", doc.getString("fullName"));
+                        item.put("phoneNumber", doc.getString("phoneNumber"));
+                        item.put("personalId", doc.getString("personalId"));
+                        item.put("primaryContact", Boolean.TRUE.equals(doc.getBoolean("primaryContact")));
+                        item.put("contractRepresentative", Boolean.TRUE.equals(doc.getBoolean("contractRepresentative")));
+                        item.put("active", Boolean.TRUE.equals(doc.getBoolean("active")));
+                        snapshots.add(item);
+                    }
+                    callback.onDone(snapshots);
+                })
+                .addOnFailureListener(e -> callback.onDone(new ArrayList<>()));
     }
 
     private interface InvoiceStatsCallback {

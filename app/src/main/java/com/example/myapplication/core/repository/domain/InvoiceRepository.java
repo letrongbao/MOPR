@@ -194,12 +194,12 @@ public class InvoiceRepository {
         putIfNotBlank(payload, "roomNumber", invoice.getRoomNumber());
         putIfNotBlank(payload, "billingPeriod", invoice.getBillingPeriod());
 
-        putIfPositive(payload, "electricStartReading", invoice.getElectricStartReading());
-        putIfPositive(payload, "electricEndReading", invoice.getElectricEndReading());
-        putIfPositive(payload, "electricUnitPrice", invoice.getElectricUnitPrice());
-        putIfPositive(payload, "waterStartReading", invoice.getWaterStartReading());
-        putIfPositive(payload, "waterEndReading", invoice.getWaterEndReading());
-        putIfPositive(payload, "waterUnitPrice", invoice.getWaterUnitPrice());
+        payload.put("electricStartReading", Math.max(0, invoice.getElectricStartReading()));
+        payload.put("electricEndReading", Math.max(0, invoice.getElectricEndReading()));
+        payload.put("electricUnitPrice", Math.max(0, invoice.getElectricUnitPrice()));
+        payload.put("waterStartReading", Math.max(0, invoice.getWaterStartReading()));
+        payload.put("waterEndReading", Math.max(0, invoice.getWaterEndReading()));
+        payload.put("waterUnitPrice", Math.max(0, invoice.getWaterUnitPrice()));
 
         payload.put("trashFee", invoice.getTrashFee());
         payload.put("internetFee", invoice.getInternetFee());
@@ -209,7 +209,7 @@ public class InvoiceRepository {
         if (invoice.getOtherFeeLines() != null && !invoice.getOtherFeeLines().isEmpty()) {
             payload.put("otherFeeLines", new ArrayList<>(invoice.getOtherFeeLines()));
         }
-        putIfPositive(payload, "rentAmount", invoice.getRentAmount());
+        payload.put("rentAmount", Math.max(0, invoice.getRentAmount()));
         payload.put("totalAmount", Math.max(0, invoice.getTotalAmount()));
 
         putIfNotBlank(payload, "status", invoice.getStatus());
