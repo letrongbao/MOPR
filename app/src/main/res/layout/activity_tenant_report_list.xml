@@ -62,9 +62,11 @@
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:contentDescription="@string/tenant_report_add"
-        app:layout_anchorGravity="bottom|end"
-        app:srcCompat="@drawable/ic_report" />
+        app:backgroundTint="#00796B"
+        app:srcCompat="@drawable/ic_add_plus_white"
+        app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

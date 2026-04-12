@@ -2,27 +2,32 @@ package com.example.myapplication.features.home;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.features.contract.TenantContractDetailsActivity;
-import com.example.myapplication.core.util.MoneyFormatter;
+import com.bumptech.glide.Glide;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -45,6 +50,11 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private TextView tvStartDate;
     private TextView tvEndDate;
     private TextView btnViewContractDetail;
+    private ImageView ivRoomImage;
+    private TextView tvOverviewRoomName;
+    private TextView tvOverviewHouseName;
+    private TextView tvMemberSummary;
+    private TextView tvMemberList;
 
     // --- Block 2: Tính tiền ---
     private TextView tvBillingSubtitle;
@@ -60,13 +70,11 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private TextView tvWaterLastIndex;
     private TextView tvElecStatus;
     private TextView tvElecLastIndex;
-    private Button   btnMeterHistory;
-    private Button   btnMeterList;
-    private Button   btnConfirmMeter;
 
     // --- Data ---
     private String roomId;
     private String tenantId;   // = activeTenantId từ Firestore (= ownerUid trong hệ thống hiện tại)
+    private String contractId;
 
     private FirebaseFirestore db;
     private FirebaseAuth      mAuth;
@@ -79,7 +87,17 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        ScreenUiHelper.enableEdgeToEdge(this, false);
         setContentView(R.layout.activity_tenant_room_detail);
+
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
+        }
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_room_overview_title));
 
         db    = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -103,6 +121,11 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         tvStartDate             = findViewById(R.id.tvStartDate);
         tvEndDate               = findViewById(R.id.tvEndDate);
         btnViewContractDetail   = findViewById(R.id.btnViewContractDetail);
+        ivRoomImage             = findViewById(R.id.ivRoomImage);
+        tvOverviewRoomName      = findViewById(R.id.tvOverviewRoomName);
+        tvOverviewHouseName     = findViewById(R.id.tvOverviewHouseName);
+        tvMemberSummary         = findViewById(R.id.tvMemberSummary);
+        tvMemberList            = findViewById(R.id.tvMemberList);
 
         tvBillingSubtitle       = findViewById(R.id.tvBillingSubtitle);
         tvPaymentDayLabel       = findViewById(R.id.tvPaymentDayLabel);
@@ -117,9 +140,6 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         tvWaterLastIndex        = findViewById(R.id.tvWaterLastIndex);
         tvElecStatus            = findViewById(R.id.tvElecStatus);
         tvElecLastIndex         = findViewById(R.id.tvElecLastIndex);
-        btnMeterHistory         = findViewById(R.id.btnMeterHistory);
-        btnMeterList            = findViewById(R.id.btnMeterList);
-        btnConfirmMeter         = findViewById(R.id.btnConfirmMeter);
     }
 
     // ================================================================
@@ -128,9 +148,124 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     private void loadAllData() {
         if (roomId == null || roomId.isEmpty()) return;
 
+        loadRoomOverview(roomId);
+        loadRoomMembers(roomId);
         getContractSummary(roomId);
         getLatestServiceRates(roomId);
         fetchLatestMeterReading(roomId);
+    }
+
+    private void loadRoomOverview(String roomId) {
+        if (tenantId == null) return;
+
+        db.collection("users").document(tenantId)
+                .collection("rooms").document(roomId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        applyRoomOverview(doc);
+                    } else {
+                        db.collection("tenants").document(tenantId)
+                                .collection("rooms").document(roomId)
+                                .get()
+                                .addOnSuccessListener(this::applyRoomOverview);
+                    }
+                });
+    }
+
+    private void applyRoomOverview(DocumentSnapshot doc) {
+        if (doc == null || !doc.exists()) return;
+
+        String roomNumber = doc.getString("roomNumber");
+        if (roomNumber == null || roomNumber.trim().isEmpty()) {
+            roomNumber = roomId;
+        }
+        if (roomNumber != null && !roomNumber.trim().isEmpty()) {
+            tvOverviewRoomName.setText(getString(R.string.tenant_room_overview_room_name, roomNumber.trim()));
+        }
+
+        String houseName = doc.getString("houseName");
+        if (houseName != null && !houseName.trim().isEmpty()) {
+            tvOverviewHouseName.setText(getString(R.string.tenant_room_overview_house_name, houseName.trim()));
+        } else {
+            tvOverviewHouseName.setText(getString(R.string.tenant_room_overview_house_placeholder));
+        }
+
+        String imageUrl = doc.getString("imageUrl");
+        if (imageUrl != null && !imageUrl.trim().isEmpty() && !isDestroyed()) {
+            Glide.with(this)
+                    .load(imageUrl.trim())
+                    .centerCrop()
+                    .placeholder(R.drawable.bg_room_placeholder)
+                    .into(ivRoomImage);
+        }
+    }
+
+    private void loadRoomMembers(String roomId) {
+        if (tenantId == null || roomId == null || roomId.isEmpty()) return;
+
+        db.collection("tenants").document(tenantId)
+                .collection("contractMembers")
+                .whereEqualTo("roomId", roomId)
+                .whereEqualTo("active", true)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    if (qs == null || qs.isEmpty()) {
+                        db.collection("users").document(tenantId)
+                                .collection("contractMembers")
+                                .whereEqualTo("roomId", roomId)
+                                .whereEqualTo("active", true)
+                                .get()
+                                .addOnSuccessListener(this::applyRoomMembers)
+                                .addOnFailureListener(e -> applyRoomMembers(null));
+                        return;
+                    }
+                    applyRoomMembers(qs);
+                })
+                .addOnFailureListener(e -> applyRoomMembers(null));
+    }
+
+    private void applyRoomMembers(QuerySnapshot querySnapshot) {
+        if (querySnapshot == null || querySnapshot.isEmpty()) {
+            tvMemberSummary.setText(getString(R.string.tenant_room_overview_members_empty));
+            tvMemberList.setText(getString(R.string.tenant_room_overview_members_empty));
+            return;
+        }
+
+        List<String> lines = new ArrayList<>();
+        List<DocumentSnapshot> docs = new ArrayList<>(querySnapshot.getDocuments());
+        Collections.sort(docs, (left, right) -> {
+            Boolean leftRep = left.getBoolean("contractRepresentative");
+            Boolean rightRep = right.getBoolean("contractRepresentative");
+            boolean leftRepresentative = leftRep != null && leftRep;
+            boolean rightRepresentative = rightRep != null && rightRep;
+            if (leftRepresentative != rightRepresentative) {
+                return leftRepresentative ? -1 : 1;
+            }
+            String leftName = left.getString("fullName");
+            String rightName = right.getString("fullName");
+            if (leftName == null) leftName = "";
+            if (rightName == null) rightName = "";
+            return leftName.compareToIgnoreCase(rightName);
+        });
+
+        for (DocumentSnapshot doc : docs) {
+            String name = doc.getString("fullName");
+            String phone = doc.getString("phoneNumber");
+            Boolean rep = doc.getBoolean("contractRepresentative");
+            StringBuilder line = new StringBuilder("• ");
+            line.append((name != null && !name.trim().isEmpty()) ? name.trim() : "Thành viên");
+            if (phone != null && !phone.trim().isEmpty()) {
+                line.append(" - ").append(phone.trim());
+            }
+            if (rep != null && rep) {
+                line.append(" (người đại diện thuê)");
+            }
+            lines.add(line.toString());
+        }
+
+        tvMemberSummary.setText(getString(R.string.tenant_room_overview_members_count, lines.size()));
+        tvMemberList.setText(String.join("\n", lines));
     }
 
     // ================================================================
@@ -180,6 +315,8 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
 
     /** Áp dụng dữ liệu hợp đồng lên UI */
     private void applyContractToUI(DocumentSnapshot doc) {
+        contractId = doc.getId();
+
         // Đọc ngày bắt đầu: ưu tiên rentalStartDate (String dd/MM/yyyy)
         Date startDate = parseDate(doc, "rentalStartDate", "startDate");
         Date endDate   = parseDate(doc, "contractEndDate", "endDate");
@@ -407,28 +544,6 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
     //  Setup click listeners
     // ================================================================
     private void setupClickListeners() {
-        // Nút Chốt đồng hồ → mở ConfirmMeterActivity
-        if (btnConfirmMeter != null) {
-            btnConfirmMeter.setOnClickListener(v -> {
-                Intent intent = new Intent(this, ConfirmMeterActivity.class);
-                intent.putExtra(EXTRA_ROOM_ID,   roomId);
-                intent.putExtra(EXTRA_TENANT_ID, tenantId);
-                startActivity(intent);
-            });
-        }
-
-        // Nút Lịch sử đồng hồ
-        if (btnMeterHistory != null) {
-            btnMeterHistory.setOnClickListener(v ->
-                    Toast.makeText(this, getString(R.string.tenant_room_meter_history), Toast.LENGTH_SHORT).show());
-        }
-
-        // Nút Danh sách chốt
-        if (btnMeterList != null) {
-            btnMeterList.setOnClickListener(v ->
-                    Toast.makeText(this, getString(R.string.tenant_room_meter_list), Toast.LENGTH_SHORT).show());
-        }
-
         // Xem chi tiết hợp đồng
         if (btnViewContractDetail != null) {
             btnViewContractDetail.setOnClickListener(v -> {

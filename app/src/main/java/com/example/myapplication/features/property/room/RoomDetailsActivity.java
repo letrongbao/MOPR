@@ -292,6 +292,12 @@ public class RoomDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        if (activeContractId == null || activeContractId.trim().isEmpty()) {
+            Toast.makeText(this, "Phòng chưa có hợp đồng đang hiệu lực nên chưa thể tạo mã vào phòng.", Toast.LENGTH_LONG)
+                    .show();
+            return;
+        }
+
         String tenantId = TenantSession.getActiveTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = user.getUid();
@@ -308,7 +314,8 @@ public class RoomDetailsActivity extends AppCompatActivity {
 
                 new AlertDialog.Builder(RoomDetailsActivity.this)
                         .setTitle("Mã phòng được tạo thành công!")
-                        .setMessage("Đây là mã dùng 1 lần. Hãy sao chép và gửi cho khách để họ kết nối phòng.\n\nCode: " + code)
+                    .setMessage("Mã này dùng để vào phòng theo số lượng thành viên còn trống của hợp đồng.\n\nCode: "
+                        + code)
                         .setPositiveButton("Copy Mã", (dialog, which) -> {
                             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                             ClipData clip = ClipData.newPlainText("Room Code", code);

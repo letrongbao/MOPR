@@ -10,40 +10,20 @@
     <!-- AppBarLayout -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
+        style="@style/TenantHeaderAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_card_gradient_blue"
-        android:fitsSystemWindows="true"
         app:elevation="0dp">
 
-        <RelativeLayout
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            style="@style/TenantHeaderToolbar"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:paddingHorizontal="8dp">
-
-            <!-- UI section note -->
-            <ImageView
-                android:id="@+id/btnBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_centerVertical="true"
-                android:padding="12dp"
-                android:src="@drawable/ic_arrow_back"
-                app:tint="@color/white"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/navigate_back"/>
-
-            <!-- UI section note -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="@string/contract_details_title"
-                android:textColor="@color/white"
-                android:textSize="17sp"
-                android:textStyle="bold"/>
-
-        </RelativeLayout>
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIconTint="@color/white"
+            app:title="@string/contract_details_title" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- UI section note -->

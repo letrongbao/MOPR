@@ -6,6 +6,7 @@ import com.example.myapplication.core.constants.TenantRoles;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -15,6 +16,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class InviteRepository {
+    private static final String CONTRACT_MEMBER_ROLE_OCCUPANT = "OCCUPANT";
+    private static final String CONTRACT_MEMBER_ROLE_REPRESENTATIVE = "REPRESENTATIVE";
+
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final SecureRandom rnd = new SecureRandom();
 
@@ -115,16 +119,127 @@ public class InviteRepository {
             return;
         }
 
+        db.collection("tenants").document(tenantId)
+                .collection("contracts")
+                .whereEqualTo("roomId", roomId)
+                .whereEqualTo("contractStatus", "ACTIVE")
+                .limit(1)
+                .get()
+                .addOnSuccessListener(contracts -> {
+                    if (!contracts.isEmpty()) {
+                        prepareAnonymousInviteByQuota(tenantId, roomId, contracts.getDocuments().get(0), cb);
+                        return;
+                    }
+
+                    // Legacy fallback path.
+                    db.collection("users").document(tenantId)
+                            .collection("contracts")
+                            .whereEqualTo("roomId", roomId)
+                            .whereEqualTo("contractStatus", "ACTIVE")
+                            .limit(1)
+                            .get()
+                            .addOnSuccessListener(legacyContracts -> {
+                                if (legacyContracts.isEmpty()) {
+                                    cb.onError(new IllegalStateException(
+                                            "Phòng chưa có hợp đồng đang hiệu lực, không thể tạo mã vào phòng."));
+                                    return;
+                                }
+                                prepareAnonymousInviteByQuota(
+                                        tenantId,
+                                        roomId,
+                                        legacyContracts.getDocuments().get(0),
+                                        cb);
+                            })
+                            .addOnFailureListener(cb::onError);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    private void prepareAnonymousInviteByQuota(@NonNull String tenantId,
+            @NonNull String roomId,
+            @NonNull DocumentSnapshot activeContract,
+            @NonNull InviteCallback cb) {
+        int totalSlots = resolveMemberCount(activeContract);
+        String contractId = activeContract.getId();
+
+        db.collection("tenants").document(tenantId)
+                .collection("contractMembers")
+                .whereEqualTo("contractId", contractId)
+                .whereEqualTo("active", true)
+                .get()
+                .addOnSuccessListener(activeMembers -> {
+                    int currentCount = activeMembers != null ? activeMembers.size() : 0;
+                    int remainingSlots = Math.max(0, totalSlots - currentCount);
+                    if (remainingSlots <= 0) {
+                        cb.onError(new IllegalStateException("Số người ở đã đủ theo hợp đồng, không thể tạo thêm mã."));
+                        return;
+                    }
+                    upsertAnonymousInvite(tenantId, roomId, contractId, totalSlots, remainingSlots, cb);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    private void upsertAnonymousInvite(@NonNull String tenantId,
+            @NonNull String roomId,
+            @NonNull String contractId,
+            int totalSlots,
+            int remainingSlots,
+            @NonNull InviteCallback cb) {
+        db.collection("tenants").document(tenantId)
+                .collection("invites")
+                .whereEqualTo("type", "ANONYMOUS")
+                .whereEqualTo("role", TenantRoles.TENANT)
+                .whereEqualTo("roomId", roomId)
+                .whereEqualTo("contractId", contractId)
+                .whereEqualTo("status", "PENDING")
+                .limit(1)
+                .get()
+                .addOnSuccessListener(existing -> {
+                    Timestamp now = Timestamp.now();
+                    if (existing != null && !existing.isEmpty()) {
+                        DocumentSnapshot doc = existing.getDocuments().get(0);
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("totalSlots", totalSlots);
+                        updates.put("remainingSlots", remainingSlots);
+                        updates.put("usageCount", Math.max(0, totalSlots - remainingSlots));
+                        updates.put("updatedAt", now);
+                        doc.getReference().set(updates, SetOptions.merge())
+                                .addOnSuccessListener(v -> cb.onSuccess(doc.getString("code") != null
+                                        ? doc.getString("code")
+                                        : doc.getId()))
+                                .addOnFailureListener(cb::onError);
+                        return;
+                    }
+
+                    writeAnonymousInvite(tenantId, roomId, contractId, totalSlots, remainingSlots, cb);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    private void writeAnonymousInvite(@NonNull String tenantId,
+            @NonNull String roomId,
+            @NonNull String contractId,
+            int totalSlots,
+            int remainingSlots,
+            @NonNull InviteCallback cb) {
         String code = generateCode(8);
+        Timestamp now = Timestamp.now();
 
         Map<String, Object> invite = new HashMap<>();
         invite.put("code", code);
-        invite.put("type", "ANONYMOUS"); // Phân biệt mã ẩn danh
+        invite.put("type", "ANONYMOUS");
         invite.put("role", TenantRoles.TENANT);
         invite.put("roomId", roomId);
+        invite.put("contractId", contractId);
         invite.put("status", "PENDING");
-        invite.put("createdAt", Timestamp.now());
-        invite.put("createdBy", user.getUid());
+        invite.put("totalSlots", totalSlots);
+        invite.put("remainingSlots", remainingSlots);
+        invite.put("usageCount", Math.max(0, totalSlots - remainingSlots));
+        invite.put("createdAt", now);
+        invite.put("updatedAt", now);
+        invite.put("createdBy", FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : "");
 
         db.collection("tenants").document(tenantId)
                 .collection("invites").document(code).set(invite)
@@ -186,21 +301,121 @@ public class InviteRepository {
                         }
 
                         String roomId = freshInvite.getString("roomId");
+                        String contractId = freshInvite.getString("contractId");
                         String houseId = freshInvite.getString("houseId");
                         if (TenantRoles.TENANT.equals(role) && (roomId == null || roomId.trim().isEmpty())) {
                             throw new IllegalStateException("Lỗi dữ liệu: Mã mời không đính kèm phòng.");
                         }
 
+                        com.google.firebase.firestore.DocumentSnapshot contractDoc = null;
+                        com.google.firebase.firestore.DocumentReference activeContractRef = null;
+
+                        if (TenantRoles.TENANT.equals(role)) {
+                            if (contractId == null || contractId.trim().isEmpty()) {
+                                throw new IllegalStateException("Mã phòng không gắn với hợp đồng đang hiệu lực.");
+                            }
+
+                            com.google.firebase.firestore.DocumentReference contractRef = db.collection("tenants")
+                                    .document(tenantId)
+                                    .collection("contracts")
+                                    .document(contractId);
+                            contractDoc = transaction.get(contractRef);
+                            activeContractRef = contractRef;
+
+                            if (!contractDoc.exists()) {
+                                // Legacy fallback path.
+                                com.google.firebase.firestore.DocumentReference legacyContractRef = db
+                                        .collection("users")
+                                        .document(tenantId)
+                                        .collection("contracts")
+                                        .document(contractId);
+                                contractDoc = transaction.get(legacyContractRef);
+                                activeContractRef = legacyContractRef;
+                            }
+
+                            if (!contractDoc.exists()) {
+                                throw new IllegalStateException("Hợp đồng gắn với mã không tồn tại.");
+                            }
+
+                            String contractStatus = contractDoc.getString("contractStatus");
+                            if (contractStatus == null || !"ACTIVE".equalsIgnoreCase(contractStatus.trim())) {
+                                throw new IllegalStateException("Hợp đồng không còn hiệu lực, mã phòng đã bị khóa.");
+                            }
+                        }
+
+                        Long inviteTotalSlotsVal = freshInvite.getLong("totalSlots");
+                        Long inviteRemainingSlotsVal = freshInvite.getLong("remainingSlots");
+                        Long inviteUsageCountVal = freshInvite.getLong("usageCount");
+                        int totalSlots = inviteTotalSlotsVal != null && inviteTotalSlotsVal > 0
+                            ? inviteTotalSlotsVal.intValue()
+                            : resolveMemberCount(contractDoc);
+                        int remainingSlots = inviteRemainingSlotsVal != null
+                            ? Math.max(0, inviteRemainingSlotsVal.intValue())
+                            : totalSlots;
+
+                        if (remainingSlots <= 0) {
+                            throw new IllegalStateException("Mã phòng đã đủ số lượng theo hợp đồng.");
+                        }
+
+                        com.google.firebase.firestore.DocumentReference userRef = db.collection("users")
+                            .document(user.getUid());
+                        com.google.firebase.firestore.DocumentSnapshot userDoc = transaction.get(userRef);
+
+                        String contractPhone = normalizePhone(contractDoc.getString("phoneNumber"));
+                        if (contractPhone.isEmpty()) {
+                            contractPhone = normalizePhone(contractDoc.getString("phone"));
+                        }
+
+                        String accountPhone = normalizePhone(user.getPhoneNumber());
+                        if (accountPhone.isEmpty() && userDoc.exists()) {
+                            accountPhone = normalizePhone(userDoc.getString("phoneNumber"));
+                        }
+                        if (accountPhone.isEmpty() && userDoc.exists()) {
+                            accountPhone = normalizePhone(userDoc.getString("phone"));
+                        }
+
+                        boolean representative = !contractPhone.isEmpty() && contractPhone.equals(accountPhone);
+
+                        if (representative && contractDoc != null) {
+                            String representativeUid = contractDoc.getString("representativeUid");
+                            if (representativeUid != null
+                                    && !representativeUid.trim().isEmpty()
+                                    && !representativeUid.equals(user.getUid())) {
+                                representative = false;
+                            }
+                        }
+
+                        String contractMemberRole = representative
+                            ? CONTRACT_MEMBER_ROLE_REPRESENTATIVE
+                            : CONTRACT_MEMBER_ROLE_OCCUPANT;
                         Timestamp now = Timestamp.now();
+
+                        com.google.firebase.firestore.DocumentReference memberRef = db.collection("tenants")
+                            .document(tenantId)
+                            .collection("members")
+                            .document(user.getUid());
+                        com.google.firebase.firestore.DocumentSnapshot existingMember = transaction.get(memberRef);
+                        boolean alreadyActive = existingMember.exists()
+                            && "ACTIVE".equalsIgnoreCase(String.valueOf(existingMember.getString("status")));
+
+                        int usageCount = inviteUsageCountVal != null ? Math.max(0, inviteUsageCountVal.intValue()) : 0;
+                        int nextRemaining = alreadyActive ? remainingSlots : Math.max(0, remainingSlots - 1);
+                        int nextUsage = alreadyActive ? usageCount : usageCount + 1;
 
                         Map<String, Object> memberDoc = new HashMap<>();
                         memberDoc.put("uid", user.getUid());
                         memberDoc.put("role", role);
+                        memberDoc.put("contractMemberRole", contractMemberRole);
+                        memberDoc.put("primaryContact", representative);
+                        memberDoc.put("contractRepresentative", representative);
                         memberDoc.put("status", "ACTIVE");
                         memberDoc.put("inviteCode", code);
 
                         if (TenantRoles.TENANT.equals(role)) {
                             memberDoc.put("roomId", roomId);
+                            if (contractId != null && !contractId.trim().isEmpty()) {
+                                memberDoc.put("contractId", contractId);
+                            }
                             java.util.List<String> assignedRooms = new java.util.ArrayList<>();
                             assignedRooms.add(roomId);
                             memberDoc.put("assignedRoomIds", assignedRooms);
@@ -220,19 +435,31 @@ public class InviteRepository {
                         memberDoc.put("updatedAt", now);
 
                         Map<String, Object> inviteUpdate = new HashMap<>();
-                        inviteUpdate.put("status", "ACCEPTED");
-                        inviteUpdate.put("acceptedAt", now);
-                        inviteUpdate.put("acceptedBy", user.getUid());
+                        inviteUpdate.put("totalSlots", totalSlots);
+                        inviteUpdate.put("remainingSlots", nextRemaining);
+                        inviteUpdate.put("usageCount", nextUsage);
+                        inviteUpdate.put("lastAcceptedAt", now);
+                        inviteUpdate.put("lastAcceptedBy", user.getUid());
+                        inviteUpdate.put("updatedAt", now);
+                        inviteUpdate.put("status", nextRemaining <= 0 ? "CLOSED" : "PENDING");
 
                         Map<String, Object> userUpdate = new HashMap<>();
                         userUpdate.put("activeTenantId", tenantId);
                         userUpdate.put("primaryRole", role);
+                        userUpdate.put("activeContractMemberRole", contractMemberRole);
                         userUpdate.put("updatedAt", now);
 
                         transaction.set(db.collection("tenants").document(tenantId).collection("members")
                                 .document(user.getUid()), memberDoc, SetOptions.merge());
                         transaction.set(inviteRef, inviteUpdate, SetOptions.merge());
                         transaction.set(db.collection("users").document(user.getUid()), userUpdate, SetOptions.merge());
+                        if (representative && activeContractRef != null) {
+                            Map<String, Object> contractUpdate = new HashMap<>();
+                            contractUpdate.put("representativeUid", user.getUid());
+                            contractUpdate.put("representativePhone", accountPhone);
+                            contractUpdate.put("updatedAt", now);
+                            transaction.set(activeContractRef, contractUpdate, SetOptions.merge());
+                        }
 
                         return tenantId;
                     }).addOnSuccessListener(joinedTenantId -> {
@@ -287,14 +514,22 @@ public class InviteRepository {
 
                     String roomId = snap.getString("roomId");
                     String houseId = snap.getString("houseId");
+                    String contractMemberRole = snap.getString("contractMemberRole");
                     if (TenantRoles.TENANT.equals(role) && (roomId == null || roomId.trim().isEmpty())) {
                         cb.onError(new IllegalStateException("Invite missing roomId"));
                         return;
                     }
 
+                    boolean representative = CONTRACT_MEMBER_ROLE_REPRESENTATIVE
+                            .equalsIgnoreCase(contractMemberRole != null ? contractMemberRole.trim() : "");
+
                     Map<String, Object> memberDoc = new HashMap<>();
                     memberDoc.put("uid", user.getUid());
                     memberDoc.put("role", role);
+                        memberDoc.put("contractMemberRole",
+                            representative ? CONTRACT_MEMBER_ROLE_REPRESENTATIVE : CONTRACT_MEMBER_ROLE_OCCUPANT);
+                        memberDoc.put("primaryContact", representative);
+                        memberDoc.put("contractRepresentative", representative);
                     memberDoc.put("status", "ACTIVE");
                     memberDoc.put("inviteCode", code);
                     if (TenantRoles.TENANT.equals(role)) {
@@ -324,6 +559,8 @@ public class InviteRepository {
                     Map<String, Object> userUpdate = new HashMap<>();
                     userUpdate.put("activeTenantId", tenantId);
                     userUpdate.put("primaryRole", role);
+                        userUpdate.put("activeContractMemberRole",
+                            representative ? CONTRACT_MEMBER_ROLE_REPRESENTATIVE : CONTRACT_MEMBER_ROLE_OCCUPANT);
                     userUpdate.put("updatedAt", Timestamp.now());
 
                     db.runBatch(batch -> {
@@ -346,5 +583,25 @@ public class InviteRepository {
             sb.append(chars.charAt(rnd.nextInt(chars.length())));
         }
         return sb.toString();
+    }
+
+    private int resolveMemberCount(@NonNull DocumentSnapshot contractDoc) {
+        Long memberCount = contractDoc.getLong("memberCount");
+        if (memberCount == null || memberCount <= 0) {
+            return 1;
+        }
+        return memberCount.intValue();
+    }
+
+    @NonNull
+    private String normalizePhone(String value) {
+        if (value == null) {
+            return "";
+        }
+        String digits = value.replaceAll("[^0-9]", "");
+        if (digits.startsWith("84") && digits.length() > 9) {
+            digits = "0" + digits.substring(2);
+        }
+        return digits;
     }
 }

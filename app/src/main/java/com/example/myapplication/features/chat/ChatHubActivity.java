@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -17,10 +18,15 @@ import com.example.myapplication.core.constants.TenantRoles;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.features.chat.model.ChatConversation;
+import com.example.myapplication.features.chat.model.ChatMessage;
+import com.example.myapplication.features.notification.ChatForegroundState;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,7 +34,9 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,10 +45,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class ChatHubActivity extends AppCompatActivity {
 
     private static final String STATE_SELECTED_TAB = "chat_hub_selected_tab";
+    public static final String EXTRA_USE_TENANT_HEADER = "USE_TENANT_HEADER";
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -52,6 +62,10 @@ public class ChatHubActivity extends AppCompatActivity {
     private String currentUserName;
     private String ownerConversationTypeFilter = "HOUSE";
     private RecyclerView conversationsRecyclerView;
+    private LinearLayout tenantInlineChatLayout;
+    private RecyclerView tenantInlineMessagesRecyclerView;
+    private TextInputEditText tenantInlineMessageInput;
+    private MaterialButton tenantInlineSendButton;
     private TabLayout chatTypeTabLayout;
     private FloatingActionButton ownerNewConversationFab;
     private int restoredTabPosition = 0;
@@ -60,9 +74,14 @@ public class ChatHubActivity extends AppCompatActivity {
     private ChatConversationAdapter adapter;
     private ListenerRegistration conversationListener;
     private ListenerRegistration unreadNotificationListener;
+    private ListenerRegistration tenantInlineMessageListener;
     private final List<ChatConversation> latestConversations = new ArrayList<>();
     private final Map<String, Integer> unreadByConversation = new HashMap<>();
     private final Map<String, String> roomLabelById = new HashMap<>();
+    private ChatMessageAdapter tenantInlineMessageAdapter;
+    private String activeTenantConversationId;
+
+    private static final int MAX_MESSAGE_LENGTH = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +98,29 @@ public class ChatHubActivity extends AppCompatActivity {
         AppBarLayout appBarLayout = findViewById(R.id.appBarChatHub);
         if (appBarLayout != null) {
             ScreenUiHelper.applyTopInset(appBarLayout);
+        }
+
+        boolean useTenantHeader = getIntent().getBooleanExtra(EXTRA_USE_TENANT_HEADER, false);
+        if (useTenantHeader) {
+            if (appBarLayout != null) {
+                appBarLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+
+            MaterialToolbar toolbar = findViewById(R.id.toolbarChatHub);
+            if (toolbar != null) {
+                toolbar.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+
+            TabLayout tabLayout = findViewById(R.id.tabChatType);
+            if (tabLayout != null) {
+                tabLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+
+            FloatingActionButton fab = findViewById(R.id.fabOwnerNewConversation);
+            if (fab != null) {
+                fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                        android.graphics.Color.parseColor("#00796B")));
+            }
         }
 
         db = FirebaseFirestore.getInstance();
@@ -200,6 +242,36 @@ public class ChatHubActivity extends AppCompatActivity {
         adapter = new ChatConversationAdapter(this::openConversation);
         conversationsRecyclerView.setAdapter(adapter);
 
+        tenantInlineChatLayout = findViewById(R.id.layoutTenantInlineChat);
+        tenantInlineMessagesRecyclerView = findViewById(R.id.rvTenantInlineMessages);
+        tenantInlineMessageInput = findViewById(R.id.etTenantInlineMessage);
+        tenantInlineSendButton = findViewById(R.id.btnTenantInlineSend);
+        if (tenantInlineMessagesRecyclerView != null) {
+            tenantInlineMessagesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            tenantInlineMessageAdapter = new ChatMessageAdapter(uid);
+            tenantInlineMessagesRecyclerView.setAdapter(tenantInlineMessageAdapter);
+        }
+
+        if (tenantInlineSendButton != null) {
+            tenantInlineSendButton.setOnClickListener(v -> {
+                String content = tenantInlineMessageInput != null && tenantInlineMessageInput.getText() != null
+                        ? tenantInlineMessageInput.getText().toString().trim()
+                        : "";
+                if (content.isEmpty()) {
+                    return;
+                }
+                if (content.length() > MAX_MESSAGE_LENGTH) {
+                    Toast.makeText(this, getString(R.string.chat_message_too_long, MAX_MESSAGE_LENGTH), Toast.LENGTH_SHORT)
+                            .show();
+                    return;
+                }
+                sendTenantInlineMessage(content);
+                if (tenantInlineMessageInput != null) {
+                    tenantInlineMessageInput.setText("");
+                }
+            });
+        }
+
         chatTypeTabLayout = findViewById(R.id.tabChatType);
         ownerNewConversationFab = findViewById(R.id.fabOwnerNewConversation);
 
@@ -258,6 +330,8 @@ public class ChatHubActivity extends AppCompatActivity {
             selectedTab.select();
         }
 
+        updateTabUnreadBadges();
+
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -286,17 +360,20 @@ public class ChatHubActivity extends AppCompatActivity {
             if (conversationsRecyclerView != null) {
                 conversationsRecyclerView.setVisibility(RecyclerView.VISIBLE);
             }
+            if (tenantInlineChatLayout != null) {
+                tenantInlineChatLayout.setVisibility(View.GONE);
+            }
             renderConversationList();
             setupOwnerFabForCurrentTab();
         } else {
             if (conversationsRecyclerView != null) {
                 conversationsRecyclerView.setVisibility(RecyclerView.GONE);
             }
-            hideOwnerFab();
-
-            if (!hasRestoredTab) {
-                ensureHouseConversationAndOpen();
+            if (tenantInlineChatLayout != null) {
+                tenantInlineChatLayout.setVisibility(View.VISIBLE);
             }
+            hideOwnerFab();
+            openTenantTabInline(selectedTabPosition);
         }
 
         hasRestoredTab = false;
@@ -305,13 +382,7 @@ public class ChatHubActivity extends AppCompatActivity {
     private void handleSelectedTab(int position) {
         boolean isTenant = TenantRoles.TENANT.equalsIgnoreCase(currentUserRole);
         if (isTenant) {
-            if (position == 0) {
-                ensureHouseConversationAndOpen();
-            } else if (position == 1) {
-                openRoomChatFlow();
-            } else {
-                openLandlordPrivateChat();
-            }
+            openTenantTabInline(position);
             return;
         }
 
@@ -324,6 +395,24 @@ public class ChatHubActivity extends AppCompatActivity {
         }
         renderConversationList();
         setupOwnerFabForCurrentTab();
+    }
+
+    private void openTenantTabInline(int position) {
+        if (position == 0) {
+            ensureHouseConversation(this::openConversationInline);
+            return;
+        }
+
+        if (position == 1) {
+            if (roomId == null || roomId.trim().isEmpty()) {
+                Toast.makeText(this, getString(R.string.chat_no_room_found), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ensureRoomConversation(roomId.trim(), this::openConversationInline);
+            return;
+        }
+
+        openLandlordPrivateChat(this::openConversationInline);
     }
 
     private void setupOwnerFabForCurrentTab() {
@@ -379,13 +468,13 @@ public class ChatHubActivity extends AppCompatActivity {
         return "HOUSE";
     }
 
-    private void openLandlordPrivateChat() {
+    private void openLandlordPrivateChat(ConversationReady callback) {
         if (ownerUid == null || ownerUid.trim().isEmpty() || ownerUid.equals(uid)) {
             Toast.makeText(this, getString(R.string.chat_no_private_target), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        ensurePrivateConversation(ownerUid.trim());
+        ensurePrivateConversation(ownerUid.trim(), callback);
     }
 
     private void observeConversations() {
@@ -421,6 +510,7 @@ public class ChatHubActivity extends AppCompatActivity {
                     latestConversations.clear();
                     latestConversations.addAll(list);
                     renderConversationList();
+                    updateTabUnreadBadges();
                 });
 
         observeUnreadByConversation();
@@ -454,6 +544,7 @@ public class ChatHubActivity extends AppCompatActivity {
                     }
 
                     renderConversationList();
+                    updateTabUnreadBadges();
                 });
     }
 
@@ -530,6 +621,10 @@ public class ChatHubActivity extends AppCompatActivity {
     }
 
     private void ensureHouseConversationAndOpen() {
+        ensureHouseConversation(this::openConversationById);
+    }
+
+    private void ensureHouseConversation(ConversationReady callback) {
         db.collection("tenants").document(tenantId)
                 .get()
                 .addOnSuccessListener(tenantDoc -> {
@@ -557,7 +652,7 @@ public class ChatHubActivity extends AppCompatActivity {
                                         null,
                                         new ArrayList<>(participantSet),
                                         getString(R.string.chat_house),
-                                        this::openConversationById);
+                                    callback);
                             });
                 });
     }
@@ -593,6 +688,10 @@ public class ChatHubActivity extends AppCompatActivity {
     }
 
     private void ensureRoomConversation(String selectedRoomId) {
+        ensureRoomConversation(selectedRoomId, this::openConversationById);
+    }
+
+    private void ensureRoomConversation(String selectedRoomId, ConversationReady callback) {
         db.collection("tenants").document(tenantId)
                 .collection("members")
                 .whereEqualTo("roomId", selectedRoomId)
@@ -615,7 +714,7 @@ public class ChatHubActivity extends AppCompatActivity {
                     }
 
                     ensureConversation("room_" + selectedRoomId, "ROOM", selectedRoomId, participants,
-                            getString(R.string.chat_room_with_id, roomLabel), this::openConversationById);
+                getString(R.string.chat_room_with_id, roomLabel), callback);
                 });
     }
 
@@ -698,6 +797,10 @@ public class ChatHubActivity extends AppCompatActivity {
     }
 
     private void ensurePrivateConversation(String otherUid) {
+        ensurePrivateConversation(otherUid, this::openConversationById);
+    }
+
+    private void ensurePrivateConversation(String otherUid, ConversationReady callback) {
         String first = uid.compareTo(otherUid) <= 0 ? uid : otherUid;
         String second = uid.compareTo(otherUid) <= 0 ? otherUid : uid;
         String conversationId = "private_" + first + "_" + second;
@@ -710,15 +813,232 @@ public class ChatHubActivity extends AppCompatActivity {
         db.collection("users").document(otherUid).get().addOnSuccessListener(doc -> {
             String fullName = doc.getString("fullName");
             if (fullName != null && !fullName.trim().isEmpty()) {
-                ensureConversation(conversationId, "PRIVATE", null, participants, fullName, this::openConversationById);
+                ensureConversation(conversationId, "PRIVATE", null, participants, fullName, callback);
             } else {
-                ensureConversation(conversationId, "PRIVATE", null, participants, title, this::openConversationById);
+                ensureConversation(conversationId, "PRIVATE", null, participants, title, callback);
             }
-        }).addOnFailureListener(e -> ensureConversation(conversationId, "PRIVATE", null, participants, title, this::openConversationById));
+        }).addOnFailureListener(e -> ensureConversation(conversationId, "PRIVATE", null, participants, title, callback));
     }
 
     private interface ConversationReady {
         void onReady(ChatConversation conversation);
+    }
+
+    private void openConversationInline(ChatConversation conversation) {
+        if (conversation == null || conversation.id == null || conversation.id.trim().isEmpty()) {
+            return;
+        }
+        activeTenantConversationId = conversation.id.trim();
+        unreadByConversation.remove(activeTenantConversationId);
+        updateTabUnreadBadges();
+        observeTenantInlineMessages(activeTenantConversationId);
+        markConversationNotificationsRead(activeTenantConversationId);
+        ChatForegroundState.setActiveConversationId(activeTenantConversationId);
+    }
+
+    private void updateTabUnreadBadges() {
+        if (chatTypeTabLayout == null) {
+            return;
+        }
+
+        int houseUnread = 0;
+        int roomUnread = 0;
+        int privateUnread = 0;
+
+        boolean tenantMode = TenantRoles.TENANT.equalsIgnoreCase(currentUserRole);
+        for (ChatConversation conversation : latestConversations) {
+            if (conversation == null || conversation.id == null || conversation.id.trim().isEmpty()) {
+                continue;
+            }
+
+            int unread = unreadByConversation.containsKey(conversation.id)
+                    ? unreadByConversation.get(conversation.id)
+                    : 0;
+            if (unread <= 0) {
+                continue;
+            }
+
+            if (tenantMode && conversation.id.equals(activeTenantConversationId)) {
+                continue;
+            }
+
+            String type = value(conversation.type).trim().toUpperCase();
+            switch (type) {
+                case "HOUSE":
+                    houseUnread += unread;
+                    break;
+                case "ROOM":
+                    roomUnread += unread;
+                    break;
+                default:
+                    privateUnread += unread;
+                    break;
+            }
+        }
+
+        applyBadgeForTab(0, houseUnread);
+        applyBadgeForTab(1, roomUnread);
+        applyBadgeForTab(2, privateUnread);
+    }
+
+    private void applyBadgeForTab(int position, int count) {
+        if (chatTypeTabLayout == null) {
+            return;
+        }
+        TabLayout.Tab tab = chatTypeTabLayout.getTabAt(position);
+        if (tab == null) {
+            return;
+        }
+        if (count <= 0) {
+            tab.removeBadge();
+            return;
+        }
+        BadgeDrawable badge = tab.getOrCreateBadge();
+        badge.setVisible(true);
+        badge.setNumber(Math.min(99, count));
+    }
+
+    private void observeTenantInlineMessages(String conversationId) {
+        if (tenantInlineMessageListener != null) {
+            tenantInlineMessageListener.remove();
+            tenantInlineMessageListener = null;
+        }
+
+        tenantInlineMessageListener = db.collection("tenants").document(tenantId)
+                .collection("chat_conversations").document(conversationId)
+                .collection("messages")
+                .addSnapshotListener(this, (snap, err) -> {
+                    if (err != null || snap == null || tenantInlineMessageAdapter == null) {
+                        return;
+                    }
+
+                    List<ChatMessage> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        ChatMessage message = new ChatMessage();
+                        message.id = doc.getId();
+                        message.senderId = doc.getString("senderId");
+                        message.senderName = doc.getString("senderName");
+                        message.text = doc.getString("text");
+                        message.createdAt = doc.getTimestamp("createdAt");
+                        list.add(message);
+                    }
+
+                    Collections.sort(list,
+                            (left, right) -> Long.compare(
+                                    left.createdAt != null ? left.createdAt.toDate().getTime() : 0L,
+                                    right.createdAt != null ? right.createdAt.toDate().getTime() : 0L));
+
+                    tenantInlineMessageAdapter.submit(list);
+                    if (tenantInlineMessagesRecyclerView != null && !list.isEmpty()) {
+                        tenantInlineMessagesRecyclerView.scrollToPosition(list.size() - 1);
+                    }
+                });
+    }
+
+    private void sendTenantInlineMessage(String content) {
+        if (activeTenantConversationId == null || activeTenantConversationId.trim().isEmpty()) {
+            return;
+        }
+
+        DocumentReference conversationRef = db.collection("tenants").document(tenantId)
+                .collection("chat_conversations")
+                .document(activeTenantConversationId);
+
+        conversationRef.get().addOnSuccessListener(doc -> {
+            List<String> participantIds = (List<String>) doc.get("participantIds");
+            if (participantIds == null || !participantIds.contains(uid)) {
+                Toast.makeText(this, getString(R.string.chat_send_not_allowed), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            DocumentReference messageRef = conversationRef.collection("messages").document();
+            Timestamp now = Timestamp.now();
+
+            Map<String, Object> message = new HashMap<>();
+            message.put("senderId", uid);
+            message.put("senderName", currentUserName != null && !currentUserName.trim().isEmpty() ? currentUserName : uid);
+            message.put("text", content);
+            message.put("createdAt", now);
+
+            WriteBatch batch = db.batch();
+            batch.set(messageRef, message, SetOptions.merge());
+
+            Map<String, Object> conversationUpdate = new HashMap<>();
+            conversationUpdate.put("lastMessage", content);
+            conversationUpdate.put("lastSenderId", uid);
+            conversationUpdate.put("lastMessageAt", now);
+            conversationUpdate.put("updatedAt", now);
+            batch.set(conversationRef, conversationUpdate, SetOptions.merge());
+
+            batch.commit().addOnSuccessListener(v ->
+                    pushTenantInlineNotifications(activeTenantConversationId, content, now)
+            ).addOnFailureListener(e ->
+                    Toast.makeText(this, getString(R.string.send_failed), Toast.LENGTH_SHORT).show()
+            );
+        });
+    }
+
+    private void pushTenantInlineNotifications(String conversationId, String content, Timestamp now) {
+        DocumentReference conversationRef = db.collection("tenants").document(tenantId)
+                .collection("chat_conversations")
+                .document(conversationId);
+
+        conversationRef.get().addOnSuccessListener(doc -> {
+            List<String> participantIds = (List<String>) doc.get("participantIds");
+            if (participantIds == null || participantIds.isEmpty()) {
+                return;
+            }
+
+            String title = getString(R.string.chat_notification_title,
+                    currentUserName != null && !currentUserName.trim().isEmpty() ? currentUserName : uid);
+            WriteBatch batch = db.batch();
+            for (String participantId : participantIds) {
+                if (participantId == null || participantId.trim().isEmpty() || uid.equals(participantId)) {
+                    continue;
+                }
+
+                DocumentReference notificationRef = db.collection("tenants").document(tenantId)
+                        .collection("notifications").document(UUID.randomUUID().toString());
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("userId", participantId);
+                payload.put("type", "CHAT_MESSAGE");
+                payload.put("title", title);
+                payload.put("body", content);
+                payload.put("conversationId", conversationId);
+                payload.put("isRead", false);
+                payload.put("createdAt", now);
+                payload.put("senderId", uid);
+                payload.put("pushState", "PENDING_SERVER_DISPATCH");
+                batch.set(notificationRef, payload, SetOptions.merge());
+            }
+            batch.commit();
+        });
+    }
+
+    private void markConversationNotificationsRead(String conversationId) {
+        if (conversationId == null || conversationId.trim().isEmpty()) {
+            return;
+        }
+
+        db.collection("tenants").document(tenantId)
+                .collection("notifications")
+                .whereEqualTo("userId", uid)
+                .whereEqualTo("conversationId", conversationId)
+                .whereEqualTo("isRead", false)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    if (qs == null || qs.isEmpty()) {
+                        return;
+                    }
+                    WriteBatch batch = db.batch();
+                    for (QueryDocumentSnapshot doc : qs) {
+                        Map<String, Object> update = new HashMap<>();
+                        update.put("isRead", true);
+                        update.put("readAt", Timestamp.now());
+                        batch.set(doc.getReference(), update, SetOptions.merge());
+                    }
+                    batch.commit();
+                });
     }
 
     private void ensureConversation(String id,
@@ -781,6 +1101,24 @@ public class ChatHubActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (TenantRoles.TENANT.equalsIgnoreCase(currentUserRole)
+                && activeTenantConversationId != null
+                && !activeTenantConversationId.trim().isEmpty()) {
+            ChatForegroundState.setActiveConversationId(activeTenantConversationId);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        if (TenantRoles.TENANT.equalsIgnoreCase(currentUserRole)) {
+            ChatForegroundState.setActiveConversationId(null);
+        }
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
         if (conversationListener != null) {
             conversationListener.remove();
@@ -789,6 +1127,10 @@ public class ChatHubActivity extends AppCompatActivity {
         if (unreadNotificationListener != null) {
             unreadNotificationListener.remove();
             unreadNotificationListener = null;
+        }
+        if (tenantInlineMessageListener != null) {
+            tenantInlineMessageListener.remove();
+            tenantInlineMessageListener = null;
         }
         super.onDestroy();
     }

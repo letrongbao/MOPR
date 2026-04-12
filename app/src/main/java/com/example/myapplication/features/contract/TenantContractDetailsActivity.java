@@ -92,6 +92,7 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
     private void openContractDetails(String contractId) {
         Intent intent = new Intent(this, ContractDetailsActivity.class);
         intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, contractId);
+        intent.putExtra(ContractDetailsActivity.EXTRA_HEADER_TITLE, getString(R.string.tenant_contract_your_title));
         startActivity(intent);
         finish();
     }

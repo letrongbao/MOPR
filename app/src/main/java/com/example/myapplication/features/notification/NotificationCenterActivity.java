@@ -40,6 +40,8 @@ import java.util.concurrent.TimeUnit;
 
 public class NotificationCenterActivity extends AppCompatActivity {
 
+    public static final String EXTRA_USE_TENANT_HEADER = "USE_TENANT_HEADER";
+
     private FirebaseFirestore db;
     private String tenantId;
     private String uid;
@@ -71,6 +73,15 @@ public class NotificationCenterActivity extends AppCompatActivity {
         ScreenUiHelper.applyTopInset(appBarLayout);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbarNotifications);
+        boolean useTenantHeader = getIntent().getBooleanExtra(EXTRA_USE_TENANT_HEADER, false);
+        if (useTenantHeader) {
+            if (appBarLayout != null) {
+                appBarLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+            if (toolbar != null) {
+                toolbar.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+        }
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.notification_center_title));
 
         RecyclerView rv = findViewById(R.id.rvNotifications);

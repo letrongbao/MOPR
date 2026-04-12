@@ -1,16 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F4F6F8"
-    android:fillViewport="true">
+    android:fitsSystemWindows="false">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        style="@style/TenantHeaderAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            style="@style/TenantHeaderToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIconTint="@color/white"
+            app:title="@string/tenant_room_overview_title" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="12dp">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:id="@+id/ivRoomImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:contentDescription="@string/tenant_room_overview_title"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/bg_room_placeholder" />
+
+                <TextView
+                    android:id="@+id/tvOverviewRoomName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/tenant_room_overview_title"
+                    android:textColor="#1D1D1D"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvOverviewHouseName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/tenant_room_overview_house_placeholder"
+                    android:textColor="#6F6F6F"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/tenant_room_overview_members_title"
+                    android:textColor="#26a65b"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvMemberSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/tenant_room_overview_members_empty"
+                    android:textColor="#444444"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tvMemberList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/tenant_room_overview_members_empty"
+                    android:textColor="#666666"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- ═══════════════════════════════════════════ -->
         <!--       BLOCK 1: TÓM TẮT HỢP ĐỒNG           -->
@@ -20,7 +112,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -220,7 +312,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -712,36 +804,6 @@
                         android:layout_marginVertical="12dp"
                         android:background="#F0F0F0" />
 
-                    <!-- Nút nhỏ: Lịch sử + Danh sách chốt -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btnMeterHistory"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:text="@string/tenant_room_meter_history_short"
-                            android:textColor="#757575"
-                            android:textSize="12sp"
-                            app:strokeColor="#CCCCCC" />
-
-                        <Button
-                            android:id="@+id/btnMeterList"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_weight="1"
-                            android:text="@string/tenant_room_meter_list_short"
-                            android:textColor="#26a65b"
-                            android:textSize="12sp"
-                            app:strokeColor="#26a65b" />
-                    </LinearLayout>
-
                     <!-- Nút Chốt đồng hồ (to, xanh dương) -->
                     <Button
                         android:id="@+id/btnConfirmMeter"
@@ -754,11 +816,13 @@
                         android:text="@string/tenant_room_confirm_meter_button"
                         android:textColor="@color/white"
                         android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:visibility="gone" />
 
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
     </LinearLayout>
-</ScrollView>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

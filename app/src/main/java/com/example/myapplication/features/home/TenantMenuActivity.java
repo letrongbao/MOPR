@@ -29,6 +29,7 @@ import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.chat.ChatHubActivity;
 import com.example.myapplication.features.contract.TenantContractDetailsActivity;
+import com.example.myapplication.features.invoice.TenantInvoiceActivity;
 import com.example.myapplication.features.notification.NotificationCenterActivity;
 import com.example.myapplication.features.notification.NotificationRealtimeObserver;
 import com.example.myapplication.features.notification.push.AppFirebaseMessagingService;
@@ -45,6 +46,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -97,6 +99,7 @@ public class TenantMenuActivity extends AppCompatActivity {
     // ===== Data =====
     private String tenantId;
     private String roomId;
+    private String activeMemberContractId;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -197,16 +200,7 @@ public class TenantMenuActivity extends AppCompatActivity {
 
         // ===== Load dữ liệu =====
         loadUserInfo();
-        if (roomId != null && !roomId.isEmpty()) {
-            fetchRoomNumber(roomId);
-            getContractSummary(roomId);
-        } else {
-            tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
-            if (tvHouseInfo != null) {
-                tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
-            }
-            showNoContractUI();
-        }
+        loadTenantScopedData();
 
         // ===== Click avatar → mở Drawer từ phải =====
         if (imgAvatar != null) {
@@ -219,13 +213,16 @@ public class TenantMenuActivity extends AppCompatActivity {
 
         // ===== Click 4 thẻ menu =====
         cardMyRoom.setOnClickListener(v -> openRoomDetail());
-        cardBill.setOnClickListener(v -> openRoomDetail());   // cùng màn hình, tab billing
+        cardBill.setOnClickListener(v -> openInvoicePage());
         cardContract.setOnClickListener(v -> openContractDetail());
 
         cardReport.setOnClickListener(v -> startActivity(new Intent(this, TenantReportListActivity.class)));
 
-        cardNotification.setOnClickListener(v ->
-            startActivity(new Intent(this, ChatHubActivity.class)));
+        cardNotification.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ChatHubActivity.class);
+            intent.putExtra(ChatHubActivity.EXTRA_USE_TENANT_HEADER, true);
+            startActivity(intent);
+        });
 
         if (btnViewContractDetail != null) {
             btnViewContractDetail.setOnClickListener(v -> openContractDetail());
@@ -235,13 +232,87 @@ public class TenantMenuActivity extends AppCompatActivity {
         observeUnreadNotificationCount();
     }
 
+    private void loadTenantScopedData() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
+            if (tvHouseInfo != null) {
+                tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+            }
+            showNoContractUI();
+            return;
+        }
+
+        db.collection("users").document(user.getUid())
+                .get()
+                .addOnSuccessListener(userDoc -> {
+                    String freshTenantId = userDoc.getString("activeTenantId");
+                    if (freshTenantId == null || freshTenantId.trim().isEmpty()) {
+                        freshTenantId = tenantId;
+                    }
+                    if (freshTenantId == null || freshTenantId.trim().isEmpty()) {
+                        freshTenantId = TenantSession.getActiveTenantId();
+                    }
+
+                    if (freshTenantId == null || freshTenantId.trim().isEmpty()) {
+                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
+                        if (tvHouseInfo != null) {
+                            tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+                        }
+                        showNoContractUI();
+                        return;
+                    }
+
+                    tenantId = freshTenantId;
+                    db.collection("tenants").document(freshTenantId)
+                            .collection("members")
+                            .document(user.getUid())
+                            .get()
+                            .addOnSuccessListener(memberDoc -> {
+                                if (memberDoc.exists()) {
+                                    String mappedRoomId = memberDoc.getString("roomId");
+                                    String mappedContractId = memberDoc.getString("contractId");
+
+                                    if ((roomId == null || roomId.trim().isEmpty())
+                                            && mappedRoomId != null
+                                            && !mappedRoomId.trim().isEmpty()) {
+                                        roomId = mappedRoomId.trim();
+                                    }
+
+                                    if (mappedContractId != null && !mappedContractId.trim().isEmpty()) {
+                                        activeMemberContractId = mappedContractId.trim();
+                                    }
+                                }
+                                loadRoomAndContractData();
+                            })
+                            .addOnFailureListener(e -> loadRoomAndContractData());
+                })
+                .addOnFailureListener(e -> loadRoomAndContractData());
+    }
+
+    private void loadRoomAndContractData() {
+        if (roomId != null && !roomId.isEmpty()) {
+            fetchRoomNumber(roomId);
+            getContractSummary(roomId);
+            return;
+        }
+
+        tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
+        if (tvHouseInfo != null) {
+            tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+        }
+        showNoContractUI();
+    }
+
     private void setupDrawerNotificationEntry() {
         if (btnDrawerNotification == null) {
             return;
         }
         btnDrawerNotification.setOnClickListener(v -> {
             tenantDrawerLayout.closeDrawer(GravityCompat.END);
-            startActivity(new Intent(this, NotificationCenterActivity.class));
+            Intent intent = new Intent(this, NotificationCenterActivity.class);
+            intent.putExtra(NotificationCenterActivity.EXTRA_USE_TENANT_HEADER, true);
+            startActivity(intent);
         });
     }
 
@@ -311,6 +382,17 @@ public class TenantMenuActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void openInvoicePage() {
+        if (roomId == null || roomId.isEmpty()) {
+            Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(this, TenantInvoiceActivity.class);
+        intent.putExtra(TenantInvoiceActivity.EXTRA_ROOM_ID, roomId);
+        intent.putExtra(TenantInvoiceActivity.EXTRA_TENANT_ID, tenantId);
+        startActivity(intent);
+    }
+
     // ========== MỞ DRAWER TỪ BÊN PHẢI ==========
     private void openProfileDrawer() {
         // Điền thông tin user vào drawer trước khi mở
@@ -373,7 +455,9 @@ public class TenantMenuActivity extends AppCompatActivity {
         if (menuEditProfile != null) {
             menuEditProfile.setOnClickListener(v -> {
                 tenantDrawerLayout.closeDrawer(GravityCompat.END);
-                startActivity(new Intent(this, EditProfileActivity.class));
+                Intent intent = new Intent(this, EditProfileActivity.class);
+                intent.putExtra(EditProfileActivity.EXTRA_USE_TENANT_HEADER, true);
+                startActivity(intent);
             });
         }
 
@@ -381,7 +465,9 @@ public class TenantMenuActivity extends AppCompatActivity {
         if (menuChangePassword != null) {
             menuChangePassword.setOnClickListener(v -> {
                 tenantDrawerLayout.closeDrawer(GravityCompat.END);
-                startActivity(new Intent(this, ChangePasswordActivity.class));
+                Intent intent = new Intent(this, ChangePasswordActivity.class);
+                intent.putExtra(ChangePasswordActivity.EXTRA_USE_TENANT_HEADER, true);
+                startActivity(intent);
             });
         }
 
@@ -658,6 +744,43 @@ public class TenantMenuActivity extends AppCompatActivity {
             return;
         }
 
+        if (activeMemberContractId != null && !activeMemberContractId.trim().isEmpty()) {
+            loadContractByIdFirst(activeMemberContractId.trim(), activeRoomId);
+            return;
+        }
+
+        queryContractByRoom(activeRoomId);
+    }
+
+    private void loadContractByIdFirst(String contractId, String activeRoomId) {
+        db.collection("tenants").document(tenantId)
+                .collection("contracts")
+                .document(contractId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (isValidContractDoc(doc, activeRoomId)) {
+                        applyContractToUI(doc);
+                        return;
+                    }
+
+                    db.collection("users").document(tenantId)
+                            .collection("contracts")
+                            .document(contractId)
+                            .get()
+                            .addOnSuccessListener(legacyDoc -> {
+                                if (isValidContractDoc(legacyDoc, activeRoomId)) {
+                                    applyContractToUI(legacyDoc);
+                                } else {
+                                    queryContractByRoom(activeRoomId);
+                                }
+                            })
+                            .addOnFailureListener(e -> queryContractByRoom(activeRoomId));
+                })
+                .addOnFailureListener(e -> queryContractByRoom(activeRoomId));
+    }
+
+    private void queryContractByRoom(String activeRoomId) {
+
         db.collection("tenants").document(tenantId)
                 .collection("contracts")
                 .whereEqualTo("roomId", activeRoomId)
@@ -687,7 +810,18 @@ public class TenantMenuActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> showNoContractUI());
     }
 
-    private DocumentSnapshot findActiveContract(com.google.firebase.firestore.QuerySnapshot qs) {
+    private boolean isValidContractDoc(DocumentSnapshot doc, String activeRoomId) {
+        if (doc == null || !doc.exists()) {
+            return false;
+        }
+        if (activeRoomId == null || activeRoomId.trim().isEmpty()) {
+            return true;
+        }
+        String roomInContract = doc.getString("roomId");
+        return roomInContract == null || roomInContract.trim().isEmpty() || activeRoomId.equals(roomInContract);
+    }
+
+    private DocumentSnapshot findActiveContract(QuerySnapshot qs) {
         if (qs == null || qs.isEmpty()) {
             return null;
         }

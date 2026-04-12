@@ -3,11 +3,11 @@ package com.example.myapplication.features.contract;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.example.myapplication.R;
 import com.example.myapplication.core.repository.domain.TenantRepository;
@@ -29,6 +29,7 @@ import java.util.Locale;
 public class ContractDetailsActivity extends AppCompatActivity {
 
     public static final String EXTRA_CONTRACT_ID = "CONTRACT_ID";
+    public static final String EXTRA_HEADER_TITLE = "HEADER_TITLE";
 
     private FirebaseFirestore db;
     private TenantRepository repository;
@@ -68,11 +69,12 @@ public class ContractDetailsActivity extends AppCompatActivity {
         // Bind views
         bindViews();
 
-        // Setup listeners
-        ImageView btnBack = findViewById(R.id.btnBack);
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v -> finish());
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        String headerTitle = getIntent().getStringExtra(EXTRA_HEADER_TITLE);
+        if (headerTitle == null || headerTitle.trim().isEmpty()) {
+            headerTitle = getString(R.string.contract_details_title);
         }
+        ScreenUiHelper.setupBackToolbar(this, toolbar, headerTitle);
 
         // Load data
         loadContractDetails();

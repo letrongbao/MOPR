@@ -254,6 +254,7 @@
     <string name="payment_title_format">Thanh toán • Phòng %1$s • %2$s</string>
     <string name="payment_history_header_subtitle_format">%1$s • %2$s</string>
     <string name="payment_history_unknown_room">Phòng chưa xác định</string>
+    <string name="payment_history_room_label">Phòng %1$s</string>
     <string name="payment_history_unknown_house">Nhà chưa xác định</string>
     <string name="payment_history_invoice_total_colon">Tổng hóa đơn: </string>
     <string name="payment_history_invoice_total_default">Tổng hóa đơn: 0 đ</string>
@@ -519,7 +520,7 @@
     <string name="home_owner_guest_report_label">Phản ánh\ncủa khách</string>
     <string name="home_stat_room_vacant_label">Phòng trống</string>
     <string name="tenant_report_quick_hint">Gửi phản ánh nhanh cho chủ trọ và theo dõi trạng thái xử lí</string>
-    <string name="tenant_report_title">Phản ánh của tôi</string>
+    <string name="tenant_report_title">Phản ánh sự cố</string>
     <string name="tenant_report_empty">Chưa có phản ánh</string>
     <string name="tenant_report_add">Thêm phản ánh</string>
     <string name="owner_report_empty">Không có phản ánh trong trạng thái này</string>
@@ -1212,6 +1213,23 @@
     <string name="tenant_room_meter_history">Lịch sử đồng hồ</string>
     <string name="tenant_room_meter_list">Danh sách chốt</string>
     <string name="tenant_room_contract_detail">Chi tiết hợp đồng</string>
+    <string name="tenant_contract_your_title">Hợp đồng của bạn</string>
+    <string name="tenant_invoice_title">Hoá đơn của bạn</string>
+    <string name="tenant_invoice_subtitle">Danh sách hoá đơn theo phòng hiện tại</string>
+    <string name="tenant_invoice_total">Tổng hoá đơn: %1$s</string>
+    <string name="tenant_invoice_empty">Chưa có hoá đơn cho phòng này</string>
+    <string name="tenant_invoice_status">Trạng thái: %1$s</string>
+    <string name="tenant_invoice_period">Kỳ: %1$s</string>
+    <string name="tenant_invoice_period_label">Kỳ hoá đơn</string>
+    <string name="tenant_invoice_status_label">Trạng thái</string>
+    <string name="tenant_room_overview_title">Phòng của bạn</string>
+    <string name="tenant_room_overview_subtitle">Thông tin tổng quan phòng hiện tại</string>
+    <string name="tenant_room_overview_room_name">Phòng %1$s</string>
+    <string name="tenant_room_overview_house_name">Địa chỉ: %1$s</string>
+    <string name="tenant_room_overview_house_placeholder">Địa chỉ: --</string>
+    <string name="tenant_room_overview_members_title">Thành viên trong phòng</string>
+    <string name="tenant_room_overview_members_count">%1$d thành viên</string>
+    <string name="tenant_room_overview_members_empty">Chưa có dữ liệu thành viên</string>
 
     <string name="chat_hub_title">Tin nhắn</string>
     <string name="chat_hub_hint">Nhắn tin theo nhóm phòng, toàn căn nhà hoặc riêng tư.</string>

@@ -18,6 +18,8 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class ChangePasswordActivity extends AppCompatActivity {
 
+    public static final String EXTRA_USE_TENANT_HEADER = "USE_TENANT_HEADER";
+
     private TextInputEditText edtNewPassword, edtConfirmNewPassword;
     private Button btnChangePassword;
     private FirebaseAuth mAuth;
@@ -40,6 +42,15 @@ public class ChangePasswordActivity extends AppCompatActivity {
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
+        boolean useTenantHeader = getIntent().getBooleanExtra(EXTRA_USE_TENANT_HEADER, false);
+        if (useTenantHeader) {
+            if (appBarLayout != null) {
+                appBarLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+            if (toolbar != null) {
+                toolbar.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+        }
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.change_password));
 
         edtNewPassword = findViewById(R.id.edtNewPassword);
