@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.features.contract.TenantContractDetailsActivity;
 import com.bumptech.glide.Glide;
@@ -106,6 +107,9 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
 
         roomId   = getIntent().getStringExtra(EXTRA_ROOM_ID);
         tenantId = getIntent().getStringExtra(EXTRA_TENANT_ID);
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            tenantId = TenantSession.getActiveTenantId();
+        }
 
         bindViews();
         loadAllData();
@@ -686,10 +690,24 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
         // Xem chi tiết hợp đồng
         if (btnViewContractDetail != null) {
             btnViewContractDetail.setOnClickListener(v -> {
+                if (roomId == null || roomId.trim().isEmpty() || tenantId == null || tenantId.trim().isEmpty()) {
+                    android.widget.Toast.makeText(
+                            TenantRoomDetailActivity.this,
+                            getString(R.string.tenant_menu_room_not_identified),
+                            android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Intent intent = new Intent(this, TenantContractDetailsActivity.class);
                 intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
                 intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
-                startActivity(intent);
+                try {
+                    startActivity(intent);
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(
+                            TenantRoomDetailActivity.this,
+                            getString(R.string.operation_failed),
+                            android.widget.Toast.LENGTH_SHORT).show();
+                }
             });
         }
     }

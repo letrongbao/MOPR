@@ -741,9 +741,6 @@ public class RoomDetailsActivity extends AppCompatActivity {
         if (status != null && "ACTIVE".equalsIgnoreCase(status.trim())) {
             return 2;
         }
-        if (status == null || !"ENDED".equalsIgnoreCase(status.trim())) {
-            return 1;
-        }
         return 0;
     }
 

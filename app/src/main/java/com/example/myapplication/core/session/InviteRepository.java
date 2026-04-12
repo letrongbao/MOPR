@@ -356,6 +356,9 @@ public class InviteRepository {
                         if (role == null) {
                             role = TenantRoles.TENANT;
                         }
+                        if (!TenantRoles.TENANT.equals(role)) {
+                            throw new IllegalStateException("Mã phòng không hợp lệ cho khách thuê.");
+                        }
 
                         String roomId = freshInvite.getString("roomId");
                         String contractId = freshInvite.getString("contractId");
@@ -367,37 +370,35 @@ public class InviteRepository {
                         com.google.firebase.firestore.DocumentSnapshot contractDoc = null;
                         com.google.firebase.firestore.DocumentReference activeContractRef = null;
 
-                        if (TenantRoles.TENANT.equals(role)) {
-                            if (contractId == null || contractId.trim().isEmpty()) {
-                                throw new IllegalStateException("Mã phòng không gắn với hợp đồng đang hiệu lực.");
-                            }
+                        if (contractId == null || contractId.trim().isEmpty()) {
+                            throw new IllegalStateException("Mã phòng không gắn với hợp đồng đang hiệu lực.");
+                        }
 
-                            com.google.firebase.firestore.DocumentReference contractRef = db.collection("tenants")
+                        com.google.firebase.firestore.DocumentReference contractRef = db.collection("tenants")
+                                .document(tenantId)
+                                .collection("contracts")
+                                .document(contractId);
+                        contractDoc = transaction.get(contractRef);
+                        activeContractRef = contractRef;
+
+                        if (!contractDoc.exists()) {
+                            // Legacy fallback path.
+                            com.google.firebase.firestore.DocumentReference legacyContractRef = db
+                                    .collection("users")
                                     .document(tenantId)
                                     .collection("contracts")
                                     .document(contractId);
-                            contractDoc = transaction.get(contractRef);
-                            activeContractRef = contractRef;
+                            contractDoc = transaction.get(legacyContractRef);
+                            activeContractRef = legacyContractRef;
+                        }
 
-                            if (!contractDoc.exists()) {
-                                // Legacy fallback path.
-                                com.google.firebase.firestore.DocumentReference legacyContractRef = db
-                                        .collection("users")
-                                        .document(tenantId)
-                                        .collection("contracts")
-                                        .document(contractId);
-                                contractDoc = transaction.get(legacyContractRef);
-                                activeContractRef = legacyContractRef;
-                            }
+                        if (!contractDoc.exists()) {
+                            throw new IllegalStateException("Hợp đồng gắn với mã không tồn tại.");
+                        }
 
-                            if (!contractDoc.exists()) {
-                                throw new IllegalStateException("Hợp đồng gắn với mã không tồn tại.");
-                            }
-
-                            String contractStatus = contractDoc.getString("contractStatus");
-                            if (contractStatus == null || !"ACTIVE".equalsIgnoreCase(contractStatus.trim())) {
-                                throw new IllegalStateException("Hợp đồng không còn hiệu lực, mã phòng đã bị khóa.");
-                            }
+                        String contractStatus = contractDoc.getString("contractStatus");
+                        if (contractStatus == null || !"ACTIVE".equalsIgnoreCase(contractStatus.trim())) {
+                            throw new IllegalStateException("Hợp đồng không còn hiệu lực, mã phòng đã bị khóa.");
                         }
 
                         Long inviteTotalSlotsVal = freshInvite.getLong("totalSlots");
@@ -502,9 +503,7 @@ public class InviteRepository {
                         memberDoc.put("createdAt", now);
                         memberDoc.put("updatedAt", now);
 
-                        if (TenantRoles.TENANT.equals(role)
-                                && contractId != null
-                                && !contractId.trim().isEmpty()) {
+                        if (contractId != null && !contractId.trim().isEmpty()) {
                             com.google.firebase.firestore.DocumentReference contractMemberRef = db
                                     .collection("tenants")
                                     .document(tenantId)

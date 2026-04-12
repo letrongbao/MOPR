@@ -510,7 +510,7 @@ public class TenantMenuActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TenantRoomDetailActivity.class);
         intent.putExtra(TenantRoomDetailActivity.EXTRA_ROOM_ID,   roomId);
         intent.putExtra(TenantRoomDetailActivity.EXTRA_TENANT_ID, tenantId);
-        startActivity(intent);
+        startActivitySafely(intent);
     }
 
     private void openContractDetail() {
@@ -524,14 +524,14 @@ public class TenantMenuActivity extends AppCompatActivity {
             intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, activeMemberContractId.trim());
             intent.putExtra(ContractDetailsActivity.EXTRA_HEADER_TITLE, getString(R.string.tenant_contract_your_title));
             intent.putExtra(ContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
-            startActivity(intent);
+            startActivitySafely(intent);
             return;
         }
 
         Intent intent = new Intent(this, TenantContractDetailsActivity.class);
         intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
         intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
-        startActivity(intent);
+        startActivitySafely(intent);
     }
 
     private void openInvoicePage() {
@@ -541,7 +541,17 @@ public class TenantMenuActivity extends AppCompatActivity {
         }
         Intent intent = new Intent(this, InvoiceActivity.class);
         intent.putExtra(InvoiceActivity.EXTRA_INITIAL_TAB, InvoiceActivity.TAB_REPORTED);
-        startActivity(intent);
+        intent.putExtra("TENANT_ID", tenantId);
+        intent.putExtra("ROOM_ID", roomId);
+        startActivitySafely(intent);
+    }
+
+    private void startActivitySafely(Intent intent) {
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show();
+        }
     }
 
     // ========== MỞ DRAWER TỪ BÊN PHẢI ==========

@@ -57,7 +57,14 @@ public class TenantContractDetailsActivity extends AppCompatActivity {
     }
 
     private void fallbackUserContracts(String tenantId, String roomId) {
-        db.collection("users").document(tenantId)
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, getString(R.string.contract_not_found), Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        db.collection("users").document(user.getUid())
                 .collection("contracts")
                 .whereEqualTo("roomId", roomId)
                 .limit(5)
