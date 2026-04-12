@@ -50,7 +50,7 @@ public class ContractListActivity extends AppCompatActivity {
 
         // Internal note.
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.contract_list_title));
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.contract_smart_title));
 
         // Internal note.
         tvCountDangThue = findViewById(R.id.tvCountDangThue);

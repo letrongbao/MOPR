@@ -5,8 +5,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/loginbkg"
+    android:background="@android:color/white"
     tools:context=".MainActivity">
+
+    <ImageView
+        android:id="@+id/imgAuthTopBackground"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="fitStart"
+        android:src="@drawable/loginbkg"
+        android:contentDescription="@null" />
 
     <!-- Language Switcher Component (moved down to avoid notification bar) -->
     <include
@@ -44,7 +53,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/login"
+                android:text="@string/app_subtitle_manage_rental_upper"
                 android:id="@+id/loginText"
                 android:textSize="36sp"
                 android:textAlignment="center"
@@ -54,7 +63,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/app_subtitle_manage_rental"
+                android:text="@string/login"
                 android:textSize="14sp"
                 android:textAlignment="center"
                 android:textColor="?attr/colorOnSurfaceVariant"

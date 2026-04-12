@@ -515,7 +515,9 @@
     <string name="home_tenant_support_label">Yêu cầu\nhỗ trợ</string>
     <string name="home_owner_report_label">Thống kê\ndoanh thu</string>
     <string name="report_management_title">Quản lí phản ánh</string>
-    <string name="home_owner_chat_quick_hint">Trao đổi nhanh với khách thuê trong từng phòng</string>
+    <string name="home_owner_chat_quick_hint">Trao đổi nhanh với khách thuê</string>
+    <string name="home_owner_guest_report_label">Phản ánh\ncủa khách</string>
+    <string name="home_stat_room_vacant_label">Phòng trống</string>
     <string name="tenant_report_quick_hint">Gửi phản ánh nhanh cho chủ trọ và theo dõi trạng thái xử lí</string>
     <string name="tenant_report_title">Phản ánh của tôi</string>
     <string name="tenant_report_empty">Chưa có phản ánh</string>
@@ -695,14 +697,16 @@
     <string name="app_subtitle_manage_rental_upper">QUẢN LÍ TRỌ</string>
     <string name="password">Mật khẩu</string>
     <string name="remember_login">Ghi nhớ đăng nhập</string>
-    <string name="no_account_signup_now">Chưa có tài khoản? Đăng ký ngay</string>
+    <string name="no_account_signup_now">Chưa có tài khoản? Tạo ngay</string>
     <string name="sign_up">Đăng ký</string>
+    <string name="sign_up_compact">Đăng kí</string>
     <string name="create_new_account">Tạo tài khoản mới</string>
+    <string name="create_account_action">Tạo tài khoản</string>
     <string name="full_name">Họ và tên</string>
     <string name="confirm_password">Xác nhận mật khẩu</string>
     <string name="phone_number">Số điện thoại</string>
     <string name="signup_default_role_note">Tài khoản tạo từ ứng dụng sẽ mặc định là Khách thuê.</string>
-    <string name="already_have_account_login">Đã có tài khoản? Đăng nhập</string>
+    <string name="already_have_account_login">Quay lại Đăng nhập</string>
     <string name="change_password_subtitle">Nhập mật khẩu mới để thay đổi</string>
     <string name="new_password">Mật khẩu mới</string>
     <string name="new_password_hint">Nhập mật khẩu mới (tối thiểu 6 ký tự)</string>
@@ -1144,10 +1148,13 @@
     <string name="join_room_success">Kết nối phòng thành công!</string>
 
     <string name="tenant_menu_greeting">Xin chào, Khách thuê!</string>
+    <string name="tenant_menu_greeting_with_name">Xin chào, %1$s!</string>
     <string name="tenant_menu_default_name">Người thuê</string>
     <string name="tenant_menu_room_unknown">Phòng: --</string>
     <string name="tenant_menu_room_loading">Phòng: ...</string>
     <string name="tenant_menu_room_value">Phòng: %1$s</string>
+    <string name="tenant_menu_house_unknown">Địa chỉ: --</string>
+    <string name="tenant_menu_house_value">Địa chỉ: %1$s</string>
     <string name="tenant_menu_avatar_desc">Ảnh đại diện</string>
     <string name="tenant_menu_my_room">Phòng của tôi</string>
     <string name="tenant_menu_finalize_bill">Chốt hóa đơn</string>
@@ -1155,6 +1162,12 @@
     <string name="tenant_menu_notification">Thông báo</string>
     <string name="tenant_menu_chat">Trò chuyện</string>
     <string name="tenant_menu_room_not_identified">Chưa xác định được phòng</string>
+    <string name="tenant_menu_my_room_yours">Phòng\ncủa bạn</string>
+    <string name="tenant_menu_contract_yours">Hợp đồng\ncủa bạn</string>
+    <string name="tenant_menu_invoice_yours">Hoá đơn\ncủa bạn</string>
+    <string name="tenant_menu_issue_incident">Phản ánh\nsự cố</string>
+    <string name="tenant_menu_chat_title">Trò chuyện</string>
+    <string name="tenant_menu_chat_quick_hint_owner">Trò chuyện nhanh với chủ nhà</string>
 
     <string name="tenant_room_days_remaining_label">Ngày\ncòn lại</string>
     <string name="tenant_room_months_stayed_label">Số tháng đã ở</string>

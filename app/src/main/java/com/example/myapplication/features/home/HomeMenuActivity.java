@@ -765,7 +765,7 @@ public class HomeMenuActivity extends AppCompatActivity {
         setStylizedHomeCardLabel(tvCardExpenseLabel, getString(R.string.home_owner_expense_label), isOwner);
         setStylizedHomeCardLabel(tvCardReportLabel, getString(R.string.home_owner_report_label), isOwner);
         setStylizedHomeCardLabel(tvCardReportManagementLabel, getString(R.string.report_management_title), isOwner);
-        setStylizedHomeCardLabel(tvCardTenantLabel, getString(R.string.home_owner_chat_label), isOwner);
+        setSingleLineHomeCardLabel(tvCardTenantLabel, getString(R.string.home_owner_chat_label), isOwner);
         setStylizedHomeCardLabel(tvCardContractLabel, getString(R.string.home_owner_contract_label), isOwner);
     }
 
@@ -778,6 +778,20 @@ public class HomeMenuActivity extends AppCompatActivity {
             return;
         }
         target.setText(buildStylizedCardLabel(label));
+    }
+
+    private void setSingleLineHomeCardLabel(TextView target, String label, boolean isOwner) {
+        if (target == null) {
+            return;
+        }
+        if (!isOwner) {
+            target.setText("");
+            return;
+        }
+
+        String normalized = label == null ? "" : label.replace('\n', ' ').trim().replaceAll("\\s+", " ");
+        target.setText(normalized);
+        target.setTextSize(18f);
     }
 
     private CharSequence buildStylizedCardLabel(String rawLabel) {

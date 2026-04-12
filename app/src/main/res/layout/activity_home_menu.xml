@@ -67,15 +67,17 @@
                 <!-- UI section note -->
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/btnProfile"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:padding="2dp"
-                    android:src="@drawable/ic_profile"
+                    android:padding="4dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_user_avatar"
                     android:contentDescription="@string/account_management"
                     app:tint="@color/white"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="@drawable/bg_header_profile_button"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
                     app:shapeAppearanceOverlay="@style/CircleImage" />
 
             </RelativeLayout>

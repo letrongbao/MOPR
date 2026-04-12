@@ -20,6 +20,7 @@ import com.example.myapplication.core.repository.domain.TicketRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Ticket;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.Timestamp;
@@ -62,8 +63,12 @@ public class TenantReportListActivity extends AppCompatActivity {
         ScreenUiHelper.enableEdgeToEdge(this, false);
         setContentView(R.layout.activity_tenant_report_list);
 
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.applyTopInset(toolbar);
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_report_title));
 
         RecyclerView rvReports = findViewById(R.id.rvReports);

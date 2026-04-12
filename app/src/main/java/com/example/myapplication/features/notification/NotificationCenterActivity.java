@@ -9,10 +9,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.features.chat.ChatRoomActivity;
 import com.example.myapplication.features.notification.model.NotificationItem;
 import com.example.myapplication.features.report.TenantReportListActivity;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -64,8 +66,12 @@ public class NotificationCenterActivity extends AppCompatActivity {
         }
         uid = user.getUid();
 
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
+        ScreenUiHelper.applyTopInset(appBarLayout);
+
         MaterialToolbar toolbar = findViewById(R.id.toolbarNotifications);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.notification_center_title));
 
         RecyclerView rv = findViewById(R.id.rvNotifications);
         rv.setLayoutManager(new LinearLayoutManager(this));

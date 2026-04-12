@@ -77,7 +77,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/room_status_vacant"
+                    android:text="@string/home_stat_room_vacant_label"
                     android:textColor="#4A6582"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -311,14 +311,14 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@drawable/bg_card_gradient_orange"
+                    android:background="@drawable/bg_card_gradient_gold_lime"
                     android:padding="16dp">
 
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:contentDescription="@string/complaints_repairs"
-                        android:src="@drawable/ic_report"
+                        android:src="@drawable/ic_feedback"
                         app:tint="@color/white" />
 
                     <TextView
@@ -356,7 +356,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:contentDescription="@string/contract_header_title"
-                        android:src="@drawable/ic_contract"
+                        android:src="@drawable/ic_calendar"
                         app:tint="@color/white" />
 
                     <TextView

@@ -623,7 +623,9 @@
     <string name="home_owner_report_label">Statistics\nreports</string>
     <string name="home_owner_contract_label">Smart\ncontracts</string>
     <string name="report_management_title">Issue management</string>
-    <string name="home_owner_chat_quick_hint">Quickly chat with tenants in each room</string>
+    <string name="home_owner_chat_quick_hint">Quickly chat with tenants</string>
+    <string name="home_owner_guest_report_label">Tenant\nreports</string>
+    <string name="home_stat_room_vacant_label">Vacant rooms</string>
     <string name="tenant_report_quick_hint">Quickly send issue reports to the landlord and track progress</string>
     <string name="tenant_report_title">My reports</string>
     <string name="tenant_report_empty">No reports yet</string>

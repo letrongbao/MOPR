@@ -2,6 +2,9 @@ package com.example.myapplication.features.home;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -12,7 +15,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.bumptech.glide.Glide;
@@ -33,6 +40,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -44,19 +52,23 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import android.graphics.Color;
+import android.view.Window;
+
 public class TenantMenuActivity extends AppCompatActivity {
 
     // ===== Header =====
     private TextView tvTenantName;
     private TextView tvRoomInfo;
+    private TextView tvHouseInfo;
     private ImageView imgAvatar;
 
     // ===== Grid menu =====
     private CardView cardMyRoom;
     private CardView cardBill;
+    private CardView cardContract;
     private CardView cardReport;
     private CardView cardNotification;
-    private CardView cardReportExternal;
 
     // ===== Contract summary =====
     private ProgressBar contractProgress;
@@ -95,6 +107,11 @@ public class TenantMenuActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Window window = getWindow();
+        WindowCompat.setDecorFitsSystemWindows(window, false);
+        window.setStatusBarColor(Color.TRANSPARENT);
+
         setContentView(R.layout.activity_tenant_menu);
 
         mAuth = FirebaseAuth.getInstance();
@@ -110,14 +127,15 @@ public class TenantMenuActivity extends AppCompatActivity {
         // ===== Ánh xạ Header =====
         tvTenantName = findViewById(R.id.tvTenantName);
         tvRoomInfo   = findViewById(R.id.tvRoomInfo);
+        tvHouseInfo  = findViewById(R.id.tvHouseInfo);
         imgAvatar    = findViewById(R.id.imgAvatarHeader);
 
         // ===== Ánh xạ Grid menu =====
         cardMyRoom       = findViewById(R.id.cardMyRoom);
         cardBill         = findViewById(R.id.cardBill);
+        cardContract     = findViewById(R.id.cardContract);
         cardReport       = findViewById(R.id.cardReport);
         cardNotification = findViewById(R.id.cardNotification);
-        cardReportExternal = findViewById(R.id.cardReportExternal);
 
         contractProgress = findViewById(R.id.contractProgress);
         tvDaysRemaining = findViewById(R.id.tvDaysRemaining);
@@ -139,6 +157,34 @@ public class TenantMenuActivity extends AppCompatActivity {
         menuLogout          = findViewById(R.id.menuLogout);
         btnDrawerNotification = findViewById(R.id.btnDrawerNotification);
         tvDrawerNotificationBadge = findViewById(R.id.tvDrawerNotificationBadge);
+        applyStylizedTenantCardLabels();
+
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            final int baseTopPadding = appBarLayout.getPaddingTop();
+            final int baseBottomPadding = appBarLayout.getPaddingBottom();
+            final int baseStartPadding = appBarLayout.getPaddingLeft();
+            final int baseEndPadding = appBarLayout.getPaddingRight();
+            ViewCompat.setOnApplyWindowInsetsListener(appBarLayout, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(baseStartPadding, baseTopPadding + systemBars.top, baseEndPadding, baseBottomPadding);
+                return insets;
+            });
+        }
+
+        View drawerHeader = findViewById(R.id.drawerHeader);
+        if (drawerHeader != null) {
+            drawerHeader.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            final int baseTopPadding = drawerHeader.getPaddingTop();
+            final int baseBottomPadding = drawerHeader.getPaddingBottom();
+            final int baseStartPadding = drawerHeader.getPaddingLeft();
+            final int baseEndPadding = drawerHeader.getPaddingRight();
+            ViewCompat.setOnApplyWindowInsetsListener(drawerHeader, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(baseStartPadding, baseTopPadding + systemBars.top, baseEndPadding, baseBottomPadding);
+                return insets;
+            });
+        }
 
         if (menuTenantProfiles != null) {
             menuTenantProfiles.setVisibility(View.GONE);
@@ -156,6 +202,9 @@ public class TenantMenuActivity extends AppCompatActivity {
             getContractSummary(roomId);
         } else {
             tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
+            if (tvHouseInfo != null) {
+                tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+            }
             showNoContractUI();
         }
 
@@ -171,26 +220,15 @@ public class TenantMenuActivity extends AppCompatActivity {
         // ===== Click 4 thẻ menu =====
         cardMyRoom.setOnClickListener(v -> openRoomDetail());
         cardBill.setOnClickListener(v -> openRoomDetail());   // cùng màn hình, tab billing
+        cardContract.setOnClickListener(v -> openContractDetail());
 
         cardReport.setOnClickListener(v -> startActivity(new Intent(this, TenantReportListActivity.class)));
-        if (cardReportExternal != null) {
-            cardReportExternal.setOnClickListener(v -> startActivity(new Intent(this, TenantReportListActivity.class)));
-        }
 
         cardNotification.setOnClickListener(v ->
             startActivity(new Intent(this, ChatHubActivity.class)));
 
         if (btnViewContractDetail != null) {
-            btnViewContractDetail.setOnClickListener(v -> {
-                if (roomId == null || roomId.isEmpty()) {
-                    Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Intent intent = new Intent(this, TenantContractDetailsActivity.class);
-                intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
-                intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
-                startActivity(intent);
-            });
+            btnViewContractDetail.setOnClickListener(v -> openContractDetail());
         }
 
         AppFirebaseMessagingService.syncTokenForCurrentUser();
@@ -259,6 +297,17 @@ public class TenantMenuActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TenantRoomDetailActivity.class);
         intent.putExtra(TenantRoomDetailActivity.EXTRA_ROOM_ID,   roomId);
         intent.putExtra(TenantRoomDetailActivity.EXTRA_TENANT_ID, tenantId);
+        startActivity(intent);
+    }
+
+    private void openContractDetail() {
+        if (roomId == null || roomId.isEmpty()) {
+            Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(this, TenantContractDetailsActivity.class);
+        intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
+        intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
         startActivity(intent);
     }
 
@@ -382,9 +431,9 @@ public class TenantMenuActivity extends AppCompatActivity {
         String email       = user.getEmail();
 
         if (displayName != null && !displayName.isEmpty()) {
-            tvTenantName.setText(displayName);
+            setGreeting(displayName);
         } else if (email != null) {
-            tvTenantName.setText(email.split("@")[0]);
+            setGreeting(email.split("@")[0]);
         }
 
         db.collection("users").document(user.getUid())
@@ -393,10 +442,79 @@ public class TenantMenuActivity extends AppCompatActivity {
                     if (doc.exists()) {
                         String fullName = doc.getString("fullName");
                         if (fullName != null && !fullName.isEmpty()) {
-                            tvTenantName.setText(fullName);
+                            setGreeting(fullName);
                         }
                     }
                 });
+    }
+
+    private void setGreeting(String name) {
+        if (tvTenantName == null) {
+            return;
+        }
+        if (name == null || name.trim().isEmpty()) {
+            tvTenantName.setText(getString(R.string.tenant_menu_greeting));
+            return;
+        }
+        tvTenantName.setText(getString(R.string.tenant_menu_greeting_with_name, name.trim()));
+    }
+
+    private void applyStylizedTenantCardLabels() {
+        setStylizedTenantCardLabel(findViewById(R.id.tvCardMyRoomLabel), getString(R.string.tenant_menu_my_room_yours));
+        setStylizedTenantCardLabel(findViewById(R.id.tvCardContractLabel), getString(R.string.tenant_menu_contract_yours));
+        setStylizedTenantCardLabel(findViewById(R.id.tvCardBillLabel), getString(R.string.tenant_menu_invoice_yours));
+        setStylizedTenantCardLabel(findViewById(R.id.tvCardReportLabel), getString(R.string.tenant_menu_issue_incident));
+    }
+
+    private void setStylizedTenantCardLabel(TextView target, String label) {
+        if (target == null) {
+            return;
+        }
+        target.setText(buildStylizedCardLabel(label));
+    }
+
+    private CharSequence buildStylizedCardLabel(String rawLabel) {
+        if (rawLabel == null) {
+            return "";
+        }
+
+        String normalized = rawLabel.replace('\n', ' ').trim().replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return "";
+        }
+
+        String[] words = normalized.split(" ");
+        String topLine;
+        String bottomLine;
+
+        if (getString(R.string.tenant_menu_my_room_yours).replace('\n', ' ').trim().equalsIgnoreCase(normalized)
+                && words.length >= 3) {
+            topLine = words[0];
+            bottomLine = words[1] + " " + words[2];
+        } else if (words.length >= 4) {
+            topLine = words[0] + " " + words[1];
+            bottomLine = words[words.length - 2] + " " + words[words.length - 1];
+        } else if (words.length == 3) {
+            topLine = words[0] + " " + words[1];
+            bottomLine = words[2];
+        } else if (words.length == 2) {
+            topLine = words[0];
+            bottomLine = words[1];
+        } else {
+            topLine = words[0];
+            bottomLine = "";
+        }
+
+        String styled = bottomLine.isEmpty() ? topLine : topLine + "\n" + bottomLine;
+        SpannableString span = new SpannableString(styled);
+        span.setSpan(new RelativeSizeSpan(1.14f), 0, topLine.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        if (!bottomLine.isEmpty()) {
+            int start = topLine.length() + 1;
+            span.setSpan(new RelativeSizeSpan(0.92f), start, styled.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return span;
     }
 
     // ========== QUERY TÊN PHÒNG TỪ FIRESTORE ==========
@@ -428,9 +546,7 @@ public class TenantMenuActivity extends AppCompatActivity {
                             .get()
                             .addOnSuccessListener(roomDoc -> {
                                 if (roomDoc.exists()) {
-                                    String rn = roomDoc.getString("roomNumber");
-                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
-                                            rn != null && !rn.isEmpty() ? rn : roomId));
+                                    applyRoomInfo(roomDoc, roomId);
                                 } else {
                                     // Bước 2b: rooms lưu ở users/{tenantId}/rooms/ (khi owner không có tenant org)
                                     db.collection("users").document(freshTenantId)
@@ -438,9 +554,7 @@ public class TenantMenuActivity extends AppCompatActivity {
                                             .get()
                                             .addOnSuccessListener(userRoomDoc -> {
                                                 if (userRoomDoc.exists()) {
-                                                    String rn = userRoomDoc.getString("roomNumber");
-                                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
-                                                            rn != null && !rn.isEmpty() ? rn : roomId));
+                                                    applyRoomInfo(userRoomDoc, roomId);
                                                 } else {
                                                     // Bước 3: scan toàn bộ cả 2 path
                                                     scanAllRooms(freshTenantId, roomId);
@@ -458,38 +572,81 @@ public class TenantMenuActivity extends AppCompatActivity {
         db.collection("tenants").document(freshTenantId)
                 .collection("rooms").get()
                 .addOnSuccessListener(qs -> {
-                    String found = findRoomNumber(qs, roomId);
-                    if (found != null) {
-                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, found));
+                    DocumentSnapshot foundDoc = findRoomDoc(qs, roomId);
+                    if (foundDoc != null) {
+                        applyRoomInfo(foundDoc, roomId);
                     } else {
                         db.collection("users").document(freshTenantId)
                                 .collection("rooms").get()
                                 .addOnSuccessListener(qs2 -> {
-                                    String found2 = findRoomNumber(qs2, roomId);
-                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
-                                        found2 != null ? found2 : roomId));
+                                    DocumentSnapshot foundDoc2 = findRoomDoc(qs2, roomId);
+                                    if (foundDoc2 != null) {
+                                        applyRoomInfo(foundDoc2, roomId);
+                                    } else {
+                                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId));
+                                        if (tvHouseInfo != null) {
+                                            tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+                                        }
+                                    }
                                 })
-                                .addOnFailureListener(
-                                    e -> tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId)));
+                                .addOnFailureListener(e -> {
+                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId));
+                                    if (tvHouseInfo != null) {
+                                        tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+                                    }
+                                });
                     }
                 })
                 .addOnFailureListener(e ->
                         db.collection("users").document(freshTenantId)
                                 .collection("rooms").get()
                                 .addOnSuccessListener(qs2 -> {
-                                    String found2 = findRoomNumber(qs2, roomId);
-                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value,
-                                        found2 != null ? found2 : roomId));
+                                    DocumentSnapshot foundDoc2 = findRoomDoc(qs2, roomId);
+                                    if (foundDoc2 != null) {
+                                        applyRoomInfo(foundDoc2, roomId);
+                                    } else {
+                                        tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId));
+                                        if (tvHouseInfo != null) {
+                                            tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+                                        }
+                                    }
                                 })
-                                .addOnFailureListener(
-                                    e2 -> tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId))));
+                                .addOnFailureListener(e2 -> {
+                                    tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomId));
+                                    if (tvHouseInfo != null) {
+                                        tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+                                    }
+                                }));
     }
 
-    private String findRoomNumber(com.google.firebase.firestore.QuerySnapshot qs, String roomId) {
+    private void applyRoomInfo(DocumentSnapshot roomDoc, String roomIdFallback) {
+        String roomNumber = roomDoc.getString("roomNumber");
+        String roomResolved = roomNumber != null && !roomNumber.isEmpty() ? roomNumber : roomIdFallback;
+        tvRoomInfo.setText(getString(R.string.tenant_menu_room_value, roomResolved));
+
+        if (tvHouseInfo == null) {
+            return;
+        }
+
+        String houseAddress = roomDoc.getString("houseAddress");
+        if (houseAddress == null || houseAddress.trim().isEmpty()) {
+            houseAddress = roomDoc.getString("houseName");
+        }
+        if (houseAddress == null || houseAddress.trim().isEmpty()) {
+            houseAddress = roomDoc.getString("address");
+        }
+
+        if (houseAddress != null && !houseAddress.trim().isEmpty()) {
+            tvHouseInfo.setText(getString(R.string.tenant_menu_house_value, houseAddress.trim()));
+        } else {
+            tvHouseInfo.setText(getString(R.string.tenant_menu_house_unknown));
+        }
+    }
+
+    private DocumentSnapshot findRoomDoc(com.google.firebase.firestore.QuerySnapshot qs, String roomId) {
         for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
             if (roomId.equals(doc.getId()) || roomId.equals(doc.getString("roomId"))) {
-                String rn = doc.getString("roomNumber");
-                return rn != null && !rn.isEmpty() ? rn : doc.getId();
+                return doc;
             }
         }
         return null;

@@ -17,6 +17,7 @@ import com.example.myapplication.core.repository.domain.TicketRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Ticket;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -54,8 +55,12 @@ public class TenantCreateReportActivity extends AppCompatActivity {
             tenantId = TenantSession.getActiveTenantId();
         }
 
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.applyTopInset(toolbar);
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_report_create_title));
 
         etTitle = findViewById(R.id.etTitle);

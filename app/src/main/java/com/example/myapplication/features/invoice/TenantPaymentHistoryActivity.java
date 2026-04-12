@@ -49,9 +49,13 @@ public class TenantPaymentHistoryActivity extends AppCompatActivity {
         com.google.android.material.appbar.AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
         if (appBarLayout != null) {
             ScreenUiHelper.applyTopInset(appBarLayout);
+            appBarLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            toolbar.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+        }
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.your_payment_history));
 
         tvEmpty = findViewById(R.id.tvEmpty);

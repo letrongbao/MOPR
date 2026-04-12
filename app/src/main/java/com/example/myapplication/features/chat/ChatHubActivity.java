@@ -62,6 +62,7 @@ public class ChatHubActivity extends AppCompatActivity {
     private ListenerRegistration unreadNotificationListener;
     private final List<ChatConversation> latestConversations = new ArrayList<>();
     private final Map<String, Integer> unreadByConversation = new HashMap<>();
+    private final Map<String, String> roomLabelById = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -213,6 +214,7 @@ public class ChatHubActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(tenantDoc -> {
                     ownerUid = tenantDoc.getString("ownerUid");
+                loadRoomLabels();
 
                     db.collection("tenants").document(tenantId).collection("members").document(uid)
                             .get()
@@ -225,6 +227,7 @@ public class ChatHubActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     ownerUid = null;
+                    loadRoomLabels();
                     setupTopTabs(chatTypeTabLayout);
                 });
 
@@ -329,6 +332,12 @@ public class ChatHubActivity extends AppCompatActivity {
         }
 
         if (TenantRoles.TENANT.equalsIgnoreCase(currentUserRole)) {
+            hideOwnerFab();
+            return;
+        }
+
+        if ("HOUSE".equalsIgnoreCase(ownerConversationTypeFilter)) {
+            // House thread is unique and always available in list, so no create action is needed.
             hideOwnerFab();
             return;
         }
@@ -493,7 +502,18 @@ public class ChatHubActivity extends AppCompatActivity {
             return getString(R.string.chat_house);
         }
         if ("ROOM".equals(type)) {
-            return getString(R.string.chat_room_with_id, value(doc.getString("roomId")));
+            String roomIdValue = value(doc.getString("roomId"));
+            String roomLabel = roomLabelById.get(roomIdValue);
+            if (roomLabel != null && !roomLabel.trim().isEmpty()) {
+                return getString(R.string.chat_room_with_id, roomLabel.trim());
+            }
+
+            String displayName = doc.getString("displayName");
+            if (displayName != null && !displayName.trim().isEmpty()) {
+                return displayName;
+            }
+
+            return getString(R.string.chat_room_with_id, roomIdValue);
         }
         String displayName = doc.getString("displayName");
         if (displayName != null && !displayName.trim().isEmpty()) {
@@ -589,8 +609,30 @@ public class ChatHubActivity extends AppCompatActivity {
                         participants.add(uid);
                     }
 
+                    String roomLabel = roomLabelById.get(selectedRoomId);
+                    if (roomLabel == null || roomLabel.trim().isEmpty()) {
+                        roomLabel = selectedRoomId;
+                    }
+
                     ensureConversation("room_" + selectedRoomId, "ROOM", selectedRoomId, participants,
-                            getString(R.string.chat_room_with_id, selectedRoomId), this::openConversationById);
+                            getString(R.string.chat_room_with_id, roomLabel), this::openConversationById);
+                });
+    }
+
+    private void loadRoomLabels() {
+        db.collection("tenants").document(tenantId)
+                .collection("rooms")
+                .get()
+                .addOnSuccessListener(qs -> {
+                    roomLabelById.clear();
+                    for (DocumentSnapshot roomDoc : qs.getDocuments()) {
+                        String roomIdValue = roomDoc.getId();
+                        String roomNumber = roomDoc.getString("roomNumber");
+                        if (roomNumber != null && !roomNumber.trim().isEmpty()) {
+                            roomLabelById.put(roomIdValue, roomNumber.trim());
+                        }
+                    }
+                    renderConversationList();
                 });
     }
 

@@ -19,6 +19,7 @@ import com.example.myapplication.core.repository.domain.TicketRepository;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.domain.Ticket;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -49,8 +50,12 @@ public class OwnerReportListActivity extends AppCompatActivity {
         ScreenUiHelper.enableEdgeToEdge(this, false);
         setContentView(R.layout.activity_owner_report_list);
 
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (appBarLayout != null) {
+            ScreenUiHelper.applyTopInset(appBarLayout);
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
-        ScreenUiHelper.applyTopInset(toolbar);
         ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.report_management_title));
 
         RecyclerView rvReports = findViewById(R.id.rvReports);

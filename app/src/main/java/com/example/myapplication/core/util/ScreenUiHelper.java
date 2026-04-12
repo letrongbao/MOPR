@@ -14,6 +14,8 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.example.myapplication.R;
+
 public final class ScreenUiHelper {
 
     private ScreenUiHelper() {
@@ -41,6 +43,7 @@ public final class ScreenUiHelper {
     public static void setupBackToolbar(@NonNull AppCompatActivity activity,
             @NonNull Toolbar toolbar,
             @Nullable String title) {
+        toolbar.setTitleTextAppearance(activity, R.style.ToolbarTitleEmphasis);
         activity.setSupportActionBar(toolbar);
         if (activity.getSupportActionBar() != null) {
             activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
