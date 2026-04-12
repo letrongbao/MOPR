@@ -644,6 +644,11 @@
     <string name="report_reject_reason_hint">Enter reject reason...</string>
     <string name="report_reject_reason_required">Please enter a reason</string>
     <string name="tenant_report_create_title">Create new report</string>
+    <string name="tenant_report_create_subtitle">Describe the issue so the landlord can triage and resolve it faster.</string>
+    <string name="report_appointment_label">Repair appointment (optional)</string>
+    <string name="report_appointment_pick">Pick date and time</string>
+    <string name="report_appointment_prefix">Appointment: %1$s</string>
+    <string name="report_description_label">Issue description</string>
     <string name="report_resubmit_title">Edit report</string>
     <string name="report_resubmit_success">Report resubmitted</string>
     <string name="report_notification_title">Report update</string>

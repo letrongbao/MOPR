@@ -59,6 +59,7 @@
         <activity android:name=".features.contract.ContractActivity" />
         <activity android:name=".features.contract.ContractListActivity" />
         <activity android:name=".features.contract.ContractDetailsActivity" />
+        <activity android:name=".features.contract.TenantContractDetailsActivity" />
         <activity android:name=".features.contract.ContractPdfPreviewActivity" />
         
         <!-- History -->
@@ -82,6 +83,7 @@
 
         <!-- Reports -->
         <activity android:name=".features.report.TenantReportListActivity" />
+        <activity android:name=".features.report.TenantCreateReportActivity" />
         <activity android:name=".features.report.OwnerReportListActivity" />
 
         <service

@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.R;
+import com.example.myapplication.features.contract.TenantContractDetailsActivity;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -430,8 +431,12 @@ public class TenantRoomDetailActivity extends AppCompatActivity {
 
         // Xem chi tiết hợp đồng
         if (btnViewContractDetail != null) {
-            btnViewContractDetail.setOnClickListener(v ->
-                    Toast.makeText(this, getString(R.string.tenant_room_contract_detail), Toast.LENGTH_SHORT).show());
+            btnViewContractDetail.setOnClickListener(v -> {
+                Intent intent = new Intent(this, TenantContractDetailsActivity.class);
+                intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
+                intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
+                startActivity(intent);
+            });
         }
     }
 

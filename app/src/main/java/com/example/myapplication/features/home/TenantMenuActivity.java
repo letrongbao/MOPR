@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,6 +21,7 @@ import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.chat.ChatHubActivity;
+import com.example.myapplication.features.contract.TenantContractDetailsActivity;
 import com.example.myapplication.features.notification.NotificationCenterActivity;
 import com.example.myapplication.features.notification.NotificationRealtimeObserver;
 import com.example.myapplication.features.notification.push.AppFirebaseMessagingService;
@@ -33,7 +35,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class TenantMenuActivity extends AppCompatActivity {
 
@@ -48,6 +57,15 @@ public class TenantMenuActivity extends AppCompatActivity {
     private CardView cardReport;
     private CardView cardNotification;
     private CardView cardReportExternal;
+
+    // ===== Contract summary =====
+    private ProgressBar contractProgress;
+    private TextView tvDaysRemaining;
+    private TextView tvMonthsStayed;
+    private TextView tvContractStatus;
+    private TextView tvStartDate;
+    private TextView tvEndDate;
+    private TextView btnViewContractDetail;
 
     // ===== DrawerLayout (tái sử dụng home_menu_profile_drawer.xml) =====
     private DrawerLayout tenantDrawerLayout;
@@ -71,6 +89,8 @@ public class TenantMenuActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private NotificationRealtimeObserver notificationRealtimeObserver;
+
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +119,14 @@ public class TenantMenuActivity extends AppCompatActivity {
         cardNotification = findViewById(R.id.cardNotification);
         cardReportExternal = findViewById(R.id.cardReportExternal);
 
+        contractProgress = findViewById(R.id.contractProgress);
+        tvDaysRemaining = findViewById(R.id.tvDaysRemaining);
+        tvMonthsStayed = findViewById(R.id.tvMonthsStayed);
+        tvContractStatus = findViewById(R.id.tvContractStatus);
+        tvStartDate = findViewById(R.id.tvStartDate);
+        tvEndDate = findViewById(R.id.tvEndDate);
+        btnViewContractDetail = findViewById(R.id.btnViewContractDetail);
+
         // ===== Ánh xạ DrawerLayout và các view bên trong drawer =====
         tenantDrawerLayout  = findViewById(R.id.tenantDrawerLayout);
         drawerAvatar        = findViewById(R.id.drawerAvatar);
@@ -125,8 +153,10 @@ public class TenantMenuActivity extends AppCompatActivity {
         loadUserInfo();
         if (roomId != null && !roomId.isEmpty()) {
             fetchRoomNumber(roomId);
+            getContractSummary(roomId);
         } else {
             tvRoomInfo.setText(getString(R.string.tenant_menu_room_unknown));
+            showNoContractUI();
         }
 
         // ===== Click avatar → mở Drawer từ phải =====
@@ -149,6 +179,19 @@ public class TenantMenuActivity extends AppCompatActivity {
 
         cardNotification.setOnClickListener(v ->
             startActivity(new Intent(this, ChatHubActivity.class)));
+
+        if (btnViewContractDetail != null) {
+            btnViewContractDetail.setOnClickListener(v -> {
+                if (roomId == null || roomId.isEmpty()) {
+                    Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent intent = new Intent(this, TenantContractDetailsActivity.class);
+                intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
+                intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
+                startActivity(intent);
+            });
+        }
 
         AppFirebaseMessagingService.syncTokenForCurrentUser();
         observeUnreadNotificationCount();
@@ -447,6 +490,150 @@ public class TenantMenuActivity extends AppCompatActivity {
             if (roomId.equals(doc.getId()) || roomId.equals(doc.getString("roomId"))) {
                 String rn = doc.getString("roomNumber");
                 return rn != null && !rn.isEmpty() ? rn : doc.getId();
+            }
+        }
+        return null;
+    }
+
+    private void getContractSummary(String activeRoomId) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            showNoContractUI();
+            return;
+        }
+
+        db.collection("tenants").document(tenantId)
+                .collection("contracts")
+                .whereEqualTo("roomId", activeRoomId)
+                .limit(5)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    DocumentSnapshot activeContract = findActiveContract(qs);
+                    if (activeContract != null) {
+                        applyContractToUI(activeContract);
+                    } else {
+                        db.collection("users").document(tenantId)
+                                .collection("contracts")
+                                .whereEqualTo("roomId", activeRoomId)
+                                .limit(5)
+                                .get()
+                                .addOnSuccessListener(qs2 -> {
+                                    DocumentSnapshot c2 = findActiveContract(qs2);
+                                    if (c2 != null) {
+                                        applyContractToUI(c2);
+                                    } else {
+                                        showNoContractUI();
+                                    }
+                                })
+                                .addOnFailureListener(e -> showNoContractUI());
+                    }
+                })
+                .addOnFailureListener(e -> showNoContractUI());
+    }
+
+    private DocumentSnapshot findActiveContract(com.google.firebase.firestore.QuerySnapshot qs) {
+        if (qs == null || qs.isEmpty()) {
+            return null;
+        }
+        for (DocumentSnapshot doc : qs.getDocuments()) {
+            String status = doc.getString("contractStatus");
+            if ("ACTIVE".equalsIgnoreCase(status)) {
+                return doc;
+            }
+        }
+        return qs.getDocuments().get(0);
+    }
+
+    private void applyContractToUI(DocumentSnapshot doc) {
+        Date startDate = parseDate(doc, "rentalStartDate", "startDate");
+        Date endDate = parseDate(doc, "contractEndDate", "endDate", "contractEndTimestamp");
+
+        if (startDate == null || endDate == null) {
+            showNoContractUI();
+            return;
+        }
+
+        Date today = new Date();
+        long totalMs = endDate.getTime() - startDate.getTime();
+        long remainingMs = endDate.getTime() - today.getTime();
+        long totalDays = TimeUnit.MILLISECONDS.toDays(totalMs);
+        long daysLeft = TimeUnit.MILLISECONDS.toDays(remainingMs);
+        long daysStayed = TimeUnit.MILLISECONDS.toDays(today.getTime() - startDate.getTime());
+        long monthsStayed = Math.max(0, daysStayed / 30);
+        long extraDays = Math.max(0, daysStayed % 30);
+
+        int progress = (totalDays > 0)
+                ? (int) Math.max(0, Math.min(100, (remainingMs * 100L) / totalMs))
+                : 0;
+
+        if (contractProgress != null) {
+            contractProgress.setProgress(progress);
+        }
+        if (tvDaysRemaining != null) {
+            tvDaysRemaining.setText(String.valueOf(Math.max(0, daysLeft)));
+        }
+        if (tvMonthsStayed != null) {
+            tvMonthsStayed.setText(getString(R.string.tenant_room_months_stayed_value, monthsStayed, extraDays));
+        }
+        if (tvStartDate != null) {
+            tvStartDate.setText(DATE_FORMAT.format(startDate));
+        }
+        if (tvEndDate != null) {
+            tvEndDate.setText(DATE_FORMAT.format(endDate));
+        }
+        if (tvContractStatus != null) {
+            tvContractStatus.setText(daysLeft > 0
+                    ? getString(R.string.tenant_room_contract_active)
+                    : getString(R.string.tenant_room_contract_expired));
+        }
+    }
+
+    private void showNoContractUI() {
+        if (tvDaysRemaining != null) {
+            tvDaysRemaining.setText("--");
+        }
+        if (tvMonthsStayed != null) {
+            tvMonthsStayed.setText(getString(R.string.tenant_room_no_contract));
+        }
+        if (tvContractStatus != null) {
+            tvContractStatus.setText(getString(R.string.tenant_room_contract_not_found));
+        }
+        if (tvStartDate != null) {
+            tvStartDate.setText("--/--/----");
+        }
+        if (tvEndDate != null) {
+            tvEndDate.setText("--/--/----");
+        }
+        if (contractProgress != null) {
+            contractProgress.setProgress(0);
+        }
+    }
+
+    private Date parseDate(DocumentSnapshot doc, String... fieldNames) {
+        for (String field : fieldNames) {
+            Object val = doc.get(field);
+            if (val == null) {
+                continue;
+            }
+
+            if (val instanceof com.google.firebase.Timestamp) {
+                return ((com.google.firebase.Timestamp) val).toDate();
+            }
+            if (val instanceof String) {
+                String str = (String) val;
+                if (!str.isEmpty()) {
+                    try {
+                        return DATE_FORMAT.parse(str);
+                    } catch (ParseException ignored) {
+                        try {
+                            return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(str);
+                        } catch (ParseException ignored2) {
+                            // Continue parsing fallback types.
+                        }
+                    }
+                }
+            }
+            if (val instanceof Long) {
+                return new Date((Long) val);
             }
         }
         return null;

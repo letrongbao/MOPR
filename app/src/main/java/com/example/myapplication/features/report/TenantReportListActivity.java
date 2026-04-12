@@ -37,6 +37,8 @@ import java.util.Map;
 public class TenantReportListActivity extends AppCompatActivity {
 
     public static final String EXTRA_OPEN_TICKET_ID = "OPEN_TICKET_ID";
+    public static final String EXTRA_ROOM_ID = "ROOM_ID";
+    public static final String EXTRA_TENANT_ID = "TENANT_ID";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final TicketRepository repository = new TicketRepository();
@@ -100,7 +102,7 @@ public class TenantReportListActivity extends AppCompatActivity {
         });
 
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
-        fabAdd.setOnClickListener(v -> showCreateReportDialog());
+        fabAdd.setOnClickListener(v -> openCreateReportScreen());
 
         pendingOpenTicketId = getIntent().getStringExtra(EXTRA_OPEN_TICKET_ID);
 
@@ -144,6 +146,17 @@ public class TenantReportListActivity extends AppCompatActivity {
             }
             renderFilteredList();
         });
+    }
+
+    private void openCreateReportScreen() {
+        if (roomId == null || roomId.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.missing_room_id_for_tenant), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        android.content.Intent intent = new android.content.Intent(this, TenantCreateReportActivity.class);
+        intent.putExtra(EXTRA_ROOM_ID, roomId);
+        intent.putExtra(EXTRA_TENANT_ID, tenantId);
+        startActivity(intent);
     }
 
     private void renderFilteredList() {

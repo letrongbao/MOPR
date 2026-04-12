@@ -1,0 +1,146 @@
+package com.example.myapplication.features.report;
+
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+import com.example.myapplication.R;
+import com.example.myapplication.core.constants.TicketStatus;
+import com.example.myapplication.core.repository.domain.TicketRepository;
+import com.example.myapplication.core.session.TenantSession;
+import com.example.myapplication.core.util.ScreenUiHelper;
+import com.example.myapplication.domain.Ticket;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
+public class TenantCreateReportActivity extends AppCompatActivity {
+
+    public static final String EXTRA_ROOM_ID = "ROOM_ID";
+    public static final String EXTRA_TENANT_ID = "TENANT_ID";
+
+    private final TicketRepository repository = new TicketRepository();
+    private static final SimpleDateFormat DATE_TIME_FORMAT =
+            new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+
+    private EditText etTitle;
+    private EditText etDescription;
+    private TextView tvAppointment;
+
+    private String roomId;
+    private String tenantId;
+    private Calendar appointmentCalendar;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ScreenUiHelper.enableEdgeToEdge(this, false);
+        setContentView(R.layout.activity_tenant_create_report);
+
+        roomId = getIntent().getStringExtra(EXTRA_ROOM_ID);
+        tenantId = getIntent().getStringExtra(EXTRA_TENANT_ID);
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            tenantId = TenantSession.getActiveTenantId();
+        }
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        ScreenUiHelper.applyTopInset(toolbar);
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_report_create_title));
+
+        etTitle = findViewById(R.id.etTitle);
+        etDescription = findViewById(R.id.etDescription);
+        tvAppointment = findViewById(R.id.tvAppointmentValue);
+
+        findViewById(R.id.layoutAppointment).setOnClickListener(v -> openDateTimePicker());
+
+        Button btnCancel = findViewById(R.id.btnCancel);
+        Button btnSubmit = findViewById(R.id.btnSubmit);
+        btnCancel.setOnClickListener(v -> finish());
+        btnSubmit.setOnClickListener(v -> submit());
+    }
+
+    private void openDateTimePicker() {
+        Calendar now = Calendar.getInstance();
+        final Calendar selected = appointmentCalendar != null ? appointmentCalendar : now;
+
+        DatePickerDialog datePicker = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    TimePickerDialog timePicker = new TimePickerDialog(
+                            this,
+                            (timeView, hourOfDay, minute) -> {
+                                appointmentCalendar = Calendar.getInstance();
+                                appointmentCalendar.set(year, month, dayOfMonth, hourOfDay, minute, 0);
+                                appointmentCalendar.set(Calendar.MILLISECOND, 0);
+                                tvAppointment.setText(DATE_TIME_FORMAT.format(appointmentCalendar.getTime()));
+                            },
+                            selected.get(Calendar.HOUR_OF_DAY),
+                            selected.get(Calendar.MINUTE),
+                            true);
+                    timePicker.show();
+                },
+                selected.get(Calendar.YEAR),
+                selected.get(Calendar.MONTH),
+                selected.get(Calendar.DAY_OF_MONTH));
+
+        datePicker.getDatePicker().setMinDate(now.getTimeInMillis() - 1000);
+        datePicker.show();
+    }
+
+    private void submit() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, getString(R.string.error_not_logged_in), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (roomId == null || roomId.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.missing_room_id_for_tenant), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String title = etTitle.getText() != null ? etTitle.getText().toString().trim() : "";
+        String description = etDescription.getText() != null ? etDescription.getText().toString().trim() : "";
+
+        if (title.isEmpty()) {
+            Toast.makeText(this, getString(R.string.please_enter_title), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (appointmentCalendar != null) {
+            String appointmentLine = getString(
+                    R.string.report_appointment_prefix,
+                    DATE_TIME_FORMAT.format(appointmentCalendar.getTime()));
+            if (description.isEmpty()) {
+                description = appointmentLine;
+            } else {
+                description = description + "\n" + appointmentLine;
+            }
+        }
+
+        Ticket ticket = new Ticket();
+        ticket.setRoomId(roomId);
+        ticket.setTitle(title);
+        ticket.setDescription(description);
+        ticket.setStatus(TicketStatus.OPEN);
+        ticket.setCreatedBy(user.getUid());
+        ticket.setCreatedAt(Timestamp.now());
+
+        repository.add(ticket,
+                () -> runOnUiThread(() -> {
+                    Toast.makeText(this, getString(R.string.ticket_sent), Toast.LENGTH_SHORT).show();
+                    finish();
+                }),
+                () -> runOnUiThread(() -> Toast.makeText(this, getString(R.string.ticket_send_failed), Toast.LENGTH_SHORT).show()));
+    }
+}

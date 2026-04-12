@@ -536,6 +536,11 @@
     <string name="report_reject_reason_hint">Nhập lí do từ chối...</string>
     <string name="report_reject_reason_required">Vui lòng nhập lí do</string>
     <string name="tenant_report_create_title">Tạo phản ánh mới</string>
+    <string name="tenant_report_create_subtitle">Mô tả sự cố để chủ trọ theo dõi và xử lí nhanh hơn.</string>
+    <string name="report_appointment_label">Lịch hẹn sửa chữa (tuỳ chọn)</string>
+    <string name="report_appointment_pick">Chọn ngày giờ</string>
+    <string name="report_appointment_prefix">Lịch hẹn: %1$s</string>
+    <string name="report_description_label">Mô tả vấn đề</string>
     <string name="report_resubmit_title">Sửa phản ánh</string>
     <string name="report_resubmit_success">Đã gửi lại phản ánh</string>
     <string name="report_notification_title">Cập nhật phản ánh</string>
