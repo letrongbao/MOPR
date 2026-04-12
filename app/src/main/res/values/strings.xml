@@ -1220,6 +1220,8 @@
     <string name="tenant_contract_your_title">Hợp đồng của bạn</string>
     <string name="tenant_invoice_title">Hoá đơn của bạn</string>
     <string name="tenant_invoice_subtitle">Danh sách hoá đơn theo phòng hiện tại</string>
+    <string name="invoice_open_from_notification_loading">Đang mở hoá đơn từ thông báo...</string>
+    <string name="invoice_open_from_notification_not_found">Không tìm thấy hoá đơn từ thông báo.</string>
     <string name="tenant_invoice_total">Tổng hoá đơn: %1$s</string>
     <string name="tenant_invoice_empty">Chưa có hoá đơn cho phòng này</string>
     <string name="tenant_invoice_status">Trạng thái: %1$s</string>

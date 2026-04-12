@@ -187,6 +187,33 @@
                     android:textColor="#AAAAAA"
                     android:textSize="15sp" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutDeepLinkLoading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_input_rounded"
+                android:elevation="4dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="10dp"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:indeterminate="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/invoice_open_from_notification_loading"
+                    android:textColor="#263238"
+                    android:textSize="13sp" />
+            </LinearLayout>
         </FrameLayout>
 
     </LinearLayout>

@@ -9,6 +9,7 @@ public class NotificationItem {
     public String type;
     public String ticketId;
     public String conversationId;
+    public String invoiceId;
     public boolean isRead;
     public boolean isSystem;
     public Timestamp createdAt;

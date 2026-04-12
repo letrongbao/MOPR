@@ -41,6 +41,8 @@
     <!-- Status colors -->
     <color name="status_empty">#F44336</color>
     <color name="status_rented">#2196F3</color>
+    <color name="invoice_card_stroke_default">#E3EAF2</color>
+    <color name="invoice_highlight_bg">#EAF3FF</color>
 
     <!-- Locked/Disabled state -->
     <color name="locked_overlay">#4DFFFFFF</color>

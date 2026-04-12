@@ -80,9 +80,12 @@ import java.util.UUID;
 
 public class InvoiceActivity extends AppCompatActivity {
 
-    // Current rollout strategy: owner/staff flow first.
-    // Tenant self-service UI is prepared but intentionally disabled for now.
-    private static final boolean ENABLE_TENANT_SELF_SERVICE = false;
+    private static final boolean ENABLE_TENANT_SELF_SERVICE = true;
+    public static final String EXTRA_INITIAL_TAB = "EXTRA_INITIAL_TAB";
+    public static final String EXTRA_OPEN_INVOICE_ID = "EXTRA_OPEN_INVOICE_ID";
+    public static final int TAB_UNREPORTED = 0;
+    public static final int TAB_REPORTED = 1;
+    public static final int TAB_PAID = 2;
 
     private static final class AutoCreateTarget {
         final Room room;
@@ -129,6 +132,8 @@ public class InvoiceActivity extends AppCompatActivity {
     private InvoiceAdapter adapter;
     private TextView tvEmpty;
     private View llEmpty;
+    private RecyclerView recyclerView;
+    private View deepLinkLoadingView;
     private List<Room> danhSachPhong = new ArrayList<>();
 
     private TextView tvSelectedMonth;
@@ -166,6 +171,9 @@ public class InvoiceActivity extends AppCompatActivity {
     private String pendingTransferProofUrl;
     private ImageView pendingTransferProofPreview;
     private Invoice pendingTransferProofInvoice;
+    private String pendingOpenInvoiceId;
+    private boolean hasOpenedDeepLinkedInvoice;
+    private boolean hasHandledMissingDeepLinkInvoice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -216,7 +224,8 @@ public class InvoiceActivity extends AppCompatActivity {
 
         tvEmpty = findViewById(R.id.tvEmpty);
         llEmpty = findViewById(R.id.llEmpty);
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.recyclerView);
+        deepLinkLoadingView = findViewById(R.id.layoutDeepLinkLoading);
 
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
         tvSelectedKhu = findViewById(R.id.tvSelectedKhu);
@@ -228,7 +237,9 @@ public class InvoiceActivity extends AppCompatActivity {
                 new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(new Date()));
         selectedKhuId = null;
         searchQuery = "";
-        selectedTabIndex = 0;
+        selectedTabIndex = resolveRequestedInitialTab();
+        pendingOpenInvoiceId = resolveRequestedInvoiceId();
+        updateDeepLinkLoading(pendingOpenInvoiceId != null);
         if (tvSelectedMonth != null) {
             selectedMonth = normalizeToAllowedBillingMonth(selectedMonth);
             String[] parts = selectedMonth.split("/");
@@ -351,6 +362,7 @@ public class InvoiceActivity extends AppCompatActivity {
             lastInvoicesRef.set(safe);
             maybeHydrateInvoiceFeesFromHouseDefaults();
             applyInvoiceFilters(safe, selectedTabIndex);
+            maybeOpenInvoiceFromDeepLink(safe);
             maybeRepairDraftInvoicesWithHouseDefaults();
             maybeBackfillMeterReadingsFromInvoices();
         });
@@ -372,6 +384,13 @@ public class InvoiceActivity extends AppCompatActivity {
                 public void onTabReselected(TabLayout.Tab tab) {
                 }
             });
+
+            if (selectedTabIndex >= TAB_UNREPORTED && selectedTabIndex <= TAB_PAID) {
+                TabLayout.Tab initialTab = tabLayout.getTabAt(selectedTabIndex);
+                if (initialTab != null) {
+                    initialTab.select();
+                }
+            }
         }
 
         setupFilterListeners();
@@ -407,6 +426,147 @@ public class InvoiceActivity extends AppCompatActivity {
         void accept(java.util.List<Invoice> list);
     }
 
+    private void applyRoleSpecificChrome() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
+        if (isTenantUser) {
+            if (appBarLayout != null) {
+                appBarLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+            if (toolbar != null) {
+                toolbar.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+            if (tabLayout != null) {
+                tabLayout.setBackgroundResource(R.drawable.bg_tenant_header_teal);
+            }
+            ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.tenant_invoice_title));
+            if (btnSelectKhu != null) {
+                btnSelectKhu.setVisibility(View.GONE);
+            }
+            if (btnDatePicker != null) {
+                btnDatePicker.setVisibility(View.GONE);
+            }
+            if (etSearchInvoice != null) {
+                etSearchInvoice.setHint(getString(R.string.invoice_search_hint));
+            }
+            return;
+        }
+
+        if (appBarLayout != null) {
+            appBarLayout.setBackgroundResource(R.color.primary);
+        }
+        if (toolbar != null) {
+            toolbar.setBackgroundResource(R.color.primary);
+        }
+        if (tabLayout != null) {
+            tabLayout.setBackgroundResource(R.color.primary);
+        }
+        ScreenUiHelper.setupBackToolbar(this, toolbar, getString(R.string.invoice_statistics));
+        if (btnSelectKhu != null) {
+            btnSelectKhu.setVisibility(View.VISIBLE);
+        }
+        if (btnDatePicker != null) {
+            btnDatePicker.setVisibility(View.VISIBLE);
+        }
+        if (etSearchInvoice != null) {
+            etSearchInvoice.setHint(getString(R.string.invoice_search_hint));
+        }
+        if (tvSelectedKhu != null) {
+            tvSelectedKhu.setText(getString(R.string.all_houses));
+        }
+    }
+
+    private int resolveRequestedInitialTab() {
+        Intent intent = getIntent();
+        if (intent == null) {
+            return TAB_UNREPORTED;
+        }
+        int tab = intent.getIntExtra(EXTRA_INITIAL_TAB, TAB_UNREPORTED);
+        if (tab < TAB_UNREPORTED || tab > TAB_PAID) {
+            return TAB_UNREPORTED;
+        }
+        return tab;
+    }
+
+    private String resolveRequestedInvoiceId() {
+        Intent intent = getIntent();
+        if (intent == null) {
+            return null;
+        }
+        String invoiceId = intent.getStringExtra(EXTRA_OPEN_INVOICE_ID);
+        if (invoiceId == null || invoiceId.trim().isEmpty()) {
+            return null;
+        }
+        return invoiceId.trim();
+    }
+
+    private void maybeOpenInvoiceFromDeepLink(@NonNull List<Invoice> invoices) {
+        if (hasOpenedDeepLinkedInvoice || pendingOpenInvoiceId == null || pendingOpenInvoiceId.isEmpty()) {
+            updateDeepLinkLoading(false);
+            return;
+        }
+
+        Invoice matched = null;
+        for (Invoice invoice : invoices) {
+            if (invoice == null || invoice.getId() == null) {
+                continue;
+            }
+            if (pendingOpenInvoiceId.equals(invoice.getId().trim())) {
+                matched = invoice;
+                break;
+            }
+        }
+
+        if (matched == null) {
+            if (!hasHandledMissingDeepLinkInvoice && !invoices.isEmpty()) {
+                hasHandledMissingDeepLinkInvoice = true;
+                pendingOpenInvoiceId = null;
+                updateDeepLinkLoading(false);
+                Toast.makeText(this, getString(R.string.invoice_open_from_notification_not_found), Toast.LENGTH_SHORT)
+                        .show();
+            }
+            return;
+        }
+
+        hasOpenedDeepLinkedInvoice = true;
+        pendingOpenInvoiceId = null;
+        updateDeepLinkLoading(false);
+
+        String status = matched.getStatus() != null ? matched.getStatus().trim() : InvoiceStatus.UNREPORTED;
+        if (InvoiceStatus.PAID.equalsIgnoreCase(status)) {
+            switchToPaidTab();
+        } else if (InvoiceStatus.REPORTED.equalsIgnoreCase(status) || "PARTIAL".equalsIgnoreCase(status)) {
+            switchToReportedTab();
+        }
+
+        highlightInvoiceCard(matched.getId());
+
+        showInvoiceExportDialog(matched);
+    }
+
+    private void updateDeepLinkLoading(boolean loading) {
+        if (deepLinkLoadingView != null) {
+            deepLinkLoadingView.setVisibility(loading ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void highlightInvoiceCard(String invoiceId) {
+        if (recyclerView == null || invoiceId == null || invoiceId.trim().isEmpty()) {
+            return;
+        }
+
+        String safeInvoiceId = invoiceId.trim();
+        recyclerView.post(() -> {
+            int target = adapter.findPositionByInvoiceId(safeInvoiceId);
+            if (target < 0) {
+                return;
+            }
+            recyclerView.scrollToPosition(target);
+            adapter.setHighlightedInvoiceId(safeInvoiceId);
+            recyclerView.postDelayed(adapter::clearHighlightedInvoice, 2200L);
+        });
+    }
+
     private void setupInvoiceObserverAndPermissions(@NonNull InvoiceListConsumer onInvoicesChanged) {
         InvoicePermissionResolver.resolve(db, ENABLE_TENANT_SELF_SERVICE,
                 new InvoicePermissionResolver.Callback() {
@@ -437,6 +597,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void applyLegacyMode(@NonNull InvoiceListConsumer onInvoicesChanged) {
         isTenantUser = false;
+        applyRoleSpecificChrome();
         adapter.setTenantMode(false);
         viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
         refreshTenantDisplayData();
@@ -447,11 +608,8 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void applyTenantSelfServiceMode(@NonNull String roomId, @NonNull InvoiceListConsumer onInvoicesChanged) {
         isTenantUser = true;
+        applyRoleSpecificChrome();
         adapter.setTenantMode(true);
-        if (btnSelectKhu != null)
-            btnSelectKhu.setVisibility(View.GONE);
-        if (etSearchInvoice != null)
-            etSearchInvoice.setHint(getString(R.string.search_by_room));
 
         viewModel.getInvoicesByRoom(roomId).observe(this, onInvoicesChanged::accept);
         refreshTenantDisplayData();
@@ -460,6 +618,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
     private void applyOwnerStaffMode(@NonNull InvoiceListConsumer onInvoicesChanged) {
         isTenantUser = false;
+        applyRoleSpecificChrome();
         adapter.setTenantMode(false);
         viewModel.getInvoiceList().observe(this, onInvoicesChanged::accept);
         refreshTenantDisplayData();

@@ -12,6 +12,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.core.util.ScreenUiHelper;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.features.chat.ChatRoomActivity;
+import com.example.myapplication.features.invoice.InvoiceActivity;
 import com.example.myapplication.features.notification.model.NotificationItem;
 import com.example.myapplication.features.report.TenantReportListActivity;
 import com.google.android.material.appbar.AppBarLayout;
@@ -116,6 +117,7 @@ public class NotificationCenterActivity extends AppCompatActivity {
                         item.type = doc.getString("type");
                         item.ticketId = doc.getString("ticketId");
                         item.conversationId = doc.getString("conversationId");
+                        item.invoiceId = doc.getString("invoiceId");
                         item.isRead = Boolean.TRUE.equals(doc.getBoolean("isRead"));
                         item.isSystem = false;
                         item.createdAt = doc.getTimestamp("createdAt");
@@ -288,6 +290,16 @@ public class NotificationCenterActivity extends AppCompatActivity {
         if ("REPORT_STATUS".equals(item.type) && item.ticketId != null && !item.ticketId.trim().isEmpty()) {
             Intent intent = new Intent(this, TenantReportListActivity.class);
             intent.putExtra(TenantReportListActivity.EXTRA_OPEN_TICKET_ID, item.ticketId);
+            startActivity(intent);
+            return;
+        }
+
+        if ("INVOICE_REPORTED".equals(item.type)) {
+            Intent intent = new Intent(this, InvoiceActivity.class);
+            intent.putExtra(InvoiceActivity.EXTRA_INITIAL_TAB, InvoiceActivity.TAB_REPORTED);
+            if (item.invoiceId != null && !item.invoiceId.trim().isEmpty()) {
+                intent.putExtra(InvoiceActivity.EXTRA_OPEN_INVOICE_ID, item.invoiceId);
+            }
             startActivity(intent);
             return;
         }

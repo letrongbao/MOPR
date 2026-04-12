@@ -29,7 +29,7 @@ import com.example.myapplication.core.util.AuthProviderUtil;
 import com.example.myapplication.features.auth.MainActivity;
 import com.example.myapplication.features.chat.ChatHubActivity;
 import com.example.myapplication.features.contract.TenantContractDetailsActivity;
-import com.example.myapplication.features.invoice.TenantInvoiceActivity;
+import com.example.myapplication.features.invoice.InvoiceActivity;
 import com.example.myapplication.features.notification.NotificationCenterActivity;
 import com.example.myapplication.features.notification.NotificationRealtimeObserver;
 import com.example.myapplication.features.notification.push.AppFirebaseMessagingService;
@@ -387,9 +387,8 @@ public class TenantMenuActivity extends AppCompatActivity {
             Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
             return;
         }
-        Intent intent = new Intent(this, TenantInvoiceActivity.class);
-        intent.putExtra(TenantInvoiceActivity.EXTRA_ROOM_ID, roomId);
-        intent.putExtra(TenantInvoiceActivity.EXTRA_TENANT_ID, tenantId);
+        Intent intent = new Intent(this, InvoiceActivity.class);
+        intent.putExtra(InvoiceActivity.EXTRA_INITIAL_TAB, InvoiceActivity.TAB_REPORTED);
         startActivity(intent);
     }
 

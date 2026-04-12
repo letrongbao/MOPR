@@ -14,6 +14,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.domain.Invoice;
 import com.example.myapplication.core.util.MoneyFormatter;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
     private Map<String, Integer> roomMemberCountByRoom = new HashMap<>();
     private int currentTab = 0;
     private boolean readOnly;
+    private String highlightedInvoiceId;
 
     public interface OnItemActionListener {
         void onDelete(Invoice invoice);
@@ -96,6 +98,32 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public int findPositionByInvoiceId(@NonNull String invoiceId) {
+        for (int i = 0; i < dataList.size(); i++) {
+            Invoice invoice = dataList.get(i);
+            if (invoice == null || invoice.getId() == null) {
+                continue;
+            }
+            if (invoiceId.equals(invoice.getId().trim())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public void setHighlightedInvoiceId(String invoiceId) {
+        highlightedInvoiceId = invoiceId != null ? invoiceId.trim() : null;
+        notifyDataSetChanged();
+    }
+
+    public void clearHighlightedInvoice() {
+        if (highlightedInvoiceId == null) {
+            return;
+        }
+        highlightedInvoiceId = null;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -108,6 +136,16 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Invoice h = dataList.get(position);
         android.content.Context context = holder.itemView.getContext();
+        MaterialCardView cardView = (MaterialCardView) holder.itemView;
+
+        boolean highlighted = highlightedInvoiceId != null
+            && h.getId() != null
+            && highlightedInvoiceId.equals(h.getId().trim());
+        cardView.setCardBackgroundColor(ContextCompat.getColor(context,
+            highlighted ? R.color.invoice_highlight_bg : R.color.white));
+        cardView.setStrokeColor(ContextCompat.getColor(context,
+            highlighted ? R.color.primary_dark : R.color.invoice_card_stroke_default));
+        cardView.setStrokeWidth(highlighted ? 3 : 1);
 
         String roomDisplay = h.getRoomNumber() != null ? ("P." + h.getRoomNumber()) : "P.???";
         String address = roomAddressByRoom.get(h.getRoomId());
