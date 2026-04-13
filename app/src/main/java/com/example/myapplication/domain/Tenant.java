@@ -1,8 +1,10 @@
 package com.example.myapplication.domain;
 
 import com.google.firebase.firestore.PropertyName;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Tenant {
@@ -440,6 +442,14 @@ public class Tenant {
         this.createdAt = createdAt;
     }
 
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = timestampToMillis(createdAt);
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt != null ? createdAt.getTime() : null;
+    }
+
     public Long getUpdatedAt() {
         return updatedAt;
     }
@@ -448,12 +458,32 @@ public class Tenant {
         this.updatedAt = updatedAt;
     }
 
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = timestampToMillis(updatedAt);
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt != null ? updatedAt.getTime() : null;
+    }
+
     public Long getEndedAt() {
         return endedAt;
     }
 
     public void setEndedAt(Long endedAt) {
         this.endedAt = endedAt;
+    }
+
+    public void setEndedAt(Timestamp endedAt) {
+        this.endedAt = timestampToMillis(endedAt);
+    }
+
+    public void setEndedAt(Date endedAt) {
+        this.endedAt = endedAt != null ? endedAt.getTime() : null;
+    }
+
+    private Long timestampToMillis(Timestamp value) {
+        return value != null ? value.toDate().getTime() : null;
     }
 
     public boolean isPrimaryContact() {

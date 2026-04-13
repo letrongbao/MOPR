@@ -732,7 +732,7 @@ public class InvoiceActivity extends AppCompatActivity {
 
                     Map<String, Tenant> map = new HashMap<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        Tenant c = doc.toObject(Tenant.class);
+                        Tenant c = safeTenantFromContractDoc(doc);
                         if (c == null)
                             continue;
                         c.setId(doc.getId());
@@ -787,7 +787,7 @@ public class InvoiceActivity extends AppCompatActivity {
                         return;
                     Map<String, String> map = new HashMap<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        Tenant n = doc.toObject(Tenant.class);
+                        Tenant n = safeTenantFromContractDoc(doc);
                         if (n == null || n.getRoomId() == null || n.getRoomId().trim().isEmpty())
                             continue;
                         String name = n.getFullName() != null ? n.getFullName().trim() : "";
@@ -1474,7 +1474,7 @@ public class InvoiceActivity extends AppCompatActivity {
                 .addOnSuccessListener(snapshot -> {
                     Map<String, Tenant> map = new HashMap<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        Tenant c = doc.toObject(Tenant.class);
+                        Tenant c = safeTenantFromContractDoc(doc);
                         if (c == null)
                             continue;
                         c.setId(doc.getId());
@@ -1499,6 +1499,176 @@ public class InvoiceActivity extends AppCompatActivity {
         long r = rhs.getUpdatedAt() != null ? rhs.getUpdatedAt()
                 : (rhs.getCreatedAt() != null ? rhs.getCreatedAt() : 0);
         return l >= r;
+    }
+
+    private Tenant safeTenantFromContractDoc(@NonNull QueryDocumentSnapshot doc) {
+        try {
+            Tenant tenant = new Tenant();
+            tenant.setId(doc.getId());
+            tenant.setFullName(asStringFlexible(doc.get("fullName")));
+            tenant.setPersonalId(asStringFlexible(doc.get("personalId")));
+            tenant.setPhoneNumber(asStringFlexible(doc.get("phoneNumber")));
+            tenant.setAddress(asStringFlexible(doc.get("address")));
+            tenant.setContractNumber(asStringFlexible(doc.get("contractNumber")));
+            tenant.setRepresentativeName(asStringFlexible(doc.get("representativeName")));
+            tenant.setRepresentativeId(asStringFlexible(doc.get("representativeId")));
+            tenant.setRoomId(asStringFlexible(doc.get("roomId")));
+            tenant.setPreviousRoomId(asStringFlexible(doc.get("previousRoomId")));
+            tenant.setRoomNumber(asStringFlexible(doc.get("roomNumber")));
+            tenant.setContractStatus(asStringFlexible(doc.get("contractStatus")));
+            tenant.setRentalStartDate(asStringFlexible(doc.get("rentalStartDate")));
+            tenant.setContractEndDate(asStringFlexible(doc.get("contractEndDate")));
+            tenant.setBillingStartPolicy(asStringFlexible(doc.get("billingStartPolicy")));
+            tenant.setBillingStartPeriod(asStringFlexible(doc.get("billingStartPeriod")));
+            tenant.setBillingReminderAt(asStringFlexible(doc.get("billingReminderAt")));
+
+            tenant.setMemberCount(asIntFlexible(doc.get("memberCount")));
+            tenant.setContractDurationMonths(asIntFlexible(doc.get("contractDurationMonths")));
+            tenant.setElectricStartReading(asIntFlexible(doc.get("electricStartReading")));
+            tenant.setWaterStartReading(asIntFlexible(doc.get("waterStartReading")));
+            tenant.setVehicleCount(asIntFlexible(doc.get("vehicleCount")));
+
+            long rentAmount = asLongFlexible(doc.get("rentAmount"));
+            if (rentAmount > 0) {
+                tenant.setRentAmount(rentAmount);
+            } else {
+                tenant.setRoomPrice(asDoubleFlexible(doc.get("roomPrice")));
+            }
+
+            long depositAmount = asLongFlexible(doc.get("depositAmount"));
+            if (depositAmount > 0) {
+                tenant.setDepositAmount(depositAmount);
+            } else {
+                tenant.setLegacyDepositAmount(asDoubleFlexible(doc.get("legacyDepositAmount")));
+            }
+
+            tenant.setContractEndTimestamp(asLongFlexible(doc.get("contractEndTimestamp")));
+
+            tenant.setShowDepositOnInvoice(asBooleanFlexible(doc.get("showDepositOnInvoice"), true));
+            tenant.setShowNoteOnInvoice(asBooleanFlexible(doc.get("showNoteOnInvoice"), true));
+            tenant.setRemindOneMonthBefore(asBooleanFlexible(doc.get("remindOneMonthBefore"), true));
+            tenant.setHasParkingService(asBooleanFlexible(doc.get("hasParkingService"), false));
+            tenant.setHasInternetService(asBooleanFlexible(doc.get("hasInternetService"), false));
+            tenant.setHasLaundryService(asBooleanFlexible(doc.get("hasLaundryService"), false));
+            tenant.setDepositCollected(asBooleanFlexible(doc.get("depositCollectionStatus"), false));
+            tenant.setPrimaryContact(asBooleanFlexible(doc.get("isPrimaryContact"), false));
+            tenant.setContractRepresentative(asBooleanFlexible(doc.get("contractRepresentative"), false));
+            tenant.setTemporaryResident(asBooleanFlexible(doc.get("temporaryResident"), false));
+            tenant.setFullyDocumented(asBooleanFlexible(doc.get("fullyDocumented"), false));
+
+            tenant.setCreatedAt(asLongFlexible(doc.get("createdAt")));
+            tenant.setUpdatedAt(asLongFlexible(doc.get("updatedAt")));
+            tenant.setEndedAt(asLongFlexible(doc.get("endedAt")));
+            tenant.setSelectedExtraFeeNames(asStringListFlexible(doc.get("selectedExtraFeeNames")));
+            tenant.setNote(asStringFlexible(doc.get("note")));
+
+            return tenant;
+        } catch (Exception ex) {
+            android.util.Log.w("InvoiceActivity", "Skip invalid contract doc: " + doc.getId(), ex);
+            return null;
+        }
+    }
+
+    private long asLongFlexible(Object value) {
+        if (value == null) {
+            return 0L;
+        }
+        if (value instanceof Long) {
+            return (Long) value;
+        }
+        if (value instanceof Integer) {
+            return ((Integer) value).longValue();
+        }
+        if (value instanceof Double) {
+            return Math.round((Double) value);
+        }
+        if (value instanceof Timestamp) {
+            return ((Timestamp) value).toDate().getTime();
+        }
+        if (value instanceof Date) {
+            return ((Date) value).getTime();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return 0L;
+            }
+        }
+        return 0L;
+    }
+
+    private int asIntFlexible(Object value) {
+        long parsed = asLongFlexible(value);
+        if (parsed > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        if (parsed < Integer.MIN_VALUE) {
+            return Integer.MIN_VALUE;
+        }
+        return (int) parsed;
+    }
+
+    private double asDoubleFlexible(Object value) {
+        if (value == null) {
+            return 0D;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Double.parseDouble(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return 0D;
+            }
+        }
+        return 0D;
+    }
+
+    private boolean asBooleanFlexible(Object value, boolean fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof String) {
+            String normalized = ((String) value).trim().toLowerCase(Locale.US);
+            if ("true".equals(normalized) || "1".equals(normalized)) {
+                return true;
+            }
+            if ("false".equals(normalized) || "0".equals(normalized)) {
+                return false;
+            }
+        }
+        return fallback;
+    }
+
+    private String asStringFlexible(Object value) {
+        if (value == null) {
+            return "";
+        }
+        if (value instanceof String) {
+            return ((String) value).trim();
+        }
+        return String.valueOf(value).trim();
+    }
+
+    @NonNull
+    private List<String> asStringListFlexible(Object value) {
+        List<String> out = new ArrayList<>();
+        if (!(value instanceof List)) {
+            return out;
+        }
+        List<?> rawList = (List<?>) value;
+        for (Object raw : rawList) {
+            String item = asStringFlexible(raw);
+            if (!item.isEmpty()) {
+                out.add(item);
+            }
+        }
+        return out;
     }
 
     private void loadMissingAutoTargets(@NonNull String period,

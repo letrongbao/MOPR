@@ -285,9 +285,9 @@ public class RoomActivity extends AppCompatActivity {
                             String contractId = d.getId();
                             String name = d.getString("fullName");
                             String phone = d.getString("phoneNumber");
-                            Long updatedAt = d.getLong("updatedAt");
-                            Long createdAt = d.getLong("createdAt");
-                            long order = updatedAt != null ? updatedAt : (createdAt != null ? createdAt : 0L);
+                            long updatedAt = toMillisFlexible(d.get("updatedAt"));
+                            long createdAt = toMillisFlexible(d.get("createdAt"));
+                            long order = updatedAt > 0 ? updatedAt : createdAt;
                             Long declaredMemberCount = d.getLong("memberCount");
                             int declared = declaredMemberCount != null ? Math.max(0, declaredMemberCount.intValue()) : 0;
 
@@ -915,6 +915,29 @@ public class RoomActivity extends AppCompatActivity {
                     current));
         }
         adapter.setTenantByRoomId(out);
+    }
+
+    private long toMillisFlexible(Object value) {
+        if (value == null) {
+            return 0L;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof com.google.firebase.Timestamp) {
+            return ((com.google.firebase.Timestamp) value).toDate().getTime();
+        }
+        if (value instanceof java.util.Date) {
+            return ((java.util.Date) value).getTime();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return 0L;
+            }
+        }
+        return 0L;
     }
 
     @Override
