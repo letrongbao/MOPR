@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -53,6 +54,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.Timestamp;
+import java.util.function.Consumer;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -107,6 +109,7 @@ public class TenantMenuActivity extends AppCompatActivity {
     private String tenantId;
     private String roomId;
     private String activeMemberContractId;
+    private boolean isResolvingMemberContext;
     private boolean profilePromptShown;
     private boolean redirectingToJoinRoom;
     private ListenerRegistration tenantMemberListener;
@@ -514,36 +517,92 @@ public class TenantMenuActivity extends AppCompatActivity {
     }
 
     private void openContractDetail() {
-        if (roomId == null || roomId.isEmpty()) {
-            Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
-            return;
-        }
+        resolveLatestMemberContext(success -> {
+            if (!success) {
+                return;
+            }
 
-        if (activeMemberContractId != null && !activeMemberContractId.trim().isEmpty()) {
-            Intent intent = new Intent(this, ContractDetailsActivity.class);
-            intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, activeMemberContractId.trim());
-            intent.putExtra(ContractDetailsActivity.EXTRA_HEADER_TITLE, getString(R.string.tenant_contract_your_title));
-            intent.putExtra(ContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
+            if (activeMemberContractId != null && !activeMemberContractId.trim().isEmpty()) {
+                Intent intent = new Intent(this, ContractDetailsActivity.class);
+                intent.putExtra(ContractDetailsActivity.EXTRA_CONTRACT_ID, activeMemberContractId.trim());
+                intent.putExtra(ContractDetailsActivity.EXTRA_HEADER_TITLE, getString(R.string.tenant_contract_your_title));
+                intent.putExtra(ContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
+                startActivitySafely(intent);
+                return;
+            }
+
+            Intent intent = new Intent(this, TenantContractDetailsActivity.class);
+            intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
+            intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
             startActivitySafely(intent);
-            return;
-        }
-
-        Intent intent = new Intent(this, TenantContractDetailsActivity.class);
-        intent.putExtra(TenantContractDetailsActivity.EXTRA_ROOM_ID, roomId);
-        intent.putExtra(TenantContractDetailsActivity.EXTRA_TENANT_ID, tenantId);
-        startActivitySafely(intent);
+        });
     }
 
     private void openInvoicePage() {
-        if (roomId == null || roomId.isEmpty()) {
-            Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
+        resolveLatestMemberContext(success -> {
+            if (!success) {
+                return;
+            }
+            Intent intent = new Intent(this, InvoiceActivity.class);
+            intent.putExtra(InvoiceActivity.EXTRA_INITIAL_TAB, InvoiceActivity.TAB_REPORTED);
+            intent.putExtra("TENANT_ID", tenantId);
+            intent.putExtra("ROOM_ID", roomId);
+            startActivitySafely(intent);
+        });
+    }
+
+    private void resolveLatestMemberContext(@NonNull Consumer<Boolean> callback) {
+        if (isResolvingMemberContext) {
+            callback.accept(false);
             return;
         }
-        Intent intent = new Intent(this, InvoiceActivity.class);
-        intent.putExtra(InvoiceActivity.EXTRA_INITIAL_TAB, InvoiceActivity.TAB_REPORTED);
-        intent.putExtra("TENANT_ID", tenantId);
-        intent.putExtra("ROOM_ID", roomId);
-        startActivitySafely(intent);
+
+        FirebaseUser user = mAuth.getCurrentUser();
+        String activeTenantId = tenantId != null && !tenantId.trim().isEmpty()
+                ? tenantId.trim()
+                : TenantSession.getActiveTenantId();
+
+        if (user == null || activeTenantId == null || activeTenantId.trim().isEmpty()) {
+            Toast.makeText(this, getString(R.string.tenant_menu_room_not_identified), Toast.LENGTH_SHORT).show();
+            callback.accept(false);
+            return;
+        }
+
+        isResolvingMemberContext = true;
+        db.collection("tenants").document(activeTenantId)
+                .collection("members").document(user.getUid())
+                .get()
+                .addOnSuccessListener(memberDoc -> {
+                    isResolvingMemberContext = false;
+                    if (!memberDoc.exists()) {
+                        redirectToJoinRoomForRelink();
+                        callback.accept(false);
+                        return;
+                    }
+
+                    String status = memberDoc.getString("status");
+                    String mappedRoomId = memberDoc.getString("roomId");
+                    if (!"ACTIVE".equalsIgnoreCase(status == null ? "" : status.trim())
+                            || mappedRoomId == null
+                            || mappedRoomId.trim().isEmpty()) {
+                        redirectToJoinRoomForRelink();
+                        callback.accept(false);
+                        return;
+                    }
+
+                    tenantId = activeTenantId;
+                    roomId = mappedRoomId.trim();
+                    String mappedContractId = memberDoc.getString("contractId");
+                    activeMemberContractId = mappedContractId != null && !mappedContractId.trim().isEmpty()
+                            ? mappedContractId.trim()
+                            : null;
+                    callback.accept(true);
+                })
+                .addOnFailureListener(e -> {
+                    isResolvingMemberContext = false;
+                    Toast.makeText(this, getString(R.string.operation_failed), Toast.LENGTH_SHORT).show();
+                    callback.accept(false);
+                });
     }
 
     private void startActivitySafely(Intent intent) {
