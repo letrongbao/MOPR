@@ -153,11 +153,35 @@ public class Room {
         this.createdAt = createdAt;
     }
 
+    public void setCreatedAt(Long createdAt) {
+        this.createdAt = createdAt != null
+                ? new com.google.firebase.Timestamp(new java.util.Date(createdAt))
+                : null;
+    }
+
+    public void setCreatedAt(java.util.Date createdAt) {
+        this.createdAt = createdAt != null
+                ? new com.google.firebase.Timestamp(createdAt)
+                : null;
+    }
+
     public com.google.firebase.Timestamp getUpdatedAt() {
         return updatedAt;
     }
 
     public void setUpdatedAt(com.google.firebase.Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public void setUpdatedAt(Long updatedAt) {
+        this.updatedAt = updatedAt != null
+                ? new com.google.firebase.Timestamp(new java.util.Date(updatedAt))
+                : null;
+    }
+
+    public void setUpdatedAt(java.util.Date updatedAt) {
+        this.updatedAt = updatedAt != null
+                ? new com.google.firebase.Timestamp(updatedAt)
+                : null;
     }
 }
