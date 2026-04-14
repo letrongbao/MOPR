@@ -285,10 +285,19 @@ public class RoomActivity extends AppCompatActivity {
                             String contractId = d.getId();
                             String name = d.getString("fullName");
                             String phone = d.getString("phoneNumber");
-                            Long updatedAt = d.getLong("updatedAt");
-                            Long createdAt = d.getLong("createdAt");
+                            Long updatedAt = null;
+                            try { updatedAt = d.getLong("updatedAt"); } catch (Exception ignored) {
+                                com.google.firebase.Timestamp ts = d.getTimestamp("updatedAt");
+                                if (ts != null) updatedAt = ts.toDate().getTime();
+                            }
+                            Long createdAt = null;
+                            try { createdAt = d.getLong("createdAt"); } catch (Exception ignored) {
+                                com.google.firebase.Timestamp ts = d.getTimestamp("createdAt");
+                                if (ts != null) createdAt = ts.toDate().getTime();
+                            }
                             long order = updatedAt != null ? updatedAt : (createdAt != null ? createdAt : 0L);
-                            Long declaredMemberCount = d.getLong("memberCount");
+                            Long declaredMemberCount = null;
+                            try { declaredMemberCount = d.getLong("memberCount"); } catch (Exception e) {}
                             int declared = declaredMemberCount != null ? Math.max(0, declaredMemberCount.intValue()) : 0;
 
                             ActiveContractInfo candidate = new ActiveContractInfo(
