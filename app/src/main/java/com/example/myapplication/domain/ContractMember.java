@@ -1,5 +1,9 @@
 package com.example.myapplication.domain;
 
+import com.google.firebase.Timestamp;
+
+import java.util.Date;
+
 public class ContractMember {
     private String id;
     private String contractId;
@@ -151,19 +155,59 @@ public class ContractMember {
         this.active = active;
     }
 
+    @com.google.firebase.firestore.Exclude
     public Long getCreatedAt() {
         return createdAt;
     }
 
+    @com.google.firebase.firestore.Exclude
     public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
+    @com.google.firebase.firestore.PropertyName("createdAt")
+    public Object getCreatedAtForDb() {
+        return createdAt;
+    }
+
+    @com.google.firebase.firestore.PropertyName("createdAt")
+    public void setCreatedAtForDb(Object obj) {
+        if (obj instanceof Number) {
+            this.createdAt = ((Number) obj).longValue();
+        } else if (obj instanceof Timestamp) {
+            this.createdAt = ((Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Date) {
+            this.createdAt = ((Date) obj).getTime();
+        } else {
+            this.createdAt = null;
+        }
+    }
+
+    @com.google.firebase.firestore.Exclude
     public Long getUpdatedAt() {
         return updatedAt;
     }
 
+    @com.google.firebase.firestore.Exclude
     public void setUpdatedAt(Long updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @com.google.firebase.firestore.PropertyName("updatedAt")
+    public Object getUpdatedAtForDb() {
+        return updatedAt;
+    }
+
+    @com.google.firebase.firestore.PropertyName("updatedAt")
+    public void setUpdatedAtForDb(Object obj) {
+        if (obj instanceof Number) {
+            this.updatedAt = ((Number) obj).longValue();
+        } else if (obj instanceof Timestamp) {
+            this.updatedAt = ((Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Date) {
+            this.updatedAt = ((Date) obj).getTime();
+        } else {
+            this.updatedAt = null;
+        }
     }
 }

@@ -1,8 +1,10 @@
 package com.example.myapplication.domain;
 
 import com.google.firebase.firestore.PropertyName;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Tenant {
@@ -243,14 +245,32 @@ public class Tenant {
         this.legacyDepositAmount = depositAmount;
     }
 
-    @PropertyName("contractEndTimestamp")
+    @com.google.firebase.firestore.Exclude
     public long getContractEndTimestamp() {
         return contractEndTimestamp;
     }
 
-    @PropertyName("contractEndTimestamp")
+    @com.google.firebase.firestore.Exclude
     public void setContractEndTimestamp(long contractEndTimestamp) {
         this.contractEndTimestamp = contractEndTimestamp;
+    }
+
+    @PropertyName("contractEndTimestamp")
+    public Object getContractEndTimestampForDb() {
+        return contractEndTimestamp > 0 ? contractEndTimestamp : null;
+    }
+
+    @PropertyName("contractEndTimestamp")
+    public void setContractEndTimestampForDb(Object obj) {
+        if (obj instanceof Number) {
+            this.contractEndTimestamp = ((Number) obj).longValue();
+        } else if (obj instanceof com.google.firebase.Timestamp) {
+            this.contractEndTimestamp = ((com.google.firebase.Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Date) {
+            this.contractEndTimestamp = ((Date) obj).getTime();
+        } else {
+            this.contractEndTimestamp = 0L;
+        }
     }
 
     public double getRoomPrice() {
@@ -432,28 +452,88 @@ public class Tenant {
         this.contractStatus = contractStatus;
     }
 
+    @com.google.firebase.firestore.Exclude
     public Long getCreatedAt() {
         return createdAt;
     }
 
+    @com.google.firebase.firestore.Exclude
     public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
+    @PropertyName("createdAt")
+    public Object getCreatedAtForDb() {
+        return createdAt;
+    }
+
+    @PropertyName("createdAt")
+    public void setCreatedAtForDb(Object obj) {
+        if (obj instanceof Number) {
+            this.createdAt = ((Number) obj).longValue();
+        } else if (obj instanceof com.google.firebase.Timestamp) {
+            this.createdAt = ((com.google.firebase.Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Date) {
+            this.createdAt = ((Date) obj).getTime();
+        } else {
+            this.createdAt = null;
+        }
+    }
+
+    @com.google.firebase.firestore.Exclude
     public Long getUpdatedAt() {
         return updatedAt;
     }
 
+    @com.google.firebase.firestore.Exclude
     public void setUpdatedAt(Long updatedAt) {
         this.updatedAt = updatedAt;
     }
 
+    @PropertyName("updatedAt")
+    public Object getUpdatedAtForDb() {
+        return updatedAt;
+    }
+
+    @PropertyName("updatedAt")
+    public void setUpdatedAtForDb(Object obj) {
+        if (obj instanceof Number) {
+            this.updatedAt = ((Number) obj).longValue();
+        } else if (obj instanceof com.google.firebase.Timestamp) {
+            this.updatedAt = ((com.google.firebase.Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Date) {
+            this.updatedAt = ((Date) obj).getTime();
+        } else {
+            this.updatedAt = null;
+        }
+    }
+
+    @com.google.firebase.firestore.Exclude
     public Long getEndedAt() {
         return endedAt;
     }
 
+    @com.google.firebase.firestore.Exclude
     public void setEndedAt(Long endedAt) {
         this.endedAt = endedAt;
+    }
+
+    @PropertyName("endedAt")
+    public Object getEndedAtForDb() {
+        return endedAt;
+    }
+
+    @PropertyName("endedAt")
+    public void setEndedAtForDb(Object obj) {
+        if (obj instanceof Number) {
+            this.endedAt = ((Number) obj).longValue();
+        } else if (obj instanceof com.google.firebase.Timestamp) {
+            this.endedAt = ((com.google.firebase.Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Date) {
+            this.endedAt = ((Date) obj).getTime();
+        } else {
+            this.endedAt = null;
+        }
     }
 
     public boolean isPrimaryContact() {

@@ -1,6 +1,7 @@
 package com.example.myapplication.core.repository.domain;
 
 import androidx.lifecycle.MutableLiveData;
+import android.util.Log;
 import com.example.myapplication.core.constants.RoomStatus;
 import com.example.myapplication.core.session.TenantSession;
 import com.example.myapplication.domain.Tenant;
@@ -10,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 public class TenantRepository {
+
+    private static final String TAG = "TenantRepository";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final String COLLECTION = "contracts";
@@ -40,9 +44,10 @@ public class TenantRepository {
                 return;
             List<Tenant> list = new ArrayList<>();
             snapshot.forEach(doc -> {
-                Tenant n = doc.toObject(Tenant.class);
-                n.setId(doc.getId());
-                list.add(n);
+                Tenant n = safeToTenant(doc);
+                if (n != null) {
+                    list.add(n);
+                }
             });
             data.setValue(list);
         });
@@ -57,9 +62,10 @@ public class TenantRepository {
                         return;
                     List<Tenant> list = new ArrayList<>();
                     snapshot.forEach(doc -> {
-                        Tenant n = doc.toObject(Tenant.class);
-                        n.setId(doc.getId());
-                        list.add(n);
+                        Tenant n = safeToTenant(doc);
+                        if (n != null) {
+                            list.add(n);
+                        }
                     });
                     data.setValue(list);
                 });
@@ -79,15 +85,34 @@ public class TenantRepository {
                     }
                     List<Tenant> list = new ArrayList<>();
                     snapshot.forEach(doc -> {
-                        Tenant n = doc.toObject(Tenant.class);
-                        n.setId(doc.getId());
-                        list.add(n);
+                        Tenant n = safeToTenant(doc);
+                        if (n != null) {
+                            list.add(n);
+                        }
                     });
                     // Internal note.
-                    list.sort((a, b) -> Long.compare(b.getEndedAt(), a.getEndedAt()));
+                    list.sort((a, b) -> Long.compare(nullSafeTime(b.getEndedAt()), nullSafeTime(a.getEndedAt())));
                     data.setValue(list);
                 });
         return data;
+    }
+
+    private Tenant safeToTenant(DocumentSnapshot doc) {
+        try {
+            Tenant tenant = doc.toObject(Tenant.class);
+            if (tenant == null) {
+                return null;
+            }
+            tenant.setId(doc.getId());
+            return tenant;
+        } catch (RuntimeException ex) {
+            Log.w(TAG, "Skip malformed contract document: " + doc.getId(), ex);
+            return null;
+        }
+    }
+
+    private long nullSafeTime(Long value) {
+        return value != null ? value : 0L;
     }
 
     public void addTenant(Tenant tenant, Runnable onSuccess, Runnable onFail) {

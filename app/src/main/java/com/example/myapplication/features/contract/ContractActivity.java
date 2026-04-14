@@ -23,6 +23,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -68,6 +69,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class ContractActivity extends AppCompatActivity {
+
+    private static final String TAG = "ContractActivity";
 
     public static final String EXTRA_ROOM_ID = "ROOM_ID";
 
@@ -470,7 +473,7 @@ public class ContractActivity extends AppCompatActivity {
                 .addOnSuccessListener(qs -> {
                     if (qs != null && !qs.isEmpty()) {
                         com.google.firebase.firestore.DocumentSnapshot d = qs.getDocuments().get(0);
-                        Tenant n = d.toObject(Tenant.class);
+                        Tenant n = safeTenantFromDoc(d);
                         if (n != null) {
                             n.setId(d.getId());
                             currentContract = n;
@@ -489,7 +492,7 @@ public class ContractActivity extends AppCompatActivity {
                     Tenant best = null;
                     if (qs != null && !qs.isEmpty()) {
                         com.google.firebase.firestore.DocumentSnapshot d = qs.getDocuments().get(0);
-                        Tenant n = d.toObject(Tenant.class);
+                        Tenant n = safeTenantFromDoc(d);
                         if (n != null) {
                             String st = n.getContractStatus();
                             if (st == null || !st.equalsIgnoreCase("ENDED")) {
@@ -1238,6 +1241,15 @@ public class ContractActivity extends AppCompatActivity {
 
     private String text(@NonNull EditText et) {
         return et.getText() != null ? et.getText().toString().trim() : "";
+    }
+
+    private Tenant safeTenantFromDoc(@NonNull DocumentSnapshot doc) {
+        try {
+            return doc.toObject(Tenant.class);
+        } catch (RuntimeException ex) {
+            Log.w(TAG, "Invalid contract data for room " + roomId + ": " + doc.getId(), ex);
+            return null;
+        }
     }
 
     private List<String> collectSelectedExtraFeeNames() {
